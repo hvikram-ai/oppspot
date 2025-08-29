@@ -73,7 +73,7 @@ export default async function DashboardPage() {
             Welcome back, {user.user_metadata?.full_name || user.email?.split('@')[0]}!
           </h1>
           <p className="text-muted-foreground">
-            Here's your business intelligence dashboard
+            Here&apos;s your business intelligence dashboard
           </p>
         </div>
 
