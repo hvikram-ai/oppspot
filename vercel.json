@@ -1,0 +1,15 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "regions": ["lhr1"],
+  "functions": {
+    "app/api/ai/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/scrape/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
