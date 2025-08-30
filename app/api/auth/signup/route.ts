@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     const { data: org, error: orgError } = await supabase
       .from('organizations')
-      .insert({
+      .insert([{
         name: companyName,
         slug: orgSlug,
         settings: {
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
           company_size: null,
         },
         subscription_tier: 'trial',
-      })
+      }] as any)
       .select()
       .single()
 
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     // Update user profile
     const { error: profileError } = await supabase
       .from('profiles')
-      .upsert({
+      .upsert([{
         id: userId,
         org_id: org.id,
         full_name: fullName,
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
         },
         streak_count: 0,
         last_active: new Date().toISOString(),
-      })
+      }] as any)
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     try {
       await supabase
         .from('events')
-        .insert({
+        .insert([{
           user_id: userId,
           event_type: 'signup_completed',
           metadata: {
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
             role,
             signup_source: 'web',
           },
-        })
+        }] as any)
     } catch (eventError) {
       // Events table might not exist yet, that's okay
       console.log('Event logging skipped:', eventError)
