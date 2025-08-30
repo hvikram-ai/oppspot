@@ -25,6 +25,30 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
+  // Check if user needs onboarding
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('onboarding_completed, org_id')
+    .eq('id', user.id)
+    .single()
+
+  // Check organization subscription tier
+  let isPremium = false
+  if (profile?.org_id) {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('subscription_tier')
+      .eq('id', profile.org_id)
+      .single()
+    
+    isPremium = org?.subscription_tier === 'premium' || org?.subscription_tier === 'enterprise'
+  }
+
+  // Redirect to onboarding if not completed (unless premium user)
+  if (!profile?.onboarding_completed && !isPremium) {
+    redirect('/onboarding')
+  }
+
   const quickActions = [
     {
       title: 'Search Businesses',
