@@ -146,7 +146,7 @@ export default function OnboardingPage() {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
-        .single()
+        .single() as any
 
       if (profile?.org_id) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -26,7 +26,7 @@ export function EmailVerificationBanner() {
         .from('profiles')
         .select('email_verified_at')
         .eq('id', user.id)
-        .single()
+        .single() as any
       
       if (profile?.email_verified_at) {
         setIsVerified(true)
