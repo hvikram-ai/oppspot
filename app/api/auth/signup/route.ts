@@ -39,6 +39,7 @@ export async function POST(request: Request) {
 
     const { data: org, error: orgError } = await supabase
       .from('organizations')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .insert([{
         name: companyName,
         slug: orgSlug,
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
     // Update user profile
     const { error: profileError } = await supabase
       .from('profiles')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .upsert([{
         id: userId,
         org_id: org.id,
@@ -87,6 +89,7 @@ export async function POST(request: Request) {
     try {
       await supabase
         .from('events')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert([{
           user_id: userId,
           event_type: 'signup_completed',
