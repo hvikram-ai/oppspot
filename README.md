@@ -77,7 +77,7 @@ An AI-powered business discovery platform for finding and analyzing UK & Ireland
 3. Add environment variables in Vercel dashboard
 4. Deploy!
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/hvikram-ai/oppspot)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/hvikram-ai/oppspot&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,OPENROUTER_API_KEY&envDescription=Required%20API%20Keys&project-name=oppspot&repository-name=oppspot)
 
 ## 📝 Project Structure
 
