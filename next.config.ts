@@ -11,11 +11,6 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: false,
   },
-  experimental: {
-    turbopack: {
-      // Turbopack configuration
-    },
-  },
   // Force rebuild timestamp
   env: {
     BUILD_TIME: new Date().toISOString(),
