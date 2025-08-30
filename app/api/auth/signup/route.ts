@@ -3,8 +3,6 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database'
 
-type Tables = Database['public']['Tables']
-
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -49,8 +47,10 @@ export async function POST(request: Request) {
         onboarding_step: 0,
         industry: null,
         company_size: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
       .select()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .single() as any
 
     if (orgError || !org) {
@@ -78,6 +78,7 @@ export async function POST(request: Request) {
         trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days trial
         onboarding_completed: false,
         email_verified_at: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any) as any
 
     if (profileError) {
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
             role,
             signup_source: 'web',
           },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
     } catch (eventError) {
       // Events table might not exist yet, that's okay

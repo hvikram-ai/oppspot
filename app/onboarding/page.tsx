@@ -127,8 +127,8 @@ export default function OnboardingPage() {
       if (!user) throw new Error('Not authenticated')
 
       // Update profile with onboarding data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: profileError } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from('profiles') as any)
         .update({
           preferences: {
@@ -146,11 +146,12 @@ export default function OnboardingPage() {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .single() as any
 
       if (profile?.org_id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .from('organizations') as any)
           .update({
             settings: {
