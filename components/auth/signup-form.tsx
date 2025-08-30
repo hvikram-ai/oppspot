@@ -127,9 +127,10 @@ export function SignupForm() {
         // Redirect to onboarding
         router.push('/onboarding')
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Signup error:', error)
-      toast.error(error.message || 'Failed to create account')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create account'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { X, Mail, CheckCircle } from 'lucide-react'
@@ -12,11 +12,7 @@ export function EmailVerificationBanner() {
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
-  useEffect(() => {
-    checkVerificationStatus()
-  }, [])
-
-  const checkVerificationStatus = async () => {
+  const checkVerificationStatus = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
@@ -37,7 +33,11 @@ export function EmailVerificationBanner() {
         setIsVisible(false)
       }
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    checkVerificationStatus()
+  }, [checkVerificationStatus])
 
   const resendVerificationEmail = async () => {
     setLoading(true)
@@ -55,7 +55,7 @@ export function EmailVerificationBanner() {
       if (error) throw error
 
       toast.success('Verification email sent! Check your inbox.')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error resending verification:', error)
       toast.error('Failed to send verification email')
     } finally {
