@@ -70,8 +70,14 @@ export function SignupForm() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!agreedToTerms) {
-      toast.error('Please agree to the terms and conditions')
+    // Validate all required fields
+    if (!formData.fullName.trim()) {
+      toast.error('Please enter your full name')
+      return
+    }
+
+    if (!formData.email.trim()) {
+      toast.error('Please enter your email address')
       return
     }
 
@@ -80,8 +86,28 @@ export function SignupForm() {
       return
     }
 
+    if (!formData.password) {
+      toast.error('Please enter a password')
+      return
+    }
+
     if (passwordStrength.score < 3) {
       toast.error('Please choose a stronger password')
+      return
+    }
+
+    if (!formData.companyName.trim()) {
+      toast.error('Please enter your company name')
+      return
+    }
+
+    if (!formData.role) {
+      toast.error('Please select your role')
+      return
+    }
+
+    if (!agreedToTerms) {
+      toast.error('Please agree to the terms and conditions')
       return
     }
 
@@ -89,6 +115,7 @@ export function SignupForm() {
 
     try {
       // Sign up with Supabase (auto-confirms if configured)
+      console.log('Starting signup process...')
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -101,24 +128,40 @@ export function SignupForm() {
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase signup error:', error)
+        throw error
+      }
 
       if (data.user) {
+        console.log('User created, calling API...')
         // Create organization and profile via API
-        const response = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email: formData.email,
-            fullName: formData.fullName,
-            companyName: formData.companyName,
-            role: formData.role,
-          }),
-        })
+        try {
+          const response = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: data.user.id,
+              email: formData.email,
+              fullName: formData.fullName,
+              companyName: formData.companyName,
+              role: formData.role,
+            }),
+          })
 
-        if (!response.ok) {
-          throw new Error('Failed to complete signup')
+          if (!response.ok) {
+            const errorData = await response.text()
+            console.error('API response error:', errorData)
+            throw new Error(`Failed to complete signup: ${response.status}`)
+          }
+          
+          const result = await response.json()
+          console.log('Signup API success:', result)
+        } catch (fetchError) {
+          console.error('Fetch error:', fetchError)
+          // If the API call fails, we should still consider the user signed up
+          // since the Supabase auth was successful
+          toast.warning('Account created but profile setup incomplete. You can complete it later.')
         }
 
         // Success! User is automatically logged in
@@ -267,7 +310,6 @@ export function SignupForm() {
             <Select
               value={formData.role}
               onValueChange={(value) => setFormData({ ...formData, role: value })}
-              required
               disabled={loading}
             >
               <SelectTrigger id="role">
