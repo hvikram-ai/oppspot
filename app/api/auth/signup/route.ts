@@ -1,12 +1,34 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import type { Database } from '@/types/database'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { userId, email, fullName, companyName, role } = body
 
-    const supabase = await createClient()
+    const cookieStore = await cookies()
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {
+              // Server Component context
+            }
+          },
+        },
+      }
+    )
 
     // Create organization
     const orgSlug = companyName
@@ -61,19 +83,24 @@ export async function POST(request: Request) {
       )
     }
 
-    // Log signup event
-    await supabase
-      .from('events')
-      .insert({
-        user_id: userId,
-        event_type: 'signup_completed',
-        metadata: {
-          email,
-          company_name: companyName,
-          role,
-          signup_source: 'web',
-        },
-      })
+    // Log signup event (optional - only if events table exists)
+    try {
+      await supabase
+        .from('events')
+        .insert({
+          user_id: userId,
+          event_type: 'signup_completed',
+          metadata: {
+            email,
+            company_name: companyName,
+            role,
+            signup_source: 'web',
+          },
+        })
+    } catch (eventError) {
+      // Events table might not exist yet, that's okay
+      console.log('Event logging skipped:', eventError)
+    }
 
     // Schedule welcome email (in production, use a queue service)
     // For now, we'll just log it
