@@ -30,7 +30,8 @@ export default async function DashboardPage() {
     .from('profiles')
     .select('onboarding_completed, org_id')
     .eq('id', user.id)
-    .single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .single() as any
 
   // Check organization subscription tier
   let isPremium = false
@@ -39,7 +40,8 @@ export default async function DashboardPage() {
       .from('organizations')
       .select('subscription_tier')
       .eq('id', profile.org_id)
-      .single()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .single() as any
     
     isPremium = org?.subscription_tier === 'premium' || org?.subscription_tier === 'enterprise'
   }
