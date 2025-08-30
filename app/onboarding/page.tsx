@@ -135,7 +135,8 @@ export default function OnboardingPage() {
             onboarding_completed: true,
             onboarding_date: new Date().toISOString(),
           },
-        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
         .eq('id', user.id)
 
       if (profileError) throw profileError
@@ -155,7 +156,8 @@ export default function OnboardingPage() {
               industry: formData.industry,
               company_size: formData.companySize,
             },
-          })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
           .eq('id', profile.org_id)
       }
 
