@@ -127,18 +127,17 @@ export default function OnboardingPage() {
       if (!user) throw new Error('Not authenticated')
 
       // Update profile with onboarding data
-      const { error: profileError } = await supabase
-        .from('profiles')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: profileError } = await (supabase
+        .from('profiles') as any)
         .update({
           preferences: {
             ...formData,
             onboarding_completed: true,
             onboarding_date: new Date().toISOString(),
           },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .eq('id', user.id) as any
+        })
+        .eq('id', user.id)
 
       if (profileError) throw profileError
 
@@ -150,17 +149,16 @@ export default function OnboardingPage() {
         .single()
 
       if (profile?.org_id) {
-        await supabase
-          .from('organizations')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase
+          .from('organizations') as any)
           .update({
             settings: {
               industry: formData.industry,
               company_size: formData.companySize,
             },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .eq('id', profile.org_id) as any
+          })
+          .eq('id', profile.org_id)
       }
 
       toast.success('Welcome aboard! Let&apos;s start discovering opportunities.')
