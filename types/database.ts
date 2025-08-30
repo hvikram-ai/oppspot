@@ -16,6 +16,9 @@ export interface Database {
           slug: string
           settings: Json
           subscription_tier: string
+          onboarding_step: number | null
+          industry: string | null
+          company_size: string | null
           created_at: string
           updated_at: string
         }
@@ -25,6 +28,9 @@ export interface Database {
           slug: string
           settings?: Json
           subscription_tier?: string
+          onboarding_step?: number | null
+          industry?: string | null
+          company_size?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -34,6 +40,9 @@ export interface Database {
           slug?: string
           settings?: Json
           subscription_tier?: string
+          onboarding_step?: number | null
+          industry?: string | null
+          company_size?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -48,6 +57,9 @@ export interface Database {
           preferences: Json
           streak_count: number
           last_active: string | null
+          trial_ends_at: string | null
+          onboarding_completed: boolean
+          email_verified_at: string | null
           created_at: string
           updated_at: string
         }
@@ -60,6 +72,9 @@ export interface Database {
           preferences?: Json
           streak_count?: number
           last_active?: string | null
+          trial_ends_at?: string | null
+          onboarding_completed?: boolean
+          email_verified_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -72,6 +87,9 @@ export interface Database {
           preferences?: Json
           streak_count?: number
           last_active?: string | null
+          trial_ends_at?: string | null
+          onboarding_completed?: boolean
+          email_verified_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -200,6 +218,29 @@ export interface Database {
           collaborators?: string[]
           created_at?: string
           updated_at?: string
+        }
+      }
+      events: {
+        Row: {
+          id: string
+          user_id: string
+          event_type: string
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_type: string
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_type?: string
+          metadata?: Json
+          created_at?: string
         }
       }
     }
