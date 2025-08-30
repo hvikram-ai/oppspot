@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       .select()
       .single()
 
-    if (orgError) {
+    if (orgError || !org) {
       console.error('Error creating organization:', orgError)
       return NextResponse.json(
         { error: 'Failed to create organization' },
