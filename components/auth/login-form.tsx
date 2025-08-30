@@ -39,25 +39,8 @@ export function LoginForm() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-
-    if (error) {
-      toast.error(error.message)
-    } else {
-      toast.success('Check your email to confirm your account!')
-    }
-    setLoading(false)
+    // Redirect to dedicated signup page for better experience
+    router.push('/signup')
   }
 
   const handleGoogleSignIn = async () => {

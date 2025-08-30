@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/navbar'
+import { EmailVerificationBanner } from '@/components/ui/email-verification-banner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
@@ -65,6 +66,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <Navbar />
+      <EmailVerificationBanner />
       
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
