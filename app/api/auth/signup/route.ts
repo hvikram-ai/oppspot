@@ -37,7 +37,6 @@ export async function POST(request: Request) {
       .replace(/^-|-$/g, '')
       + '-' + Math.random().toString(36).substring(2, 7)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .insert([{
@@ -48,8 +47,10 @@ export async function POST(request: Request) {
           company_size: null,
         },
         subscription_tier: 'trial',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }] as any)
       .select()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .single() as any
 
     if (orgError || !org) {
@@ -61,7 +62,6 @@ export async function POST(request: Request) {
     }
 
     // Update user profile
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert([{
@@ -75,7 +75,9 @@ export async function POST(request: Request) {
         },
         streak_count: 0,
         last_active: new Date().toISOString(),
-      }] as any) as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }] as any) as // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      any
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
