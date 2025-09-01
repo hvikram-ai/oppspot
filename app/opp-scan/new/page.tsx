@@ -53,7 +53,7 @@ interface ScanConfig {
 function NewOppScanPageContent() {
   const router = useRouter()
   const supabase = createClient()
-  const { isDemoMode, demoData } = useDemoMode()
+  const { isDemoMode, demoData, addDemoScan } = useDemoMode()
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -176,9 +176,23 @@ function NewOppScanPageContent() {
     setLoading(true)
     try {
       if (isDemoMode) {
-        // In demo mode, simulate the scan creation and redirect
+        // In demo mode, create and persist the actual scan
         await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
-        toast.success('Demo Opp Scan configured successfully!')
+        
+        const newScan = addDemoScan({
+          name: scanConfig.name,
+          description: scanConfig.description,
+          status: 'configuring',
+          progress_percentage: 0,
+          targets_identified: 0,
+          targets_analyzed: 0,
+          selected_industries: scanConfig.selectedIndustries,
+          selected_regions: scanConfig.selectedRegions,
+          current_step: 'industry_selection',
+          started_at: new Date().toISOString()
+        })
+        
+        toast.success(`Demo Opp Scan "${scanConfig.name}" created successfully!`)
         router.push('/opp-scan')
         return
       }
