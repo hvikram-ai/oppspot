@@ -1,5 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+
+// Force dynamic rendering for personalized dashboard
+export const dynamic = 'force-dynamic'
 import { Navbar } from '@/components/layout/navbar'
 import { EmailVerificationBanner } from '@/components/ui/email-verification-banner'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'

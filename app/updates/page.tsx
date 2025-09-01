@@ -1,6 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+
+// Force dynamic rendering for real-time updates
+export const dynamic = 'force-dynamic'
 import { useSearchParams } from 'next/navigation'
 import { UpdateCard } from '@/components/updates/update-card'
 import { Button } from '@/components/ui/button'
@@ -54,7 +57,7 @@ interface BusinessUpdate {
   is_following?: boolean
 }
 
-export default function UpdatesPage() {
+function UpdatesPageContent() {
   const searchParams = useSearchParams()
   const [updates, setUpdates] = useState<BusinessUpdate[]>([])
   const [loading, setLoading] = useState(true)
@@ -377,5 +380,22 @@ export default function UpdatesPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function UpdatesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading updates...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <UpdatesPageContent />
+    </Suspense>
   )
 }

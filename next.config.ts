@@ -11,8 +11,8 @@ const nextConfig: NextConfig = {
     // while technical debt is being addressed
     ignoreBuildErrors: true,
   },
-  // Temporarily disable static optimization to fix build issues
-  output: 'standalone',
+  // Re-enabled static optimization with Suspense boundaries now in place
+  // output: 'standalone', // Removed to allow static generation
   // Force rebuild timestamp
   env: {
     BUILD_TIME: new Date().toISOString(),
