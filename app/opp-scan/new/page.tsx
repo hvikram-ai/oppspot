@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useDemoMode } from '@/lib/demo/demo-context'
 import { Navbar } from '@/components/layout/navbar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -52,6 +53,7 @@ interface ScanConfig {
 function NewOppScanPageContent() {
   const router = useRouter()
   const supabase = createClient()
+  const { isDemoMode, demoData } = useDemoMode()
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -109,6 +111,12 @@ function NewOppScanPageContent() {
 
   useEffect(() => {
     const getUser = async () => {
+      if (isDemoMode) {
+        // Use demo user for demo mode
+        setUser(demoData.user)
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -117,7 +125,7 @@ function NewOppScanPageContent() {
       setUser(user)
     }
     getUser()
-  }, [])
+  }, [isDemoMode, demoData.user])
 
   const currentStep = steps[currentStepIndex]
   const isFirstStep = currentStepIndex === 0
@@ -167,6 +175,14 @@ function NewOppScanPageContent() {
 
     setLoading(true)
     try {
+      if (isDemoMode) {
+        // In demo mode, simulate the scan creation and redirect
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
+        toast.success('Demo Opp Scan configured successfully!')
+        router.push('/opp-scan')
+        return
+      }
+
       // Get user's organization
       const { data: profile } = await supabase
         .from('profiles')

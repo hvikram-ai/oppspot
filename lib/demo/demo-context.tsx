@@ -55,7 +55,11 @@ const DEMO_ALLOWED_ACTIONS = [
   'navigate',
   'toggle',
   'expand',
-  'collapse'
+  'collapse',
+  'scan',
+  'opp_scan',
+  'configure',
+  'analyze'
 ]
 
 // Actions that require full access

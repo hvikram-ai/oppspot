@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useDemoMode } from '@/lib/demo/demo-context'
 import { Navbar } from '@/components/layout/navbar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -46,12 +47,21 @@ interface AcquisitionScan {
 function OppScanPageContent() {
   const router = useRouter()
   const supabase = createClient()
+  const { isDemoMode, demoData } = useDemoMode()
   const [scans, setScans] = useState<AcquisitionScan[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     const getUser = async () => {
+      if (isDemoMode) {
+        // Use demo user and demo scans
+        setUser(demoData.user)
+        setScans(generateDemoScans())
+        setLoading(false)
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -61,7 +71,7 @@ function OppScanPageContent() {
       await loadScans(user.id)
     }
     getUser()
-  }, [])
+  }, [isDemoMode, demoData.user])
 
   const loadScans = async (userId: string) => {
     try {
@@ -135,6 +145,69 @@ function OppScanPageContent() {
         </div>
       </div>
     )
+  }
+
+  // Generate demo scans for demo mode
+  const generateDemoScans = (): AcquisitionScan[] => {
+    return [
+      {
+        id: 'demo-scan-1',
+        name: 'UK FinTech Acquisition Scan',
+        description: 'Comprehensive scan for financial technology acquisitions in the UK market',
+        status: 'completed',
+        progress_percentage: 100,
+        targets_identified: 47,
+        targets_analyzed: 47,
+        created_at: '2024-08-25T10:30:00Z',
+        updated_at: '2024-08-25T14:45:00Z',
+        started_at: '2024-08-25T10:35:00Z',
+        completed_at: '2024-08-25T14:45:00Z',
+        current_step: 'completed',
+        selected_industries: [
+          { key: 'technology:fintech', industry: 'Technology', subcategory: 'FinTech' }
+        ],
+        selected_regions: [
+          { id: 'london', name: 'Greater London', country: 'England' }
+        ]
+      },
+      {
+        id: 'demo-scan-2',
+        name: 'Healthcare Tech Ireland',
+        description: 'Health technology companies across Ireland for strategic acquisition',
+        status: 'scanning',
+        progress_percentage: 65,
+        targets_identified: 23,
+        targets_analyzed: 15,
+        created_at: '2024-08-30T09:15:00Z',
+        updated_at: '2024-08-30T16:20:00Z',
+        started_at: '2024-08-30T09:20:00Z',
+        current_step: 'financial_analysis',
+        selected_industries: [
+          { key: 'healthcare:health-tech', industry: 'Healthcare', subcategory: 'Health Technology' }
+        ],
+        selected_regions: [
+          { id: 'dublin', name: 'Dublin', country: 'Ireland' }
+        ]
+      },
+      {
+        id: 'demo-scan-3',
+        name: 'Manufacturing Consolidation',
+        description: 'Small-medium manufacturing companies for consolidation opportunities',
+        status: 'configuring',
+        progress_percentage: 0,
+        targets_identified: 0,
+        targets_analyzed: 0,
+        created_at: '2024-09-01T08:00:00Z',
+        updated_at: '2024-09-01T08:00:00Z',
+        current_step: 'industry_selection',
+        selected_industries: [
+          { key: 'manufacturing', industry: 'Manufacturing' }
+        ],
+        selected_regions: [
+          { id: 'birmingham', name: 'Birmingham & West Midlands', country: 'England' }
+        ]
+      }
+    ]
   }
 
   return (
