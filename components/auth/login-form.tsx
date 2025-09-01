@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useDemoMode } from '@/lib/demo/demo-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,6 +19,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const { enableDemoMode } = useDemoMode()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,6 +59,27 @@ export function LoginForm() {
       toast.error(error.message)
     }
     setLoading(false)
+  }
+
+  const handleDemoLogin = async () => {
+    setLoading(true)
+
+    try {
+      // Enable demo mode (this will show demo data and the demo banner)
+      enableDemoMode()
+      
+      toast.success('Welcome to the oppSpot demo! 🚀', {
+        description: 'You are now exploring the app with sample data. No registration required!',
+        duration: 5000,
+      })
+      
+      // Navigate to dashboard in demo mode
+      router.push('/dashboard?demo=true')
+    } catch (error) {
+      toast.error('Failed to start demo mode')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -194,6 +217,20 @@ export function LoginForm() {
             </svg>
             Continue with Google
           </Button>
+          <Button
+            variant="secondary"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+            onClick={handleDemoLogin}
+            disabled={loading}
+          >
+            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {loading ? 'Logging in...' : 'Try Demo (No Registration)'}
+          </Button>
+          <p className="text-xs text-center text-muted-foreground px-4">
+            Demo mode lets you explore all features without creating an account
+          </p>
         </div>
       </CardFooter>
     </Card>

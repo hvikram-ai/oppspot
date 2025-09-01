@@ -191,3 +191,34 @@ Core tables include:
 - Competitive analysis tools
 
 This is a production SaaS application with real users - maintain high code quality and test thoroughly before making changes.
+
+## Testing & Demo Access
+
+### Demo Mode (Recommended for Testing)
+**One-Click Demo Access:**
+- Visit `/login` page 
+- Click "Try Demo (No Registration)" button
+- Instantly access full application with sample data
+- Demo banner will appear indicating test mode
+- No authentication required
+
+### Manual Test Credentials (Alternative)
+If you prefer manual login testing:
+```
+Email: demo@oppspot.com
+Password: Demo123456!
+```
+- Creates actual test user in database
+- Use command: `npm run demo-login` (CLI method)
+- Or use credentials manually in login form
+
+### Demo Features
+- ✅ Full application access with sample business data
+- ✅ Interactive dashboard with metrics and insights  
+- ✅ Search functionality with demo results
+- ✅ Map visualization with sample locations
+- ✅ Business detail views and analytics
+- ✅ Visual demo mode indicators
+- ✅ Safe testing environment (no real data affected)
+
+**Note**: Demo mode uses static sample data and disables certain destructive actions to protect the testing environment.
