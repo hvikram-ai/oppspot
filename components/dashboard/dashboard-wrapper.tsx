@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { Navbar } from '@/components/layout/navbar'
 import { EmailVerificationBanner } from '@/components/ui/email-verification-banner'
-import { DemoBanner } from '@/components/demo/demo-banner'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { StatsOverview } from '@/components/dashboard/stats-overview'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
@@ -92,7 +91,6 @@ export function DashboardWrapper() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DemoBanner />
       <Navbar />
       <EmailVerificationBanner />
       <DashboardHeader user={user} profile={profile} />
