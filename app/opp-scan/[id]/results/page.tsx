@@ -273,7 +273,7 @@ function ScanResultsPageContent() {
                     </div>
                     <div className="text-center p-4 bg-yellow-50 rounded-lg">
                       <div className="text-2xl font-bold text-yellow-600">{scanResults.summary.lowQualityTargets}</div>
-                      <div className="text-sm text-muted-foreground">Low Quality (<60)</div>
+                      <div className="text-sm text-muted-foreground">Low Quality (&lt;60)</div>
                     </div>
                     <div className="text-center p-4 bg-purple-50 rounded-lg">
                       <div className="text-2xl font-bold text-purple-600">{formatCurrency(scanResults.summary.totalEstimatedValue)}</div>
