@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "vercel-build": "next build --turbopack",
+    "vercel-build": "next build",
     "postinstall": "echo 'Dependencies installed successfully'",
     "create-account": "tsx scripts/create-premium-account.ts",
     "demo-login": "tsx scripts/demo-login.ts",

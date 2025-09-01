@@ -40,6 +40,30 @@ npm run demo-login            # Demo login script
 
 The `.npmrc` file is configured with `legacy-peer-deps=true` to handle this automatically in deployment environments like Vercel.
 
+## Build Configuration & Technical Debt
+
+**Current Build Status**: The project has temporary configuration changes to enable deployment while technical debt is being addressed.
+
+### Temporary Build Settings (next.config.ts):
+- `eslint.ignoreDuringBuilds: true` - ESLint errors ignored during builds
+- `typescript.ignoreBuildErrors: true` - TypeScript errors ignored during builds  
+- `output: 'standalone'` - Disables static optimization
+- Standard webpack build (Turbopack temporarily disabled)
+
+### Known Technical Debt:
+1. **TypeScript Issues**: ~100+ `@typescript-eslint/no-explicit-any` errors across codebase
+2. **React Issues**: Multiple `react/no-unescaped-entities` errors in JSX  
+3. **Hook Dependencies**: Missing dependencies in useEffect arrays
+4. **Unused Variables**: Various unused imports and variables
+5. **Next.js 15 Compatibility**: Some route handlers need async params updates
+
+### Priority Technical Debt Cleanup:
+1. **High Priority**: Fix async await syntax errors (blocking builds)
+2. **Medium Priority**: Replace `any` types with proper TypeScript interfaces
+3. **Low Priority**: Clean up unused variables and fix React warnings
+
+**Note**: These configuration changes prioritize deployment stability while maintaining code functionality. Re-enable strict checking after systematic cleanup.
+
 ## Architecture Overview
 
 ### Next.js App Router Structure

@@ -4,10 +4,11 @@ import { demoBusinesses } from '@/lib/demo/demo-data'
 // GET: Fetch single demo business
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const business = demoBusinesses.find(b => b.id === params.id)
+    const { id } = await params
+    const business = demoBusinesses.find(b => b.id === id)
     
     if (!business) {
       return NextResponse.json(

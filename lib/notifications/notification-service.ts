@@ -269,6 +269,7 @@ export class NotificationService {
 
   // Queue notification for later delivery
   private async queueNotification(data: NotificationData, scheduledFor: Date): Promise<string> {
+    const userPreferences = await this.getUserPreferences(data.userId)
     const { data: queued, error } = await this.supabase
       .from('notification_queue')
       .insert({
@@ -277,7 +278,7 @@ export class NotificationService {
         notification_data: data,
         scheduled_for: scheduledFor.toISOString(),
         channels: ['in_app', 'email', 'push'].filter(channel => 
-          this.shouldSendChannel(channel, data.type, await this.getUserPreferences(data.userId))
+          this.shouldSendChannel(channel, data.type, userPreferences)
         )
       })
       .select()
