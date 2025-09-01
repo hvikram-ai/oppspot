@@ -10,7 +10,8 @@ import {
   Users,
   Settings,
   Download,
-  BarChart3
+  BarChart3,
+  Target
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -27,6 +28,14 @@ export function QuickActions() {
       variant: 'default' as const
     },
     {
+      title: 'Opp Scan',
+      description: 'Acquisition intelligence',
+      icon: Target,
+      onClick: () => router.push('/opp-scan'),
+      variant: 'default' as const,
+      premium: true
+    },
+    {
       title: 'View Map',
       description: 'Geographic view',
       icon: Map,
@@ -38,13 +47,6 @@ export function QuickActions() {
       description: 'Organize leads',
       icon: FilePlus,
       onClick: () => router.push('/lists/new'),
-      variant: 'secondary' as const
-    },
-    {
-      title: 'Import Data',
-      description: 'Bulk upload',
-      icon: Upload,
-      onClick: () => router.push('/import'),
       variant: 'secondary' as const
     }
   ]
@@ -63,13 +65,22 @@ export function QuickActions() {
               <Button
                 key={action.title}
                 variant={action.variant}
-                className="h-auto flex-col py-4 gap-2"
+                className={`h-auto flex-col py-4 gap-2 ${
+                  action.premium 
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0' 
+                    : ''
+                }`}
                 onClick={action.onClick}
               >
                 <Icon className="h-5 w-5" />
                 <div className="text-center">
                   <div className="font-semibold">{action.title}</div>
-                  <div className="text-xs opacity-80">{action.description}</div>
+                  <div className={`text-xs ${action.premium ? 'opacity-90' : 'opacity-80'}`}>
+                    {action.description}
+                  </div>
+                  {action.premium && (
+                    <div className="text-xs opacity-75 mt-1">Premium</div>
+                  )}
                 </div>
               </Button>
             )
