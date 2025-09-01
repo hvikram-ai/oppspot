@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { Database } from '@/lib/supabase/database.types'
 
-interface SearchFilters {
-  categories?: string[]
-  location?: string
-  radius?: number
-  minRating?: number
-  verified?: boolean
-  sortBy?: string
-  userLat?: number
-  userLng?: number
-}
+type Business = Database['public']['Tables']['businesses']['Row']
 
 export async function GET(request: Request) {
   try {
@@ -42,21 +34,57 @@ export async function GET(request: Request) {
       )
     }
 
-    // Use the advanced search RPC function for better performance
-    const { data: searchResults, error } = await supabase
-      .rpc('search_businesses', {
-        search_query: query || null,
-        filter_categories: categories.length > 0 ? categories : null,
-        filter_location: location || null,
-        filter_min_rating: minRating,
-        filter_verified: verified || null,
-        user_lat: userLat,
-        user_lng: userLng,
-        radius_miles: radius,
-        sort_by: sortBy,
-        page_limit: limit,
-        page_offset: (page - 1) * limit
-      })
+    // Build the query
+    let businessQuery = supabase.from('businesses').select('*', { count: 'exact' })
+
+    // Apply search query
+    if (query) {
+      businessQuery = businessQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+    }
+
+    // Apply category filter
+    if (categories.length > 0) {
+      businessQuery = businessQuery.contains('categories', categories)
+    }
+
+    // Apply location filter
+    if (location) {
+      // Search in the address JSON field
+      businessQuery = businessQuery.or(`address->formatted.ilike.%${location}%,address->vicinity.ilike.%${location}%`)
+    }
+
+    // Apply rating filter
+    if (minRating) {
+      businessQuery = businessQuery.gte('rating', minRating)
+    }
+
+    // Apply verified filter
+    if (verified) {
+      businessQuery = businessQuery.eq('verified', true)
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'rating':
+        businessQuery = businessQuery.order('rating', { ascending: false, nullsFirst: false })
+        break
+      case 'name':
+        businessQuery = businessQuery.order('name', { ascending: true })
+        break
+      case 'newest':
+        businessQuery = businessQuery.order('created_at', { ascending: false })
+        break
+      default:
+        // Default sort by creation date for now
+        businessQuery = businessQuery.order('created_at', { ascending: false })
+    }
+
+    // Apply pagination
+    const startRange = (page - 1) * limit
+    const endRange = startRange + limit - 1
+    businessQuery = businessQuery.range(startRange, endRange)
+
+    const { data: searchResults, error, count } = await businessQuery
 
     if (error) {
       console.error('Database query error:', error)
@@ -66,17 +94,53 @@ export async function GET(request: Request) {
       )
     }
 
-    // Get total count from the first result (if any)
-    const totalCount = searchResults && searchResults.length > 0 
-      ? searchResults[0].total_count 
-      : 0
+    // Calculate distance if user location is provided
+    const resultsWithDistance = searchResults?.map((business: Business) => {
+      let distance = null
+      if (userLat && userLng && business.latitude && business.longitude) {
+        // Calculate distance using Haversine formula
+        const R = 6371 // Earth's radius in kilometers
+        const dLat = (business.latitude - userLat) * Math.PI / 180
+        const dLon = (business.longitude - userLng) * Math.PI / 180
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(userLat * Math.PI / 180) * Math.cos(business.latitude * Math.PI / 180) *
+          Math.sin(dLon/2) * Math.sin(dLon/2)
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+        distance = R * c // Distance in kilometers
+      }
+
+      return {
+        ...business,
+        distance_km: distance
+      }
+    }) || []
+
+    // Filter by radius if specified and location is provided
+    let filteredResults = resultsWithDistance
+    if (radius && userLat && userLng) {
+      filteredResults = resultsWithDistance.filter(
+        business => business.distance_km !== null && business.distance_km <= radius
+      )
+    }
+
+    // Sort by distance if user location is provided and sort is relevance
+    if (sortBy === 'relevance' && userLat && userLng) {
+      filteredResults.sort((a, b) => {
+        if (a.distance_km === null) return 1
+        if (b.distance_km === null) return -1
+        return a.distance_km - b.distance_km
+      })
+    }
 
     // Format the results
-    const formattedResults = (searchResults || []).map(business => ({
+    const formattedResults = filteredResults.map(business => ({
       id: business.id,
       name: business.name,
       description: business.description,
       address: business.address,
+      latitude: business.latitude,
+      longitude: business.longitude,
       phone: Array.isArray(business.phone_numbers) 
         ? business.phone_numbers[0] 
         : business.phone_numbers,
@@ -87,8 +151,9 @@ export async function GET(request: Request) {
       categories: business.categories || [],
       rating: business.rating,
       verified: business.verified || false,
-      distance: business.distance_miles,
-      relevance_score: business.relevance_score || 0.9
+      distance: business.distance_km,
+      google_place_id: business.google_place_id,
+      metadata: business.metadata
     }))
 
     // Log search for analytics
@@ -102,147 +167,26 @@ export async function GET(request: Request) {
           location,
           radius,
           minRating,
-          verified,
-          sortBy
+          verified
         },
-        results_count: totalCount || 0
-      })
+        results_count: formattedResults.length
+      } as Database['public']['Tables']['searches']['Insert'])
+
+    const totalPages = count ? Math.ceil(count / limit) : 0
 
     return NextResponse.json({
       results: formattedResults,
-      total: totalCount || 0,
+      totalCount: count || 0,
       page,
-      limit,
-      totalPages: Math.ceil((totalCount || 0) / limit)
+      totalPages,
+      hasMore: page < totalPages
     })
 
   } catch (error) {
-    console.error('Search API error:', error)
+    console.error('Search error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Search failed' },
       { status: 500 }
     )
   }
-}
-
-// POST endpoint for AI-powered search
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const { query, useAI = false } = body
-
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    if (useAI) {
-      // Parse natural language query into structured search
-      // This would integrate with OpenAI/Anthropic to understand intent
-      
-      // For now, extract basic patterns
-      const filters: SearchFilters = {}
-      
-      // Extract location mentions
-      const locationMatch = query.match(/in\s+([A-Za-z\s]+?)(?:\s|$)/i)
-      if (locationMatch) {
-        filters.location = locationMatch[1].trim()
-      }
-      
-      // Extract category mentions
-      const categoryKeywords = {
-        'restaurant': ['Food & Beverage', 'Restaurant'],
-        'tech': ['Technology'],
-        'software': ['Technology', 'Software'],
-        'medical': ['Healthcare', 'Medical'],
-        'finance': ['Finance'],
-        'construction': ['Construction'],
-        'education': ['Education']
-      }
-      
-      for (const [keyword, cats] of Object.entries(categoryKeywords)) {
-        if (query.toLowerCase().includes(keyword)) {
-          filters.categories = cats
-          break
-        }
-      }
-      
-      // Extract rating requirements
-      if (query.includes('highly rated') || query.includes('best')) {
-        filters.minRating = 4.5
-      }
-      
-      // Extract verified requirement
-      if (query.includes('verified') || query.includes('trusted')) {
-        filters.verified = true
-      }
-      
-      // Build URL with extracted filters
-      const searchParams = new URLSearchParams({
-        q: query,
-        ...(filters.location && { location: filters.location }),
-        ...(filters.categories && { categories: filters.categories.join(',') }),
-        ...(filters.minRating && { minRating: filters.minRating.toString() }),
-        ...(filters.verified && { verified: 'true' })
-      })
-      
-      // Use the GET endpoint with extracted parameters
-      const url = new URL(request.url)
-      url.search = searchParams.toString()
-      const modifiedRequest = new Request(url, {
-        method: 'GET',
-        headers: request.headers
-      })
-      
-      const response = await GET(modifiedRequest)
-      const data = await response.json()
-      
-      return NextResponse.json({
-        ...data,
-        aiInsights: {
-          interpretation: `Searching for: ${query}`,
-          extractedFilters: filters,
-          suggestions: [
-            'Try adding more specific location',
-            'Filter by business category',
-            'Sort by rating or distance'
-          ]
-        }
-      })
-    }
-
-    // Fall back to regular search
-    return GET(request)
-
-  } catch (error) {
-    console.error('AI Search API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
-
-// Helper function to calculate distance between two points
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 3959 // Earth radius in miles
-  const dLat = toRad(lat2 - lat1)
-  const dLng = toRad(lng2 - lng1)
-  
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2)
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
-}
-
-function toRad(degrees: number): number {
-  return degrees * (Math.PI / 180)
 }

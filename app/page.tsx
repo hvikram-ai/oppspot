@@ -226,15 +226,18 @@ export default function LandingPage() {
             Join thousands of companies using oppSpot to discover new opportunities
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
+            <Link href="/demo">
               <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600">
-                Get Started Free
-                <Star className="ml-2 h-4 w-4" />
+                Try Live Demo
+                <Sparkles className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline">
-              Book a Demo
-            </Button>
+            <Link href="/register">
+              <Button size="lg" variant="outline">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </motion.div>
       </section>

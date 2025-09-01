@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { NotificationProvider } from "@/lib/notifications/realtime-notifications";
+import { DemoModeProvider } from "@/lib/demo/demo-context";
+import { DemoBanner } from "@/components/demo/demo-banner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,7 +40,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        {children}
+        <DemoModeProvider>
+          <NotificationProvider>
+            <DemoBanner />
+            {children}
+          </NotificationProvider>
+        </DemoModeProvider>
         <Toaster position="bottom-right" richColors />
       </body>
     </html>

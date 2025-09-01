@@ -70,7 +70,7 @@ export function SearchBar({
           <div className="absolute -top-10 left-0 flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
               <Sparkles className="mr-1 h-3 w-3" />
-              AI Mode: Describe what you're looking for in natural language
+              AI Mode: Describe what you&apos;re looking for in natural language
             </Badge>
           </div>
         )}

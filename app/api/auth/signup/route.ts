@@ -109,14 +109,30 @@ export async function POST(request: Request) {
       console.log('Event logging skipped:', eventError)
     }
 
-    // Schedule welcome email (in production, use a queue service)
-    // For now, we'll just log it
-    console.log('Welcome email scheduled for:', email)
-    
-    // Schedule verification reminder for 5 minutes later
-    setTimeout(() => {
-      console.log('Verification reminder scheduled for:', email)
-    }, 5 * 60 * 1000)
+    // Send welcome email
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const verificationUrl = `${appUrl}/auth/verify?email=${encodeURIComponent(email)}`
+      
+      await fetch(`${appUrl}/api/email/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'welcome',
+          to: email,
+          data: {
+            firstName: fullName.split(' ')[0],
+            verificationUrl,
+          },
+        }),
+      })
+      console.log('Welcome email sent to:', email)
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError)
+      // Don't fail the signup if email fails
+    }
 
     return NextResponse.json({
       success: true,

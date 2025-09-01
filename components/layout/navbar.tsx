@@ -25,9 +25,11 @@ import {
   Sparkles,
   LogOut,
   Settings,
-  User as UserIcon
+  User as UserIcon,
+  Newspaper
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -51,14 +53,20 @@ export function Navbar() {
   }, [supabase])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    if (isDemoMode) {
+      disableDemoMode()
+      router.push('/login')
+    } else {
+      await supabase.auth.signOut()
+      router.push('/')
+      router.refresh()
+    }
   }
 
   const navItems = [
     { href: '/search', label: 'Search', icon: Search },
     { href: '/map', label: 'Map', icon: Map },
+    { href: '/updates', label: 'Updates', icon: Newspaper },
     { href: '/lists', label: 'Lists', icon: Building2 },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   ]
@@ -96,6 +104,7 @@ export function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
