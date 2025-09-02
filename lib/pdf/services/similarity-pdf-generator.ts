@@ -97,13 +97,26 @@ export class SimilarityPDFGenerator {
       // 1. Fetch analysis data from database
       const analysisData = await this.fetchAnalysisData(analysisId, userId)
       
-      // 2. Create export record in database
-      const exportRecord = await this.createExportRecord({
-        analysisId,
-        userId,
-        exportType,
-        targetCompany: analysisData.target_company_name
-      })
+      // 2. Create export record in database (skip for demo mode)
+      let exportRecord = null
+      if (!analysisId.startsWith('demo-') && analysisId !== 'demo') {
+        exportRecord = await this.createExportRecord({
+          analysisId,
+          userId,
+          exportType,
+          targetCompany: analysisData.target_company_name
+        })
+      } else {
+        // Demo mode fake export record
+        exportRecord = {
+          id: 'demo-export-' + Date.now(),
+          similarity_analysis_id: analysisId,
+          user_id: userId,
+          export_type: exportType,
+          export_format: 'pdf',
+          generation_status: 'generating'
+        }
+      }
 
       // 3. Transform data for PDF template
       const templateData = this.transformDataForTemplate(analysisData, {
@@ -120,11 +133,13 @@ export class SimilarityPDFGenerator {
       // 5. Generate filename
       const filename = this.generateFilename(analysisData.target_company_name, analysisId)
 
-      // 6. Save PDF file (optional - for persistent storage)
-      await this.savePDFFile(pdfBuffer, filename, exportRecord.id)
-
-      // 7. Update export record status
-      await this.updateExportRecord(exportRecord.id, 'completed', filename)
+      // 6. Save PDF file (optional - for persistent storage) - skip for demo
+      if (!analysisId.startsWith('demo-') && analysisId !== 'demo') {
+        await this.savePDFFile(pdfBuffer, filename, exportRecord.id)
+        
+        // 7. Update export record status
+        await this.updateExportRecord(exportRecord.id, 'completed', filename)
+      }
 
       return {
         buffer: pdfBuffer,
@@ -139,6 +154,11 @@ export class SimilarityPDFGenerator {
   }
 
   private async fetchAnalysisData(analysisId: string, userId: string): Promise<SimilarityAnalysis> {
+    // Handle demo mode
+    if (analysisId.startsWith('demo-') || analysisId === 'demo') {
+      return this.generateDemoAnalysisData(analysisId)
+    }
+
     const supabase = await this.getSupabase()
     const { data: analysis, error } = await supabase
       .from('similarity_analyses')
@@ -162,6 +182,154 @@ export class SimilarityPDFGenerator {
     }
 
     return analysis
+  }
+
+  private generateDemoAnalysisData(analysisId: string): SimilarityAnalysis {
+    // Generate demo similarity analysis data for PDF testing
+    const demoMatches: SimilarityMatch[] = [
+      {
+        id: 'demo-match-1',
+        company_name: 'TechFlow Solutions',
+        company_data: {
+          country: 'United States',
+          industry: 'Enterprise Software',
+          revenue: '$25M',
+          employees: '150',
+          description: 'Leading provider of workflow automation and business process management solutions for enterprise clients.'
+        },
+        overall_score: 92.5,
+        confidence: 0.88,
+        rank: 1,
+        financial_score: 89.2,
+        strategic_score: 94.1,
+        operational_score: 91.8,
+        market_score: 88.5,
+        risk_score: 85.3,
+        financial_confidence: 0.85,
+        strategic_confidence: 0.92,
+        operational_confidence: 0.87,
+        market_confidence: 0.81,
+        risk_confidence: 0.79,
+        market_position: 'Market Leader',
+        risk_factors_identified: ['Market competition intensifying', 'Talent acquisition challenges'],
+        opportunity_areas: ['AI integration potential', 'International expansion', 'Strategic partnerships'],
+        data_points_used: 127,
+        similarity_explanations: [{
+          summary: 'TechFlow Solutions represents an exceptional strategic acquisition opportunity with strong alignment in enterprise software solutions and complementary market positioning.',
+          key_reasons: [
+            'Direct competitive overlap in enterprise workflow automation',
+            'Shared customer base in mid-market and enterprise segments',
+            'Similar SaaS-based recurring revenue model with 95%+ retention'
+          ],
+          financial_rationale: 'Strong revenue trajectory with $25M ARR and sustainable 85% gross margins',
+          strategic_rationale: 'Complementary product capabilities enabling cross-selling and market expansion opportunities',
+          risk_considerations: ['Integration complexity', 'Key personnel retention'],
+          confidence_level: 'Very High',
+          data_quality_note: 'Comprehensive competitive intelligence available for enterprise software sector'
+        }]
+      },
+      {
+        id: 'demo-match-2',
+        company_name: 'CloudSync Technologies',
+        company_data: {
+          country: 'United Kingdom',
+          industry: 'Cloud Infrastructure',
+          revenue: '$18M',
+          employees: '120',
+          description: 'Specialized cloud infrastructure and data synchronization platform serving mid-market businesses.'
+        },
+        overall_score: 87.3,
+        confidence: 0.82,
+        rank: 2,
+        financial_score: 85.1,
+        strategic_score: 88.9,
+        operational_score: 89.2,
+        market_score: 84.7,
+        risk_score: 88.1,
+        financial_confidence: 0.79,
+        strategic_confidence: 0.86,
+        operational_confidence: 0.84,
+        market_confidence: 0.78,
+        risk_confidence: 0.81,
+        market_position: 'Strong Player',
+        risk_factors_identified: ['Cloud provider dependencies', 'Economic sensitivity'],
+        opportunity_areas: ['Platform integration synergies', 'Cross-market expansion'],
+        data_points_used: 98
+      },
+      {
+        id: 'demo-match-3',
+        company_name: 'DataBridge Systems',
+        company_data: {
+          country: 'Germany',
+          industry: 'Data Analytics',
+          revenue: '$12M',
+          employees: '85',
+          description: 'Advanced data analytics and business intelligence solutions for enterprise data management.'
+        },
+        overall_score: 81.7,
+        confidence: 0.76,
+        rank: 3,
+        financial_score: 79.8,
+        strategic_score: 83.2,
+        operational_score: 82.1,
+        market_score: 80.4,
+        risk_score: 82.9,
+        financial_confidence: 0.74,
+        strategic_confidence: 0.79,
+        operational_confidence: 0.77,
+        market_confidence: 0.72,
+        risk_confidence: 0.76,
+        market_position: 'Growing Company',
+        risk_factors_identified: ['GDPR compliance complexity', 'Limited market presence'],
+        opportunity_areas: ['AI enhancement potential', 'Geographic expansion'],
+        data_points_used: 89
+      }
+    ]
+
+    return {
+      id: analysisId,
+      target_company_name: 'Demo Target Company',
+      target_company_data: {
+        country: 'United States',
+        industry: 'Business Software',
+        founded: '2015',
+        employees: '200',
+        revenue: '$30M',
+        businessModel: 'B2B SaaS - Enterprise software subscriptions ($50K-250K annual contracts)',
+        targetCustomers: 'Mid-market and enterprise businesses, IT departments',
+        description: 'Demo Target Company specializes in business process automation and enterprise workflow solutions, serving mid-market and enterprise clients with comprehensive software platforms.'
+      },
+      status: 'completed',
+      total_companies_analyzed: 156,
+      average_similarity_score: 73.8,
+      top_similarity_score: 92.5,
+      executive_summary: 'Demo Target Company demonstrates strong strategic positioning in the enterprise software sector. The analysis identified 156 potential acquisition targets with varying degrees of strategic fit, operational synergies, and market positioning alignment. Key findings indicate significant opportunities in workflow automation, cloud infrastructure, and data analytics segments.',
+      key_opportunities: [
+        'Market consolidation opportunities in enterprise automation space',
+        'Cross-selling potential with complementary product portfolios',
+        'Geographic expansion into European markets through strategic acquisitions',
+        'AI and machine learning integration capabilities enhancement'
+      ],
+      risk_highlights: [
+        'Integration complexity with multiple technology stacks',
+        'Talent retention challenges in competitive market',
+        'Economic sensitivity affecting enterprise software spending',
+        'Regulatory compliance requirements across different markets'
+      ],
+      strategic_recommendations: [
+        'Focus on companies with complementary technology stacks for easier integration',
+        'Prioritize targets with strong recurring revenue models and high customer retention',
+        'Consider geographic expansion through European market leaders'
+      ],
+      analysis_configuration: {
+        weights: { financial: 30, strategic: 25, operational: 20, market: 15, risk: 10 },
+        regions: ['United States', 'United Kingdom', 'Germany'],
+        industries: ['Enterprise Software', 'Business Automation', 'Cloud Infrastructure']
+      },
+      created_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+      similar_company_matches: demoMatches
+    }
   }
 
   private async createExportRecord(params: {

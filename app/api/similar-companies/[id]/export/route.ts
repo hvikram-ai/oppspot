@@ -10,16 +10,29 @@ import { generateSimilarityAnalysisPDF } from '@/lib/pdf/services/similarity-pdf
 // POST: Generate export in specified format
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const analysisId = params.id
+    const { id: analysisId } = await params
 
-    // Check authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Check authentication (allow demo mode)
+    const isDemoMode = analysisId.startsWith('demo-') || analysisId === 'demo'
+    
+    let user = null
+    if (!isDemoMode) {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      user = authUser
+    } else {
+      // Demo mode user
+      user = { 
+        id: 'demo-user', 
+        email: 'demo@oppspot.com',
+        user_metadata: { full_name: 'Demo User' }
+      }
     }
 
     const body = await request.json()
@@ -58,32 +71,70 @@ export async function POST(
       )
     }
 
-    // Get analysis data
-    const { data: analysis, error: fetchError } = await supabase
-      .from('similarity_analyses')
-      .select(`
-        *,
-        similar_company_matches!inner(
+    // Get analysis data (handle demo mode)
+    let analysis
+    if (isDemoMode) {
+      // Create demo analysis data
+      analysis = {
+        id: analysisId,
+        target_company_name: 'Demo Target Company',
+        target_company_data: {
+          country: 'United States',
+          industry: 'Business Software',
+          description: 'Demo company for testing PDF export functionality'
+        },
+        status: 'completed',
+        total_companies_analyzed: 150,
+        average_similarity_score: 75.2,
+        top_similarity_score: 92.5,
+        executive_summary: 'Demo analysis for PDF export testing.',
+        key_opportunities: ['Demo opportunity 1', 'Demo opportunity 2'],
+        risk_highlights: ['Demo risk 1', 'Demo risk 2'],
+        strategic_recommendations: ['Demo recommendation 1', 'Demo recommendation 2'],
+        similar_company_matches: [
+          {
+            id: 'demo-1',
+            company_name: 'Demo Company 1',
+            overall_score: 92.5,
+            confidence: 0.88,
+            rank: 1,
+            financial_score: 89.2,
+            strategic_score: 94.1,
+            operational_score: 91.8,
+            market_score: 88.5,
+            risk_score: 85.3
+          }
+        ]
+      }
+    } else {
+      const { data: fetchedAnalysis, error: fetchError } = await supabase
+        .from('similarity_analyses')
+        .select(`
           *,
-          similarity_explanations(*)
+          similar_company_matches!inner(
+            *,
+            similarity_explanations(*)
+          )
+        `)
+        .eq('id', analysisId)
+        .eq('user_id', user.id)
+        .single()
+
+      if (fetchError || !fetchedAnalysis) {
+        return NextResponse.json(
+          { error: 'Analysis not found or access denied' },
+          { status: 404 }
         )
-      `)
-      .eq('id', analysisId)
-      .eq('user_id', user.id)
-      .single()
+      }
 
-    if (fetchError || !analysis) {
-      return NextResponse.json(
-        { error: 'Analysis not found or access denied' },
-        { status: 404 }
-      )
-    }
+      if (fetchedAnalysis.status !== 'completed') {
+        return NextResponse.json(
+          { error: 'Analysis must be completed before export' },
+          { status: 400 }
+        )
+      }
 
-    if (analysis.status !== 'completed') {
-      return NextResponse.json(
-        { error: 'Analysis must be completed before export' },
-        { status: 400 }
-      )
+      analysis = fetchedAnalysis
     }
 
     // Prepare export data
@@ -189,11 +240,11 @@ export async function POST(
 // GET: Check export status or download completed export
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const analysisId = params.id
+    const { id: analysisId } = await params
     const searchParams = request.nextUrl.searchParams
     const exportId = searchParams.get('exportId')
 
