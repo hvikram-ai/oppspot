@@ -14,6 +14,7 @@ import {
   ArrowLeft, 
   Download, 
   Eye, 
+  Camera,
   TrendingUp, 
   TrendingDown,
   Building2,
@@ -127,6 +128,7 @@ function SimilarCompanyDetailContent() {
   const [user, setUser] = useState<any>(null)
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
   const [exportLoading, setExportLoading] = useState(false)
+  const [pageExportLoading, setPageExportLoading] = useState(false)
   const [filterCriteria, setFilterCriteria] = useState({
     minScore: 0,
     maxScore: 100,
@@ -558,6 +560,59 @@ function SimilarCompanyDetailContent() {
     }
   }
 
+  const handleExportPageAsPDF = async () => {
+    if (!analysis || pageExportLoading) return
+
+    setPageExportLoading(true)
+    toast.loading('Capturing page as PDF...', { id: 'page-export' })
+
+    try {
+      const response = await fetch(`/api/similar-companies/${analysisId}/export-page`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          format: 'A4',
+          orientation: 'portrait',
+          includeBackground: true,
+          scale: 0.8
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to capture page as PDF')
+      }
+
+      // Direct PDF download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Get filename from Content-Disposition header
+      const contentDisposition = response.headers.get('content-disposition')
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+      const filename = filenameMatch?.[1] || `similarity-analysis-page-${analysisId.slice(0, 8)}-${new Date().toISOString().split('T')[0]}.pdf`
+      
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(link)
+      
+      toast.success('Page captured as PDF successfully!', { id: 'page-export' })
+
+    } catch (error) {
+      console.error('Page export error:', error)
+      toast.error(error.message || 'Failed to capture page as PDF', { id: 'page-export' })
+    } finally {
+      setPageExportLoading(false)
+    }
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 85) return 'text-green-600'
     if (score >= 70) return 'text-blue-600'
@@ -672,14 +727,28 @@ function SimilarCompanyDetailContent() {
                 variant="secondary" 
                 size="sm" 
                 onClick={handleExportPDF}
-                disabled={exportLoading}
+                disabled={exportLoading || pageExportLoading}
               >
                 {exportLoading ? (
                   <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Download className="h-4 w-4 mr-2" />
                 )}
-                {exportLoading ? 'Generating...' : 'Export PDF'}
+                {exportLoading ? 'Generating...' : 'Export Report'}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportPageAsPDF}
+                disabled={exportLoading || pageExportLoading}
+                title="Export this page exactly as you see it as a PDF"
+              >
+                {pageExportLoading ? (
+                  <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4 mr-2" />
+                )}
+                {pageExportLoading ? 'Capturing...' : 'Export Page'}
               </Button>
             </div>
           </div>
@@ -726,7 +795,7 @@ function SimilarCompanyDetailContent() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8" data-testid="analysis-results">
         <Tabs defaultValue="matches" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="matches" className="flex items-center gap-2">
