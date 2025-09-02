@@ -58,7 +58,7 @@ export const CompanyGrid: React.FC<CompanyGridProps> = ({
             <View style={{ flex: 1 }}>
               <Text style={pdfStyles.companyName}>{match.company_name}</Text>
               <View style={{ flexDirection: 'row', marginTop: 4 }}>
-                <Text style={pdfStyles.badge}>#{match.rank}</Text>
+                <Text style={[pdfStyles.badge, { marginRight: 8 }]}>#{match.rank}</Text>
                 <Text style={getConfidenceStyle(match.confidence)}>
                   {(match.confidence * 100).toFixed(0)}% Confidence
                 </Text>
@@ -81,10 +81,10 @@ export const CompanyGrid: React.FC<CompanyGridProps> = ({
 
           {/* Company Details */}
           <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-            <Text style={pdfStyles.footerText}>
+            <Text style={[pdfStyles.footerText, { marginRight: 15 }]}>
               📍 {match.company_data?.country || 'N/A'}
             </Text>
-            <Text style={pdfStyles.footerText}>
+            <Text style={[pdfStyles.footerText, { marginRight: 15 }]}>
               🏢 {match.company_data?.industry || 'N/A'}
             </Text>
             <Text style={pdfStyles.footerText}>

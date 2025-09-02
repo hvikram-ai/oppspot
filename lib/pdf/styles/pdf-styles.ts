@@ -7,9 +7,10 @@ export const pdfStyles = StyleSheet.create({
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
     fontSize: 10,
-    paddingTop: 35,
-    paddingBottom: 65,
-    paddingHorizontal: 35,
+    paddingTop: 40,
+    paddingBottom: 80,
+    paddingHorizontal: 40,
+    lineHeight: 1.4,
   },
   
   // Header styles
@@ -44,35 +45,35 @@ export const pdfStyles = StyleSheet.create({
   
   // Title and headings
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginTop: 20,
-    marginBottom: 10,
-    paddingBottom: 5,
+    marginTop: 25,
+    marginBottom: 12,
+    paddingBottom: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
   
   subsectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#374151',
-    marginTop: 15,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 6,
   },
   
   // Content styles
@@ -88,38 +89,42 @@ export const pdfStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
+    marginTop: 10,
   },
   
   metricCard: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
-    padding: 15,
-    marginHorizontal: 5,
-    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    marginHorizontal: 3,
+    borderRadius: 6,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   
   metricValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   
   metricLabel: {
     fontSize: 8,
-    color: '#6B7280',
+    color: '#64748B',
     textAlign: 'center',
+    lineHeight: 1.2,
   },
   
   // Company cards
   companyCard: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
+    padding: 15,
+    marginBottom: 15,
   },
   
   companyHeader: {
@@ -154,7 +159,10 @@ export const pdfStyles = StyleSheet.create({
   scoresContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
   
   scoreItem: {
@@ -164,12 +172,13 @@ export const pdfStyles = StyleSheet.create({
   
   scoreLabel: {
     fontSize: 7,
-    color: '#6B7280',
-    marginBottom: 2,
+    color: '#64748B',
+    marginBottom: 3,
+    textAlign: 'center',
   },
   
   scoreValue: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#374151',
   },
@@ -178,19 +187,19 @@ export const pdfStyles = StyleSheet.create({
   badge: {
     backgroundColor: '#EEF2FF',
     color: '#3730A3',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    fontSize: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    fontSize: 7,
     fontWeight: 'bold',
   },
   
   confidenceBadge: {
     backgroundColor: '#F0FDF4',
     color: '#15803D',
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 8,
     fontSize: 7,
   },
   
@@ -223,20 +232,21 @@ export const pdfStyles = StyleSheet.create({
   // Footer
   footer: {
     position: 'absolute',
-    bottom: 30,
-    left: 35,
-    right: 35,
+    bottom: 40,
+    left: 40,
+    right: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 10,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#E2E8F0',
   },
   
   footerText: {
     fontSize: 8,
-    color: '#6B7280',
+    color: '#64748B',
+    lineHeight: 1.2,
   },
   
   // Watermark
@@ -253,18 +263,20 @@ export const pdfStyles = StyleSheet.create({
   
   // Charts and visualizations
   chartContainer: {
-    backgroundColor: '#F9FAFB',
-    padding: 15,
+    backgroundColor: '#F8FAFC',
+    padding: 12,
     marginBottom: 15,
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   
   chartTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 10,
+    color: '#1E293B',
+    marginBottom: 8,
   },
   
   // Executive summary specific

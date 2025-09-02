@@ -30,10 +30,12 @@ export const Header: React.FC<HeaderProps> = ({
         <Text style={pdfStyles.logoText}>oppSpot</Text>
       </View>
       
-      <View>
+      <View style={{ alignItems: 'flex-end' }}>
         <Text style={pdfStyles.title}>Similarity Analysis Report</Text>
-        <Text style={pdfStyles.subtitle}>{targetCompanyName}</Text>
-        <Text style={[pdfStyles.footerText, { textAlign: 'right' }]}>
+        <Text style={[pdfStyles.subtitle, { textAlign: 'right', marginBottom: 8 }]}>
+          {targetCompanyName}
+        </Text>
+        <Text style={[pdfStyles.footerText, { textAlign: 'right', marginBottom: 2 }]}>
           Generated: {formatDate(analysisDate)}
         </Text>
         <Text style={[pdfStyles.footerText, { textAlign: 'right' }]}>

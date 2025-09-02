@@ -175,20 +175,20 @@ export const SimilarityAnalysisTemplate: React.FC<SimilarityAnalysisTemplateProp
         <Text style={pdfStyles.sectionTitle}>Target Company Profile</Text>
         <View style={pdfStyles.companyCard}>
           <Text style={pdfStyles.companyName}>{analysis.targetCompany}</Text>
-          <View style={{ flexDirection: 'row', gap: 20, marginTop: 8 }}>
-            <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', marginTop: 8 }}>
+            <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={pdfStyles.scoreLabel}>Country</Text>
               <Text style={pdfStyles.paragraph}>
                 {analysis.targetCompanyData?.country || 'N/A'}
               </Text>
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={pdfStyles.scoreLabel}>Industry</Text>
               <Text style={pdfStyles.paragraph}>
                 {analysis.targetCompanyData?.industry || 'N/A'}
               </Text>
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={pdfStyles.scoreLabel}>Employees</Text>
               <Text style={pdfStyles.paragraph}>
                 {analysis.targetCompanyData?.employees || 'N/A'}
@@ -233,15 +233,17 @@ export const SimilarityAnalysisTemplate: React.FC<SimilarityAnalysisTemplateProp
             generatedBy={metadata.generatedBy}
           />
 
-          <CompanyGrid 
-            matches={pageCompanies} 
-            maxCompanies={companiesPerPage}
-          />
+          <View style={{ marginTop: 20 }}>
+            <CompanyGrid 
+              matches={pageCompanies} 
+              maxCompanies={companiesPerPage}
+            />
+          </View>
 
           {/* Add continuation note if there are more pages */}
           {pageIndex === companyPages.length - 1 && matches.length > (pageIndex + 1) * companiesPerPage && (
-            <View style={[pdfStyles.metricCard, { marginTop: 10 }]}>
-              <Text style={pdfStyles.paragraph}>
+            <View style={[pdfStyles.metricCard, { marginTop: 20, backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}>
+              <Text style={[pdfStyles.paragraph, { color: '#92400E', textAlign: 'center' }]}>
                 📄 Analysis continues with additional companies in the complete dataset.
                 Contact your account manager for the full detailed report.
               </Text>
