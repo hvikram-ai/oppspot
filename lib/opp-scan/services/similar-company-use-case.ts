@@ -27,6 +27,7 @@ interface AnalysisRequest {
   userId: string
   orgId?: string
   configuration: SimilarityConfiguration
+  analysisId?: string
 }
 
 interface AnalysisProgress {
@@ -76,7 +77,7 @@ export class SimilarCompanyUseCase {
     progressCallback?: (progress: AnalysisProgress) => void
   ): Promise<AnalysisResult> {
     const startTime = Date.now()
-    const analysisId = this.generateAnalysisId()
+    const analysisId = request.analysisId || this.generateAnalysisId()
     let metrics: AnalysisMetrics = {
       totalProcessingTime: 0,
       apiCallsMade: 0,

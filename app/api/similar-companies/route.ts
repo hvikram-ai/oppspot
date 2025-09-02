@@ -128,17 +128,20 @@ export async function POST(request: NextRequest) {
       configuration
     }
 
+    // Generate analysis ID that will be used consistently
+    const analysisId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
     // For long-running analysis, we'll start it and return immediately
     // The client can poll for progress using the analysis ID
-    const analysisPromise = useCase.executeSimilarityAnalysis(analysisRequest)
+    const analysisPromise = useCase.executeSimilarityAnalysis({
+      ...analysisRequest,
+      analysisId // Pass the ID to ensure consistency
+    })
     
     // Start the analysis in the background
     analysisPromise.catch(error => {
       console.error('Background analysis failed:', error)
     })
-
-    // Return immediate response with analysis ID for tracking
-    const analysisId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     return NextResponse.json({
       analysisId,
@@ -231,7 +234,7 @@ export async function GET(request: NextRequest) {
         progress: analysisStatus.progress_percentage,
         currentStep: analysisStatus.current_step,
         error: analysisStatus.error_message,
-        message: this.getStatusMessage(analysisStatus.status, analysisStatus.current_step)
+        message: getStatusMessage(analysisStatus.status, analysisStatus.current_step)
       })
 
     } else {
