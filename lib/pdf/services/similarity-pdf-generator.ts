@@ -317,9 +317,11 @@ export class SimilarityPDFGenerator {
         'Regulatory compliance requirements across different markets'
       ],
       strategic_recommendations: [
-        'Focus on companies with complementary technology stacks for easier integration',
-        'Prioritize targets with strong recurring revenue models and high customer retention',
-        'Consider geographic expansion through European market leaders'
+        'Focus on companies with complementary technology stacks for easier integration and reduced development costs',
+        'Prioritize targets with strong recurring revenue models and high customer retention rates above 90%',
+        'Consider geographic expansion through European market leaders to access new customer segments',
+        'Evaluate acquisition targets with established enterprise sales teams and customer relationships',
+        'Target companies with AI/ML capabilities to enhance product differentiation'
       ],
       analysis_configuration: {
         weights: { financial: 30, strategic: 25, operational: 20, market: 15, risk: 10 },

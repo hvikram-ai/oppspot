@@ -73,40 +73,8 @@ export async function POST(
 
     // Get analysis data (handle demo mode)
     let analysis
-    if (isDemoMode) {
-      // Create demo analysis data
-      analysis = {
-        id: analysisId,
-        target_company_name: 'Demo Target Company',
-        target_company_data: {
-          country: 'United States',
-          industry: 'Business Software',
-          description: 'Demo company for testing PDF export functionality'
-        },
-        status: 'completed',
-        total_companies_analyzed: 150,
-        average_similarity_score: 75.2,
-        top_similarity_score: 92.5,
-        executive_summary: 'Demo analysis for PDF export testing.',
-        key_opportunities: ['Demo opportunity 1', 'Demo opportunity 2'],
-        risk_highlights: ['Demo risk 1', 'Demo risk 2'],
-        strategic_recommendations: ['Demo recommendation 1', 'Demo recommendation 2'],
-        similar_company_matches: [
-          {
-            id: 'demo-1',
-            company_name: 'Demo Company 1',
-            overall_score: 92.5,
-            confidence: 0.88,
-            rank: 1,
-            financial_score: 89.2,
-            strategic_score: 94.1,
-            operational_score: 91.8,
-            market_score: 88.5,
-            risk_score: 85.3
-          }
-        ]
-      }
-    } else {
+    if (!isDemoMode) {
+      // Only fetch from database for non-demo mode
       const { data: fetchedAnalysis, error: fetchError } = await supabase
         .from('similarity_analyses')
         .select(`
@@ -135,32 +103,41 @@ export async function POST(
       }
 
       analysis = fetchedAnalysis
+    } else {
+      // For demo mode, let PDF generator handle the demo data
+      // Just provide minimal structure that PDF generator expects
+      analysis = null
+    }
+
+    // For PDF exports in demo mode, pass directly to PDF generator
+    if (exportFormat === 'pdf' && isDemoMode) {
+      return await generatePDFExport(supabase, analysisId, null, user.id)
     }
 
     // Prepare export data
-    const matches = analysis.similar_company_matches || []
+    const matches = analysis?.similar_company_matches || []
     const topMatches = matches
       .sort((a: any, b: any) => b.overall_score - a.overall_score)
       .slice(0, maxMatches)
 
     const exportData = {
       analysis: {
-        id: analysis.id,
-        targetCompany: analysis.target_company_name,
-        targetCompanyData: analysis.target_company_data,
-        configuration: analysis.analysis_configuration,
+        id: analysis?.id,
+        targetCompany: analysis?.target_company_name,
+        targetCompanyData: analysis?.target_company_data,
+        configuration: analysis?.analysis_configuration,
         summary: {
-          totalCompanies: analysis.total_companies_analyzed,
-          averageScore: analysis.average_similarity_score,
-          topScore: analysis.top_similarity_score,
-          analysisDate: analysis.created_at,
-          completionTime: analysis.completed_at
+          totalCompanies: analysis?.total_companies_analyzed,
+          averageScore: analysis?.average_similarity_score,
+          topScore: analysis?.top_similarity_score,
+          analysisDate: analysis?.created_at,
+          completionTime: analysis?.completed_at
         },
         insights: {
-          executiveSummary: analysis.executive_summary,
-          keyOpportunities: analysis.key_opportunities || [],
-          riskHighlights: analysis.risk_highlights || [],
-          strategicRecommendations: analysis.strategic_recommendations || []
+          executiveSummary: analysis?.executive_summary,
+          keyOpportunities: analysis?.key_opportunities || [],
+          riskHighlights: analysis?.risk_highlights || [],
+          strategicRecommendations: analysis?.strategic_recommendations || []
         }
       },
       matches: topMatches,
