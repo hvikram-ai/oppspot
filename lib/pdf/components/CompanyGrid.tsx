@@ -57,7 +57,7 @@ export const CompanyGrid: React.FC<CompanyGridProps> = ({
           <View style={pdfStyles.companyHeader}>
             <View style={{ flex: 1 }}>
               <Text style={pdfStyles.companyName}>{match.company_name}</Text>
-              <View style={{ flexDirection: 'row', marginTop: 4, gap: 6 }}>
+              <View style={{ flexDirection: 'row', marginTop: 4 }}>
                 <Text style={pdfStyles.badge}>#{match.rank}</Text>
                 <Text style={getConfidenceStyle(match.confidence)}>
                   {(match.confidence * 100).toFixed(0)}% Confidence
@@ -80,7 +80,7 @@ export const CompanyGrid: React.FC<CompanyGridProps> = ({
           )}
 
           {/* Company Details */}
-          <View style={{ flexDirection: 'row', marginBottom: 8, gap: 12 }}>
+          <View style={{ flexDirection: 'row', marginBottom: 8 }}>
             <Text style={pdfStyles.footerText}>
               📍 {match.company_data?.country || 'N/A'}
             </Text>
@@ -161,7 +161,7 @@ export const CompanyGrid: React.FC<CompanyGridProps> = ({
 
           {/* Opportunities and Risks Summary */}
           {(match.opportunity_areas.length > 0 || match.risk_factors_identified.length > 0) && (
-            <View style={{ flexDirection: 'row', marginTop: 8, gap: 10 }}>
+            <View style={{ flexDirection: 'row', marginTop: 8 }}>
               {match.opportunity_areas.length > 0 && (
                 <View style={{ flex: 1 }}>
                   <Text style={[pdfStyles.scoreLabel, { color: '#059669', marginBottom: 3 }]}>

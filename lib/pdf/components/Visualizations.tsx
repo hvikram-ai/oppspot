@@ -50,8 +50,8 @@ export const Visualizations: React.FC<VisualizationsProps> = ({
           marginRight: 8
         }}>
           <View style={{
-            width: `${percentage}%`,
-            height: '100%',
+            width: percentage,
+            height: 8,
             backgroundColor: color,
             borderRadius: 4
           }} />
@@ -70,7 +70,7 @@ export const Visualizations: React.FC<VisualizationsProps> = ({
     <View>
       <Text style={pdfStyles.sectionTitle}>Analysis Overview & Configuration</Text>
       
-      <View style={{ flexDirection: 'row', gap: 20, marginBottom: 20 }}>
+      <View style={{ flexDirection: 'row', marginBottom: 20 }}>
         {/* Score Distribution */}
         <View style={[pdfStyles.chartContainer, { flex: 1 }]}>
           <Text style={pdfStyles.chartTitle}>Score Distribution</Text>
@@ -123,7 +123,7 @@ export const Visualizations: React.FC<VisualizationsProps> = ({
       <View style={pdfStyles.chartContainer}>
         <Text style={pdfStyles.chartTitle}>Analysis Configuration</Text>
         
-        <View style={{ flexDirection: 'row', gap: 20 }}>
+        <View style={{ flexDirection: 'row' }}>
           {/* Scoring Weights */}
           <View style={{ flex: 1 }}>
             <Text style={pdfStyles.subsectionTitle}>Scoring Weights</Text>
@@ -134,10 +134,10 @@ export const Visualizations: React.FC<VisualizationsProps> = ({
                 alignItems: 'center',
                 marginBottom: 4
               }}>
-                <Text style={[pdfStyles.scoreLabel, { textTransform: 'capitalize' }]}>
-                  {category}
+                <Text style={pdfStyles.scoreLabel}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
                 </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{
                     width: 40,
                     height: 6,
@@ -145,8 +145,8 @@ export const Visualizations: React.FC<VisualizationsProps> = ({
                     borderRadius: 3
                   }}>
                     <View style={{
-                      width: `${weight * 2}%`,
-                      height: '100%',
+                      width: (weight as number) * 0.8,
+                      height: 6,
                       backgroundColor: '#3B82F6',
                       borderRadius: 3
                     }} />
@@ -162,14 +162,14 @@ export const Visualizations: React.FC<VisualizationsProps> = ({
             <Text style={pdfStyles.subsectionTitle}>Analysis Scope</Text>
             
             <Text style={[pdfStyles.scoreLabel, { marginBottom: 4 }]}>Regions:</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8, gap: 4 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
               {analysisConfiguration.regions.map((region, idx) => (
                 <Text key={idx} style={pdfStyles.badge}>{region}</Text>
               ))}
             </View>
             
             <Text style={[pdfStyles.scoreLabel, { marginBottom: 4 }]}>Industries:</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
               {analysisConfiguration.industries.map((industry, idx) => (
                 <Text key={idx} style={pdfStyles.badge}>{industry}</Text>
               ))}

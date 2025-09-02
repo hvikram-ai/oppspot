@@ -115,7 +115,8 @@ export const pdfStyles = StyleSheet.create({
   // Company cards
   companyCard: {
     backgroundColor: '#FFFFFF',
-    border: '1px solid #E5E7EB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
@@ -269,7 +270,8 @@ export const pdfStyles = StyleSheet.create({
   // Executive summary specific
   executiveSummaryBox: {
     backgroundColor: '#EFF6FF',
-    border: '2px solid #DBEAFE',
+    borderWidth: 2,
+    borderColor: '#DBEAFE',
     borderRadius: 8,
     padding: 15,
     marginBottom: 20,

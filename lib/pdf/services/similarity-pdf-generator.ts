@@ -259,8 +259,11 @@ export class SimilarityPDFGenerator {
 
   private async renderPDF(templateData: any): Promise<Buffer> {
     try {
+      // Import React for JSX
+      const React = await import('react')
+      
       // Create React element from template
-      const pdfElement = SimilarityAnalysisTemplate({ data: templateData })
+      const pdfElement = React.createElement(SimilarityAnalysisTemplate, { data: templateData })
       
       // Render to buffer
       const pdfBuffer = await renderToBuffer(pdfElement)
