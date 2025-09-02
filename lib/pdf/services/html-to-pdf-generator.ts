@@ -73,8 +73,13 @@ export class HTMLToPDFGenerator {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--disable-gpu'
-        ]
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding'
+        ],
+        timeout: 15000
       })
 
       const page = await browser.newPage()
@@ -87,30 +92,34 @@ export class HTMLToPDFGenerator {
       })
 
       // 4. Navigate to the page
-      const targetUrl = pageUrl || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/similar-companies/${analysisId}`
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
+      const targetUrl = pageUrl || `${baseUrl}/similar-companies/${analysisId}`
       
       // Add authentication if needed
       if (!analysisId.startsWith('demo-') && analysisId !== 'demo') {
         // For authenticated pages, we might need to set cookies or headers
         // This is a simplified approach - in production you'd handle auth properly
         await page.goto(targetUrl, {
-          waitUntil: ['networkidle0', 'domcontentloaded'],
-          timeout: 30000
+          waitUntil: ['domcontentloaded', 'networkidle2'],
+          timeout: 15000
         })
       } else {
         // For demo pages
         await page.goto(targetUrl, {
-          waitUntil: ['networkidle0', 'domcontentloaded'],
-          timeout: 30000
+          waitUntil: ['domcontentloaded', 'networkidle2'],
+          timeout: 15000
         })
       }
 
       // 5. Wait for the page content to load completely
       await page.waitForSelector('[data-testid="analysis-results"], .analysis-container, main', {
-        timeout: 10000
+        timeout: 5000
       }).catch(() => {
         console.log('Main content selector not found, proceeding with page as-is')
       })
+
+      // 5.1. Additional wait to ensure dynamic content is loaded
+      await new Promise(resolve => setTimeout(resolve, 2000))
 
       // 6. Add print-specific styles
       await page.addStyleTag({
