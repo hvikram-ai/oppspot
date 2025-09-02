@@ -126,6 +126,7 @@ function SimilarCompanyDetailContent() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
+  const [exportLoading, setExportLoading] = useState(false)
   const [filterCriteria, setFilterCriteria] = useState({
     minScore: 0,
     maxScore: 100,
@@ -490,6 +491,73 @@ function SimilarCompanyDetailContent() {
     }
   }
 
+  const handleExportPDF = async () => {
+    if (!analysis || exportLoading) return
+
+    setExportLoading(true)
+    toast.loading('Generating PDF report...', { id: 'pdf-export' })
+
+    try {
+      const response = await fetch(`/api/similar-companies/${analysisId}/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          exportType: 'executive_summary',
+          exportFormat: 'pdf',
+          includeDetails: true,
+          maxMatches: 25
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to generate PDF')
+      }
+
+      // Check if response is JSON (error/status) or binary (PDF)
+      const contentType = response.headers.get('content-type')
+      
+      if (contentType?.includes('application/pdf')) {
+        // Direct PDF download
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('content-disposition')
+        const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+        const filename = filenameMatch?.[1] || `similarity-analysis-${analysis.target_company_name}-${new Date().toISOString().split('T')[0]}.pdf`
+        
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(link)
+        
+        toast.success('PDF downloaded successfully!', { id: 'pdf-export' })
+      } else {
+        // JSON response with export status
+        const data = await response.json()
+        
+        if (data.error) {
+          throw new Error(data.message || data.error)
+        }
+        
+        toast.success('PDF generated successfully!', { id: 'pdf-export' })
+      }
+
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(error.message || 'Failed to generate PDF export', { id: 'pdf-export' })
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 85) return 'text-green-600'
     if (score >= 70) return 'text-blue-600'
@@ -600,9 +668,18 @@ function SimilarCompanyDetailContent() {
                 <Bookmark className="h-4 w-4 mr-2" />
                 Save
               </Button>
-              <Button variant="secondary" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleExportPDF}
+                disabled={exportLoading}
+              >
+                {exportLoading ? (
+                  <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {exportLoading ? 'Generating...' : 'Export PDF'}
               </Button>
             </div>
           </div>

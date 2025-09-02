@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { generateSimilarityAnalysisPDF } from '@/lib/pdf/services/similarity-pdf-generator'
 
 // POST: Generate export in specified format
 export async function POST(
@@ -313,36 +314,57 @@ async function generatePDFExport(
   exportData: any,
   userId: string
 ): Promise<NextResponse> {
-  // Create export record
-  const { data: exportRecord, error } = await supabase
-    .from('similarity_analysis_exports')
-    .insert({
-      similarity_analysis_id: analysisId,
-      user_id: userId,
-      export_type: 'executive_summary',
-      export_format: 'pdf',
-      export_title: `Similar Companies Analysis - ${exportData.analysis.targetCompany}`,
-      export_description: 'Executive summary of similar company analysis for MnA evaluation',
-      export_content: exportData,
-      generation_status: 'pending',
-      template_version: 'v1.0'
+  try {
+    // Generate PDF using our new service
+    const { buffer, filename, contentType } = await generateSimilarityAnalysisPDF(
+      analysisId,
+      userId,
+      {
+        exportType: 'executive_summary',
+        includeDetails: true,
+        maxMatches: 25
+      }
+    )
+
+    // Return PDF directly as download
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-cache',
+        'Content-Length': buffer.length.toString()
+      }
     })
-    .select()
-    .single()
 
-  if (error) {
-    throw new Error(`Failed to create export record: ${error.message}`)
+  } catch (error) {
+    console.error('PDF generation error:', error)
+    
+    // Fallback: Create export record for background processing
+    const { data: exportRecord, error: dbError } = await supabase
+      .from('similarity_analysis_exports')
+      .insert({
+        similarity_analysis_id: analysisId,
+        user_id: userId,
+        export_type: 'executive_summary',
+        export_format: 'pdf',
+        export_title: `Similar Companies Analysis - ${exportData.analysis.targetCompany}`,
+        export_description: 'Executive summary of similar company analysis for MnA evaluation',
+        export_content: exportData,
+        generation_status: 'failed',
+        template_version: 'v1.0',
+        error_message: error.message
+      })
+      .select()
+      .single()
+
+    return NextResponse.json({
+      error: 'PDF generation temporarily unavailable',
+      message: 'Please try again in a few minutes or contact support',
+      exportId: exportRecord?.id,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 })
   }
-
-  // In a real implementation, you would queue a background job to generate the PDF
-  // For now, we'll return the export ID for tracking
-  return NextResponse.json({
-    exportId: exportRecord.id,
-    status: 'generating',
-    message: 'PDF export is being generated. Check back in a few minutes.',
-    estimatedCompletion: '2-3 minutes',
-    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${exportRecord.id}`
-  }, { status: 202 })
 }
 
 async function generatePowerPointExport(
