@@ -21,7 +21,11 @@
     "test:e2e:search": "playwright test tests/search.spec.ts",
     "test:e2e:map": "playwright test tests/map.spec.ts",
     "test:e2e:business": "playwright test tests/business-detail.spec.ts",
-    "test:e2e:email": "playwright test tests/email-notifications.spec.ts"
+    "test:e2e:email": "playwright test tests/email-notifications.spec.ts",
+    "ollama:start": "tsx scripts/start-ollama-integration.ts",
+    "ollama:interactive": "tsx scripts/start-ollama-integration.ts --interactive",
+    "ollama:setup": "tsx scripts/start-ollama-integration.ts --download-models",
+    "ollama:test": "tsx scripts/test-ollama-integration.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

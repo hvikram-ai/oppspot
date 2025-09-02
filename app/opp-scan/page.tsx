@@ -162,7 +162,7 @@ function OppScanPageContent() {
             <p className="text-xl opacity-90 mb-6 max-w-2xl mx-auto">
               Enterprise Acquisition Intelligence Workflow - Identify, analyze, and prioritize acquisition targets with AI-powered scanning
             </p>
-            <div className="flex items-center justify-center gap-6 text-sm opacity-80">
+            <div className="flex items-center justify-center gap-6 text-sm opacity-80 flex-wrap">
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4" />
                 <span>Multi-Source Scanning</span>
@@ -179,6 +179,10 @@ function OppScanPageContent() {
                 <FileText className="h-4 w-4" />
                 <span>Due Diligence</span>
               </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span>Similar Companies</span>
+              </div>
             </div>
           </div>
         </div>
@@ -193,12 +197,20 @@ function OppScanPageContent() {
               Manage your acquisition intelligence workflows
             </p>
           </div>
-          <Link href="/opp-scan/new">
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-              <Plus className="h-4 w-4 mr-2" />
-              New Scan
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/similar-companies">
+              <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                <Target className="h-4 w-4 mr-2" />
+                Similar Companies
+              </Button>
+            </Link>
+            <Link href="/opp-scan/new">
+              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                <Plus className="h-4 w-4 mr-2" />
+                New Scan
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Overview */}

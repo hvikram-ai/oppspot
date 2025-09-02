@@ -1,4 +1,16 @@
 import { Database } from '@/lib/supabase/database.types'
+import { 
+  LLMProvider, 
+  LLMService,
+  GenerationOptions, 
+  ModelCapabilities, 
+  ProviderStatus, 
+  TestResult,
+  LLMError,
+  LLMTimeoutError,
+  LLMUnavailableError,
+  LLMQuotaExceededError
+} from './llm-interface'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -19,17 +31,12 @@ interface OpenRouterResponse {
   }
 }
 
-interface GenerationOptions {
-  model?: string
-  temperature?: number
-  max_tokens?: number
-  system_prompt?: string
-}
-
-export class OpenRouterClient {
+export class OpenRouterClient implements LLMProvider, LLMService {
   private apiKey: string
   private baseUrl = 'https://openrouter.ai/api/v1'
   private defaultModel = 'anthropic/claude-3-haiku' // Fast and cost-effective
+  private fastModel = 'anthropic/claude-3-haiku' // Already fast
+  private timeout = 120000 // 2 minutes
 
   constructor(apiKey: string) {
     this.apiKey = apiKey
@@ -212,12 +219,9 @@ export class OpenRouterClient {
   }
 
   /**
-   * Make API call to OpenRouter
+   * Generate text completion using OpenRouter (LLMProvider interface)
    */
-  private async complete(
-    prompt: string,
-    options: GenerationOptions = {}
-  ): Promise<string> {
+  async complete(prompt: string, options: GenerationOptions = {}): Promise<string> {
     const {
       model = this.defaultModel,
       temperature = 0.7,
@@ -240,6 +244,8 @@ export class OpenRouterClient {
     })
 
     try {
+      console.log(`[OpenRouter] Generating with model: ${model}`)
+      
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -254,24 +260,184 @@ export class OpenRouterClient {
           temperature,
           max_tokens,
           stream: false
-        })
+        }),
+        signal: AbortSignal.timeout(this.timeout)
       })
 
       if (!response.ok) {
-        const error = await response.text()
-        throw new Error(`OpenRouter API error: ${response.status} - ${error}`)
+        const errorText = await response.text()
+        
+        // Handle specific error types
+        if (response.status === 429) {
+          throw new LLMQuotaExceededError('openrouter', model)
+        }
+        if (response.status >= 500) {
+          throw new LLMUnavailableError('openrouter', `Server error: ${response.status}`)
+        }
+        
+        throw new LLMError(`OpenRouter API error: ${response.status} - ${errorText}`, 'openrouter', model)
       }
 
       const data: OpenRouterResponse = await response.json()
       
       if (!data.choices || data.choices.length === 0) {
-        throw new Error('No response from OpenRouter')
+        throw new LLMError('No response from OpenRouter', 'openrouter', model)
       }
+
+      const tokensGenerated = data.usage?.completion_tokens || 0
+      console.log(`[OpenRouter] Generated ${tokensGenerated} tokens`)
 
       return data.choices[0].message.content
     } catch (error) {
-      console.error('OpenRouter API error:', error)
-      throw error
+      if (error instanceof LLMError) {
+        throw error
+      }
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new LLMTimeoutError('openrouter', this.timeout, model)
+      }
+      
+      console.error('[OpenRouter] Generation error:', error)
+      throw new LLMError(
+        error instanceof Error ? error.message : 'Unknown error',
+        'openrouter',
+        model,
+        error instanceof Error ? error : undefined
+      )
+    }
+  }
+
+  /**
+   * Fast completion using the lighter model
+   */
+  async fastComplete(prompt: string, options: GenerationOptions = {}): Promise<string> {
+    return this.complete(prompt, {
+      ...options,
+      model: options.model || this.fastModel
+    })
+  }
+
+  /**
+   * Check if OpenRouter service is accessible
+   */
+  async validateAccess(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/auth/key`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        signal: AbortSignal.timeout(5000)
+      })
+      return response.ok
+    } catch (error) {
+      console.error('[OpenRouter] Service validation failed:', error)
+      return false
+    }
+  }
+
+  /**
+   * Get model capabilities and configuration
+   */
+  getModelCapabilities(): Record<string, ModelCapabilities | any> {
+    return {
+      'anthropic/claude-3-haiku': {
+        name: 'Claude 3 Haiku',
+        contextLength: 200000,
+        maxTokens: 4096,
+        bestFor: ['quick responses', 'simple tasks', 'cost-effective generation'],
+        cost: 0.0025, // $2.50 per 1M tokens
+        speed: 'fast'
+      },
+      'anthropic/claude-3.5-sonnet': {
+        name: 'Claude 3.5 Sonnet',
+        contextLength: 200000,
+        maxTokens: 8192,
+        bestFor: ['detailed analysis', 'complex reasoning', 'high-quality generation'],
+        cost: 0.015, // $15 per 1M tokens
+        speed: 'medium'
+      },
+      features: {
+        streaming: false,
+        functionCalling: true,
+        multimodal: true,
+        localExecution: false,
+        offline: false
+      },
+      limits: {
+        requestsPerMinute: 200,
+        tokensPerRequest: 8192,
+        contextWindow: 200000
+      }
+    }
+  }
+
+  /**
+   * Estimate tokens in text (rough approximation)
+   */
+  estimateTokens(text: string): number {
+    // More accurate estimation for Claude models
+    return Math.ceil(text.length / 3.8)
+  }
+
+  /**
+   * Calculate cost for given number of tokens
+   */
+  calculateCost(tokens: number): number {
+    // Using Haiku pricing as default
+    return (tokens / 1000000) * 2.50
+  }
+
+  /**
+   * Get current provider status
+   */
+  async getStatus(): Promise<ProviderStatus> {
+    try {
+      const usage = await this.checkUsage()
+      const available = await this.validateAccess()
+      
+      return {
+        available,
+        models: ['anthropic/claude-3-haiku', 'anthropic/claude-3.5-sonnet'],
+        version: 'v1',
+        uptime: Date.now() // Simplified
+      }
+    } catch (error) {
+      return {
+        available: false,
+        models: [],
+        lastError: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  /**
+   * Test the provider with a simple request
+   */
+  async testModel(modelName?: string): Promise<TestResult> {
+    const model = modelName || this.fastModel
+    const startTime = Date.now()
+
+    try {
+      const response = await this.complete('Generate a brief hello message.', {
+        model,
+        max_tokens: 50,
+        temperature: 0.1
+      })
+
+      const responseTime = Date.now() - startTime
+      const tokensGenerated = this.estimateTokens(response)
+
+      return {
+        success: true,
+        responseTime,
+        tokensGenerated
+      }
+    } catch (error) {
+      return {
+        success: false,
+        responseTime: Date.now() - startTime,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
     }
   }
 
