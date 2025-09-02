@@ -1,5 +1,5 @@
 import { renderToBuffer } from '@react-pdf/renderer'
-import { SimilarityAnalysisTemplate } from '../templates/SimilarityAnalysisTemplate'
+import { CleanSimilarityTemplate } from '../templates/CleanSimilarityTemplate'
 import { createClient } from '@/lib/supabase/server'
 import { writeFile } from 'fs/promises'
 import path from 'path'
@@ -431,7 +431,7 @@ export class SimilarityPDFGenerator {
       const React = await import('react')
       
       // Create React element from template
-      const pdfElement = React.createElement(SimilarityAnalysisTemplate, { data: templateData })
+      const pdfElement = React.createElement(CleanSimilarityTemplate, { data: templateData })
       
       // Render to buffer
       const pdfBuffer = await renderToBuffer(pdfElement)
