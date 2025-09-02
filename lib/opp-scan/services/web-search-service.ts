@@ -1,7 +1,7 @@
 /**
  * WebSearchService: Multi-source company discovery for Similar Company feature
  * Integrates with multiple search providers to find and enrich company data
- * Built for M&A directors requiring comprehensive company intelligence
+ * Built for MnA directors requiring comprehensive company intelligence
  */
 
 import { 

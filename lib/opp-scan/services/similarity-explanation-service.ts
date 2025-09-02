@@ -1,14 +1,14 @@
 /**
  * SimilarityExplanationService: LLM-powered explanation generation for Similar Company feature
- * Specializes in creating M&A-focused explanations and insights
- * Built for sophisticated M&A directors requiring detailed rationale
+ * Specializes in creating MnA-focused explanations and insights
+ * Built for sophisticated MnA directors requiring detailed rationale
  */
 
 import { getLLMProvider } from '@/lib/ai/llm-factory'
 import { LLMProvider, LLMService } from '@/lib/ai/llm-interface'
 import {
   SimilarityExplanation,
-  M&AInsights,
+  MnAInsights,
   OpportunityInsight,
   RiskInsight,
   StrategyRecommendation,
@@ -16,7 +16,7 @@ import {
   IntegrationInsight,
   ConfidenceLevel,
   SimilarCompanyMatch,
-  M&ABenchmarkScores,
+  MnABenchmarkScores,
   ImplementationGuidance
 } from '../core/similarity-interfaces'
 import { CompanyEntity } from '../core/interfaces'
@@ -24,11 +24,11 @@ import { CompanyEntity } from '../core/interfaces'
 interface ExplanationPromptContext {
   targetCompany: CompanyEntity
   similarCompany: CompanyEntity
-  benchmarkScores: M&ABenchmarkScores
+  benchmarkScores: MnABenchmarkScores
   additionalContext?: Record<string, any>
 }
 
-interface M&AInsightsContext {
+interface MnAInsightsContext {
   targetCompany: CompanyEntity
   matches: SimilarCompanyMatch[]
   analysisConfiguration: any
@@ -92,41 +92,41 @@ export class SimilarityExplanationService {
   }
 
   /**
-   * Generate M&A-focused insights for multiple matches
+   * Generate MnA-focused insights for multiple matches
    */
-  async generateM&AInsights(
-    context: M&AInsightsContext
+  async generateMnAInsights(
+    context: MnAInsightsContext
   ): Promise<{
-    insights: M&AInsights
+    insights: MnAInsights
     metrics: ExplanationMetrics
   }> {
     const startTime = Date.now()
     let tokensUsed = 0
 
-    const prompt = this.buildM&AInsightsPrompt(context)
+    const prompt = this.buildMnAInsightsPrompt(context)
     
     try {
       const response = await this.llmProvider.complete(prompt, {
-                system_prompt: this.getM&AInsightsSystemPrompt(),
+                system_prompt: this.getMnAInsightsSystemPrompt(),
         temperature: 0.4,
         max_tokens: 2000
       })
 
-      const insights = this.parseM&AInsightsResponse(response, context)
+      const insights = this.parseMnAInsightsResponse(response, context)
       
       const metrics: ExplanationMetrics = {
         tokensUsed: this.llmProvider.estimateTokens(prompt + response),
         responseTime: Date.now() - startTime,
         cost: this.llmProvider.calculateCost(this.llmProvider.estimateTokens(prompt + response)),
         modelUsed: 'primary',
-        confidence: 'high', // M&A insights are generally high confidence
+        confidence: 'high', // MnA insights are generally high confidence
         retryCount: 0
       }
 
       return { insights, metrics }
     } catch (error) {
-      console.error('Error generating M&A insights:', error)
-      throw new Error(`Failed to generate M&A insights: ${error.message}`)
+      console.error('Error generating MnA insights:', error)
+      throw new Error(`Failed to generate MnA insights: ${error.message}`)
     }
   }
 
@@ -138,7 +138,7 @@ export class SimilarityExplanationService {
     similarCompany: CompanyEntity,
     overallScore: number
   ): Promise<string> {
-    const prompt = `Explain in 2-3 sentences why ${similarCompany.name} is ${overallScore}% similar to ${targetCompany.name} for M&A purposes.
+    const prompt = `Explain in 2-3 sentences why ${similarCompany.name} is ${overallScore}% similar to ${targetCompany.name} for MnA purposes.
 
 Target Company: ${targetCompany.name}
 - Industry: ${targetCompany.industryCodes.join(', ')}
@@ -150,7 +150,7 @@ Similar Company: ${similarCompany.name}
 - Location: ${similarCompany.country}
 - Description: ${similarCompany.description || 'N/A'}
 
-Focus on the most important similarity factors for M&A evaluation.`
+Focus on the most important similarity factors for MnA evaluation.`
 
     try {
       return await this.llmProvider.complete(prompt, {
@@ -180,14 +180,14 @@ Location: ${targetCompany.country}
 Identified Risk Factors:
 ${riskFactors.map(factor => `• ${factor}`).join('\n')}
 
-Provide a professional risk assessment suitable for M&A directors, including:
+Provide a professional risk assessment suitable for MnA directors, including:
 1. Primary risk concerns
 2. Potential mitigation strategies
 3. Overall risk level assessment`
 
     try {
       return await this.llmProvider.complete(prompt, {
-                system_prompt: 'You are an M&A risk assessment specialist providing professional analysis for acquisition decisions.',
+                system_prompt: 'You are an MnA risk assessment specialist providing professional analysis for acquisition decisions.',
         temperature: 0.2,
         max_tokens: 600
       })
@@ -225,7 +225,7 @@ Provide analysis covering:
 
     try {
       return await this.llmProvider.complete(prompt, {
-                system_prompt: 'You are a strategic M&A advisor analyzing value creation opportunities for corporate acquisitions.',
+                system_prompt: 'You are a strategic MnA advisor analyzing value creation opportunities for corporate acquisitions.',
         temperature: 0.4,
         max_tokens: 800
       })
@@ -240,7 +240,7 @@ Provide analysis covering:
   private buildSimilarityExplanationPrompt(context: ExplanationPromptContext): string {
     const { targetCompany, similarCompany, benchmarkScores } = context
 
-    return `Generate a comprehensive similarity explanation for M&A analysis.
+    return `Generate a comprehensive similarity explanation for MnA analysis.
 
 TARGET COMPANY:
 Name: ${targetCompany.name}
@@ -256,7 +256,7 @@ Country: ${similarCompany.country}
 Description: ${similarCompany.description || 'Not available'}
 ${similarCompany.website ? `Website: ${similarCompany.website}` : ''}
 
-M&A BENCHMARK SCORES:
+MnA BENCHMARK SCORES:
 • Financial Similarity: ${benchmarkScores.financial.score}/100 (${benchmarkScores.financial.confidence} confidence)
 • Strategic Similarity: ${benchmarkScores.strategic.score}/100 (${benchmarkScores.strategic.confidence} confidence)
 • Operational Similarity: ${benchmarkScores.operational.score}/100 (${benchmarkScores.operational.confidence} confidence)
@@ -279,11 +279,11 @@ Provide your analysis in the following structure:
 6. Confidence Assessment (high/medium/low with reasoning)`
   }
 
-  private buildM&AInsightsPrompt(context: M&AInsightsContext): string {
+  private buildMnAInsightsPrompt(context: MnAInsightsContext): string {
     const { targetCompany, matches } = context
     const topMatches = matches.slice(0, 5) // Focus on top 5 matches
 
-    return `Generate comprehensive M&A insights for ${targetCompany.name} based on similarity analysis.
+    return `Generate comprehensive MnA insights for ${targetCompany.name} based on similarity analysis.
 
 TARGET COMPANY:
 Name: ${targetCompany.name}
@@ -321,7 +321,7 @@ Generate insights covering:
   }
 
   private getSimilarityExplanationSystemPrompt(): string {
-    return `You are a senior M&A analyst with 15+ years of experience in corporate acquisitions and strategic analysis. You specialize in identifying and explaining company similarities for acquisition purposes.
+    return `You are a senior MnA analyst with 15+ years of experience in corporate acquisitions and strategic analysis. You specialize in identifying and explaining company similarities for acquisition purposes.
 
 Your expertise includes:
 - Financial analysis and valuation
@@ -331,10 +331,10 @@ Your expertise includes:
 - Market positioning analysis
 
 Guidelines for your analysis:
-- Focus on factors most relevant to M&A decisions
+- Focus on factors most relevant to MnA decisions
 - Provide specific, actionable insights
 - Consider both opportunities and risks
-- Use professional M&A terminology
+- Use professional MnA terminology
 - Maintain objectivity while highlighting key points
 - Support conclusions with logical reasoning
 - Consider UK/Ireland market context when relevant
@@ -342,8 +342,8 @@ Guidelines for your analysis:
 Your explanations should be suitable for board-level presentations and investment committee reviews.`
   }
 
-  private getM&AInsightsSystemPrompt(): string {
-    return `You are a strategic M&A advisor and managing director at a top-tier investment bank. You have deep expertise in cross-border acquisitions, market analysis, and value creation strategies.
+  private getMnAInsightsSystemPrompt(): string {
+    return `You are a strategic MnA advisor and managing director at a top-tier investment bank. You have deep expertise in cross-border acquisitions, market analysis, and value creation strategies.
 
 Your role is to provide executive-level insights that inform acquisition strategies and investment decisions. Your analysis should be:
 
@@ -382,10 +382,10 @@ Frame recommendations in terms of:
     }
   }
 
-  private parseM&AInsightsResponse(
+  private parseMnAInsightsResponse(
     response: string, 
-    context: M&AInsightsContext
-  ): M&AInsights {
+    context: MnAInsightsContext
+  ): MnAInsights {
     const sections = this.parseResponseSections(response)
     
     return {
@@ -703,7 +703,7 @@ Frame recommendations in terms of:
     return 'low'
   }
 
-  private determineConfidenceLevel(scores: M&ABenchmarkScores): ConfidenceLevel {
+  private determineConfidenceLevel(scores: MnABenchmarkScores): ConfidenceLevel {
     const avgConfidence = (
       scores.financial.confidence +
       scores.strategic.confidence +

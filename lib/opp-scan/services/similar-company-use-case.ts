@@ -1,7 +1,7 @@
 /**
  * SimilarCompanyUseCase: Orchestration service for Similar Company analysis
  * Coordinates the complete workflow from company input to similarity analysis
- * Built for enterprise M&A decision making with comprehensive error handling
+ * Built for enterprise MnA decision making with comprehensive error handling
  */
 
 import { createClient } from '@/lib/supabase/server'
@@ -14,8 +14,8 @@ import {
   SimilarCompanyMatch,
   SimilarityConfiguration,
   SimilarityAnalysisStatus,
-  M&AInsights,
-  M&ABenchmarkEntity,
+  MnAInsights,
+  MnABenchmarkEntity,
   CompanySearchQuery,
   EnrichedCompanyData,
   ConfidenceLevel
@@ -147,7 +147,7 @@ export class SimilarCompanyUseCase {
         metrics
       )
 
-      // Create M&A benchmark profiles for scoring
+      // Create MnA benchmark profiles for scoring
       const targetBenchmark = await this.createOrGetBenchmarkProfile(targetCompany)
       const candidateBenchmarks = await this.createBenchmarkProfiles(enrichedCandidates)
 
@@ -156,7 +156,7 @@ export class SimilarCompanyUseCase {
         stage: 'scoring',
         progress: 55,
         message: 'Calculating similarity scores',
-        currentTask: 'Running M&A-specific algorithms'
+        currentTask: 'Running MnA-specific algorithms'
       })
 
       const scoredMatches: SimilarCompanyMatch[] = []
@@ -217,7 +217,7 @@ export class SimilarCompanyUseCase {
           stage: 'explanation',
           progress: 75,
           message: 'Generating AI explanations',
-          currentTask: 'Creating M&A-focused insights'
+          currentTask: 'Creating MnA-focused insights'
         })
 
         await this.generateExplanationsForMatches(
@@ -226,8 +226,8 @@ export class SimilarCompanyUseCase {
           metrics
         )
 
-        // Generate overall M&A insights
-        const mnaInsights = await this.generateM&AInsights(
+        // Generate overall MnA insights
+        const mnaInsights = await this.generateMnAInsights(
           targetCompany,
           scoredMatches,
           request.configuration,
@@ -473,7 +473,7 @@ export class SimilarCompanyUseCase {
     return enrichedCandidates
   }
 
-  private async createOrGetBenchmarkProfile(company: CompanyEntity): Promise<M&ABenchmarkEntity> {
+  private async createOrGetBenchmarkProfile(company: CompanyEntity): Promise<MnABenchmarkEntity> {
     // Check if benchmark profile already exists
     const { data: existing } = await this.supabase
       .from('mna_benchmark_profiles')
@@ -486,7 +486,7 @@ export class SimilarCompanyUseCase {
     }
 
     // Create new benchmark profile
-    const benchmarkProfile: Partial<M&ABenchmarkEntity> = {
+    const benchmarkProfile: Partial<MnABenchmarkEntity> = {
       companyId: company.id,
       // Add default/estimated values based on available data
       dataQualityScore: 0.5,
@@ -512,8 +512,8 @@ export class SimilarCompanyUseCase {
 
   private async createBenchmarkProfiles(
     enrichedCandidates: EnrichedCompanyData[]
-  ): Promise<M&ABenchmarkEntity[]> {
-    const benchmarks: M&ABenchmarkEntity[] = []
+  ): Promise<MnABenchmarkEntity[]> {
+    const benchmarks: MnABenchmarkEntity[] = []
 
     for (const enrichedCandidate of enrichedCandidates) {
       try {
@@ -553,12 +553,12 @@ export class SimilarCompanyUseCase {
     }
   }
 
-  private async generateM&AInsights(
+  private async generateMnAInsights(
     targetCompany: CompanyEntity,
     matches: SimilarCompanyMatch[],
     configuration: SimilarityConfiguration,
     metrics: AnalysisMetrics
-  ): Promise<M&AInsights> {
+  ): Promise<MnAInsights> {
     try {
       const insightsContext = {
         targetCompany,
@@ -566,14 +566,14 @@ export class SimilarCompanyUseCase {
         analysisConfiguration: configuration
       }
 
-      const insightsResult = await this.explanationService.generateM&AInsights(insightsContext)
+      const insightsResult = await this.explanationService.generateMnAInsights(insightsContext)
       
       metrics.llmTokensUsed += insightsResult.metrics.tokensUsed
       metrics.totalCost += insightsResult.metrics.cost
 
       return insightsResult.insights
     } catch (error) {
-      console.error('Error generating M&A insights:', error)
+      console.error('Error generating MnA insights:', error)
       metrics.errorCount++
       
       // Return basic insights
@@ -837,8 +837,8 @@ export class SimilarCompanyUseCase {
     return 0.2 // 20% cache hit rate
   }
 
-  private mapDatabaseToBenchmark(dbRecord: any): M&ABenchmarkEntity {
-    // Map database record to M&ABenchmarkEntity
+  private mapDatabaseToBenchmark(dbRecord: any): MnABenchmarkEntity {
+    // Map database record to MnABenchmarkEntity
     return {
       id: dbRecord.id,
       companyId: dbRecord.company_id,
@@ -858,7 +858,7 @@ export class SimilarCompanyUseCase {
       },
       lastUpdated: new Date(dbRecord.updated_at),
       sourceReliability: dbRecord.source_reliability || 0.7
-    } as M&ABenchmarkEntity
+    } as MnABenchmarkEntity
   }
 
   private mapDatabaseToSimilarityEntity(dbRecord: any): SimilarityEntity {

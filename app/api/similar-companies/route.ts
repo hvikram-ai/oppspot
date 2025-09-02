@@ -1,7 +1,7 @@
 /**
  * Similar Companies API Routes
- * RESTful endpoints for the Similar Company M&A analysis feature
- * Built for enterprise-grade M&A decision making
+ * RESTful endpoints for the Similar Company MnA analysis feature
+ * Built for enterprise-grade MnA decision making
  */
 
 import { NextRequest, NextResponse } from 'next/server'

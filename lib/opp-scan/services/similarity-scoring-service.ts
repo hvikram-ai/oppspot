@@ -1,29 +1,29 @@
 /**
- * SimilarityScoringService: M&A-focused company similarity scoring algorithms
+ * SimilarityScoringService: MnA-focused company similarity scoring algorithms
  * Implements sophisticated scoring models for merger and acquisition analysis
  * Built for enterprise-grade decision making with explainable AI principles
  */
 
 import {
-  M&ABenchmarkScores,
-  M&ABenchmarkEntity,
-  M&AParameterWeights,
+  MnABenchmarkScores,
+  MnABenchmarkEntity,
+  MnAParameterWeights,
   ParameterScore,
   SimilarityConfiguration,
   CompanyEntity,
-  M&AFinancialProfile,
-  M&AStrategicProfile,
-  M&AOperationalProfile,
-  M&AMarketProfile,
-  M&ARiskProfile,
+  MnAFinancialProfile,
+  MnAStrategicProfile,
+  MnAOperationalProfile,
+  MnAMarketProfile,
+  MnARiskProfile,
   ConfidenceLevel
 } from '../core/similarity-interfaces'
 
 interface ScoringContext {
   targetCompany: CompanyEntity
   candidateCompany: CompanyEntity
-  targetBenchmark: M&ABenchmarkEntity
-  candidateBenchmark: M&ABenchmarkEntity
+  targetBenchmark: MnABenchmarkEntity
+  candidateBenchmark: MnABenchmarkEntity
   configuration: SimilarityConfiguration
 }
 
@@ -47,7 +47,7 @@ interface ScoringExplanation {
 }
 
 export class SimilarityScoringService {
-  private readonly defaultWeights: M&AParameterWeights = {
+  private readonly defaultWeights: MnAParameterWeights = {
     financial: 0.30,
     strategic: 0.25,
     operational: 0.20,
@@ -56,10 +56,10 @@ export class SimilarityScoringService {
   }
 
   /**
-   * Calculate comprehensive M&A similarity scores
+   * Calculate comprehensive MnA similarity scores
    */
   async calculateSimilarityScores(context: ScoringContext): Promise<{
-    scores: M&ABenchmarkScores
+    scores: MnABenchmarkScores
     explanations: ScoringExplanation[]
     overallScore: number
     confidence: ConfidenceLevel
@@ -74,7 +74,7 @@ export class SimilarityScoringService {
     const riskScore = await this.calculateRiskSimilarity(context)
 
     // Create comprehensive score object
-    const scores: M&ABenchmarkScores = {
+    const scores: MnABenchmarkScores = {
       financial: financialScore,
       strategic: strategicScore,
       operational: operationalScore,
@@ -380,7 +380,7 @@ export class SimilarityScoringService {
 
   // Financial similarity calculation methods
 
-  private calculateRevenueSimilarity(target: M&AFinancialProfile, candidate: M&AFinancialProfile): number {
+  private calculateRevenueSimilarity(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     if (!target.estimatedRevenue || !candidate.estimatedRevenue) return 0.5
 
     const targetRev = target.estimatedRevenue
@@ -395,7 +395,7 @@ export class SimilarityScoringService {
     return Math.max(0, Math.min(1, (ratio + logSimilarity) / 2))
   }
 
-  private calculateProfitabilitySimilarity(target: M&AFinancialProfile, candidate: M&AFinancialProfile): number {
+  private calculateProfitabilitySimilarity(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     const metrics = ['ebitdaMargin', 'netProfitMargin', 'grossMargin', 'operatingMargin']
     let totalSimilarity = 0
     let validMetrics = 0
@@ -416,7 +416,7 @@ export class SimilarityScoringService {
     return validMetrics > 0 ? totalSimilarity / validMetrics : 0.5
   }
 
-  private calculateGrowthSimilarity(target: M&AFinancialProfile, candidate: M&AFinancialProfile): number {
+  private calculateGrowthSimilarity(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     if (!target.growthTrajectory?.projectedGrowth || !candidate.growthTrajectory?.projectedGrowth) {
       return 0.5
     }
@@ -438,7 +438,7 @@ export class SimilarityScoringService {
     return (growthSimilarity * 0.7) + (stabilitySimilarity * 0.3)
   }
 
-  private calculateDebtSimilarity(target: M&AFinancialProfile, candidate: M&AFinancialProfile): number {
+  private calculateDebtSimilarity(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     const targetDebt = target.debtProfile
     const candidateDebt = candidate.debtProfile
 
@@ -465,7 +465,7 @@ export class SimilarityScoringService {
     return similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0.5
   }
 
-  private calculateValuationSimilarity(target: M&AFinancialProfile, candidate: M&AFinancialProfile): number {
+  private calculateValuationSimilarity(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     const targetVal = target.valuationMetrics
     const candidateVal = candidate.valuationMetrics
 
@@ -490,7 +490,7 @@ export class SimilarityScoringService {
     return similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0.5
   }
 
-  private calculateCashFlowSimilarity(target: M&AFinancialProfile, candidate: M&AFinancialProfile): number {
+  private calculateCashFlowSimilarity(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     const targetCF = target.cashFlowPatterns
     const candidateCF = candidate.cashFlowPatterns
 
@@ -515,7 +515,7 @@ export class SimilarityScoringService {
 
   // Strategic similarity calculation methods
 
-  private calculateMarketPositionSimilarity(target: M&AStrategicProfile, candidate: M&AStrategicProfile): number {
+  private calculateMarketPositionSimilarity(target: MnAStrategicProfile, candidate: MnAStrategicProfile): number {
     const targetPos = target.marketPosition
     const candidatePos = candidate.marketPosition
 
@@ -537,7 +537,7 @@ export class SimilarityScoringService {
     return (positionSimilarity * 0.6) + (brandSimilarity * 0.4)
   }
 
-  private calculateGeographicSimilarity(target: M&AStrategicProfile, candidate: M&AStrategicProfile): number {
+  private calculateGeographicSimilarity(target: MnAStrategicProfile, candidate: MnAStrategicProfile): number {
     const targetGeo = target.geographicPresence
     const candidateGeo = candidate.geographicPresence
 
@@ -558,7 +558,7 @@ export class SimilarityScoringService {
     return (overlapSimilarity * 0.7) + (intlSimilarity * 0.3)
   }
 
-  private calculateCustomerBaseSimilarity(target: M&AStrategicProfile, candidate: M&AStrategicProfile): number {
+  private calculateCustomerBaseSimilarity(target: MnAStrategicProfile, candidate: MnAStrategicProfile): number {
     const targetCustomer = target.customerBase
     const candidateCustomer = candidate.customerBase
 
@@ -584,7 +584,7 @@ export class SimilarityScoringService {
     return similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0.5
   }
 
-  private calculateTechnologySimilarity(target: M&AStrategicProfile, candidate: M&AStrategicProfile): number {
+  private calculateTechnologySimilarity(target: MnAStrategicProfile, candidate: MnAStrategicProfile): number {
     const targetTech = target.technologyAlignment
     const candidateTech = candidate.technologyAlignment
 
@@ -610,7 +610,7 @@ export class SimilarityScoringService {
     return similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0.5
   }
 
-  private calculateDistributionSimilarity(target: M&AStrategicProfile, candidate: M&AStrategicProfile): number {
+  private calculateDistributionSimilarity(target: MnAStrategicProfile, candidate: MnAStrategicProfile): number {
     const targetDist = target.distributionChannels
     const candidateDist = candidate.distributionChannels
 
@@ -630,7 +630,7 @@ export class SimilarityScoringService {
 
   // Operational similarity calculation methods
 
-  private calculateBusinessModelSimilarity(target: M&AOperationalProfile, candidate: M&AOperationalProfile): number {
+  private calculateBusinessModelSimilarity(target: MnAOperationalProfile, candidate: MnAOperationalProfile): number {
     const targetModel = target.businessModel
     const candidateModel = candidate.businessModel
 
@@ -653,7 +653,7 @@ export class SimilarityScoringService {
     return modelSimilarity
   }
 
-  private calculateScaleSimilarity(target: M&AOperationalProfile, candidate: M&AOperationalProfile): number {
+  private calculateScaleSimilarity(target: MnAOperationalProfile, candidate: MnAOperationalProfile): number {
     const targetScale = target.operationalScale
     const candidateScale = candidate.operationalScale
 
@@ -668,7 +668,7 @@ export class SimilarityScoringService {
     return Math.max(0, 1 - levelDiff / 3)
   }
 
-  private calculateRegulatorySimilarity(target: M&AOperationalProfile, candidate: M&AOperationalProfile): number {
+  private calculateRegulatorySimilarity(target: MnAOperationalProfile, candidate: MnAOperationalProfile): number {
     const targetReg = target.regulatoryComplexity
     const candidateReg = candidate.regulatoryComplexity
 
@@ -683,7 +683,7 @@ export class SimilarityScoringService {
     return Math.max(0, 1 - complexityDiff / 2)
   }
 
-  private calculateEfficiencySimilarity(target: M&AOperationalProfile, candidate: M&AOperationalProfile): number {
+  private calculateEfficiencySimilarity(target: MnAOperationalProfile, candidate: MnAOperationalProfile): number {
     const targetEff = target.operationalEfficiency
     const candidateEff = candidate.operationalEfficiency
 
@@ -696,7 +696,7 @@ export class SimilarityScoringService {
 
   // Market similarity calculation methods
 
-  private calculateIndustrySimilarity(target: M&AMarketProfile, candidate: M&AMarketProfile): number {
+  private calculateIndustrySimilarity(target: MnAMarketProfile, candidate: MnAMarketProfile): number {
     const targetIndustry = target.industryVertical
     const candidateIndustry = candidate.industryVertical
 
@@ -715,7 +715,7 @@ export class SimilarityScoringService {
     return (primaryMatch * 0.7) + (subIndustryOverlap * 0.3)
   }
 
-  private calculateMaturitySimilarity(target: M&AMarketProfile, candidate: M&AMarketProfile): number {
+  private calculateMaturitySimilarity(target: MnAMarketProfile, candidate: MnAMarketProfile): number {
     const targetMaturity = target.marketMaturity
     const candidateMaturity = candidate.marketMaturity
 
@@ -730,7 +730,7 @@ export class SimilarityScoringService {
     return Math.max(0, 1 - levelDiff / 3)
   }
 
-  private calculateCompetitiveSimilarity(target: M&AMarketProfile, candidate: M&AMarketProfile): number {
+  private calculateCompetitiveSimilarity(target: MnAMarketProfile, candidate: MnAMarketProfile): number {
     const targetComp = target.competitiveIntensity
     const candidateComp = candidate.competitiveIntensity
 
@@ -745,7 +745,7 @@ export class SimilarityScoringService {
     return Math.max(0, 1 - intensityDiff / 2)
   }
 
-  private calculateGrowthPotentialSimilarity(target: M&AMarketProfile, candidate: M&AMarketProfile): number {
+  private calculateGrowthPotentialSimilarity(target: MnAMarketProfile, candidate: MnAMarketProfile): number {
     const targetGrowth = target.growthPotential
     const candidateGrowth = candidate.growthPotential
 
@@ -762,7 +762,7 @@ export class SimilarityScoringService {
 
   // Risk similarity calculation methods
 
-  private calculateRegulatoryRiskSimilarity(target: M&ARiskProfile, candidate: M&ARiskProfile): number {
+  private calculateRegulatoryRiskSimilarity(target: MnARiskProfile, candidate: MnARiskProfile): number {
     const targetRisk = target.regulatoryRisk
     const candidateRisk = candidate.regulatoryRisk
 
@@ -777,7 +777,7 @@ export class SimilarityScoringService {
     return Math.max(0, 1 - levelDiff / 3)
   }
 
-  private calculateIntegrationRiskSimilarity(target: M&ARiskProfile, candidate: M&ARiskProfile): number {
+  private calculateIntegrationRiskSimilarity(target: MnARiskProfile, candidate: MnARiskProfile): number {
     const targetIntegration = target.integrationComplexity
     const candidateIntegration = candidate.integrationComplexity
 
@@ -792,7 +792,7 @@ export class SimilarityScoringService {
     return Math.max(0, 1 - complexityDiff / 3)
   }
 
-  private calculateESGRiskSimilarity(target: M&ARiskProfile, candidate: M&ARiskProfile): number {
+  private calculateESGRiskSimilarity(target: MnARiskProfile, candidate: MnARiskProfile): number {
     const targetESG = target.esgFactors
     const candidateESG = candidate.esgFactors
 
@@ -803,7 +803,7 @@ export class SimilarityScoringService {
     return Math.max(0, 1 - esgDiff / 100) // ESG scores typically 0-100
   }
 
-  private calculateTechnologyRiskSimilarity(target: M&ARiskProfile, candidate: M&ARiskProfile): number {
+  private calculateTechnologyRiskSimilarity(target: MnARiskProfile, candidate: MnARiskProfile): number {
     const targetTech = target.technologyRisk
     const candidateTech = candidate.technologyRisk
 
@@ -831,7 +831,7 @@ export class SimilarityScoringService {
     return similarities.length > 0 ? similarities.reduce((a, b) => a + b, 0) / similarities.length : 0.5
   }
 
-  private calculateGeopoliticalRiskSimilarity(target: M&ARiskProfile, candidate: M&ARiskProfile): number {
+  private calculateGeopoliticalRiskSimilarity(target: MnARiskProfile, candidate: MnARiskProfile): number {
     const targetGeo = target.geopoliticalRisk
     const candidateGeo = candidate.geopoliticalRisk
 
@@ -848,7 +848,7 @@ export class SimilarityScoringService {
 
   // Confidence calculation methods
 
-  private calculateFinancialConfidence(target: M&AFinancialProfile, candidate: M&AFinancialProfile): number {
+  private calculateFinancialConfidence(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     let dataPoints = 0
     let totalPoints = 8 // Maximum possible data points
 
@@ -862,7 +862,7 @@ export class SimilarityScoringService {
     return Math.max(0.3, dataPoints / totalPoints)
   }
 
-  private calculateStrategicConfidence(target: M&AStrategicProfile, candidate: M&AStrategicProfile): number {
+  private calculateStrategicConfidence(target: MnAStrategicProfile, candidate: MnAStrategicProfile): number {
     let dataPoints = 0
     let totalPoints = 5
 
@@ -875,7 +875,7 @@ export class SimilarityScoringService {
     return Math.max(0.3, dataPoints / totalPoints)
   }
 
-  private calculateOperationalConfidence(target: M&AOperationalProfile, candidate: M&AOperationalProfile): number {
+  private calculateOperationalConfidence(target: MnAOperationalProfile, candidate: MnAOperationalProfile): number {
     let dataPoints = 0
     let totalPoints = 4
 
@@ -887,7 +887,7 @@ export class SimilarityScoringService {
     return Math.max(0.3, dataPoints / totalPoints)
   }
 
-  private calculateMarketConfidence(target: M&AMarketProfile, candidate: M&AMarketProfile): number {
+  private calculateMarketConfidence(target: MnAMarketProfile, candidate: MnAMarketProfile): number {
     let dataPoints = 0
     let totalPoints = 4
 
@@ -899,7 +899,7 @@ export class SimilarityScoringService {
     return Math.max(0.3, dataPoints / totalPoints)
   }
 
-  private calculateRiskConfidence(target: M&ARiskProfile, candidate: M&ARiskProfile): number {
+  private calculateRiskConfidence(target: MnARiskProfile, candidate: MnARiskProfile): number {
     let dataPoints = 0
     let totalPoints = 5
 
@@ -916,7 +916,7 @@ export class SimilarityScoringService {
 
   private calculateWeightedOverallScore(
     scores: Record<string, number>,
-    weights: M&AParameterWeights
+    weights: MnAParameterWeights
   ): number {
     return (
       (scores.financial * weights.financial) +
@@ -927,7 +927,7 @@ export class SimilarityScoringService {
     )
   }
 
-  private calculateOverallConfidence(scores: M&ABenchmarkScores): ConfidenceLevel {
+  private calculateOverallConfidence(scores: MnABenchmarkScores): ConfidenceLevel {
     const avgConfidence = (
       scores.financial.confidence +
       scores.strategic.confidence +
@@ -944,7 +944,7 @@ export class SimilarityScoringService {
 
   private async generateScoringExplanations(
     context: ScoringContext,
-    scores: M&ABenchmarkScores
+    scores: MnABenchmarkScores
   ): Promise<ScoringExplanation[]> {
     // Generate detailed explanations for each scoring category
     const explanations: ScoringExplanation[] = [

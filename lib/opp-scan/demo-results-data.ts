@@ -315,7 +315,7 @@ export class DemoResultsDataGenerator {
         },
         regulatory_environment: 'stable',
         upcoming_regulations: ['PSD3', 'Digital Services Act'],
-        data_sources: { sources: ['PwC FinTech Survey', 'KPMG M&A Data', 'FCA Statistics'] },
+        data_sources: { sources: ['PwC FinTech Survey', 'KPMG MnA Data', 'FCA Statistics'] },
         analysis_date: new Date().toISOString().split('T')[0],
         confidence_level: 0.87,
         created_at: new Date().toISOString(),

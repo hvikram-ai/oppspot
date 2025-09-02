@@ -1,6 +1,6 @@
 /**
  * Similar Companies Export API Routes
- * Export similarity analysis results in various formats for M&A presentations
+ * Export similarity analysis results in various formats for MnA presentations
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -322,7 +322,7 @@ async function generatePDFExport(
       export_type: 'executive_summary',
       export_format: 'pdf',
       export_title: `Similar Companies Analysis - ${exportData.analysis.targetCompany}`,
-      export_description: 'Executive summary of similar company analysis for M&A evaluation',
+      export_description: 'Executive summary of similar company analysis for MnA evaluation',
       export_content: exportData,
       generation_status: 'pending',
       template_version: 'v1.0'
@@ -359,8 +359,8 @@ async function generatePowerPointExport(
       user_id: userId,
       export_type: 'presentation_slides',
       export_format: 'pptx',
-      export_title: `M&A Similar Companies Presentation - ${exportData.analysis.targetCompany}`,
-      export_description: 'PowerPoint presentation for M&A committee review',
+      export_title: `MnA Similar Companies Presentation - ${exportData.analysis.targetCompany}`,
+      export_description: 'PowerPoint presentation for MnA committee review',
       export_content: exportData,
       generation_status: 'pending',
       template_version: 'v1.0'

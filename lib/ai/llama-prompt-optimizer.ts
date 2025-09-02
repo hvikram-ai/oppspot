@@ -151,21 +151,21 @@ Write in British English and focus on what makes each business distinctive and v
   }
 
   /**
-   * Optimize M&A analysis for Llama
+   * Optimize MnA analysis for Llama
    */
   static optimizeMergerAnalysis(targetCompany: any, similarCompany: any, scores: any): OptimizedPrompt {
-    const systemPrompt = `You are a senior M&A analyst specializing in business similarity analysis. Provide comprehensive, actionable insights for merger and acquisition decisions.
+    const systemPrompt = `You are a senior MnA analyst specializing in business similarity analysis. Provide comprehensive, actionable insights for merger and acquisition decisions.
 
 Your analysis should:
 - Focus on strategic alignment and synergy opportunities
 - Assess financial compatibility and operational fit
 - Identify integration challenges and mitigation strategies
 - Provide clear rationale for similarity scores
-- Use professional M&A terminology
+- Use professional MnA terminology
 
 Return analysis in JSON format with the specified structure.`
 
-    const userPrompt = `Analyze the M&A compatibility between these companies:
+    const userPrompt = `Analyze the MnA compatibility between these companies:
 
 TARGET COMPANY:
 ${JSON.stringify(targetCompany, null, 2)}
@@ -176,7 +176,7 @@ ${JSON.stringify(similarCompany, null, 2)}
 SIMILARITY SCORES:
 ${JSON.stringify(scores, null, 2)}
 
-Provide detailed M&A analysis focusing on:
+Provide detailed MnA analysis focusing on:
 1. Strategic alignment opportunities
 2. Financial synergies potential
 3. Operational integration challenges
@@ -332,12 +332,12 @@ export const LlamaPromptTemplates = {
 
 Provide structured, actionable insights based on the available data.`,
 
-  similarityExplanation: `You are a senior M&A analyst explaining company similarity for acquisition decisions. Your explanation should:
+  similarityExplanation: `You are a senior MnA analyst explaining company similarity for acquisition decisions. Your explanation should:
 - Clearly articulate why companies are similar
 - Highlight strategic synergies and opportunities
 - Identify potential integration challenges
 - Provide confidence reasoning
-- Use professional M&A terminology
+- Use professional MnA terminology
 
 Focus on actionable insights for investment decisions.`,
 

@@ -15,7 +15,7 @@ export interface SimilarityEntity {
   readonly similarCompanies: readonly SimilarCompanyMatch[]
   readonly analysisConfiguration: SimilarityConfiguration
   readonly overallSummary: SimilarityAnalysisSummary
-  readonly mnaInsights: M&AInsights
+  readonly mnaInsights: MnAInsights
   readonly generatedAt: Date
   readonly userId: string
   readonly orgId?: string
@@ -28,7 +28,7 @@ export interface SimilarCompanyMatch {
   readonly company: CompanyEntity
   readonly overallScore: number
   readonly confidence: number
-  readonly benchmarkScores: M&ABenchmarkScores
+  readonly benchmarkScores: MnABenchmarkScores
   readonly explanation: SimilarityExplanation
   readonly riskFactors: readonly RiskFactor[]
   readonly opportunities: readonly OpportunityArea[]
@@ -38,7 +38,7 @@ export interface SimilarCompanyMatch {
 
 export interface SimilarityConfiguration {
   readonly analysisDepth: SimilarityDepth
-  readonly parameterWeights: M&AParameterWeights
+  readonly parameterWeights: MnAParameterWeights
   readonly filterCriteria: SimilarityFilterCriteria
   readonly maxResults: number
   readonly includeExplanations: boolean
@@ -62,7 +62,7 @@ export interface SimilarityFilterCriteria {
   readonly maxFoundingYear?: number
 }
 
-export interface M&AParameterWeights {
+export interface MnAParameterWeights {
   readonly financial: number           // 30%
   readonly strategic: number          // 25%
   readonly operational: number        // 20%
@@ -71,24 +71,24 @@ export interface M&AParameterWeights {
 }
 
 // ==========================================
-// M&A BENCHMARK ENTITIES
+// MnA BENCHMARK ENTITIES
 // ==========================================
 
-export interface M&ABenchmarkEntity {
+export interface MnABenchmarkEntity {
   readonly id: string
   readonly companyId: string
-  readonly benchmarkScores: M&ABenchmarkScores
-  readonly financialProfile: M&AFinancialProfile
-  readonly strategicProfile: M&AStrategicProfile
-  readonly operationalProfile: M&AOperationalProfile
-  readonly marketProfile: M&AMarketProfile
-  readonly riskProfile: M&ARiskProfile
+  readonly benchmarkScores: MnABenchmarkScores
+  readonly financialProfile: MnAFinancialProfile
+  readonly strategicProfile: MnAStrategicProfile
+  readonly operationalProfile: MnAOperationalProfile
+  readonly marketProfile: MnAMarketProfile
+  readonly riskProfile: MnARiskProfile
   readonly lastUpdated: Date
   readonly dataQuality: BenchmarkDataQuality
   readonly sourceReliability: number
 }
 
-export interface M&ABenchmarkScores {
+export interface MnABenchmarkScores {
   readonly financial: ParameterScore
   readonly strategic: ParameterScore
   readonly operational: ParameterScore
@@ -104,7 +104,7 @@ export interface ParameterScore {
   readonly dataPoints: number
 }
 
-export interface M&AFinancialProfile {
+export interface MnAFinancialProfile {
   readonly revenueRange: RevenueRange
   readonly growthTrajectory: GrowthTrajectory
   readonly profitabilityMetrics: ProfitabilityMetrics
@@ -113,7 +113,7 @@ export interface M&AFinancialProfile {
   readonly cashFlowPatterns: CashFlowPatterns
 }
 
-export interface M&AStrategicProfile {
+export interface MnAStrategicProfile {
   readonly marketPosition: MarketPositioning
   readonly customerBase: CustomerBaseProfile
   readonly geographicPresence: GeographicProfile
@@ -123,7 +123,7 @@ export interface M&AStrategicProfile {
   readonly competitiveDifferentiation: readonly string[]
 }
 
-export interface M&AOperationalProfile {
+export interface MnAOperationalProfile {
   readonly businessModel: BusinessModelProfile
   readonly operationalScale: OperationalScale
   readonly regulatoryComplexity: RegulatoryProfile
@@ -132,7 +132,7 @@ export interface M&AOperationalProfile {
   readonly operationalEfficiency: EfficiencyMetrics
 }
 
-export interface M&AMarketProfile {
+export interface MnAMarketProfile {
   readonly industryVertical: IndustryProfile
   readonly marketMaturity: MarketMaturity
   readonly competitiveIntensity: CompetitiveIntensity
@@ -141,7 +141,7 @@ export interface M&AMarketProfile {
   readonly growthPotential: GrowthPotentialProfile
 }
 
-export interface M&ARiskProfile {
+export interface MnARiskProfile {
   readonly regulatoryRisk: RiskAssessment
   readonly integrationComplexity: IntegrationRisk
   readonly esgFactors: ESGProfile
@@ -279,7 +279,7 @@ export interface SimilarityExplanation {
   readonly dataQualityNote?: string
 }
 
-export interface M&AInsights {
+export interface MnAInsights {
   readonly executiveSummary: string
   readonly keyOpportunities: readonly OpportunityInsight[]
   readonly riskHighlights: readonly RiskInsight[]
@@ -337,11 +337,11 @@ export interface ISimilarityRepository {
   cleanupExpired(): Promise<number>
 }
 
-export interface IM&ABenchmarkRepository {
-  save(benchmark: M&ABenchmarkEntity): Promise<void>
-  findByCompanyId(companyId: string): Promise<M&ABenchmarkEntity | null>
-  findBatch(companyIds: string[]): Promise<M&ABenchmarkEntity[]>
-  update(id: string, updates: Partial<M&ABenchmarkEntity>): Promise<void>
+export interface IMnABenchmarkRepository {
+  save(benchmark: MnABenchmarkEntity): Promise<void>
+  findByCompanyId(companyId: string): Promise<MnABenchmarkEntity | null>
+  findBatch(companyIds: string[]): Promise<MnABenchmarkEntity[]>
+  update(id: string, updates: Partial<MnABenchmarkEntity>): Promise<void>
   delete(id: string): Promise<void>
 }
 
@@ -366,20 +366,20 @@ export interface ISimilarityAnalysisService {
   calculateBenchmarkScores(
     targetCompany: CompanyEntity,
     candidate: CompanyEntity
-  ): Promise<M&ABenchmarkScores>
+  ): Promise<MnABenchmarkScores>
   
   generateExplanation(
     targetCompany: CompanyEntity,
     candidate: CompanyEntity,
-    scores: M&ABenchmarkScores
+    scores: MnABenchmarkScores
   ): Promise<SimilarityExplanation>
 }
 
-export interface IM&AInsightService {
+export interface IMnAInsightService {
   generateInsights(
     targetCompany: CompanyEntity,
     matches: SimilarCompanyMatch[]
-  ): Promise<M&AInsights>
+  ): Promise<MnAInsights>
   
   assessIntegrationRisk(
     acquirer: CompanyEntity,
