@@ -16,6 +16,7 @@ import {
   Download, 
   Eye, 
   Camera,
+  Printer,
   TrendingUp, 
   TrendingDown,
   Building2,
@@ -130,6 +131,7 @@ function SimilarCompanyDetailContent() {
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
   const [exportLoading, setExportLoading] = useState(false)
   const [pageExportLoading, setPageExportLoading] = useState(false)
+  const [printLoading, setPrintLoading] = useState(false)
   const [filterCriteria, setFilterCriteria] = useState({
     minScore: 0,
     maxScore: 100,
@@ -614,6 +616,160 @@ function SimilarCompanyDetailContent() {
     }
   }
 
+  const handlePrint = async () => {
+    if (!analysis || printLoading) return
+
+    setPrintLoading(true)
+    toast.loading('Preparing page for printing...', { id: 'print' })
+
+    try {
+      // Add print-specific styles
+      const printStyles = document.createElement('style')
+      printStyles.id = 'print-styles'
+      printStyles.innerHTML = `
+        @media print {
+          /* Hide navigation and non-essential elements */
+          nav,
+          .navbar,
+          .no-print,
+          .header-actions,
+          button:not(.score-button),
+          .toast-container {
+            display: none !important;
+          }
+
+          /* Ensure the page content fills the print area */
+          body {
+            margin: 0;
+            padding: 20px;
+            font-size: 12px;
+            line-height: 1.4;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+
+          /* Main container adjustments */
+          .min-h-screen {
+            min-height: auto;
+          }
+
+          .container {
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          /* Header styling for print */
+          .bg-gradient-to-r {
+            background: #1e40af !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+          }
+
+          /* Card and content styling */
+          .bg-background {
+            background: white !important;
+          }
+
+          .border {
+            border: 1px solid #e5e7eb !important;
+          }
+
+          /* Ensure charts and tables are visible */
+          .analysis-container,
+          .company-grid,
+          .metrics-section,
+          .similarity-network,
+          .radar-chart {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 15px;
+          }
+
+          /* Company cards */
+          .company-card {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 15px;
+            border: 1px solid #d1d5db;
+          }
+
+          /* Headers */
+          h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+
+          h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+          }
+
+          h3 {
+            font-size: 16px;
+            margin-bottom: 6px;
+            page-break-after: avoid;
+          }
+
+          /* Tables */
+          table {
+            page-break-inside: auto;
+          }
+
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+
+          /* Tabs - show all content */
+          .tabs-content {
+            display: block !important;
+          }
+
+          /* Ensure backgrounds and colors print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+
+          /* Page breaks */
+          .page-break {
+            page-break-before: always;
+          }
+
+          .avoid-break {
+            page-break-inside: avoid;
+          }
+        }
+      `
+
+      document.head.appendChild(printStyles)
+
+      // Brief delay to ensure styles are applied
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Trigger the print dialog
+      window.print()
+
+      // Clean up styles after printing
+      setTimeout(() => {
+        const existingStyles = document.getElementById('print-styles')
+        if (existingStyles) {
+          existingStyles.remove()
+        }
+      }, 1000)
+
+      toast.success('Print dialog opened successfully!', { id: 'print' })
+
+    } catch (error) {
+      console.error('Print error:', error)
+      toast.error('Failed to prepare page for printing', { id: 'print' })
+    } finally {
+      setPrintLoading(false)
+    }
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 85) return 'text-green-600'
     if (score >= 70) return 'text-blue-600'
@@ -756,6 +912,21 @@ function SimilarCompanyDetailContent() {
                     <Camera className="h-4 w-4 mr-2" />
                   )}
                   {pageExportLoading ? 'Capturing...' : 'Export Page'}
+                </Button>
+              </HelpTooltip>
+              <HelpTooltip content="Open your browser's print dialog with optimized formatting for professional printing of this analysis page with all charts, data, and visual elements.">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handlePrint}
+                  disabled={exportLoading || pageExportLoading || printLoading}
+                >
+                  {printLoading ? (
+                    <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Printer className="h-4 w-4 mr-2" />
+                  )}
+                  {printLoading ? 'Preparing...' : 'Print'}
                 </Button>
               </HelpTooltip>
             </div>
