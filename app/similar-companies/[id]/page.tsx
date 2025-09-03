@@ -44,6 +44,8 @@ import { SimilarityMatrix } from '@/components/similar-companies/similarity-matr
 import { ScoreConfidenceScatter } from '@/components/similar-companies/score-confidence-scatter'
 import { MultiDimensionalRadar } from '@/components/similar-companies/multi-dimensional-radar'
 import { SimilarityNetwork } from '@/components/similar-companies/similarity-network'
+import { ScoringWeightsConfigurator, type ScoringWeights, type ScoringStrategy } from '@/components/similar-companies/scoring-weights-configurator'
+import { Similarity3DSpace } from '@/components/similar-companies/similarity-3d-space'
 
 interface SimilarityAnalysis {
   id: string
@@ -138,6 +140,17 @@ function SimilarCompanyDetailContent() {
     confidenceLevel: 'all',
     scoreCategory: 'all'
   })
+  
+  const [scoringWeights, setScoringWeights] = useState<ScoringWeights>({
+    financial: 30,
+    strategic: 25,
+    operational: 20,
+    market: 15,
+    risk: 10,
+    esg: 0
+  })
+  
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
 
   useEffect(() => {
     const getUser = async () => {
@@ -898,6 +911,22 @@ function SimilarCompanyDetailContent() {
     }
   }
 
+  const handleWeightsChange = (weights: ScoringWeights) => {
+    setScoringWeights(weights)
+    // TODO: Recalculate similarity scores based on new weights
+    toast.success('Scoring weights updated successfully')
+  }
+
+  const handleStrategySelect = (strategy: ScoringStrategy) => {
+    setScoringWeights(strategy.weights)
+    toast.success(`Applied ${strategy.name} strategy`)
+  }
+
+  const handleCompanySelect = (company: any) => {
+    setSelectedCompany(company.id)
+    setSelectedMatch(company.id)
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 85) return 'text-green-600'
     if (score >= 70) return 'text-blue-600'
@@ -1104,10 +1133,18 @@ function SimilarCompanyDetailContent() {
 
       <div className="container mx-auto px-4 py-8" data-testid="analysis-results">
         <Tabs defaultValue="matches" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="matches" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Similar Companies
+            </TabsTrigger>
+            <TabsTrigger value="scoring" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Scoring Weights
+            </TabsTrigger>
+            <TabsTrigger value="3d-space" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              3D Space
             </TabsTrigger>
             <TabsTrigger value="visualizations" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -1361,6 +1398,34 @@ function SimilarCompanyDetailContent() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="scoring" className="space-y-6">
+            {/* Scoring Weights Configuration */}
+            <ScoringWeightsConfigurator
+              initialWeights={scoringWeights}
+              onWeightsChange={handleWeightsChange}
+              onStrategySelect={handleStrategySelect}
+              disabled={false}
+            />
+          </TabsContent>
+
+          <TabsContent value="3d-space" className="space-y-6">
+            {/* 3D Similarity Space Visualization */}
+            <Similarity3DSpace
+              matches={analysis?.similar_company_matches || []}
+              targetCompany={analysis?.target_company_name || ''}
+              onCompanySelect={(company) => {
+                setSelectedCompany(company.id)
+                setSelectedMatch(company.id)
+                toast.info(`Selected ${company.company_name}`)
+              }}
+              dimensions={{
+                x: 'financial_score',
+                y: 'strategic_score', 
+                z: 'operational_score'
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="visualizations" className="space-y-6">
