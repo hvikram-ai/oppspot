@@ -46,6 +46,7 @@ import { MultiDimensionalRadar } from '@/components/similar-companies/multi-dime
 import { SimilarityNetwork } from '@/components/similar-companies/similarity-network'
 import { ScoringWeightsConfigurator, type ScoringWeights, type ScoringStrategy } from '@/components/similar-companies/scoring-weights-configurator'
 import { Similarity3DSpace } from '@/components/similar-companies/similarity-3d-space'
+import { TargetProfileDashboard } from '@/components/target-intelligence/target-profile-dashboard'
 
 interface SimilarityAnalysis {
   id: string
@@ -1757,53 +1758,23 @@ function SimilarCompanyDetailContent() {
           </TabsContent>
 
           <TabsContent value="target" className="space-y-6">
-            {/* Target Company Profile */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  {analysis.target_company_name}
-                </CardTitle>
-                <CardDescription>Target company profile used for similarity analysis</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground">Country</div>
-                    <div className="text-lg">{analysis.target_company_data?.country || 'N/A'}</div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground">Industry</div>
-                    <div className="text-lg">{analysis.target_company_data?.industry || 'N/A'}</div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground">Founded</div>
-                    <div className="text-lg">{analysis.target_company_data?.founded || 'N/A'}</div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground">Employees</div>
-                    <div className="text-lg">{analysis.target_company_data?.employees || 'N/A'}</div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground">Revenue</div>
-                    <div className="text-lg">{analysis.target_company_data?.revenue || 'N/A'}</div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground">Analysis Date</div>
-                    <div className="text-lg">{formatDate(analysis.created_at)}</div>
-                  </div>
-                </div>
-                
-                {analysis.target_company_data?.description && (
-                  <div className="mt-6">
-                    <div className="text-sm font-medium text-muted-foreground mb-2">Description</div>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {analysis.target_company_data.description}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Enhanced Target Intelligence Profile */}
+            <TargetProfileDashboard
+              companyName={analysis.target_company_name}
+              existingData={analysis.target_company_data}
+              onDataUpdate={(profile) => {
+                // Update analysis data when new profile is generated
+                setAnalysis(prev => prev ? {
+                  ...prev,
+                  target_company_data: {
+                    ...prev.target_company_data,
+                    enhanced_profile: profile
+                  }
+                } : null)
+                toast.success('Target profile enhanced with AI intelligence')
+              }}
+              className="w-full"
+            />
           </TabsContent>
         </Tabs>
       </div>
