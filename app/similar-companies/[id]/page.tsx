@@ -616,156 +616,284 @@ function SimilarCompanyDetailContent() {
     }
   }
 
-  const handlePrint = async () => {
+  const handlePrint = () => {
     if (!analysis || printLoading) return
 
     setPrintLoading(true)
-    toast.loading('Preparing page for printing...', { id: 'print' })
+    toast.loading('Opening print dialog...', { id: 'print' })
 
     try {
-      // Add print-specific styles
+      // Clean up any existing print styles first
+      const existingStyles = document.getElementById('print-styles')
+      if (existingStyles) {
+        existingStyles.remove()
+      }
+
+      // Add comprehensive print styles
       const printStyles = document.createElement('style')
       printStyles.id = 'print-styles'
       printStyles.innerHTML = `
         @media print {
-          /* Hide navigation and non-essential elements */
+          @page {
+            margin: 0.5in;
+            size: A4;
+          }
+
+          /* Reset and base styling */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          body {
+            font-size: 11px !important;
+            line-height: 1.3 !important;
+            color: #000 !important;
+            background: white !important;
+          }
+
+          /* Hide unwanted elements */
           nav,
           .navbar,
+          header nav,
           .no-print,
-          .header-actions,
-          button:not(.score-button),
-          .toast-container {
+          button,
+          .toast-container,
+          .fixed,
+          .sticky {
             display: none !important;
           }
 
-          /* Ensure the page content fills the print area */
-          body {
-            margin: 0;
-            padding: 20px;
-            font-size: 12px;
-            line-height: 1.4;
-            -webkit-print-color-adjust: exact !important;
-            color-adjust: exact !important;
+          /* Show main content */
+          main,
+          .main-content,
+          [data-testid="analysis-results"] {
+            display: block !important;
+            position: static !important;
           }
 
-          /* Main container adjustments */
+          /* Container adjustments */
           .min-h-screen {
-            min-height: auto;
+            min-height: auto !important;
           }
 
           .container {
-            max-width: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
           }
 
-          /* Header styling for print */
+          /* Header section */
           .bg-gradient-to-r {
             background: #1e40af !important;
             color: white !important;
-            -webkit-print-color-adjust: exact !important;
+            padding: 15px !important;
+            margin-bottom: 15px !important;
           }
 
-          /* Card and content styling */
-          .bg-background {
+          /* Cards and content */
+          .bg-background,
+          .bg-white {
             background: white !important;
           }
 
-          .border {
-            border: 1px solid #e5e7eb !important;
+          .border,
+          .border-gray-200,
+          .border-gray-300 {
+            border: 1px solid #d1d5db !important;
           }
 
-          /* Ensure charts and tables are visible */
-          .analysis-container,
-          .company-grid,
-          .metrics-section,
-          .similarity-network,
-          .radar-chart {
-            page-break-inside: avoid;
-            break-inside: avoid;
-            margin-bottom: 15px;
-          }
-
-          /* Company cards */
-          .company-card {
-            page-break-inside: avoid;
-            break-inside: avoid;
-            margin-bottom: 15px;
-            border: 1px solid #d1d5db;
-          }
-
-          /* Headers */
+          /* Typography */
           h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 20px !important;
+            font-weight: bold !important;
+            margin: 10px 0 !important;
+            color: inherit !important;
           }
 
           h2 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            page-break-after: avoid;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            margin: 8px 0 !important;
+            page-break-after: avoid !important;
           }
 
           h3 {
-            font-size: 16px;
-            margin-bottom: 6px;
-            page-break-after: avoid;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            margin: 6px 0 !important;
+            page-break-after: avoid !important;
+          }
+
+          p, div {
+            margin: 2px 0 !important;
+          }
+
+          /* Grid layouts */
+          .grid {
+            display: grid !important;
+            gap: 10px !important;
+          }
+
+          .grid-cols-1 { grid-template-columns: 1fr !important; }
+          .grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+          .grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
+          .grid-cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr !important; }
+          .md\\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+          .md\\:grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
+          .md\\:grid-cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr !important; }
+
+          /* Cards */
+          .rounded,
+          .rounded-lg,
+          .rounded-md {
+            border-radius: 4px !important;
+          }
+
+          .p-4, .p-6 {
+            padding: 8px !important;
+          }
+
+          .mb-4, .mb-6, .mb-8 {
+            margin-bottom: 10px !important;
+          }
+
+          /* Flex layouts */
+          .flex {
+            display: flex !important;
+          }
+
+          .items-center {
+            align-items: center !important;
+          }
+
+          .justify-between {
+            justify-content: space-between !important;
+          }
+
+          /* Tabs content - show all tabs */
+          [role="tabpanel"] {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+          }
+
+          .tabs-content > div,
+          .tabs-content [data-state="active"],
+          .tabs-content [data-state="inactive"] {
+            display: block !important;
+          }
+
+          /* Show all tab panels */
+          [data-state="inactive"] {
+            display: block !important;
+          }
+
+          /* Page breaks */
+          .page-break-before {
+            page-break-before: always !important;
+          }
+
+          .page-break-inside-avoid {
+            page-break-inside: avoid !important;
+          }
+
+          .break-inside-avoid {
+            break-inside: avoid !important;
           }
 
           /* Tables */
           table {
-            page-break-inside: auto;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto !important;
+          }
+
+          thead {
+            display: table-header-group !important;
           }
 
           tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
           }
 
-          /* Tabs - show all content */
-          .tabs-content {
+          td, th {
+            padding: 4px !important;
+            border: 1px solid #ddd !important;
+            font-size: 10px !important;
+          }
+
+          /* Ensure content is visible */
+          .hidden {
             display: block !important;
           }
 
-          /* Ensure backgrounds and colors print */
+          .opacity-0 {
+            opacity: 1 !important;
+          }
+
+          .invisible {
+            visibility: visible !important;
+          }
+
+          /* Spacing improvements */
+          .space-y-4 > * + * {
+            margin-top: 8px !important;
+          }
+
+          .space-y-6 > * + * {
+            margin-top: 12px !important;
+          }
+
+          .gap-4 {
+            gap: 8px !important;
+          }
+
+          .gap-6 {
+            gap: 12px !important;
+          }
+
+          /* Progress bars and UI elements */
+          .progress,
+          .badge,
+          .score-button {
+            display: inline-block !important;
+          }
+
+          /* Remove any transform animations that might hide content */
           * {
-            -webkit-print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
-
-          /* Page breaks */
-          .page-break {
-            page-break-before: always;
-          }
-
-          .avoid-break {
-            page-break-inside: avoid;
+            transform: none !important;
+            animation: none !important;
+            transition: none !important;
           }
         }
       `
 
       document.head.appendChild(printStyles)
 
-      // Brief delay to ensure styles are applied
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Set loading to false before opening print dialog
+      setPrintLoading(false)
+      toast.dismiss('print')
 
-      // Trigger the print dialog
-      window.print()
-
-      // Clean up styles after printing
+      // Small delay then open print dialog
       setTimeout(() => {
-        const existingStyles = document.getElementById('print-styles')
-        if (existingStyles) {
-          existingStyles.remove()
-        }
-      }, 1000)
+        window.print()
+      }, 100)
 
-      toast.success('Print dialog opened successfully!', { id: 'print' })
+      // Clean up styles after a delay
+      setTimeout(() => {
+        const styles = document.getElementById('print-styles')
+        if (styles) {
+          styles.remove()
+        }
+      }, 5000)
 
     } catch (error) {
       console.error('Print error:', error)
-      toast.error('Failed to prepare page for printing', { id: 'print' })
-    } finally {
+      toast.error('Failed to open print dialog', { id: 'print' })
       setPrintLoading(false)
     }
   }
