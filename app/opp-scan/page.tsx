@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { HelpTooltip } from '@/components/ui/help-tooltip'
 import { 
   Search, 
   Target, 
@@ -198,76 +199,88 @@ function OppScanPageContent() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/similar-companies">
-              <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
-                <Target className="h-4 w-4 mr-2" />
-                Similar Companies
-              </Button>
-            </Link>
-            <Link href="/opp-scan/new">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                <Plus className="h-4 w-4 mr-2" />
-                New Scan
-              </Button>
-            </Link>
+            <HelpTooltip content="Analyze and compare similar companies using AI-powered matching algorithms to identify strategic opportunities, competitors, and potential acquisition targets.">
+              <Link href="/similar-companies">
+                <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                  <Target className="h-4 w-4 mr-2" />
+                  Similar Companies
+                </Button>
+              </Link>
+            </HelpTooltip>
+            <HelpTooltip content="Create a new comprehensive acquisition intelligence scan to identify, analyze, and evaluate potential M&A targets with financial modeling and strategic fit assessment.">
+              <Link href="/opp-scan/new">
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Scan
+                </Button>
+              </Link>
+            </HelpTooltip>
           </div>
         </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Search className="h-8 w-8 text-blue-500" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Total Scans</p>
-                  <p className="text-2xl font-bold">{scans.length}</p>
+          <HelpTooltip content="Total number of acquisition intelligence scans created in your workspace, including completed, active, and archived scans across all time periods.">
+            <Card className="cursor-help">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Search className="h-8 w-8 text-blue-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Total Scans</p>
+                    <p className="text-2xl font-bold">{scans.length}</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </HelpTooltip>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Target className="h-8 w-8 text-green-500" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Active Scans</p>
-                  <p className="text-2xl font-bold">
-                    {scans.filter(s => ['scanning', 'analyzing'].includes(s.status)).length}
-                  </p>
+          <HelpTooltip content="Scans currently in progress, actively identifying and analyzing potential acquisition targets with real-time data collection and analysis.">
+            <Card className="cursor-help">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Target className="h-8 w-8 text-green-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Active Scans</p>
+                    <p className="text-2xl font-bold">
+                      {scans.filter(s => ['scanning', 'analyzing'].includes(s.status)).length}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </HelpTooltip>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <TrendingUp className="h-8 w-8 text-purple-500" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Targets Identified</p>
-                  <p className="text-2xl font-bold">
-                    {scans.reduce((sum, scan) => sum + scan.targets_identified, 0)}
-                  </p>
+          <HelpTooltip content="Total number of potential acquisition targets discovered across all your scans, including companies that meet your investment criteria and strategic requirements.">
+            <Card className="cursor-help">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <TrendingUp className="h-8 w-8 text-purple-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Targets Identified</p>
+                    <p className="text-2xl font-bold">
+                      {scans.reduce((sum, scan) => sum + scan.targets_identified, 0)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </HelpTooltip>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-green-500" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Completed Scans</p>
-                  <p className="text-2xl font-bold">
-                    {scans.filter(s => s.status === 'completed').length}
-                  </p>
+          <HelpTooltip content="Fully completed scans with comprehensive target analysis, financial modeling, risk assessment, and strategic recommendations ready for executive review.">
+            <Card className="cursor-help">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-muted-foreground">Completed Scans</p>
+                    <p className="text-2xl font-bold">
+                      {scans.filter(s => s.status === 'completed').length}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </HelpTooltip>
         </div>
 
         {/* Scans List */}

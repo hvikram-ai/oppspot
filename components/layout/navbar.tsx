@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { HelpTooltip } from '@/components/ui/help-tooltip'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
@@ -64,11 +65,36 @@ export function Navbar() {
   }
 
   const navItems = [
-    { href: '/search', label: 'Search', icon: Search },
-    { href: '/map', label: 'Map', icon: Map },
-    { href: '/updates', label: 'Updates', icon: Newspaper },
-    { href: '/lists', label: 'Lists', icon: Building2 },
-    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { 
+      href: '/search', 
+      label: 'Search', 
+      icon: Search,
+      tooltip: 'Search and discover UK & Ireland businesses using advanced filters, location-based queries, and AI-powered matching algorithms.'
+    },
+    { 
+      href: '/map', 
+      label: 'Map', 
+      icon: Map,
+      tooltip: 'Visualize business locations on an interactive map with clustering, territory analysis, and demographic insights.'
+    },
+    { 
+      href: '/updates', 
+      label: 'Updates', 
+      icon: Newspaper,
+      tooltip: 'Stay informed with the latest business news, market updates, acquisition opportunities, and industry intelligence.'
+    },
+    { 
+      href: '/lists', 
+      label: 'Lists', 
+      icon: Building2,
+      tooltip: 'Create, manage, and organize custom prospect lists with tags, notes, and follow-up tracking for your sales pipeline.'
+    },
+    { 
+      href: '/analytics', 
+      label: 'Analytics', 
+      icon: BarChart3,
+      tooltip: 'Access performance metrics, conversion analytics, ROI insights, and detailed reports to optimize your prospecting strategy.'
+    },
   ]
 
   return (
@@ -90,12 +116,19 @@ export function Navbar() {
             {user && navItems.map((item) => {
               const Icon = item.icon
               return (
-                <Link key={item.href} href={item.href}>
-                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Button>
-                </Link>
+                <HelpTooltip 
+                  key={item.href} 
+                  content={item.tooltip}
+                  side="bottom"
+                  delayDuration={300}
+                >
+                  <Link href={item.href}>
+                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Button>
+                  </Link>
+                </HelpTooltip>
               )
             })}
           </div>
@@ -183,19 +216,26 @@ export function Navbar() {
                 {navItems.map((item) => {
                   const Icon = item.icon
                   return (
-                    <Link
+                    <HelpTooltip 
                       key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      content={item.tooltip}
+                      side="right"
+                      delayDuration={300}
                     >
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start"
+                      <Link
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block"
                       >
-                        <Icon className="mr-2 h-4 w-4" />
-                        {item.label}
-                      </Button>
-                    </Link>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                        >
+                          <Icon className="mr-2 h-4 w-4" />
+                          {item.label}
+                        </Button>
+                      </Link>
+                    </HelpTooltip>
                   )
                 })}
               </div>

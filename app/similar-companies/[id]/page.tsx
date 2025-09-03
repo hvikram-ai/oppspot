@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { HelpTooltip } from '@/components/ui/help-tooltip'
 import { 
   ArrowLeft, 
   Download, 
@@ -715,41 +716,48 @@ function SimilarCompanyDetailContent() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="secondary" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-              <Button variant="secondary" size="sm">
-                <Bookmark className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                onClick={handleExportPDF}
-                disabled={exportLoading || pageExportLoading}
-              >
-                {exportLoading ? (
-                  <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                {exportLoading ? 'Generating...' : 'Export Report'}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleExportPageAsPDF}
-                disabled={exportLoading || pageExportLoading}
-                title="Export this page exactly as you see it as a PDF"
-              >
-                {pageExportLoading ? (
-                  <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Camera className="h-4 w-4 mr-2" />
-                )}
-                {pageExportLoading ? 'Capturing...' : 'Export Page'}
-              </Button>
+              <HelpTooltip content="Share this similarity analysis via email, generate a shareable link, or integrate with your CRM system for collaborative decision making.">
+                <Button variant="secondary" size="sm">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </HelpTooltip>
+              <HelpTooltip content="Save this analysis to your workspace for future reference, add to custom lists, or bookmark for quick access in your dashboard.">
+                <Button variant="secondary" size="sm">
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Save
+                </Button>
+              </HelpTooltip>
+              <HelpTooltip content="Generate a professionally formatted PDF report with executive summary, detailed company analysis, scoring breakdowns, and oppSpot branding for presentations and sharing.">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={handleExportPDF}
+                  disabled={exportLoading || pageExportLoading}
+                >
+                  {exportLoading ? (
+                    <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  {exportLoading ? 'Generating...' : 'Export Report'}
+                </Button>
+              </HelpTooltip>
+              <HelpTooltip content="Capture this analysis page exactly as you see it and export as PDF for printing, email sharing, or archiving. Includes all visual elements and interactive content.">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleExportPageAsPDF}
+                  disabled={exportLoading || pageExportLoading}
+                >
+                  {pageExportLoading ? (
+                    <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4 mr-2" />
+                  )}
+                  {pageExportLoading ? 'Capturing...' : 'Export Page'}
+                </Button>
+              </HelpTooltip>
             </div>
           </div>
 
