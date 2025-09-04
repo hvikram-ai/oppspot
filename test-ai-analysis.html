@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Similarity Analysis Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .test-form {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #334155;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 30px;
+        }
+        .loading {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            color: #92400e;
+        }
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            color: #991b1b;
+        }
+        .analysis-result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .competitor {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .competitor-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        .similarity-score {
+            font-size: 18px;
+            font-weight: 700;
+            color: #059669;
+            float: right;
+        }
+        .reasoning {
+            color: #64748b;
+            font-size: 14px;
+        }
+        .demo-note {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 AI-Powered Similarity Analysis Test</h1>
+        <p>This test validates that our similarity analysis now uses intelligent AI classification instead of generic pattern matching.</p>
+        
+        <div class="demo-note">
+            <strong>🎯 Test Goal:</strong> Companies like "dimensions.ai" should now get intelligent research analytics competitors instead of generic "business services" results.
+        </div>
+
+        <div class="test-form">
+            <h3>Test AI Analysis</h3>
+            <div class="form-group">
+                <label for="company-name">Company Name:</label>
+                <input 
+                    type="text" 
+                    id="company-name" 
+                    placeholder="e.g., dimensions.ai, stripe, slack, salesforce"
+                    value="dimensions.ai"
+                >
+            </div>
+            <button onclick="runAnalysis()" id="analyze-btn">🧠 Run AI Analysis</button>
+        </div>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        async function runAnalysis() {
+            const companyName = document.getElementById('company-name').value.trim();
+            const resultsDiv = document.getElementById('results');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            
+            if (!companyName) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a company name</div>';
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = '🔄 Analyzing...';
+            resultsDiv.innerHTML = '<div class="loading">🧠 Running AI-powered analysis... This may take 30-60 seconds.</div>';
+
+            try {
+                console.log('🧠 Starting AI analysis for:', companyName);
+                
+                const response = await fetch('/api/intelligent-similarity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target_company_name: companyName,
+                        target_domain: null,
+                        industry_hint: null,
+                        analysis_depth: 'standard',
+                        max_competitors: 8,
+                        include_strategic_insights: true,
+                        include_market_intelligence: true
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('🎯 AI Analysis Result:', result);
+                
+                if (result.status === 'completed' && result.analysis) {
+                    displayResults(result.analysis, companyName);
+                } else if (result.status === 'processing') {
+                    resultsDiv.innerHTML = '<div class="loading">⏳ Analysis is processing in background. Estimated time: ' + result.estimatedCompletionTime + '</div>';
+                } else {
+                    throw new Error('Unexpected response format');
+                }
+
+            } catch (error) {
+                console.error('❌ Analysis failed:', error);
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Analysis Failed:</strong> ${error.message}
+                        <br><br>
+                        <strong>Possible reasons:</strong>
+                        <ul>
+                            <li>Local LLM (Ollama) is not running</li>
+                            <li>Website scraping failed</li>
+                            <li>API endpoint error</li>
+                        </ul>
+                        <br>
+                        <strong>💡 Next Steps:</strong>
+                        <ul>
+                            <li>Check if Ollama is running locally</li>
+                            <li>Try a different company name</li>
+                            <li>Check browser console for details</li>
+                        </ul>
+                    </div>
+                `;
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = '🧠 Run AI Analysis';
+            }
+        }
+
+        function displayResults(analysis, companyName) {
+            const { target_analysis, intelligent_competitors } = analysis;
+            
+            const resultsHTML = `
+                <div class="success">
+                    <strong>✅ AI Analysis Completed Successfully!</strong>
+                    <br>
+                    Found ${intelligent_competitors.length} intelligent competitors for ${companyName}
+                    <br>
+                    Confidence Score: ${target_analysis.confidence_score}%
+                    <br>
+                    LLM Model: ${target_analysis.analysis_metadata.llm_model}
+                </div>
+
+                <div class="analysis-result">
+                    <h3>🎯 Target Company Analysis</h3>
+                    <p><strong>Business Function:</strong> ${target_analysis.business_classification.primary_business_function}</p>
+                    <p><strong>Market Category:</strong> ${target_analysis.business_classification.market_category}</p>
+                    <p><strong>Business Model:</strong> ${target_analysis.business_classification.business_model_type}</p>
+                    <p><strong>Value Proposition:</strong> ${target_analysis.business_classification.value_proposition}</p>
+                </div>
+
+                <div class="analysis-result">
+                    <h3>🏢 Intelligent Competitors (Top ${Math.min(6, intelligent_competitors.length)})</h3>
+                    ${intelligent_competitors.slice(0, 6).map(competitor => `
+                        <div class="competitor">
+                            <div class="competitor-name">${competitor.company_name}</div>
+                            <div class="similarity-score">${competitor.similarity_score}%</div>
+                            <div class="reasoning">${competitor.similarity_reasoning}</div>
+                            <br>
+                            <small style="color: #6b7280;">
+                                Relationship: ${competitor.competitive_relationship} | 
+                                Threat Level: ${competitor.strategic_threat_level}
+                            </small>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            document.getElementById('results').innerHTML = resultsHTML;
+        }
+
+        // Test on page load with dimensions.ai
+        window.addEventListener('load', () => {
+            console.log('🚀 AI Analysis Test Page Loaded');
+            console.log('💡 Ready to test intelligent similarity analysis');
+        });
+    </script>
+</body>
+</html>

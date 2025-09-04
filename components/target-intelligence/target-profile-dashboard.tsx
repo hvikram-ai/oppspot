@@ -689,6 +689,21 @@ export function TargetProfileDashboard({
         </Card>
       )}
 
+      {/* Debug Info */}
+      <Card className="mb-4 border-blue-200 bg-blue-50">
+        <CardContent className="pt-4">
+          <div className="text-sm text-blue-800">
+            <strong>🔧 Target Intelligence Debug:</strong> Component loaded successfully!
+            <br />
+            Profile data: {profile ? '✅ Enhanced profile loaded' : '❌ No enhanced profile'}
+            <br />
+            Existing data: {existingData ? '✅ Basic data available' : '❌ No existing data'}
+            <br />
+            Company: {companyName}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Main Content */}
       {profile ? (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -721,6 +736,63 @@ export function TargetProfileDashboard({
           <TabsContent value="technology">{renderTechnologyTab()}</TabsContent>
           <TabsContent value="esg">{renderESGTab()}</TabsContent>
         </Tabs>
+      ) : existingData ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="rounded-full bg-blue-50 p-3 w-fit mx-auto mb-4">
+                  <Brain className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="font-medium mb-2">🚀 Enhanced Target Intelligence Available</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Generate comprehensive AI-powered company analysis with financial insights, competitive landscape, ESG scoring, and strategic recommendations.
+                </p>
+                <Button onClick={handleEnhanceProfile} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <Brain className="h-4 w-4 mr-2" />
+                  Start AI Analysis
+                </Button>
+              </div>
+              
+              {/* Preview of existing data */}
+              <div className="mt-6 pt-6 border-t">
+                <h4 className="font-medium mb-3">Current Basic Information</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                  {existingData.industry && (
+                    <div>
+                      <span className="text-muted-foreground">Industry:</span>
+                      <div className="font-medium">{existingData.industry}</div>
+                    </div>
+                  )}
+                  {existingData.country && (
+                    <div>
+                      <span className="text-muted-foreground">Country:</span>
+                      <div className="font-medium">{existingData.country}</div>
+                    </div>
+                  )}
+                  {existingData.employees && (
+                    <div>
+                      <span className="text-muted-foreground">Employees:</span>
+                      <div className="font-medium">{existingData.employees}</div>
+                    </div>
+                  )}
+                  {existingData.revenue && (
+                    <div>
+                      <span className="text-muted-foreground">Revenue:</span>
+                      <div className="font-medium">{existingData.revenue}</div>
+                    </div>
+                  )}
+                  {existingData.founded && (
+                    <div>
+                      <span className="text-muted-foreground">Founded:</span>
+                      <div className="font-medium">{existingData.founded}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ) : !loading && (
         <Card>
           <CardContent className="pt-6 text-center">
