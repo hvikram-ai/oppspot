@@ -170,6 +170,7 @@ export async function POST(request: NextRequest) {
     let confidence = 0.85
     let usedModel = 'fallback'
     let platformData: any = null
+    let collectedCitations: any[] = []
     
     // First, try to use Platform Orchestrator for intelligent responses
     try {
