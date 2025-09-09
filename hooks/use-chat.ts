@@ -112,6 +112,7 @@ export function useChat(options: UseChatOptions = {}) {
         body: JSON.stringify({
           message: content,
           session_id: sessionId,
+          conversation_history: messages,
           context: {
             current_page: window.location.pathname,
             current_context: options.context,
