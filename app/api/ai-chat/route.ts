@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SimpleOllamaClient } from '@/lib/ai/simple-ollama'
 import { findBestMatch } from '@/lib/ai/knowledge-base'
+import { PlatformChatOrchestrator } from '@/lib/ai/platform-chat-orchestrator'
 
 // Enable streaming
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Initialize Ollama client
+// Initialize clients
 const ollama = new SimpleOllamaClient()
+const platformOrchestrator = new PlatformChatOrchestrator()
 
 // Enhanced system prompt with examples and better context
 const SYSTEM_PROMPT = `You are OppSpot AI Assistant, specialized in helping users navigate the OppSpot business intelligence platform and find M&A opportunities.
@@ -56,6 +58,45 @@ Guidelines:
 6. Handle follow-ups - When users say "yes" or give company names, provide specific instructions for that case
 
 When you don't know something specific about OppSpot, guide users to relevant features or suggest contacting support.`
+
+// Build prioritized model list from env or sensible defaults
+function getPreferredModels(): string[] {
+  const fromEnv = process.env.OLLAMA_CHAT_MODELS
+  if (fromEnv) {
+    return fromEnv.split(',').map(m => m.trim()).filter(Boolean)
+  }
+  // Defaults align with scripts/setup-ollama.sh
+  return ['mistral:7b', 'llama3.2:3b', 'llama3.2:1b', 'phi:2.7b']
+}
+
+// Convert chat history + KB priming to Ollama message format
+function convertToOllamaMessages(
+  currentMessage: string,
+  history?: Array<{ role: string; content: string }>,
+  kbContext?: string
+) {
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = []
+
+  // Add lightweight KB priming to steer relevance
+  if (kbContext) {
+    messages.push({
+      role: 'system',
+      content: `Relevant OppSpot context to use in your answer:\n${kbContext}`,
+    })
+  }
+
+  // Map previous history
+  if (Array.isArray(history)) {
+    for (const h of history) {
+      const role = h.role === 'assistant' || h.role === 'system' ? (h.role as 'assistant' | 'system') : 'user'
+      messages.push({ role, content: h.content })
+    }
+  }
+
+  // Current user message last
+  messages.push({ role: 'user', content: currentMessage })
+  return messages
+}
 
 // Enhanced fallback responses using knowledge base
 const getFallbackResponse = (message: string): string => {
@@ -107,30 +148,7 @@ const validateResponse = (response: string, question: string): boolean => {
   return (hasOppSpotContext || (addressesQuestion && hasActionableContent)) && !isGeneric && response.length > 50
 }
 
-// Convert conversation history to Ollama format
-const convertToOllamaMessages = (
-  currentMessage: string,
-  conversationHistory: any[] = []
-): any[] => {
-  const messages = []
-  
-  // Add conversation history (last 5 messages for context)
-  const recentHistory = conversationHistory.slice(-5)
-  for (const msg of recentHistory) {
-    messages.push({
-      role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.content
-    })
-  }
-  
-  // Add current message
-  messages.push({
-    role: 'user',
-    content: currentMessage
-  })
-  
-  return messages
-}
+// (old convertToOllamaMessages removed in favor of KB-primed version above)
 
 export async function POST(request: NextRequest) {
   try {
@@ -150,20 +168,73 @@ export async function POST(request: NextRequest) {
     let aiResponse: string
     let confidence = 0.85
     let usedModel = 'fallback'
+    let platformData: any = null
     
-    // Try to use Ollama if available
-    const ollamaAvailable = await ollama.isAvailable()
-    
-    if (ollamaAvailable) {
-      try {
-        console.log('[AI Chat] Using Ollama for response generation')
+    // First, try to use Platform Orchestrator for intelligent responses
+    try {
+      console.log('[AI Chat] Attempting platform orchestration for:', message)
+      
+      const platformContext = {
+        sessionId,
+        conversationHistory: conversation_history || [],
+        currentCompany: context?.current_company,
+        previousCompanies: context?.previous_companies,
+        lastAction: context?.last_action,
+        userPreferences: context?.preferences
+      }
+      
+      const platformResult = await platformOrchestrator.processMessage(message, platformContext)
+      
+      if (platformResult.success && platformResult.formattedResponse) {
+        console.log('[AI Chat] Platform orchestrator succeeded')
+        aiResponse = platformResult.formattedResponse
+        confidence = 0.95
+        usedModel = 'platform_orchestrator'
+        platformData = platformResult.data
+        // Derive lightweight citations from platform data if available
+        try {
+          if (platformResult.data?.topMatches?.length) {
+            collectedCitations = platformResult.data.topMatches.slice(0, 5).map((m: any, idx: number) => ({
+              id: `${Date.now()}-${idx}`,
+              source_type: 'analysis',
+              title: m.company_name || m.name || 'Similar company',
+              url: m.website || undefined,
+              snippet: m.similarity_reasoning || 'Similar by AI analysis',
+              confidence: typeof m.overall_score === 'number' ? Math.min(Math.max(m.overall_score / 100, 0), 1) : 0.8,
+              relevance: 0.9,
+              metadata: { source: 'similarity_analysis' }
+            }))
+          }
+        } catch {}
+
+        // Add suggested actions if available
+        if (platformResult.suggestedActions && platformResult.suggestedActions.length > 0) {
+          aiResponse += '\n\n**What would you like to do next?**\n'
+          platformResult.suggestedActions.forEach((action: string, index: number) => {
+            aiResponse += `${index + 1}. ${action}\n`
+          })
+        }
+      } else {
+        // Platform orchestrator didn't provide a formatted response, continue with Ollama
+        console.log('[AI Chat] Platform orchestrator returned no formatted response, falling back to Ollama')
+        throw new Error('No formatted response from platform orchestrator')
+      }
+    } catch (platformError) {
+      console.log('[AI Chat] Platform orchestration failed or incomplete, using Ollama:', platformError)
+      
+      // Fall back to Ollama for general responses
+      const ollamaAvailable = await ollama.isAvailable()
+      
+      if (ollamaAvailable) {
+        try {
+          console.log('[AI Chat] Using Ollama for response generation')
         
-        // Convert messages to Ollama format
-        const messages = convertToOllamaMessages(message, conversation_history)
+        // Convert messages to Ollama format with KB priming
+        const kb = findBestMatch(message)
+        const messages = convertToOllamaMessages(message, conversation_history, kb?.response)
         
-        // Try different models in order of preference
-        // Using phi3.5 as primary (best balance of speed and quality)
-        const modelsToTry = ['phi3.5:3.8b', 'tinyllama:1.1b']
+        // Try different models in order of preference (aligned with installed models)
+        const modelsToTry = getPreferredModels()
         const availableModels = await ollama.getModels()
         
         for (const model of modelsToTry) {
@@ -171,7 +242,7 @@ export async function POST(request: NextRequest) {
             try {
               aiResponse = await ollama.chat(messages, {
                 model,
-                temperature: 0.5, // Lower temperature for more focused responses
+                temperature: 0.4, // lower for focus
                 stream: false,
                 systemPrompt: SYSTEM_PROMPT
               })
@@ -212,6 +283,7 @@ export async function POST(request: NextRequest) {
       usedModel = 'fallback'
       confidence = 0.75
     }
+    } // End of platform error catch block
     
     // Ensure we have a response
     if (!aiResponse || aiResponse.trim().length === 0) {
@@ -236,6 +308,15 @@ export async function POST(request: NextRequest) {
           })}\n\n`
           controller.enqueue(encoder.encode(modelData))
           
+          // Send citations early if present
+          if (collectedCitations.length) {
+            const citeData = `data: ${JSON.stringify({
+              type: 'citation',
+              citations: collectedCitations
+            })}\n\n`
+            controller.enqueue(encoder.encode(citeData))
+          }
+          
           // Send the response in chunks to simulate streaming
           const words = aiResponse.split(' ')
           let index = 0
@@ -256,7 +337,9 @@ export async function POST(request: NextRequest) {
                 type: 'done',
                 content: aiResponse,
                 confidence,
-                model: usedModel
+                model: usedModel,
+                session_id: sessionId,
+                citations: collectedCitations
               })}\n\n`
               controller.enqueue(encoder.encode(data))
               clearInterval(interval)
@@ -282,7 +365,9 @@ export async function POST(request: NextRequest) {
           content: aiResponse,
           confidence,
           model: usedModel,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          platform_data: platformData, // Include platform data if available
+          citations: collectedCitations
         }
       })
     }
