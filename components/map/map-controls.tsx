@@ -12,14 +12,11 @@ import {
 import { 
   Filter, 
   Layers,
-  Star,
-  CheckCircle,
   Building2
 } from 'lucide-react'
 import { MapFilters } from '@/app/map/page'
 import { useState } from 'react'
 import { Label } from '@/components/ui/label'
-import { Slider } from '@/components/ui/slider'
 
 interface MapControlsProps {
   filters: MapFilters
@@ -53,17 +50,6 @@ export function MapControls({ filters, onFiltersChange }: MapControlsProps) {
     onFiltersChange(newFilters)
   }
 
-  const handleRatingChange = (value: number[]) => {
-    const newFilters = { ...tempFilters, minRating: value[0] }
-    setTempFilters(newFilters)
-    onFiltersChange(newFilters)
-  }
-
-  const handleVerifiedToggle = () => {
-    const newFilters = { ...tempFilters, verified: !tempFilters.verified }
-    setTempFilters(newFilters)
-    onFiltersChange(newFilters)
-  }
 
   const clearFilters = () => {
     const newFilters: MapFilters = {}
@@ -71,11 +57,7 @@ export function MapControls({ filters, onFiltersChange }: MapControlsProps) {
     onFiltersChange(newFilters)
   }
 
-  const activeFilterCount = [
-    tempFilters.categories?.length || 0,
-    tempFilters.minRating ? 1 : 0,
-    tempFilters.verified ? 1 : 0
-  ].reduce((a, b) => a + b, 0)
+  const activeFilterCount = tempFilters.categories?.length || 0
 
   return (
     <div className="flex items-center gap-2">
@@ -120,40 +102,6 @@ export function MapControls({ filters, onFiltersChange }: MapControlsProps) {
                 </div>
               </div>
 
-              <DropdownMenuSeparator />
-
-              <div>
-                <Label className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <Star className="h-4 w-4" />
-                  Minimum Rating
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Slider
-                    value={[tempFilters.minRating || 0]}
-                    onValueChange={handleRatingChange}
-                    min={0}
-                    max={5}
-                    step={0.5}
-                    className="flex-1"
-                  />
-                  <span className="text-sm w-8">
-                    {tempFilters.minRating || 0}
-                  </span>
-                </div>
-              </div>
-
-              <DropdownMenuSeparator />
-
-              <label className="flex items-center space-x-2 cursor-pointer hover:bg-accent p-2 rounded">
-                <input
-                  type="checkbox"
-                  checked={tempFilters.verified || false}
-                  onChange={handleVerifiedToggle}
-                  className="rounded"
-                />
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Verified businesses only</span>
-              </label>
             </div>
           </div>
 

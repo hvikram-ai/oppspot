@@ -126,7 +126,7 @@ export function MapView({
 
   const createCustomIcon = (business: Business) => {
     const isSelected = selectedBusiness?.id === business.id
-    const color = business.verified ? '#10b981' : '#6b7280'
+    const color = '#6b7280' // Default color for all businesses
     
     return L.divIcon({
       html: `
@@ -139,11 +139,6 @@ export function MapView({
               stroke-width="2"/>
             <circle cx="16" cy="16" r="6" fill="white"/>
           </svg>
-          ${business.rating ? `
-            <div class="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-gray-800">
-              ${business.rating}
-            </div>
-          ` : ''}
         </div>
       `,
       className: 'custom-map-marker',
@@ -197,10 +192,11 @@ export function MapView({
                       {business.address.city}
                     </p>
                   )}
-                  {business.rating && (
+                  {business.categories && business.categories.length > 0 && (
                     <div className="flex items-center gap-1 mt-2">
-                      <span className="text-sm font-medium">Rating:</span>
-                      <span className="text-sm">{business.rating}/5</span>
+                      <span className="text-xs text-gray-500">
+                        {business.categories.slice(0, 2).join(', ')}
+                      </span>
                     </div>
                   )}
                 </div>

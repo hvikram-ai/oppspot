@@ -5,12 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Business } from '@/app/map/page'
 import { 
   MapPin, 
-  Star, 
   Phone, 
   Globe, 
   Mail, 
   X, 
-  CheckCircle,
   Building2,
   Navigation
 } from 'lucide-react'
@@ -40,9 +38,6 @@ export function MapSidebar({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold">{selectedBusiness.name}</h2>
-                {selectedBusiness.verified && (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                )}
               </div>
               {selectedBusiness.categories && selectedBusiness.categories.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -75,13 +70,6 @@ export function MapSidebar({
               </div>
             )}
 
-            {selectedBusiness.rating && (
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                <span className="text-sm font-medium">{selectedBusiness.rating}</span>
-                <span className="text-sm text-muted-foreground">/ 5.0</span>
-              </div>
-            )}
 
             <Separator />
 
