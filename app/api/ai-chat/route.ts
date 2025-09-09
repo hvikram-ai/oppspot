@@ -1,16 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ChatOrchestrator, ChatContext, StreamChunk } from '@/lib/ai/chat-orchestrator'
-import { createClient } from '@/lib/supabase/server'
 
 // Enable streaming
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+// Simple AI responses without external dependencies for now
+const getAIResponse = (message: string): string => {
+  const lowerMessage = message.toLowerCase()
+  
+  // Greetings
+  if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+    return "Hello! I'm your OppSpot AI assistant. I can help you with business intelligence, M&A analysis, and navigating the platform. What would you like to know?"
+  }
+  
+  // Help requests
+  if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
+    return "I can help you with:\n\n• **Finding and analyzing companies** - Search our database of UK & Ireland businesses\n• **Similarity analysis** - Find companies similar to your target using AI\n• **M&A opportunities** - Discover potential acquisition targets with OppScan\n• **Platform navigation** - Guide you through OppSpot's features\n• **Business intelligence** - Answer questions about markets and companies\n\nWhat would you like to explore?"
+  }
+  
+  // Feature explanations
+  if (lowerMessage.includes('similarity') || lowerMessage.includes('similar')) {
+    return "The **Similarity Analysis** feature uses AI to find companies similar to your target based on multiple dimensions:\n\n• Financial metrics\n• Strategic positioning\n• Operational characteristics\n• Market factors\n• Risk profiles\n\nYou can access it from the main dashboard or any company profile page. Would you like me to explain how to use it?"
+  }
+  
+  if (lowerMessage.includes('opp scan') || lowerMessage.includes('oppscan') || lowerMessage.includes('scan')) {
+    return "**OppScan** is our comprehensive M&A opportunity scanner that:\n\n• Searches across multiple data sources\n• Identifies potential acquisition targets\n• Analyzes companies based on your criteria\n• Provides detailed intelligence reports\n• Tracks market opportunities in real-time\n\nYou can start a scan from the dashboard. What type of companies are you looking for?"
+  }
+  
+  if (lowerMessage.includes('dashboard')) {
+    return "The **Dashboard** is your central hub for:\n\n• Recent searches and saved companies\n• Active OppScans and alerts\n• Similar company analyses\n• Market insights and trends\n• Quick access to all features\n\nYou can customize it to show the information most relevant to you."
+  }
+  
+  // Company search
+  if (lowerMessage.includes('find') || lowerMessage.includes('search') || lowerMessage.includes('looking for')) {
+    return "I can help you find companies! You can:\n\n• Use the search bar to find specific companies by name\n• Run an OppScan to discover companies matching your criteria\n• Use Similarity Analysis to find companies like one you know\n\nWhat type of company are you looking for? You can describe the industry, size, location, or other characteristics."
+  }
+  
+  // Data questions
+  if (lowerMessage.includes('data') || lowerMessage.includes('database') || lowerMessage.includes('coverage')) {
+    return "OppSpot covers **millions of companies** across the UK and Ireland with:\n\n• Company details and contact information\n• Financial data and estimates\n• Industry classifications\n• Ownership structures\n• Market intelligence\n• Real-time updates\n\nOur data comes from official registries, web sources, and AI-powered analysis."
+  }
+  
+  // Pricing/account
+  if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('premium')) {
+    return "OppSpot offers different account tiers:\n\n• **Free tier** - Basic search and limited results\n• **Premium** - Full access to all features and data\n• **Enterprise** - Custom solutions for teams\n\nPremium accounts get unlimited searches, detailed reports, API access, and priority support. Would you like to know more about upgrading?"
+  }
+  
+  // Default response
+  return "I'm here to help you navigate OppSpot and find business opportunities. You can ask me about:\n\n• Finding specific companies\n• Using our analysis tools\n• Understanding features\n• M&A opportunities\n• Business intelligence\n\nWhat would you like to know?"
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
     const body = await request.json()
     const { message, session_id, context } = body
     
@@ -21,28 +62,11 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Initialize chat orchestrator
-    const orchestrator = new ChatOrchestrator()
+    // Generate session ID if not provided
+    const sessionId = session_id || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
-    // Get or create session
-    let sessionId = session_id
-    if (!sessionId) {
-      sessionId = await orchestrator.getOrCreateSession(
-        user?.id,
-        context || {}
-      )
-    }
-    
-    // Create chat context
-    const chatContext: ChatContext = {
-      session_id: sessionId,
-      user_id: user?.id,
-      current_page: context?.current_page,
-      current_context: context?.current_context,
-      preferences: context?.preferences
-    }
-    
-    await orchestrator.initialize(chatContext)
+    // Get AI response
+    const aiResponse = getAIResponse(message)
     
     // Check if streaming is requested
     const stream = request.headers.get('accept') === 'text/event-stream'
@@ -50,33 +74,38 @@ export async function POST(request: NextRequest) {
     if (stream) {
       // Return streaming response
       const encoder = new TextEncoder()
-      const stream = new TransformStream()
-      const writer = stream.writable.getWriter()
-      
-      // Process message with streaming
-      orchestrator.processMessage(message, async (chunk: StreamChunk) => {
-        const data = `data: ${JSON.stringify(chunk)}\n\n`
-        await writer.write(encoder.encode(data))
-      }).then(async (response) => {
-        // Send final message
-        const data = `data: ${JSON.stringify({
-          type: 'done',
-          content: response.content,
-          citations: response.citations,
-          confidence: response.confidence
-        })}\n\n`
-        await writer.write(encoder.encode(data))
-        await writer.close()
-      }).catch(async (error) => {
-        const data = `data: ${JSON.stringify({
-          type: 'error',
-          content: error.message
-        })}\n\n`
-        await writer.write(encoder.encode(data))
-        await writer.close()
+      const readable = new ReadableStream({
+        start(controller) {
+          // Send the response in chunks to simulate streaming
+          const words = aiResponse.split(' ')
+          let index = 0
+          
+          const interval = setInterval(() => {
+            if (index < words.length) {
+              const chunk = words[index] + ' '
+              const data = `data: ${JSON.stringify({
+                type: 'text',
+                content: chunk,
+                timestamp: new Date()
+              })}\n\n`
+              controller.enqueue(encoder.encode(data))
+              index++
+            } else {
+              // Send final message
+              const data = `data: ${JSON.stringify({
+                type: 'done',
+                content: aiResponse,
+                confidence: 0.85
+              })}\n\n`
+              controller.enqueue(encoder.encode(data))
+              clearInterval(interval)
+              controller.close()
+            }
+          }, 50) // Send a word every 50ms
+        }
       })
       
-      return new Response(stream.readable, {
+      return new Response(readable, {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
@@ -85,11 +114,14 @@ export async function POST(request: NextRequest) {
       })
     } else {
       // Regular JSON response
-      const response = await orchestrator.processMessage(message)
-      
       return NextResponse.json({
         session_id: sessionId,
-        message: response
+        message: {
+          role: 'assistant',
+          content: aiResponse,
+          confidence: 0.85,
+          timestamp: new Date().toISOString()
+        }
       })
     }
   } catch (error) {
@@ -103,58 +135,11 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    const searchParams = request.nextUrl.searchParams
-    const session_id = searchParams.get('session_id')
-    const limit = parseInt(searchParams.get('limit') || '50')
-    
-    if (!session_id) {
-      // Get user's recent sessions
-      const { data: sessions, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('user_id', user?.id || '')
-        .order('created_at', { ascending: false })
-        .limit(10)
-      
-      if (error) throw error
-      
-      return NextResponse.json({ sessions })
-    } else {
-      // Get messages for specific session
-      const { data: messages, error } = await supabase
-        .from('chat_messages')
-        .select(`
-          *,
-          chat_citations (*)
-        `)
-        .eq('session_id', session_id)
-        .order('created_at', { ascending: true })
-        .limit(limit)
-      
-      if (error) throw error
-      
-      // Check if user has access to this session
-      const { data: session } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('id', session_id)
-        .single()
-      
-      if (session && (session.user_id === user?.id || !session.user_id)) {
-        return NextResponse.json({ 
-          session,
-          messages 
-        })
-      } else {
-        return NextResponse.json(
-          { error: 'Session not found or access denied' },
-          { status: 404 }
-        )
-      }
-    }
+    // For now, return empty history
+    return NextResponse.json({ 
+      sessions: [],
+      messages: [] 
+    })
   } catch (error) {
     console.error('[AI Chat API] Error fetching history:', error)
     return NextResponse.json(

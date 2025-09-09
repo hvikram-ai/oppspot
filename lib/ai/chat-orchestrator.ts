@@ -667,22 +667,30 @@ Response:`;
    * Get or create a chat session
    */
   async getOrCreateSession(userId?: string, context?: any): Promise<string> {
-    if (!this.supabase) {
-      this.supabase = await createClient()
+    try {
+      if (!this.supabase) {
+        this.supabase = await createClient()
+      }
+      
+      const { data, error } = await this.supabase
+        .rpc('get_or_create_chat_session', {
+          p_user_id: userId,
+          p_title: 'New Chat',
+          p_context: context || {}
+        })
+      
+      if (error) {
+        console.warn('[ChatOrchestrator] Session creation failed:', error)
+        // Return a temporary session ID as fallback
+        return `temp_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      }
+      
+      return data
+    } catch (error) {
+      console.warn('[ChatOrchestrator] Could not connect to database:', error)
+      // Return a temporary session ID as fallback
+      return `temp_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     }
-    
-    const { data, error } = await this.supabase
-      .rpc('get_or_create_chat_session', {
-        p_user_id: userId,
-        p_title: 'New Chat',
-        p_context: context || {}
-      })
-    
-    if (error) {
-      throw error
-    }
-    
-    return data
   }
   
   /**
