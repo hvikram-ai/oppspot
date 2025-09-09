@@ -220,7 +220,8 @@ export class ChatOrchestrator {
    * Analyze user intent and determine which tools to use
    */
   private async analyzeIntent(message: string): Promise<ToolCall[]> {
-    const prompt = `Analyze this user message and determine which tools (if any) are needed to answer it properly.
+    try {
+      const prompt = `Analyze this user message and determine which tools (if any) are needed to answer it properly.
 
 User Message: "${message}"
 
@@ -248,7 +249,6 @@ Examples:
 
 Response (JSON only):`;
 
-    try {
       const response = await this.ollama.complete(prompt, {
         temperature: 0.3,
         max_tokens: 500,
@@ -263,8 +263,41 @@ Response (JSON only):`;
       
       return []
     } catch (error) {
-      console.warn('[ChatOrchestrator] Intent analysis failed:', error)
-      return []
+      console.warn('[ChatOrchestrator] Intent analysis failed, using rule-based fallback:', error)
+      
+      // Rule-based fallback for common intents
+      const lowerMessage = message.toLowerCase()
+      const toolCalls: ToolCall[] = []
+      
+      // Check for feature explanations
+      if (lowerMessage.includes('how') || lowerMessage.includes('what') || lowerMessage.includes('explain')) {
+        if (lowerMessage.includes('similarity') || lowerMessage.includes('similar')) {
+          toolCalls.push({
+            id: 'fallback_1',
+            name: 'explain_feature',
+            arguments: { feature_name: 'similarity_analysis' }
+          })
+        } else if (lowerMessage.includes('opp') && lowerMessage.includes('scan')) {
+          toolCalls.push({
+            id: 'fallback_2',
+            name: 'explain_feature',
+            arguments: { feature_name: 'opp_scan' }
+          })
+        }
+      }
+      
+      // Check for search requests
+      if (lowerMessage.includes('find') || lowerMessage.includes('search') || lowerMessage.includes('show')) {
+        if (lowerMessage.includes('compan')) {
+          toolCalls.push({
+            id: 'fallback_3',
+            name: 'search_platform',
+            arguments: { query: message, type: 'companies' }
+          })
+        }
+      }
+      
+      return toolCalls
     }
   }
   
@@ -429,6 +462,7 @@ Response (JSON only):`;
     citations: Citation[],
     onStream?: (chunk: StreamChunk) => void
   ): Promise<any> {
+    try {
     // Build context from conversation history
     const conversationContext = this.conversationHistory
       .slice(-5) // Last 5 messages
@@ -470,7 +504,7 @@ Response:`;
       temperature: 0.7,
       max_tokens: 1000,
       model: 'mistral:7b',
-      stream: true
+      stream: false
     })
     
     // Calculate confidence based on tool results and citations
@@ -481,6 +515,55 @@ Response:`;
       confidence,
       tokens_used: response.length // Approximate
     }
+    } catch (error) {
+      console.error('[ChatOrchestrator] Error generating response:', error)
+      
+      // Fallback response when Ollama is not available
+      const fallbackResponse = this.generateFallbackResponse(userMessage, toolResults)
+      
+      return {
+        content: fallbackResponse,
+        confidence: 0.3,
+        tokens_used: fallbackResponse.length
+      }
+    }
+  }
+  
+  /**
+   * Generate fallback response when LLM is unavailable
+   */
+  private generateFallbackResponse(userMessage: string, toolResults: ToolCall[]): string {
+    const lowerMessage = userMessage.toLowerCase()
+    
+    // Handle common greetings
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+      return "Hello! I'm your OppSpot AI assistant. I can help you with business intelligence, M&A analysis, and navigating the platform. What would you like to know?"
+    }
+    
+    // Handle help requests
+    if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
+      return "I can help you with:\n\n• Finding and analyzing companies\n• Understanding similarity analysis\n• Exploring M&A opportunities\n• Navigating OppSpot features\n• Answering questions about business intelligence\n\nWhat would you like to explore?"
+    }
+    
+    // Handle feature questions
+    if (lowerMessage.includes('similarity') || lowerMessage.includes('similar')) {
+      return "The Similarity Analysis feature uses AI to find companies similar to your target based on multiple dimensions including financial, strategic, operational, market, and risk factors. You can access it from the main dashboard or company profile pages."
+    }
+    
+    if (lowerMessage.includes('opp scan') || lowerMessage.includes('oppscan')) {
+      return "OppScan is our comprehensive M&A opportunity scanner that searches across multiple data sources to identify potential acquisition targets. It analyzes companies based on your specified criteria and provides detailed intelligence reports."
+    }
+    
+    // If we have tool results, try to provide a basic response
+    if (toolResults.length > 0) {
+      const toolResult = toolResults[0]
+      if (toolResult.result && !toolResult.result.error) {
+        return `Based on the search results, I found relevant information. ${JSON.stringify(toolResult.result).substring(0, 500)}...`
+      }
+    }
+    
+    // Default fallback
+    return "I'm here to help you with OppSpot's features and business intelligence. Could you please rephrase your question or let me know what specific information you're looking for?"
   }
   
   /**
