@@ -97,10 +97,12 @@ export class SimpleOllamaClient {
           messages: finalMessages,
           stream,
           options: {
-            temperature,
-            num_predict: 1000,
-            top_k: 40,
-            top_p: 0.9
+            temperature: temperature || 0.5, // Lower temperature for more focused responses
+            num_predict: 2000, // Increased for complete answers
+            top_k: 30, // Reduced for more focused selection
+            top_p: 0.85, // Slightly reduced for consistency
+            repeat_penalty: 1.1, // Avoid repetition
+            seed: 42 // For consistency in testing
           }
         }),
         signal: AbortSignal.timeout(60000) // 60 second timeout
