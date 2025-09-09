@@ -354,16 +354,22 @@ export async function POST(request: NextRequest) {
         const orKey = process.env.OPENROUTER_API_KEY
         if (orKey) {
           try {
-            const client = new OpenRouterClient(orKey)
             const kb = findBestMatch(message)
             const prompt = buildOpenRouterPrompt(message, conversation_history, kb?.response)
-            aiResponse = await client.complete(prompt, {
-              system_prompt: SYSTEM_PROMPT,
-              temperature: 0.4,
-              max_tokens: 700,
-            })
-            usedModel = 'openrouter'
-            confidence = 0.9
+            const stream = request.headers.get('accept') === 'text/event-stream'
+            if (stream) {
+              // Stream tokens from OpenRouter to client
+              return await streamOpenRouter(sessionId, prompt, SYSTEM_PROMPT)
+            } else {
+              const client = new OpenRouterClient(orKey)
+              aiResponse = await client.complete(prompt, {
+                system_prompt: SYSTEM_PROMPT,
+                temperature: 0.4,
+                max_tokens: 700,
+              })
+              usedModel = 'openrouter'
+              confidence = 0.9
+            }
           } catch (orError) {
             console.warn('[AI Chat] OpenRouter fallback failed, using static fallback:', orError)
             aiResponse = getFallbackResponse(message)
@@ -381,16 +387,21 @@ export async function POST(request: NextRequest) {
       const orKey = process.env.OPENROUTER_API_KEY
       if (orKey) {
         try {
-          const client = new OpenRouterClient(orKey)
           const kb = findBestMatch(message)
           const prompt = buildOpenRouterPrompt(message, conversation_history, kb?.response)
-          aiResponse = await client.complete(prompt, {
-            system_prompt: SYSTEM_PROMPT,
-            temperature: 0.4,
-            max_tokens: 700,
-          })
-          usedModel = 'openrouter'
-          confidence = 0.9
+          const stream = request.headers.get('accept') === 'text/event-stream'
+          if (stream) {
+            return await streamOpenRouter(sessionId, prompt, SYSTEM_PROMPT)
+          } else {
+            const client = new OpenRouterClient(orKey)
+            aiResponse = await client.complete(prompt, {
+              system_prompt: SYSTEM_PROMPT,
+              temperature: 0.4,
+              max_tokens: 700,
+            })
+            usedModel = 'openrouter'
+            confidence = 0.9
+          }
         } catch (orError) {
           console.warn('[AI Chat] OpenRouter failed, using static fallback:', orError)
           aiResponse = getFallbackResponse(message)
@@ -572,4 +583,82 @@ function buildOpenRouterPrompt(
   parts.push(message)
   parts.push('\nPlease answer with concrete, OppSpot-specific guidance and actionable steps.')
   return parts.join('\n')
+}
+
+// Stream OpenRouter responses to the client as SSE tokens
+async function streamOpenRouter(sessionId: string, prompt: string, systemPrompt?: string) {
+  const apiKey = process.env.OPENROUTER_API_KEY!
+  const baseUrl = 'https://openrouter.ai/api/v1'
+  const model = 'anthropic/claude-3-haiku'
+  const encoder = new TextEncoder()
+
+  // Prepare request body
+  const messages: Array<{ role: string; content: string }> = []
+  if (systemPrompt) messages.push({ role: 'system', content: systemPrompt })
+  messages.push({ role: 'user', content: prompt })
+
+  const resp = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://oppspot.com',
+      'X-Title': 'OppSpot Business Platform'
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.4,
+      max_tokens: 700,
+      stream: true
+    })
+  })
+
+  if (!resp.ok || !resp.body) {
+    // Fall back to normal flow by throwing; caller handles
+    throw new Error(`OpenRouter stream error: ${resp.status}`)
+  }
+
+  let full = ''
+  const reader = resp.body.getReader()
+  const readable = new ReadableStream({
+    async start(controller) {
+      // Send model info
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'model', model: 'openrouter', timestamp: new Date() })}\n\n`))
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          const chunk = new TextDecoder().decode(value)
+          const lines = chunk.split('\n')
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue
+            const data = line.replace(/^data: ?/, '').trim()
+            if (!data || data === '[DONE]') continue
+            try {
+              const parsed = JSON.parse(data)
+              const delta = parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.message?.content || ''
+              if (delta) {
+                full += delta
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', content: delta })}\n\n`))
+              }
+            } catch {
+              // ignore parse errors
+            }
+          }
+        }
+      } finally {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: full, confidence: 0.9, model: 'openrouter', session_id: sessionId })}\n\n`))
+        controller.close()
+      }
+    }
+  })
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  })
 }

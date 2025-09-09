@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
@@ -33,6 +34,30 @@ export function ChatWidget({
     sessionId,
     citations
   } = useChat({ context })
+
+  const [status, setStatus] = useState<{ ollama: { available: boolean; models: string[] }, openrouter: { configured: boolean } } | null>(null)
+  const [statusLoading, setStatusLoading] = useState(false)
+
+  // Fetch backend status (Ollama/OpenRouter)
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        setStatusLoading(true)
+        const res = await fetch('/api/ai-chat?action=status', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setStatus(data)
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setStatusLoading(false)
+      }
+    }
+    load()
+    const id = setInterval(load, 30_000) // refresh every 30s
+    return () => { cancelled = true; clearInterval(id) }
+  }, [])
   
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -82,6 +107,18 @@ export function ChatWidget({
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               <h3 className="font-semibold">OppSpot AI Assistant</h3>
+              <div className="ml-2 flex items-center gap-1">
+                <Badge variant="secondary" className="py-0.5 px-1.5 text-[10px]">
+                  <span className={cn('inline-block h-2 w-2 rounded-full mr-1',
+                    statusLoading ? 'bg-yellow-400' : (status?.ollama?.available ? 'bg-green-500' : 'bg-gray-400'))} />
+                  Ollama
+                </Badge>
+                <Badge variant="secondary" className="py-0.5 px-1.5 text-[10px]">
+                  <span className={cn('inline-block h-2 w-2 rounded-full mr-1',
+                    statusLoading ? 'bg-yellow-400' : (status?.openrouter?.configured ? 'bg-green-500' : 'bg-gray-400'))} />
+                  OpenRouter
+                </Badge>
+              </div>
             </div>
             <Button
               onClick={() => setIsOpen(false)}
