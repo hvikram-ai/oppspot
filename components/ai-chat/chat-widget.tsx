@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -24,6 +24,7 @@ export function ChatWidget({
 }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [message, setMessage] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const {
     messages,
     isLoading,
@@ -32,6 +33,11 @@ export function ChatWidget({
     sessionId,
     citations
   } = useChat({ context })
+  
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const handleSend = async () => {
     if (!message.trim() || isLoading) return
@@ -72,7 +78,7 @@ export function ChatWidget({
           'w-[400px] h-[600px] max-h-[80vh]'
         )}>
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               <h3 className="font-semibold">OppSpot AI Assistant</h3>
@@ -88,7 +94,7 @@ export function ChatWidget({
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground py-8">
@@ -114,25 +120,28 @@ export function ChatWidget({
                   ))}
                 </div>
               )}
+              
+              {/* Auto-scroll anchor */}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
           {/* Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t shrink-0 bg-background">
             <div className="flex gap-2">
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
-                className="min-h-[60px] max-h-[120px] resize-none"
+                className="min-h-[50px] max-h-[100px] resize-none"
                 disabled={isLoading}
               />
               <Button
                 onClick={handleSend}
                 disabled={!message.trim() || isLoading}
                 size="icon"
-                className="h-[60px] w-[60px]"
+                className="h-[50px] w-[50px] shrink-0"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
