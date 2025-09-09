@@ -28,11 +28,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user from session
-    const supabase = createClient()
+    // Get user from session - allow demo mode
+    const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const isDemoMode = request.headers.get('x-demo-mode') === 'true'
     
-    if (authError || !user) {
+    if (!isDemoMode && (authError || !user)) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -212,11 +213,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user from session
-    const supabase = createClient()
+    // Get user from session - allow demo mode
+    const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const isDemoMode = request.headers.get('x-demo-mode') === 'true'
     
-    if (authError || !user) {
+    if (!isDemoMode && (authError || !user)) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }

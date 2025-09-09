@@ -63,8 +63,9 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   
   constructor() {
     this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
-    this.primaryModel = process.env.OLLAMA_PRIMARY_MODEL || 'llama3.1:13b'
-    this.fastModel = process.env.OLLAMA_FAST_MODEL || 'llama3.1:8b'
+    // Use available models - mistral for primary, tinyllama for fast
+    this.primaryModel = process.env.OLLAMA_PRIMARY_MODEL || 'mistral:7b'
+    this.fastModel = process.env.OLLAMA_FAST_MODEL || 'tinyllama:1.1b'
     this.timeout = parseInt(process.env.OLLAMA_TIMEOUT || '120000') // 2 minutes default
   }
 

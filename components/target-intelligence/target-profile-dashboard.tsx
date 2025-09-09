@@ -81,10 +81,14 @@ export function TargetProfileDashboard({
     setAnalysisProgress({ stage: 'initialization', progress: 0, message: 'Starting analysis...' })
 
     try {
+      // Check if user is authenticated
+      const isDemoMode = !window.location.hostname.includes('localhost') && !document.cookie.includes('supabase-auth-token')
+      
       const response = await fetch('/api/target-intelligence/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(isDemoMode && { 'x-demo-mode': 'true' })
         },
         body: JSON.stringify({
           company_name: companyName,
