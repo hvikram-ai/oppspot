@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
 export async function POST(request: Request) {
@@ -8,27 +7,14 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { userId, email, fullName, companyName, role } = body
 
-    const cookieStore = await cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            } catch {
-              // Server Component context
-            }
-          },
-        },
-      }
-    )
+    // Use service-role admin client to bypass RLS for initial account provisioning
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase env vars for admin client')
+      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+    }
+    const supabase = createSupabaseAdminClient<Database>(SUPABASE_URL, SERVICE_ROLE_KEY)
 
     // Create organization
     const orgSlug = companyName
@@ -37,21 +23,45 @@ export async function POST(request: Request) {
       .replace(/^-|-$/g, '')
       + '-' + Math.random().toString(36).substring(2, 7)
 
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .insert({
-        name: companyName,
-        slug: orgSlug,
-        settings: {},
-        subscription_tier: 'trial',
-        onboarding_step: 0,
-        industry: null,
-        company_size: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-      .select()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .single() as any
+    // Prefer secure RPC function if present, else direct insert
+    let org: any = null
+    let orgError: any = null
+    try {
+      const { data: rpcId, error: rpcError } = await supabase
+        .rpc('create_organization_for_user', {
+          user_id: userId,
+          company_name: companyName,
+          company_industry: null,
+          company_size: null,
+        })
+      if (rpcError) throw rpcError
+      if (rpcId) {
+        const { data: orgRow, error: orgFetchErr } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', rpcId)
+          .single()
+        if (orgFetchErr) throw orgFetchErr
+        org = orgRow
+      }
+    } catch (rpcFail) {
+      // Fallback to direct insert (still safe via service role)
+      const { data: orgRow, error: insertErr } = await supabase
+        .from('organizations')
+        .insert({
+          name: companyName,
+          slug: orgSlug,
+          settings: {},
+          subscription_tier: 'trial',
+          onboarding_step: 0,
+          industry: null,
+          company_size: null,
+        } as any)
+        .select()
+        .single()
+      org = orgRow
+      orgError = insertErr
+    }
 
     if (orgError || !org) {
       console.error('Error creating organization:', orgError)
@@ -68,6 +78,7 @@ export async function POST(request: Request) {
         id: userId,
         org_id: org.id,
         full_name: fullName,
+        email: email,
         role: role,
         preferences: {
           email_notifications: true,
@@ -75,11 +86,9 @@ export async function POST(request: Request) {
         },
         streak_count: 0,
         last_active: new Date().toISOString(),
-        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days trial
+        trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days trial
         onboarding_completed: false,
-        email_verified_at: null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any) as any
+      } as any)
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
@@ -95,6 +104,7 @@ export async function POST(request: Request) {
         .from('events')
         .insert({
           user_id: userId,
+          org_id: org.id,
           event_type: 'signup_completed',
           metadata: {
             email,
