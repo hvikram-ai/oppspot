@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NotificationProvider } from "@/lib/notifications/realtime-notifications";
 import { DemoModeProvider } from "@/lib/demo/demo-context";
 import { DemoBanner } from "@/components/demo/demo-banner";
+import { ChatWidget } from "@/components/ai-chat/chat-widget";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,6 +45,7 @@ export default function RootLayout({
           <NotificationProvider>
             <DemoBanner />
             {children}
+            <ChatWidget position="bottom-right" />
           </NotificationProvider>
         </DemoModeProvider>
         <Toaster position="bottom-right" richColors />
