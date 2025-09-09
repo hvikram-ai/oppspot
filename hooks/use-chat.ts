@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
@@ -30,7 +30,6 @@ interface UseChatOptions {
 }
 
 export function useChat(options: UseChatOptions = {}) {
-  const { toast } = useToast()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [citations, setCitations] = useState<Citation[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -147,11 +146,7 @@ export function useChat(options: UseChatOptions = {}) {
         setError(err)
         options.onError?.(err)
         
-        toast({
-          title: 'Error',
-          description: err.message || 'Failed to send message',
-          variant: 'destructive'
-        })
+        toast.error(err.message || 'Failed to send message')
 
         // Add error message to chat
         const errorMessage: ChatMessage = {
@@ -263,11 +258,7 @@ export function useChat(options: UseChatOptions = {}) {
 
       case 'error':
         setError(new Error(chunk.content))
-        toast({
-          title: 'Error',
-          description: chunk.content,
-          variant: 'destructive'
-        })
+        toast.error(chunk.content)
         break
     }
   }
