@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { SimpleOllamaClient } from '@/lib/ai/simple-ollama'
 import { findBestMatch } from '@/lib/ai/knowledge-base'
 import { PlatformChatOrchestrator } from '@/lib/ai/platform-chat-orchestrator'
+import { OpenRouterClient } from '@/lib/ai/openrouter'
 
 // Enable streaming
 export const runtime = 'nodejs'
@@ -267,21 +268,64 @@ export async function POST(request: NextRequest) {
           }
         }
         
-        // If no model worked, use fallback
+        // If no model worked, try OpenRouter before fallback
         if (!aiResponse || aiResponse.trim().length === 0) {
           throw new Error('No valid response from Ollama')
         }
       } catch (ollamaError) {
-        console.warn('[AI Chat] Ollama failed, using fallback:', ollamaError)
+        console.warn('[AI Chat] Ollama failed, considering OpenRouter fallback:', ollamaError)
+        // Attempt OpenRouter if API key is present
+        const orKey = process.env.OPENROUTER_API_KEY
+        if (orKey) {
+          try {
+            const client = new OpenRouterClient(orKey)
+            const kb = findBestMatch(message)
+            const prompt = buildOpenRouterPrompt(message, conversation_history, kb?.response)
+            aiResponse = await client.complete(prompt, {
+              system_prompt: SYSTEM_PROMPT,
+              temperature: 0.4,
+              max_tokens: 700,
+            })
+            usedModel = 'openrouter'
+            confidence = 0.9
+          } catch (orError) {
+            console.warn('[AI Chat] OpenRouter fallback failed, using static fallback:', orError)
+            aiResponse = getFallbackResponse(message)
+            usedModel = 'fallback'
+            confidence = 0.75
+          }
+        } else {
+          aiResponse = getFallbackResponse(message)
+          usedModel = 'fallback'
+          confidence = 0.75
+        }
+      }
+    } else {
+      console.log('[AI Chat] Ollama not available; checking OpenRouter')
+      const orKey = process.env.OPENROUTER_API_KEY
+      if (orKey) {
+        try {
+          const client = new OpenRouterClient(orKey)
+          const kb = findBestMatch(message)
+          const prompt = buildOpenRouterPrompt(message, conversation_history, kb?.response)
+          aiResponse = await client.complete(prompt, {
+            system_prompt: SYSTEM_PROMPT,
+            temperature: 0.4,
+            max_tokens: 700,
+          })
+          usedModel = 'openrouter'
+          confidence = 0.9
+        } catch (orError) {
+          console.warn('[AI Chat] OpenRouter failed, using static fallback:', orError)
+          aiResponse = getFallbackResponse(message)
+          usedModel = 'fallback'
+          confidence = 0.75
+        }
+      } else {
         aiResponse = getFallbackResponse(message)
         usedModel = 'fallback'
         confidence = 0.75
       }
-    } else {
-      console.log('[AI Chat] Ollama not available, using fallback')
-      aiResponse = getFallbackResponse(message)
-      usedModel = 'fallback'
-      confidence = 0.75
     }
     } // End of platform error catch block
     
@@ -399,12 +443,16 @@ export async function GET(request: NextRequest) {
     if (action === 'status') {
       const isAvailable = await ollama.isAvailable()
       const models = isAvailable ? await ollama.getModels() : []
+      const hasOpenRouter = !!process.env.OPENROUTER_API_KEY
       
       return NextResponse.json({
         ollama: {
           available: isAvailable,
           models,
           preferredModel: 'mistral:7b'
+        },
+        openrouter: {
+          configured: hasOpenRouter
         }
       })
     }
@@ -421,4 +469,31 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+// Build an OpenRouter prompt that includes brief recent history and a KB hint
+function buildOpenRouterPrompt(
+  message: string,
+  conversation_history?: Array<{ role: string; content: string }>,
+  kbHint?: string
+): string {
+  const parts: string[] = []
+  if (kbHint) {
+    parts.push('Context to consider (from OppSpot KB):')
+    parts.push(kbHint)
+    parts.push('---')
+  }
+  if (Array.isArray(conversation_history) && conversation_history.length) {
+    const recent = conversation_history.slice(-5)
+    parts.push('Recent conversation:')
+    for (const h of recent) {
+      const role = h.role === 'assistant' ? 'Assistant' : 'User'
+      parts.push(`${role}: ${h.content}`)
+    }
+    parts.push('---')
+  }
+  parts.push('User question:')
+  parts.push(message)
+  parts.push('\nPlease answer with concrete, OppSpot-specific guidance and actionable steps.')
+  return parts.join('\n')
 }
