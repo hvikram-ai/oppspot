@@ -172,6 +172,81 @@ export async function POST(request: NextRequest) {
     let platformData: any = null
     let collectedCitations: any[] = []
     
+    // Short-circuit: answer LLM/model identity questions directly
+    const lower = String(message).toLowerCase()
+    if (/(\bllm\b|which\s+llm|which\s+model|what\s+model|model\s+are\s+you|are\s+you\s+using\s+.*model)/.test(lower)) {
+      try {
+        const ollamaAvailable = await ollama.isAvailable()
+        const installed = ollamaAvailable ? await ollama.getModels() : []
+        const preferred = getPreferredModels().filter(m => installed.includes(m))
+        const hasOpenRouter = !!process.env.OPENROUTER_API_KEY
+
+        const parts: string[] = []
+        if (ollamaAvailable && (preferred.length || installed.length)) {
+          parts.push(`I'm using local Ollama models (${(preferred.length ? preferred : installed).join(', ')}).`)
+        } else if (ollamaAvailable) {
+          parts.push('Ollama is available locally, but no preferred models are installed.')
+        } else {
+          parts.push('Local Ollama is not available in this environment.')
+        }
+        if (hasOpenRouter) {
+          parts.push('A cloud fallback via OpenRouter is configured for reliability.')
+        }
+        parts.push('Responses are tailored to OppSpot features and workflows.')
+
+        aiResponse = parts.join(' ')
+        usedModel = ollamaAvailable ? 'ollama' : (hasOpenRouter ? 'openrouter' : 'fallback')
+        confidence = (ollamaAvailable || hasOpenRouter) ? 0.95 : 0.8
+
+        const stream = request.headers.get('accept') === 'text/event-stream'
+        if (stream) {
+          const encoder = new TextEncoder()
+          const readable = new ReadableStream({
+            start(controller) {
+              const modelData = `data: ${JSON.stringify({ type: 'model', model: usedModel, timestamp: new Date() })}\n\n`
+              controller.enqueue(encoder.encode(modelData))
+              const words = aiResponse.split(' ')
+              let index = 0
+              const interval = setInterval(() => {
+                if (index < words.length) {
+                  const chunk = words[index] + ' '
+                  const data = `data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`
+                  controller.enqueue(encoder.encode(data))
+                  index++
+                } else {
+                  const data = `data: ${JSON.stringify({ type: 'done', content: aiResponse, confidence, model: usedModel, session_id: sessionId })}\n\n`
+                  controller.enqueue(encoder.encode(data))
+                  clearInterval(interval)
+                  controller.close()
+                }
+              }, 20)
+            }
+          })
+          return new Response(readable, {
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            }
+          })
+        }
+
+        return NextResponse.json({
+          session_id: sessionId,
+          message: {
+            role: 'assistant',
+            content: aiResponse,
+            confidence,
+            model: usedModel,
+            timestamp: new Date().toISOString(),
+          }
+        })
+      } catch (e) {
+        // If this path fails, continue with normal orchestration
+        console.warn('[AI Chat] LLM status short-circuit failed:', e)
+      }
+    }
+    
     // First, try to use Platform Orchestrator for intelligent responses
     try {
       console.log('[AI Chat] Attempting platform orchestration for:', message)
