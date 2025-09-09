@@ -113,6 +113,16 @@ export function SignupForm() {
 
     setLoading(true)
 
+    // Validate Supabase public env at runtime (prevents "fetch Invalid value" from supabase-js)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined
+    const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string | undefined
+    if (!supabaseUrl || !/^https?:\/\//.test(supabaseUrl) || !supabaseAnon) {
+      console.error('Supabase env missing or invalid', { supabaseUrlPresent: !!supabaseUrl, supabaseAnonPresent: !!supabaseAnon })
+      toast.error('Signup is temporarily unavailable: missing Supabase configuration. Please try again later.')
+      setLoading(false)
+      return
+    }
+
     try {
       // Sign up with Supabase (auto-confirms if configured)
       console.log('Starting signup process...')
