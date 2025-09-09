@@ -24,21 +24,27 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Check authentication
+    // Check authentication - allow demo mode
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const isDemoMode = request.headers.get('x-demo-mode') === 'true'
+    
+    if (!user && !isDemoMode) {
       return NextResponse.json(
         { error: 'Unauthorized - Please log in to access Intelligent Similarity Analysis' }, 
         { status: 401 }
       )
     }
 
-    // Get user's organization
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('org_id, role')
-      .eq('id', user.id)
-      .single()
+    // Get user's organization (skip in demo mode)
+    let profile = null
+    if (user) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('org_id, role')
+        .eq('id', user.id)
+        .single()
+      profile = data
+    }
 
     // Parse request body
     const body = await request.json()

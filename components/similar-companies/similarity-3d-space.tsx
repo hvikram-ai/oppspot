@@ -148,14 +148,22 @@ function Scene({ matches, targetCompany, onCompanySelect, dimensions, selectedCo
 }) {
   const { camera } = useThree()
   
-  // Calculate positions based on scoring dimensions
+  // Calculate positions based on scoring dimensions with safe initialization
   const companiesWithPositions = useMemo(() => {
+    if (!matches || matches.length === 0) {
+      return []
+    }
+    
     const maxRange = 10
     
     return matches.map(match => {
-      const x = ((match[dimensions.x] as number) / 100) * maxRange - maxRange/2
-      const y = ((match[dimensions.y] as number) / 100) * maxRange - maxRange/2  
-      const z = ((match[dimensions.z] as number) / 100) * maxRange - maxRange/2
+      const xValue = typeof match[dimensions.x] === 'number' ? match[dimensions.x] as number : 50
+      const yValue = typeof match[dimensions.y] === 'number' ? match[dimensions.y] as number : 50
+      const zValue = typeof match[dimensions.z] === 'number' ? match[dimensions.z] as number : 50
+      
+      const x = (xValue / 100) * maxRange - maxRange/2
+      const y = (yValue / 100) * maxRange - maxRange/2  
+      const z = (zValue / 100) * maxRange - maxRange/2
       
       return {
         ...match,
