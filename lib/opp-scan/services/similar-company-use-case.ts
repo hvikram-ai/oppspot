@@ -127,12 +127,50 @@ export class SimilarCompanyUseCase {
         maxResults: request.configuration.maxResults
       }
 
-      const searchResults = await this.webSearchService.searchCompanies(searchQuery)
-      metrics.apiCallsMade += this.webSearchService.getProviderStats()?.totalRequests || 0
-      metrics.totalCost += this.webSearchService.getTotalCost()
-
+      let searchResults: CompanySearchResult[] = []
+      
+      try {
+        searchResults = await this.webSearchService.searchCompanies(searchQuery)
+        metrics.apiCallsMade += this.webSearchService.getProviderStats()?.totalRequests || 0
+        metrics.totalCost += this.webSearchService.getTotalCost()
+        
+        console.log(`[SimilarCompanyUseCase] Search returned ${searchResults.length} results for "${request.targetCompanyName}"`)
+        
+        if (searchResults.length === 0) {
+          console.warn(`[SimilarCompanyUseCase] No results found. Possible causes:
+            1. No external API keys configured (check GET /api/diagnostics)
+            2. Database has no matching businesses
+            3. Target company name doesn't match any records
+            Run diagnostics: curl http://localhost:3001/api/diagnostics`)
+          
+          warnings.push('No similar companies found. This may be due to missing API configurations or limited data.')
+          
+          // Try a more relaxed search
+          console.log('[SimilarCompanyUseCase] Attempting fallback search with relaxed criteria...')
+          const fallbackQuery: CompanySearchQuery = {
+            query: request.targetCompanyName.split(' ')[0], // Use first word only
+            maxResults: request.configuration.maxResults * 2
+          }
+          
+          searchResults = await this.webSearchService.searchCompanies(fallbackQuery)
+          
+          if (searchResults.length > 0) {
+            console.log(`[SimilarCompanyUseCase] Fallback search found ${searchResults.length} results`)
+            warnings.push('Used relaxed search criteria to find potential matches.')
+          }
+        }
+      } catch (searchError: any) {
+        console.error('[SimilarCompanyUseCase] Search service failed:', searchError)
+        errors.push(`Search service error: ${searchError.message}`)
+        warnings.push('Search service encountered an error. Using limited results.')
+        
+        // Continue with empty results rather than failing entirely
+        searchResults = []
+      }
+      
       if (searchResults.length === 0) {
-        warnings.push('No similar companies found in search results')
+        console.error('[SimilarCompanyUseCase] No search results available. Analysis will be limited.')
+        warnings.push('No similar companies found in any data source.')
       }
 
       // Stage 3: Enrich company data

@@ -14,6 +14,7 @@ import {
   NewsAnalysis 
 } from '../core/similarity-interfaces'
 import { CompanyEntity } from '../core/interfaces'
+import { DatabaseSimilaritySearch } from './database-similarity-search'
 
 // Search provider configurations
 interface SearchProviderConfig {
@@ -59,6 +60,7 @@ export class WebSearchService implements IWebSearchService {
   private config: WebSearchConfig
   private searchCache = new Map<string, CachedSearchResult>()
   private rateLimitTrackers = new Map<string, { count: number; resetTime: Date }>()
+  private databaseSearch: DatabaseSimilaritySearch
 
   constructor(config?: Partial<WebSearchConfig>) {
     this.config = {
@@ -115,6 +117,9 @@ export class WebSearchService implements IWebSearchService {
       cacheTTL: 24 * 60 * 60 * 1000, // 24 hours
       ...config
     }
+    
+    // Initialize database search as fallback
+    this.databaseSearch = new DatabaseSimilaritySearch()
   }
 
   /**
@@ -140,6 +145,33 @@ export class WebSearchService implements IWebSearchService {
     // Execute searches across enabled providers
     const enabledProviders = this.config.providers.filter(p => p.enabled)
     
+    // Check if we have any enabled providers
+    if (enabledProviders.length === 0) {
+      console.warn('[WebSearchService] No external API providers enabled, using database fallback')
+      
+      // Use database fallback when no external APIs are available
+      try {
+        const databaseResults = await this.databaseSearch.searchSimilarCompanies({
+          targetCompany: query.query,
+          industry: query.filters?.industry,
+          location: query.filters?.region,
+          maxResults: query.maxResults || 20
+        })
+        
+        console.log(`[WebSearchService] Database fallback returned ${databaseResults.length} results`)
+        
+        // Cache and return database results
+        if (this.config.cacheEnabled && databaseResults.length > 0) {
+          this.cacheResults(cacheKey, databaseResults, query)
+        }
+        
+        return databaseResults.slice(0, query.maxResults || 50)
+      } catch (error) {
+        console.error('[WebSearchService] Database fallback failed:', error)
+        return []
+      }
+    }
+    
     for (const provider of enabledProviders) {
       if (this.canMakeRequest(provider)) {
         searchPromises.push(this.searchWithProvider(provider, query))
@@ -150,11 +182,34 @@ export class WebSearchService implements IWebSearchService {
       // Execute searches in parallel
       const providerResults = await Promise.allSettled(searchPromises)
       
+      let hasAnyResults = false
       for (const result of providerResults) {
-        if (result.status === 'fulfilled') {
+        if (result.status === 'fulfilled' && result.value.length > 0) {
           results.push(...result.value)
-        } else {
+          hasAnyResults = true
+        } else if (result.status === 'rejected') {
           console.warn('Provider search failed:', result.reason)
+        }
+      }
+      
+      // If all external searches failed or returned no results, use database fallback
+      if (!hasAnyResults) {
+        console.warn('[WebSearchService] All external searches failed, using database fallback')
+        
+        try {
+          const databaseResults = await this.databaseSearch.searchSimilarCompanies({
+            targetCompany: query.query,
+            industry: query.filters?.industry,
+            location: query.filters?.region,
+            maxResults: query.maxResults || 20
+          })
+          
+          if (databaseResults.length > 0) {
+            results.push(...databaseResults)
+            console.log(`[WebSearchService] Added ${databaseResults.length} results from database fallback`)
+          }
+        } catch (dbError) {
+          console.error('[WebSearchService] Database fallback also failed:', dbError)
         }
       }
 
