@@ -35,7 +35,15 @@ export class DatabaseSimilaritySearch {
   private supabase: any
 
   constructor() {
-    this.supabase = createClient()
+    // Don't initialize in constructor to avoid cookies error
+    this.supabase = null
+  }
+  
+  private async getSupabase() {
+    if (!this.supabase) {
+      this.supabase = await createClient()
+    }
+    return this.supabase
   }
 
   /**
@@ -53,11 +61,14 @@ export class DatabaseSimilaritySearch {
     console.log(`[DatabaseSearch] Searching for companies similar to: ${targetCompany}`)
 
     try {
+      // Get supabase client
+      const supabase = await this.getSupabase()
+      
       // Step 1: Try to find the target company first
       const targetResult = await this.findTargetCompany(targetCompany)
       
       // Step 2: Build search query based on target company characteristics
-      let query = this.supabase
+      let query = supabase
         .from('businesses')
         .select('*')
 
@@ -119,7 +130,8 @@ export class DatabaseSimilaritySearch {
    */
   private async findTargetCompany(companyName: string): Promise<BusinessRecord | null> {
     try {
-      const { data, error } = await this.supabase
+      const supabase = await this.getSupabase()
+      const { data, error } = await supabase
         .from('businesses')
         .select('*')
         .ilike('name', `%${companyName}%`)

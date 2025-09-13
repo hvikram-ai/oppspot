@@ -63,10 +63,18 @@ export class SimilarCompanyUseCase {
   private progressCallbacks = new Map<string, (progress: AnalysisProgress) => void>()
 
   constructor() {
-    this.supabase = createClient()
+    // Don't initialize in constructor to avoid cookies error
+    this.supabase = null
     this.webSearchService = new WebSearchService()
     this.scoringService = new SimilarityScoringService()
     this.explanationService = new SimilarityExplanationService()
+  }
+  
+  private async getSupabase() {
+    if (!this.supabase) {
+      this.supabase = await createClient()
+    }
+    return this.supabase
   }
 
   /**
@@ -348,7 +356,8 @@ export class SimilarCompanyUseCase {
     try {
       const cacheKey = this.generateCacheKey(targetCompanyName, configuration)
       
-      const { data: analysis, error } = await this.supabase
+      const supabase = await this.getSupabase()
+      const { data: analysis, error } = await supabase
         .from('similarity_analyses')
         .select(`
           *,
@@ -382,7 +391,8 @@ export class SimilarCompanyUseCase {
    */
   async cancelAnalysis(analysisId: string, userId: string): Promise<boolean> {
     try {
-      const { error } = await this.supabase
+      const supabase = await this.getSupabase()
+      const { error } = await supabase
         .from('similarity_analyses')
         .update({
           status: 'cancelled',
@@ -405,8 +415,9 @@ export class SimilarCompanyUseCase {
     analysisId: string
   ): Promise<any> {
     const cacheKey = this.generateCacheKey(request.targetCompanyName, request.configuration)
+    const supabase = await this.getSupabase()
     
-    const { data: analysis, error } = await this.supabase
+    const { data: analysis, error } = await supabase
       .from('similarity_analyses')
       .insert({
         id: analysisId,
@@ -514,7 +525,8 @@ export class SimilarCompanyUseCase {
 
   private async createOrGetBenchmarkProfile(company: CompanyEntity): Promise<MnABenchmarkEntity> {
     // Check if benchmark profile already exists
-    const { data: existing } = await this.supabase
+    const supabase = await this.getSupabase()
+    const { data: existing } = await supabase
       .from('mna_benchmark_profiles')
       .select('*')
       .eq('company_id', company.id)
@@ -536,7 +548,7 @@ export class SimilarCompanyUseCase {
       updatedAt: new Date()
     }
 
-    const { data: created, error } = await this.supabase
+    const { data: created, error } = await supabase
       .from('mna_benchmark_profiles')
       .insert(benchmarkProfile)
       .select()
@@ -635,7 +647,8 @@ export class SimilarCompanyUseCase {
     metrics: AnalysisMetrics
   ): Promise<SimilarityEntity> {
     // Update analysis record with results
-    const { data: updatedAnalysis, error: updateError } = await this.supabase
+    const supabase = await this.getSupabase()
+    const { data: updatedAnalysis, error: updateError } = await supabase
       .from('similarity_analyses')
       .update({
         target_company_data: targetCompany,
@@ -696,7 +709,8 @@ export class SimilarCompanyUseCase {
                          match.benchmarkScores.risk.dataPoints
       }))
 
-      const { error: matchError } = await this.supabase
+      const supabase = await this.getSupabase()
+      const { error: matchError } = await supabase
         .from('similar_company_matches')
         .insert(matchRecords)
 
@@ -747,7 +761,8 @@ export class SimilarCompanyUseCase {
       updateData.error_message = errorMessage
     }
 
-    await this.supabase
+    const supabase = await this.getSupabase()
+    await supabase
       .from('similarity_analyses')
       .update(updateData)
       .eq('id', analysisId)
@@ -759,7 +774,8 @@ export class SimilarCompanyUseCase {
     metrics: AnalysisMetrics
   ): Promise<void> {
     try {
-      await this.supabase
+      const supabase = await this.getSupabase()
+      await supabase
         .from('similarity_feature_usage')
         .insert({
           user_id: request.userId,
@@ -938,7 +954,8 @@ export class SimilarCompanyUseCase {
    * Get analysis status
    */
   async getAnalysisStatus(analysisId: string, userId: string): Promise<any> {
-    const { data, error } = await this.supabase
+    const supabase = await this.getSupabase()
+    const { data, error } = await supabase
       .from('similarity_analyses')
       .select('id, status, progress_percentage, current_step, error_message')
       .eq('id', analysisId)
@@ -953,7 +970,8 @@ export class SimilarCompanyUseCase {
    * List user's recent analyses
    */
   async getUserAnalyses(userId: string, limit = 10): Promise<SimilarityEntity[]> {
-    const { data, error } = await this.supabase
+    const supabase = await this.getSupabase()
+    const { data, error } = await supabase
       .from('similarity_analyses')
       .select('*')
       .eq('user_id', userId)
