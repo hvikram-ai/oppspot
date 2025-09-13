@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Check external API configurations
     const apiChecks = [
+      { name: 'SearchAPI', key: 'SEARCHAPI_KEY' },
       { name: 'Google Search', key: 'GOOGLE_SEARCH_API_KEY' },
       { name: 'Bing Search', key: 'BING_SEARCH_API_KEY' },
       { name: 'Companies House', key: 'COMPANIES_HOUSE_API_KEY' },

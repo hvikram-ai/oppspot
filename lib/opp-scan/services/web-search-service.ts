@@ -66,6 +66,15 @@ export class WebSearchService implements IWebSearchService {
     this.config = {
       providers: [
         {
+          name: 'searchapi',
+          endpoint: 'https://www.searchapi.io/api/v1/search',
+          apiKey: process.env.SEARCHAPI_KEY,
+          rateLimit: { requestsPerSecond: 1, requestsPerMinute: 60 },
+          costPerRequest: 0, // Free tier: 2000 req/month
+          reliability: 0.95,
+          enabled: !!process.env.SEARCHAPI_KEY
+        },
+        {
           name: 'google_search',
           endpoint: 'https://customsearch.googleapis.com/customsearch/v1',
           apiKey: process.env.GOOGLE_SEARCH_API_KEY,
@@ -346,6 +355,9 @@ export class WebSearchService implements IWebSearchService {
       let results: CompanySearchResult[] = []
       
       switch (provider.name) {
+        case 'searchapi':
+          results = await this.searchWithSearchAPI(provider, query)
+          break
         case 'google_search':
           results = await this.searchWithGoogle(provider, query)
           break
@@ -379,6 +391,44 @@ export class WebSearchService implements IWebSearchService {
       }))
     } catch (error) {
       console.error(`Search failed for provider ${provider.name}:`, error)
+      return []
+    }
+  }
+
+  private async searchWithSearchAPI(
+    provider: SearchProviderConfig,
+    query: CompanySearchQuery
+  ): Promise<CompanySearchResult[]> {
+    if (!provider.apiKey) {
+      throw new Error('SearchAPI key not configured')
+    }
+
+    const searchTerms = this.buildSearchTerms(query)
+    const searchParams = new URLSearchParams({
+      api_key: provider.apiKey,
+      q: searchTerms + ' company business',
+      location: query.filters?.region || 'United Kingdom',
+      num: '20',
+      engine: 'google'
+    })
+
+    const searchUrl = `${provider.endpoint}?${searchParams}`
+
+    try {
+      const response = await fetch(searchUrl, {
+        headers: {
+          'User-Agent': 'oppSpot-SimilarCompany/1.0'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`SearchAPI error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return this.parseSearchAPIResults(data, query)
+    } catch (error) {
+      console.error('SearchAPI error:', error)
       return []
     }
   }
@@ -647,6 +697,86 @@ export class WebSearchService implements IWebSearchService {
         }
       }
     })
+  }
+
+  private parseSearchAPIResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
+    if (!data.organic_results && !data.knowledge_graph) return []
+
+    const results: CompanySearchResult[] = []
+
+    // Parse organic search results
+    if (data.organic_results) {
+      data.organic_results.forEach((item: any) => {
+        const domain = this.extractDomain(item.link)
+        const companyName = this.extractCompanyNameFromTitle(item.title)
+
+        const companyData: CompanyEntity = {
+          id: domain || this.generateId(),
+          name: companyName,
+          country: 'United Kingdom', // Default for UK/Ireland focus
+          industryCodes: [],
+          website: item.link,
+          description: item.snippet,
+          confidenceScore: 0.75,
+          sourceMetadata: {
+            source: 'searchapi',
+            discoveredAt: new Date(),
+            confidence: 0.75,
+            searchTerms: [item.title],
+            rawData: item
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+
+        results.push({
+          company: companyData,
+          relevanceScore: this.calculateRelevanceScore(companyData, query),
+          matchType: 'web_search',
+          source: 'searchapi',
+          snippet: item.snippet,
+          matchedKeywords: this.extractKeywords(item.snippet),
+          discoveredAt: new Date()
+        })
+      })
+    }
+
+    // Parse knowledge graph if available (for direct company matches)
+    if (data.knowledge_graph) {
+      const kg = data.knowledge_graph
+      const companyData: CompanyEntity = {
+        id: this.extractDomain(kg.website) || this.generateId(),
+        name: kg.title || kg.name,
+        country: kg.location?.country || 'United Kingdom',
+        industryCodes: kg.type ? [kg.type] : [],
+        website: kg.website,
+        description: kg.description,
+        foundingYear: kg.founded ? parseInt(kg.founded) : undefined,
+        employees: kg.employees,
+        revenue: kg.revenue,
+        confidenceScore: 0.95, // Higher confidence for knowledge graph
+        sourceMetadata: {
+          source: 'searchapi_knowledge',
+          discoveredAt: new Date(),
+          confidence: 0.95,
+          rawData: kg
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      results.unshift({ // Add to beginning as most relevant
+        company: companyData,
+        relevanceScore: 1.0, // Perfect match from knowledge graph
+        matchType: 'exact',
+        source: 'searchapi_knowledge',
+        snippet: kg.description,
+        matchedKeywords: [],
+        discoveredAt: new Date()
+      })
+    }
+
+    return results
   }
 
   private parseClearbitResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
