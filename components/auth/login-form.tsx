@@ -32,12 +32,28 @@ export function LoginForm() {
       })
 
       if (error) {
+        console.error('Sign in error details:', {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+          name: error.name,
+          fullError: error
+        })
+        
         // Provide more specific error messages
-        if (error.message.includes('fetch')) {
+        if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
+          // Log more details about the network error
+          console.error('Network/fetch error detected. Possible causes:')
+          console.error('1. CORS issues (check browser console Network tab)')
+          console.error('2. Supabase service temporarily unavailable')
+          console.error('3. Browser extensions blocking requests')
+          
           toast.error('Network error: Unable to connect to authentication service. Please check your connection and try again.')
-          console.error('Auth fetch error:', error)
         } else if (error.message.includes('Invalid login credentials')) {
           toast.error('Invalid email or password. Please check your credentials and try again.')
+        } else if (error.message.includes('infinite recursion')) {
+          toast.error('Database configuration issue. Please contact support.')
+          console.error('RLS policy error detected - infinite recursion in profiles table')
         } else {
           toast.error(error.message || 'An error occurred during sign in')
         }
