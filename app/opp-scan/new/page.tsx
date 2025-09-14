@@ -233,9 +233,24 @@ function NewOppScanPageContent() {
 
       toast.success('Opp Scan configured successfully!')
       router.push(`/opp-scan/${scan.id}`)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating scan:', error)
-      toast.error('Failed to create acquisition scan')
+      
+      // Check for missing table error
+      if (error?.message?.includes('acquisition_scans') || 
+          error?.code === 'PGRST204' || 
+          error?.code === 'PGRST205' ||
+          error?.message?.includes('table')) {
+        toast.error(
+          'Database tables not configured. Please contact support to enable Opp Scan feature.',
+          {
+            description: 'The acquisition_scans table needs to be created.',
+            duration: 10000
+          }
+        )
+      } else {
+        toast.error('Failed to create acquisition scan')
+      }
     } finally {
       setLoading(false)
     }

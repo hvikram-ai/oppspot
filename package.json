@@ -21,6 +21,8 @@
     "reset-password": "node scripts/reset-user-password.js",
     "check-profiles": "node scripts/check-user-profiles.js",
     "fix-rls": "node scripts/fix-rls-policies.js",
+    "migrate": "node scripts/run-all-migrations.js",
+    "check-tables": "node scripts/run-all-migrations.js check",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
