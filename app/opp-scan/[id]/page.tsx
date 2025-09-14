@@ -71,6 +71,7 @@ function ScanDetailPageContent() {
   const [scanData, setScanData] = useState<ScanData | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [user, setUser] = useState<any>(null)
+  const [startingScan, setStartingScan] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -169,6 +170,94 @@ function ScanDetailPageContent() {
       return `${hours}h ${minutes}m`
     } else {
       return `${minutes}m`
+    }
+  }
+
+  const handleStartScan = async () => {
+    setStartingScan(true)
+    
+    try {
+      if (isDemoMode) {
+        // For demo mode, simulate scan starting
+        toast.success('Demo scan started!')
+        
+        // Update the scan data to show it's scanning
+        setScanData(prev => prev ? {
+          ...prev,
+          status: 'scanning',
+          current_step: 'data_collection',
+          progress_percentage: 10,
+          started_at: new Date().toISOString(),
+          targets_identified: 0,
+          targets_analyzed: 0
+        } : null)
+        
+        // Simulate progress updates
+        setTimeout(() => {
+          setScanData(prev => prev ? {
+            ...prev,
+            progress_percentage: 25,
+            current_step: 'analyzing_companies',
+            targets_identified: 5
+          } : null)
+        }, 3000)
+        
+        setTimeout(() => {
+          setScanData(prev => prev ? {
+            ...prev,
+            progress_percentage: 50,
+            targets_identified: 12
+          } : null)
+        }, 6000)
+        
+        setTimeout(() => {
+          setScanData(prev => prev ? {
+            ...prev,
+            progress_percentage: 75,
+            current_step: 'finalizing_results',
+            targets_identified: 18,
+            targets_analyzed: 15
+          } : null)
+        }, 9000)
+        
+        setTimeout(() => {
+          setScanData(prev => prev ? {
+            ...prev,
+            status: 'completed',
+            progress_percentage: 100,
+            current_step: 'completed',
+            targets_identified: 24,
+            targets_analyzed: 24,
+            completed_at: new Date().toISOString()
+          } : null)
+          toast.success('Demo scan completed! 24 targets identified.')
+        }, 12000)
+        
+      } else {
+        // Real scan - call the API
+        const response = await fetch(`/api/acquisition-scans/${scanId}/start-scan`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to start scan')
+        }
+        
+        const data = await response.json()
+        toast.success('Scan started successfully!')
+        
+        // Reload scan data to get updated status
+        await loadScanDetails(scanId)
+      }
+    } catch (error: any) {
+      console.error('Error starting scan:', error)
+      toast.error(error.message || 'Failed to start scan')
+    } finally {
+      setStartingScan(false)
     }
   }
 
@@ -401,6 +490,26 @@ function ScanDetailPageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {scanData.status === 'configuring' && (
+                    <Button 
+                      className="w-full" 
+                      size="sm"
+                      onClick={handleStartScan}
+                      disabled={startingScan}
+                    >
+                      {startingScan ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Starting Scan...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Start Scan
+                        </>
+                      )}
+                    </Button>
+                  )}
                   {scanData.status === 'completed' && (
                     <Link href={`/opp-scan/${scanData.id}/results`}>
                       <Button className="w-full" size="sm">

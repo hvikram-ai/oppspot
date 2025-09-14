@@ -682,6 +682,17 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       onCheckedChange={(checked) => onChange('realtimeMonitoring', checked)}
                     />
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Start Scan Automatically</p>
+                      <p className="text-sm text-muted-foreground">Begin scanning immediately after configuration</p>
+                    </div>
+                    <Switch
+                      checked={config.autoStart !== false}
+                      onCheckedChange={(checked) => onChange('autoStart', checked)}
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>

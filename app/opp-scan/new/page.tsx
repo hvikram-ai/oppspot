@@ -48,6 +48,7 @@ interface ScanConfig {
   synergyRequirements: any
   dataSources: string[]
   scanDepth: 'basic' | 'detailed' | 'comprehensive'
+  autoStart?: boolean
 }
 
 function NewOppScanPageContent() {
@@ -75,7 +76,8 @@ function NewOppScanPageContent() {
       'patents_ip',
       'news_media'
     ],
-    scanDepth: 'comprehensive'
+    scanDepth: 'comprehensive',
+    autoStart: true
   })
 
   const steps: WorkflowStep[] = [
@@ -179,21 +181,45 @@ function NewOppScanPageContent() {
         // In demo mode, create and persist the actual scan
         await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
         
+        const shouldAutoStart = scanConfig.autoStart !== false
+        
         const newScan = addDemoScan({
           name: scanConfig.name,
           description: scanConfig.description,
-          status: 'configuring',
-          progress_percentage: 0,
+          status: shouldAutoStart ? 'scanning' : 'configuring',
+          progress_percentage: shouldAutoStart ? 10 : 0,
           targets_identified: 0,
           targets_analyzed: 0,
           selected_industries: scanConfig.selectedIndustries,
           selected_regions: scanConfig.selectedRegions,
-          current_step: 'industry_selection',
-          started_at: new Date().toISOString()
+          current_step: shouldAutoStart ? 'data_collection' : 'industry_selection',
+          started_at: shouldAutoStart ? new Date().toISOString() : undefined
         })
         
-        toast.success(`Demo Opp Scan "${scanConfig.name}" created successfully!`)
-        router.push('/opp-scan')
+        if (shouldAutoStart) {
+          toast.success(`Demo Opp Scan "${scanConfig.name}" created and started!`)
+          
+          // Simulate scan progress for demo
+          setTimeout(() => {
+            const scans = JSON.parse(localStorage.getItem('demoScans') || '[]')
+            const scanIndex = scans.findIndex((s: any) => s.id === newScan.id)
+            if (scanIndex >= 0) {
+              scans[scanIndex] = {
+                ...scans[scanIndex],
+                progress_percentage: 100,
+                status: 'completed',
+                targets_identified: 24,
+                targets_analyzed: 24,
+                completed_at: new Date().toISOString()
+              }
+              localStorage.setItem('demoScans', JSON.stringify(scans))
+            }
+          }, 15000)
+        } else {
+          toast.success(`Demo Opp Scan "${scanConfig.name}" created successfully!`)
+        }
+        
+        router.push(`/opp-scan/${newScan.id}`)
         return
       }
 
@@ -231,7 +257,32 @@ function NewOppScanPageContent() {
 
       if (error) throw error
 
-      toast.success('Opp Scan configured successfully!')
+      // Check if we should auto-start the scan
+      const shouldAutoStart = scanConfig.autoStart !== false // Default to true
+      
+      if (shouldAutoStart) {
+        // Start the scan immediately
+        try {
+          const startResponse = await fetch(`/api/acquisition-scans/${scan.id}/start-scan`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          if (!startResponse.ok) {
+            console.error('Failed to auto-start scan, but scan was created')
+          } else {
+            toast.success('Opp Scan created and started successfully!')
+          }
+        } catch (startError) {
+          console.error('Error auto-starting scan:', startError)
+          toast.warning('Scan created but failed to start automatically. You can start it manually.')
+        }
+      } else {
+        toast.success('Opp Scan configured successfully!')
+      }
+      
       router.push(`/opp-scan/${scan.id}`)
     } catch (error: any) {
       console.error('Error creating scan:', error)
