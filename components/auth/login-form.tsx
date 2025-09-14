@@ -58,12 +58,22 @@ export function LoginForm() {
           toast.error(error.message || 'An error occurred during sign in')
         }
       } else if (data?.user) {
+        console.log('Login successful, user:', data.user.email)
+        console.log('Session:', data.session ? 'Present' : 'Missing')
+        
         toast.success('Welcome back!')
-        // Small delay to ensure session is set
-        setTimeout(() => {
-          router.push('/dashboard')
-          router.refresh()
-        }, 100)
+        
+        // Ensure session is properly set before redirecting
+        if (data.session) {
+          // Give the session time to be stored in cookies
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Force a hard navigation to ensure cookies are sent
+          window.location.href = '/dashboard'
+        } else {
+          console.error('No session returned despite successful login')
+          toast.error('Session creation failed. Please try again.')
+        }
       } else {
         toast.error('Sign in failed. Please try again.')
       }

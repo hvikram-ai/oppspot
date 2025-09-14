@@ -16,10 +16,21 @@ export default async function DashboardPage({
   // Only check authentication if not in demo mode
   if (!isDemo) {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) {
-      redirect('/login')
+    // Try to get session first, then user
+    const { data: { session } } = await supabase.auth.getSession()
+    console.log('[Dashboard] Session check:', session ? 'Found' : 'Not found')
+    
+    if (!session) {
+      // Double-check with getUser
+      const { data: { user }, error } = await supabase.auth.getUser()
+      console.log('[Dashboard] User check:', user ? 'Found' : 'Not found')
+      console.log('[Dashboard] Auth error:', error?.message)
+      
+      if (!user) {
+        console.log('[Dashboard] No user found, redirecting to login')
+        redirect('/login')
+      }
     }
   }
 
