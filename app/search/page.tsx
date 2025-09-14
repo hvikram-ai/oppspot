@@ -61,11 +61,8 @@ function SearchPageContent() {
   // Debounced search function
   const performSearch = useCallback(
     debounce(async (query: string, searchFilters: SearchFilters) => {
-      if (!query.trim() && !searchFilters.location) {
-        setResults([])
-        setTotalResults(0)
-        return
-      }
+      // Always perform search, even with empty query to show all results
+      // This allows users to browse all businesses or use filters alone
 
       setLoading(true)
       try {
@@ -86,7 +83,7 @@ function SearchPageContent() {
         
         const data = await response.json()
         setResults(data.results || [])
-        setTotalResults(data.total || 0)
+        setTotalResults(data.totalCount || data.total || 0)
         
         // Update URL with search params
         const newParams = new URLSearchParams()
@@ -261,7 +258,7 @@ function SearchPageContent() {
               selectedResults={selectedResults}
               onSelectionChange={setSelectedResults}
               currentPage={currentPage}
-              totalPages={Math.ceil(totalResults / 20)}
+              totalPages={totalResults > 0 ? Math.ceil(totalResults / 20) : 1}
               onPageChange={setCurrentPage}
             />
           </div>
