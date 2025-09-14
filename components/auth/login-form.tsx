@@ -25,19 +25,38 @@ export function LoginForm() {
     e.preventDefault()
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) {
-      toast.error(error.message)
-    } else {
-      toast.success('Welcome back!')
-      router.push('/dashboard')
-      router.refresh()
+      if (error) {
+        // Provide more specific error messages
+        if (error.message.includes('fetch')) {
+          toast.error('Network error: Unable to connect to authentication service. Please check your connection and try again.')
+          console.error('Auth fetch error:', error)
+        } else if (error.message.includes('Invalid login credentials')) {
+          toast.error('Invalid email or password. Please check your credentials and try again.')
+        } else {
+          toast.error(error.message || 'An error occurred during sign in')
+        }
+      } else if (data?.user) {
+        toast.success('Welcome back!')
+        // Small delay to ensure session is set
+        setTimeout(() => {
+          router.push('/dashboard')
+          router.refresh()
+        }, 100)
+      } else {
+        toast.error('Sign in failed. Please try again.')
+      }
+    } catch (err) {
+      console.error('Sign in error:', err)
+      toast.error('An unexpected error occurred. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
