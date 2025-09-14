@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Auth</title>
+</head>
+<body>
+    <h1>Supabase Authentication Test</h1>
+    <button onclick="testAuth()">Test Authentication</button>
+    <pre id="output"></pre>
+
+    <script>
+    async function testAuth() {
+        const output = document.getElementById('output');
+        output.textContent = 'Testing authentication...\n';
+        
+        try {
+            // Test 1: Direct API call
+            output.textContent += '\n1. Testing direct API call...\n';
+            const response = await fetch('https://fuqdbewftdthbjfcecrz.supabase.co/auth/v1/token?grant_type=password', {
+                method: 'POST',
+                headers: {
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1cWRiZXdmdGR0aGJqZmNlY3J6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MDczODYsImV4cCI6MjA3MjA4MzM4Nn0.peIt7dPqPLJEp-bCsKTl4kfmmu08zjzq9iK7FV6szHY',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: 'demo@oppspot.com',
+                    password: 'Demo123456!'
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                output.textContent += '✅ Direct API call successful\n';
+                output.textContent += `   User: ${data.user?.email}\n`;
+                output.textContent += `   Has token: ${!!data.access_token}\n`;
+            } else {
+                const error = await response.json();
+                output.textContent += `❌ Direct API call failed: ${JSON.stringify(error)}\n`;
+            }
+            
+            // Test 2: Check if Supabase client exists
+            output.textContent += '\n2. Checking for Supabase client...\n';
+            if (typeof window !== 'undefined' && window.supabase) {
+                output.textContent += '✅ Supabase client found in window\n';
+            } else {
+                output.textContent += '⚠️ No Supabase client in window (this is normal)\n';
+            }
+            
+            // Test 3: Check environment
+            output.textContent += '\n3. Environment info:\n';
+            output.textContent += `   Origin: ${window.location.origin}\n`;
+            output.textContent += `   Protocol: ${window.location.protocol}\n`;
+            output.textContent += `   User Agent: ${navigator.userAgent.substring(0, 50)}...\n`;
+            
+        } catch (error) {
+            output.textContent += `\n❌ Error: ${error.message}\n`;
+            output.textContent += `   Type: ${error.name}\n`;
+            if (error.stack) {
+                output.textContent += `   Stack: ${error.stack.split('\n')[0]}\n`;
+            }
+        }
+    }
+    
+    // Auto-run on load
+    window.addEventListener('load', testAuth);
+    </script>
+</body>
+</html>
