@@ -121,7 +121,9 @@ export async function POST(request: Request) {
 
     // Send welcome email
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      // Use production URL in production, localhost in development
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
+        (process.env.NODE_ENV === 'production' ? 'https://oppspot.vercel.app' : 'http://localhost:3000')
       const verificationUrl = `${appUrl}/auth/verify?email=${encodeURIComponent(email)}`
       
       await fetch(`${appUrl}/api/email/send`, {
