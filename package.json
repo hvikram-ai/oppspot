@@ -13,6 +13,7 @@
     "db:migrate": "./scripts/apply-migrations.sh",
     "db:verify": "tsx scripts/verify-database.ts",
     "db:fix-email": "tsx scripts/fix-email-column.ts",
+    "fix-database": "node scripts/fix-database.js",
     "create-account": "node scripts/create-account.js",
     "create-account-old": "tsx scripts/create-premium-account.ts",
     "demo-login": "tsx scripts/demo-login.ts",
