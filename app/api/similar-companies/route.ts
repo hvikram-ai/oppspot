@@ -24,21 +24,27 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Check authentication
+    // Check authentication (optional - allow demo mode)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please log in to access Similar Company analysis' }, 
-        { status: 401 }
-      )
+    const isAuthenticated = !!user
+    
+    let userId = user?.id
+    let orgId = null
+    
+    if (isAuthenticated) {
+      // Get user's organization
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id, role')
+        .eq('id', user.id)
+        .single()
+      
+      orgId = profile?.org_id
+    } else {
+      // Demo mode - generate temporary ID
+      userId = `demo-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+      console.log('Similar Companies API: Running in demo mode with temporary ID:', userId)
     }
-
-    // Get user's organization
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('org_id, role')
-      .eq('id', user.id)
-      .single()
 
     // Parse request body
     const body = await request.json()
@@ -104,27 +110,29 @@ export async function POST(request: NextRequest) {
       competitorAnalysis
     }
 
-    // Check for cached results first
+    // Check for cached results first (only for authenticated users)
     const useCase = getSimilarCompanyUseCase()
-    const cachedAnalysis = await useCase.getCachedAnalysis(
-      targetCompanyName.trim(),
-      user.id,
-      configuration
-    )
+    if (isAuthenticated) {
+      const cachedAnalysis = await useCase.getCachedAnalysis(
+        targetCompanyName.trim(),
+        userId,
+        configuration
+      )
 
-    if (cachedAnalysis) {
-      return NextResponse.json({
-        analysis: cachedAnalysis,
-        cached: true,
-        message: 'Retrieved from cache'
-      })
+      if (cachedAnalysis) {
+        return NextResponse.json({
+          analysis: cachedAnalysis,
+          cached: true,
+          message: 'Retrieved from cache'
+        })
+      }
     }
 
     // Start new analysis
     const analysisRequest = {
       targetCompanyName: targetCompanyName.trim(),
-      userId: user.id,
-      orgId: profile?.org_id,
+      userId: userId,
+      orgId: orgId,
       configuration
     }
 
@@ -178,17 +186,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Check authentication
+    // Check authentication (optional - allow demo mode)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const isAuthenticated = !!user
+    
+    // For demo mode, allow retrieving analyses by ID if it starts with 'demo-'
+    const isDemoAnalysis = analysisId && analysisId.startsWith('demo-')
+    
+    if (!isAuthenticated && !isDemoAnalysis) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const useCase = getSimilarCompanyUseCase()
+    const effectiveUserId = user?.id || (isDemoAnalysis ? 'demo-user' : null)
 
     if (analysisId) {
       // Get specific analysis status or results
-      const analysisStatus = await useCase.getAnalysisStatus(analysisId, user.id)
+      const analysisStatus = await useCase.getAnalysisStatus(analysisId, effectiveUserId)
       
       if (!analysisStatus) {
         return NextResponse.json(
@@ -210,7 +224,7 @@ export async function GET(request: NextRequest) {
             )
           `)
           .eq('id', analysisId)
-          .eq('user_id', user.id)
+          .eq('user_id', effectiveUserId)
           .single()
 
         if (error || !fullAnalysis) {

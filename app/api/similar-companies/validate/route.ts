@@ -8,15 +8,49 @@ import { createClient } from '@/lib/supabase/server'
 import { WebSearchService } from '@/lib/opp-scan/services/web-search-service'
 import { SimilarCompanyUseCase } from '@/lib/opp-scan/services/similar-company-use-case'
 
+// Simple in-memory rate limiting for demo mode
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+const RATE_LIMIT_MAX = 10 // Max requests per window
+const RATE_LIMIT_WINDOW = 60000 // 1 minute window
+
 // POST: Validate company name and get suggestions
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Check authentication
+    // Check authentication (optional - allow demo mode)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const isAuthenticated = !!user
+    
+    // Basic rate limiting for unauthenticated requests
+    if (!isAuthenticated) {
+      // Get client IP for rate limiting
+      const forwarded = request.headers.get('x-forwarded-for')
+      const ip = forwarded ? forwarded.split(',')[0] : 'unknown'
+      
+      // Check rate limit
+      const now = Date.now()
+      const rateLimit = rateLimitMap.get(ip)
+      
+      if (rateLimit) {
+        if (now < rateLimit.resetTime) {
+          if (rateLimit.count >= RATE_LIMIT_MAX) {
+            return NextResponse.json(
+              { error: 'Rate limit exceeded. Please try again later.' },
+              { status: 429 }
+            )
+          }
+          rateLimit.count++
+        } else {
+          // Reset the window
+          rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW })
+        }
+      } else {
+        // First request from this IP
+        rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW })
+      }
+      
+      console.log('Similar Companies Validation: Running in demo/unauthenticated mode')
     }
 
     const body = await request.json()
@@ -134,10 +168,12 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Check authentication
+    // Check authentication (optional - allow demo mode)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const isAuthenticated = !!user
+    
+    if (!isAuthenticated) {
+      console.log('Similar Companies Health Check: Running in demo/unauthenticated mode')
     }
 
     // Check service health
