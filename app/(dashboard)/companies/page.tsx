@@ -43,6 +43,12 @@ export default function CompaniesPage() {
         if (response.ok) {
           const data = await response.json()
           setUser(data.user)
+        } else {
+          // If not authenticated and no demo param, redirect to demo mode
+          const urlParams = new URLSearchParams(window.location.search)
+          if (!urlParams.get('demo')) {
+            window.location.href = '/companies?demo=true'
+          }
         }
       } catch (err) {
         console.error('Auth check failed:', err)

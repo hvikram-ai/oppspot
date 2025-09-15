@@ -134,6 +134,8 @@ export async function POST(request: NextRequest) {
       demo = false 
     } = body
     
+    console.log('Companies search request:', { query, demo, useCache })
+    
     // Check authentication (skip for demo mode)
     if (!demo) {
       const { data: { user } } = await supabase.auth.getUser()

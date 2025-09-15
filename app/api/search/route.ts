@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/database.types'
-import { CompaniesHouseService } from '@/lib/services/companies-house'
+import { getCompaniesHouseService } from '@/lib/services/companies-house'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -257,11 +257,19 @@ async function searchCompaniesHouse(query: string, supabase: any): Promise<Busin
   if (!query || query.length < 2) return []
   
   try {
-    const companiesService = new CompaniesHouseService()
+    const companiesService = getCompaniesHouseService()
     
     // Search Companies House
-    const searchResult = await companiesService.searchCompanies(query, 5) // Limit to 5 for performance
-    const searchResults = searchResult.items || []
+    let searchResult
+    try {
+      searchResult = await companiesService.searchCompanies(query, 5) // Limit to 5 for performance
+    } catch (error) {
+      console.error('Companies House search failed:', error)
+      // Return empty array if API is not configured or fails
+      return []
+    }
+    
+    const searchResults = searchResult?.items || []
     if (!searchResults || searchResults.length === 0) return []
     
     const companiesHouseResults: Business[] = []
