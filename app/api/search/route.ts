@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/database.types'
+import { CompaniesHouseService } from '@/lib/services/companies-house'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -251,6 +252,87 @@ function getDemoSearchResults(query: string, categories: string[], location?: st
   return filteredResults
 }
 
+// Search Companies House and merge with existing results
+async function searchCompaniesHouse(query: string, supabase: any): Promise<Business[]> {
+  if (!query || query.length < 2) return []
+  
+  try {
+    const companiesService = new CompaniesHouseService()
+    
+    // Search Companies House
+    const searchResult = await companiesService.searchCompanies(query, 5) // Limit to 5 for performance
+    const searchResults = searchResult.items || []
+    if (!searchResults || searchResults.length === 0) return []
+    
+    const companiesHouseResults: Business[] = []
+    
+    for (const result of searchResults) {
+      // Check if company already exists in our database
+      const { data: existing } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('company_number', result.company_number)
+        .single()
+      
+      if (existing) {
+        // Check if cache is still valid
+        if (companiesService.isCacheValid(existing.companies_house_last_updated)) {
+          companiesHouseResults.push(existing)
+        } else {
+          // Refresh stale data
+          try {
+            const profile = await companiesService.getCompanyProfile(result.company_number)
+            if (profile) {
+              const formatted = companiesService.formatForDatabase(profile)
+              const { data: updated } = await supabase
+                .from('businesses')
+                .update({
+                  ...formatted,
+                  companies_house_last_updated: new Date().toISOString(),
+                  cache_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                })
+                .eq('id', existing.id)
+                .select()
+                .single()
+              
+              if (updated) companiesHouseResults.push(updated)
+            }
+          } catch (err) {
+            // If refresh fails, use stale data
+            companiesHouseResults.push(existing)
+          }
+        }
+      } else {
+        // Fetch full profile for new company
+        try {
+          const profile = await companiesService.getCompanyProfile(result.company_number)
+          if (profile) {
+            const formatted = companiesService.formatForDatabase(profile)
+            const { data: created } = await supabase
+              .from('businesses')
+              .insert({
+                ...formatted,
+                companies_house_last_updated: new Date().toISOString(),
+                cache_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+              })
+              .select()
+              .single()
+            
+            if (created) companiesHouseResults.push(created)
+          }
+        } catch (err) {
+          console.error('Failed to fetch company profile:', err)
+        }
+      }
+    }
+    
+    return companiesHouseResults
+  } catch (error) {
+    console.error('Companies House search error:', error)
+    return []
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -329,6 +411,16 @@ export async function GET(request: Request) {
 
     const { data: searchResults, error, count } = await businessQuery
 
+    // Also search Companies House if we have a query
+    let companiesHouseResults: Business[] = []
+    let includeCompaniesHouse = false
+    
+    if (query && !categories.length && !location && !minRating && !verified) {
+      // Only search Companies House for general text queries without specific filters
+      companiesHouseResults = await searchCompaniesHouse(query, supabase)
+      includeCompaniesHouse = true
+    }
+
     if (error) {
       console.error('Database query error:', error)
       // Return demo data instead of error for better UX
@@ -342,8 +434,23 @@ export async function GET(request: Request) {
       })
     }
     
-    // If no results from database, return demo data
-    if (!searchResults || searchResults.length === 0) {
+    // Merge results: Companies House + Database + Demo
+    let allResults: Business[] = []
+    
+    // Add Companies House results first (they're most relevant for company searches)
+    if (companiesHouseResults.length > 0) {
+      allResults = [...companiesHouseResults]
+    }
+    
+    // Add database results (excluding any duplicates from Companies House)
+    if (searchResults && searchResults.length > 0) {
+      const companiesHouseIds = new Set(companiesHouseResults.map(c => c.id))
+      const uniqueDbResults = searchResults.filter(r => !companiesHouseIds.has(r.id))
+      allResults = [...allResults, ...uniqueDbResults]
+    }
+    
+    // If still no results, return demo data
+    if (allResults.length === 0) {
       const demoResults = getDemoSearchResults(query, categories, location)
       return NextResponse.json({
         results: demoResults,
@@ -355,7 +462,7 @@ export async function GET(request: Request) {
     }
 
     // Calculate distance if user location is provided
-    const resultsWithDistance = searchResults?.map((business: Business) => {
+    const resultsWithDistance = allResults.map((business: Business) => {
       let distance = null
       if (userLat && userLng && business.latitude && business.longitude) {
         // Calculate distance using Haversine formula
@@ -374,7 +481,7 @@ export async function GET(request: Request) {
         ...business,
         distance_km: distance
       }
-    }) || []
+    })
 
     // Filter by radius if specified and location is provided
     let filteredResults = resultsWithDistance
@@ -434,14 +541,20 @@ export async function GET(request: Request) {
         } as Database['public']['Tables']['searches']['Insert'])
     }
 
-    const totalPages = count ? Math.ceil(count / limit) : 0
+    // Calculate total count including Companies House results
+    const totalCount = (count || 0) + companiesHouseResults.length
+    const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 0
 
     return NextResponse.json({
       results: formattedResults,
-      totalCount: count || 0,
+      totalCount,
       page,
       totalPages,
-      hasMore: page < totalPages
+      hasMore: page < totalPages,
+      sources: includeCompaniesHouse ? {
+        database: searchResults?.length || 0,
+        companies_house: companiesHouseResults.length
+      } : undefined
     })
 
   } catch (error) {

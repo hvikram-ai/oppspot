@@ -1,0 +1,54 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e5]:
+        - link "oppSpot" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e9] [cursor=pointer]
+          - generic [ref=e12] [cursor=pointer]: oppSpot
+        - generic [ref=e14]:
+          - link "Sign In" [ref=e15] [cursor=pointer]:
+            - /url: /login
+            - button "Sign In" [ref=e16]
+          - link "Get Started" [ref=e17] [cursor=pointer]:
+            - /url: /login
+            - button "Get Started" [ref=e18]
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]: Welcome to oppSpot
+        - generic [ref=e24]: Sign in to discover UK & Ireland business opportunities
+      - generic [ref=e26]:
+        - tablist [ref=e27]:
+          - tab "Sign In" [selected] [ref=e28]
+          - tab "Sign Up" [ref=e29]
+        - tabpanel "Sign In" [ref=e30]:
+          - generic [ref=e31]:
+            - generic [ref=e32]:
+              - generic [ref=e33]: Email
+              - textbox "Email" [ref=e34]
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - generic [ref=e37]: Password
+                - link "Forgot password?" [ref=e38] [cursor=pointer]:
+                  - /url: /forgot-password
+              - textbox "Password" [ref=e39]
+            - button "Sign In" [ref=e40]
+      - generic [ref=e42]:
+        - generic [ref=e47]: Or continue with
+        - button "Continue with Google" [ref=e48]:
+          - img
+          - text: Continue with Google
+        - button "Try Demo (No Registration)" [ref=e49]:
+          - img
+          - text: Try Demo (No Registration)
+        - paragraph [ref=e50]: Demo mode lets you explore all features without creating an account
+  - button [ref=e51]:
+    - img
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e57] [cursor=pointer]:
+    - img [ref=e58] [cursor=pointer]
+  - alert [ref=e61]
+```

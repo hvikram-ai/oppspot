@@ -78,6 +78,12 @@ export function Navbar() {
       tooltip: 'Visualize business locations on an interactive map with clustering, territory analysis, and demographic insights.'
     },
     { 
+      href: '/companies', 
+      label: 'Companies', 
+      icon: Building2,
+      tooltip: 'Search and verify UK company registrations with real-time Companies House data, including directors, filings, and financial information.'
+    },
+    { 
       href: '/updates', 
       label: 'Updates', 
       icon: Newspaper,
@@ -86,7 +92,7 @@ export function Navbar() {
     { 
       href: '/lists', 
       label: 'Lists', 
-      icon: Building2,
+      icon: Sparkles,
       tooltip: 'Create, manage, and organize custom prospect lists with tags, notes, and follow-up tracking for your sales pipeline.'
     },
     { 

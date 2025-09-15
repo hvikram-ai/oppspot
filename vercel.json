@@ -10,8 +10,17 @@
     },
     "app/api/scrape/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/companies/refresh/route.ts": {
+      "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/companies/refresh",
+      "schedule": "0 2 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

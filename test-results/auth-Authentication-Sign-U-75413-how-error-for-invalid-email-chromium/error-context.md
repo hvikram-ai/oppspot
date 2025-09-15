@@ -1,0 +1,79 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "oppSpot" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - img [ref=e7] [cursor=pointer]
+      - generic [ref=e10] [cursor=pointer]: oppSpot
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - heading "Start your free trial" [level=1] [ref=e14]
+        - paragraph [ref=e15]: No credit card required. Get instant access.
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Create your account
+          - generic [ref=e19]: Start discovering business opportunities in seconds
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - generic [ref=e23]: Full Name
+            - textbox "Full Name" [ref=e24]: Test User
+          - generic [ref=e25]:
+            - generic [ref=e26]: Work Email
+            - generic [ref=e27]:
+              - textbox "Work Email" [ref=e28]: invalid-email
+              - img [ref=e30]
+          - generic [ref=e33]:
+            - generic [ref=e34]: Password
+            - generic [ref=e35]:
+              - textbox "Password" [ref=e36]: TestPassword123!
+              - button [ref=e37]:
+                - img [ref=e38]
+            - generic [ref=e44]: Strong
+          - generic [ref=e45]:
+            - generic [ref=e46]: Company Name
+            - textbox "Company Name" [ref=e47]: Test Company
+          - generic [ref=e48]:
+            - generic [ref=e49]: Your Role
+            - combobox "Your Role" [active] [ref=e50]:
+              - generic: Sales
+              - img
+            - combobox [ref=e51]
+          - generic [ref=e52]:
+            - checkbox "I agree to the Terms of Service and Privacy Policy" [ref=e53]
+            - checkbox
+            - generic [ref=e54] [cursor=pointer]:
+              - text: I agree to the
+              - link "Terms of Service" [ref=e55] [cursor=pointer]:
+                - /url: /terms
+              - text: and
+              - link "Privacy Policy" [ref=e56] [cursor=pointer]:
+                - /url: /privacy
+          - button "Create Account" [disabled]
+        - generic [ref=e58]:
+          - generic [ref=e63]: Or continue with
+          - button "Continue with Google" [ref=e64]:
+            - img
+            - text: Continue with Google
+          - paragraph [ref=e65]:
+            - text: Already have an account?
+            - link "Sign in" [ref=e66] [cursor=pointer]:
+              - /url: /login
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - img [ref=e69]
+          - text: 30-day free trial
+        - generic [ref=e71]:
+          - img [ref=e72]
+          - text: No credit card
+        - generic [ref=e74]:
+          - img [ref=e75]
+          - text: GDPR compliant
+  - button [ref=e77]:
+    - img
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e83] [cursor=pointer]:
+    - img [ref=e84] [cursor=pointer]
+  - alert [ref=e87]
+```

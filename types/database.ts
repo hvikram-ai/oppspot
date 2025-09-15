@@ -114,6 +114,21 @@ export interface Database {
           verified_at: string | null
           created_at: string
           updated_at: string
+          // Companies House fields
+          company_number: string | null
+          company_status: string | null
+          incorporation_date: string | null
+          company_type: string | null
+          sic_codes: string[] | null
+          registered_office_address: Json | null
+          officers: Json | null
+          filing_history: Json | null
+          accounts: Json | null
+          charges: Json | null
+          companies_house_data: Json | null
+          companies_house_last_updated: string | null
+          data_sources: Json | null
+          cache_expires_at: string | null
         }
         Insert: {
           id?: string
@@ -134,6 +149,21 @@ export interface Database {
           verified_at?: string | null
           created_at?: string
           updated_at?: string
+          // Companies House fields
+          company_number?: string | null
+          company_status?: string | null
+          incorporation_date?: string | null
+          company_type?: string | null
+          sic_codes?: string[] | null
+          registered_office_address?: Json | null
+          officers?: Json | null
+          filing_history?: Json | null
+          accounts?: Json | null
+          charges?: Json | null
+          companies_house_data?: Json | null
+          companies_house_last_updated?: string | null
+          data_sources?: Json | null
+          cache_expires_at?: string | null
         }
         Update: {
           id?: string
@@ -154,6 +184,21 @@ export interface Database {
           verified_at?: string | null
           created_at?: string
           updated_at?: string
+          // Companies House fields
+          company_number?: string | null
+          company_status?: string | null
+          incorporation_date?: string | null
+          company_type?: string | null
+          sic_codes?: string[] | null
+          registered_office_address?: Json | null
+          officers?: Json | null
+          filing_history?: Json | null
+          accounts?: Json | null
+          charges?: Json | null
+          companies_house_data?: Json | null
+          companies_house_last_updated?: string | null
+          data_sources?: Json | null
+          cache_expires_at?: string | null
         }
       }
       searches: {
