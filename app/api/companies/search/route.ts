@@ -282,18 +282,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
-// Helper functions
-function getAgeInHours(timestamp: string | null): number {
-  if (!timestamp) return Infinity
-  const age = Date.now() - new Date(timestamp).getTime()
-  return Math.floor(age / (1000 * 60 * 60)) // Convert to hours
-}
-
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .substring(0, 100)
-}
