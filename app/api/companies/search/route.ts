@@ -22,6 +22,105 @@ function generateSlug(name: string): string {
     .substring(0, 100)
 }
 
+// Mock data for demo mode
+function getMockCompanyResults(query: string): any[] {
+  const mockCompanies = [
+    {
+      id: 'mock-1',
+      company_number: '03977902',
+      name: 'GOOGLE UK LIMITED',
+      company_status: 'active',
+      company_type: 'ltd',
+      incorporation_date: '2000-02-15',
+      registered_office_address: {
+        address_line_1: '1-13 St Giles High St',
+        locality: 'London',
+        postal_code: 'WC2H 8AG',
+        country: 'United Kingdom'
+      },
+      sic_codes: ['62012', '62020'],
+      slug: 'google-uk-limited',
+      source: 'mock'
+    },
+    {
+      id: 'mock-2', 
+      company_number: '04035903',
+      name: 'AMAZON UK SERVICES LTD.',
+      company_status: 'active',
+      company_type: 'ltd',
+      incorporation_date: '2000-08-02',
+      registered_office_address: {
+        address_line_1: '1 Principal Place',
+        locality: 'London',
+        postal_code: 'EC2A 2FA',
+        country: 'United Kingdom'
+      },
+      sic_codes: ['47911', '52290'],
+      slug: 'amazon-uk-services-ltd',
+      source: 'mock'
+    },
+    {
+      id: 'mock-3',
+      company_number: '03824658',
+      name: 'MICROSOFT LIMITED',
+      company_status: 'active', 
+      company_type: 'ltd',
+      incorporation_date: '1999-08-25',
+      registered_office_address: {
+        address_line_1: 'Microsoft Campus',
+        address_line_2: 'Thames Valley Park',
+        locality: 'Reading',
+        postal_code: 'RG6 1WG',
+        country: 'United Kingdom'
+      },
+      sic_codes: ['62012', '62020', '58290'],
+      slug: 'microsoft-limited',
+      source: 'mock'
+    },
+    {
+      id: 'mock-4',
+      company_number: '02627406',
+      name: 'APPLE UK LIMITED',
+      company_status: 'active',
+      company_type: 'ltd', 
+      incorporation_date: '1991-05-16',
+      registered_office_address: {
+        address_line_1: '100 New Bridge Street',
+        locality: 'London',
+        postal_code: 'EC4V 6JA',
+        country: 'United Kingdom'
+      },
+      sic_codes: ['46510', '47410'],
+      slug: 'apple-uk-limited',
+      source: 'mock'
+    },
+    {
+      id: 'mock-5',
+      company_number: '03609101',
+      name: 'META PLATFORMS IRELAND LIMITED',
+      company_status: 'active',
+      company_type: 'ltd',
+      incorporation_date: '1998-10-13',
+      registered_office_address: {
+        address_line_1: '10 Brock Street',
+        locality: 'London',
+        postal_code: 'NW1 3FG',
+        country: 'United Kingdom'
+      },
+      sic_codes: ['63120', '73110'],
+      slug: 'meta-platforms-ireland-limited',
+      source: 'mock'
+    }
+  ]
+  
+  // Filter based on search query
+  const lowerQuery = query.toLowerCase()
+  return mockCompanies.filter(company => 
+    company.name.toLowerCase().includes(lowerQuery) ||
+    company.company_number.includes(query)
+  )
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -125,7 +224,24 @@ export async function POST(request: NextRequest) {
         try {
           apiResults = await companiesHouse.searchCompanies(searchTerm, limit, offset)
         } catch (apiSearchError) {
-          console.error('Companies House search API error:', apiSearchError)
+          console.error('Companies House search API error:', {
+            error: apiSearchError,
+            message: apiSearchError instanceof Error ? apiSearchError.message : 'Unknown error',
+            query: searchTerm
+          })
+          
+          // If in demo mode, return mock data
+          if (demo) {
+            const mockResults = getMockCompanyResults(searchTerm)
+            return NextResponse.json({
+              success: true,
+              results: mockResults,
+              sources: { cache: 0, api: 0, created: 0, mock: mockResults.length },
+              warning: 'Using demo data (Companies House API unavailable)',
+              message: `Found ${mockResults.length} demo companies`
+            })
+          }
+          
           // If API key is not configured or API fails, return cached results if any
           if (results.length > 0) {
             return NextResponse.json({
@@ -137,11 +253,12 @@ export async function POST(request: NextRequest) {
             })
           }
           // Return empty results if no cache and API fails
+          const errorMessage = apiSearchError instanceof Error ? apiSearchError.message : 'Unknown error'
           return NextResponse.json({
             success: true,
             results: [],
             sources,
-            warning: 'Companies House API is not configured or unavailable',
+            warning: `Companies House API error: ${errorMessage}`,
             message: 'No results found'
           })
         }

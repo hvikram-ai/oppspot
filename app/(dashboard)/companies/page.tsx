@@ -77,9 +77,21 @@ export default function CompaniesPage() {
       setSearchResults(data.results || [])
       setSearchStats(data.sources || null)
       
+      // Show warning if API error
+      if (data.warning) {
+        toast.warning(data.warning)
+      }
+      
       // Show search statistics
       if (data.sources) {
-        const message = `Found ${data.results?.length || 0} companies (${data.sources.cache || 0} cached, ${data.sources.api || 0} from API)`
+        let message = `Found ${data.results?.length || 0} companies`
+        const details = []
+        if (data.sources.cache > 0) details.push(`${data.sources.cache} cached`)
+        if (data.sources.api > 0) details.push(`${data.sources.api} from API`)
+        if (data.sources.mock > 0) details.push(`${data.sources.mock} demo results`)
+        if (details.length > 0) {
+          message += ` (${details.join(', ')})`
+        }
         toast.success(message)
       }
     } catch (err) {
