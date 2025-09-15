@@ -18,7 +18,9 @@ import {
   Filter, 
   TrendingUp,
   AlertCircle,
-  Info
+  Info,
+  CheckCircle,
+  Clock
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -35,7 +37,9 @@ export default function CompaniesPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/check')
+        const response = await fetch('/api/auth/check', {
+          credentials: 'include'
+        })
         if (response.ok) {
           const data = await response.json()
           setUser(data.user)
@@ -54,10 +58,15 @@ export default function CompaniesPage() {
     setError('')
     
     try {
+      // Check if we're in demo mode by looking at URL params
+      const urlParams = new URLSearchParams(window.location.search)
+      const isDemo = urlParams.get('demo') === 'true' || !user
+      
       const response = await fetch('/api/companies/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery, limit: 10 })
+        credentials: 'include',
+        body: JSON.stringify({ query: searchQuery, limit: 10, demo: isDemo })
       })
       
       if (!response.ok) {
@@ -88,6 +97,7 @@ export default function CompaniesPage() {
       const response = await fetch(`/api/companies/${companyId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ enrichments: ['profile', 'officers', 'filings'] })
       })
       

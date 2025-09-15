@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { CompaniesHouseService } from '@/lib/services/companies-house'
+import { getCompaniesHouseService } from '@/lib/services/companies-house'
 import { Database } from '@/lib/supabase/database.types'
 
 type Business = Database['public']['Tables']['businesses']['Row']
@@ -26,19 +26,22 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Check authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = await request.json()
     const { 
       query, 
       useCache = true, 
       limit = 20,
-      offset = 0 
+      offset = 0,
+      demo = false 
     } = body
+    
+    // Check authentication (skip for demo mode)
+    if (!demo) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json(
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const searchTerm = query.trim()
-    const companiesHouse = new CompaniesHouseService()
+    const companiesHouse = getCompaniesHouseService()
     const results: any[] = []
     const sources = {
       cache: 0,
@@ -118,17 +121,45 @@ export async function POST(request: NextRequest) {
     // Step 2: If no cached results or cache disabled, search Companies House API
     if (results.length === 0 || !useCache) {
       try {
-        const apiResults = await companiesHouse.searchCompanies(searchTerm, limit, offset)
+        let apiResults
+        try {
+          apiResults = await companiesHouse.searchCompanies(searchTerm, limit, offset)
+        } catch (apiSearchError) {
+          console.error('Companies House search API error:', apiSearchError)
+          // If API key is not configured or API fails, return cached results if any
+          if (results.length > 0) {
+            return NextResponse.json({
+              success: true,
+              results,
+              sources,
+              warning: 'Companies House API unavailable, showing cached results only',
+              message: `Found ${results.length} cached companies`
+            })
+          }
+          // Return empty results if no cache and API fails
+          return NextResponse.json({
+            success: true,
+            results: [],
+            sources,
+            warning: 'Companies House API is not configured or unavailable',
+            message: 'No results found'
+          })
+        }
         
-        // Log API call for auditing
-        await supabase.from('api_audit_log').insert({
-          api_name: 'companies_house',
-          endpoint: '/search/companies',
-          request_params: { query: searchTerm, limit, offset },
-          response_status: 200,
-          response_data: { total_results: apiResults.total_results },
-          user_id: user.id
-        })
+        // Log API call for auditing (skip in demo mode)
+        if (!demo) {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            await supabase.from('api_audit_log').insert({
+              api_name: 'companies_house',
+              endpoint: '/search/companies',
+              request_params: { query: searchTerm, limit, offset },
+              response_status: 200,
+              response_data: { total_results: apiResults.total_results },
+              user_id: user.id
+            })
+          }
+        }
 
         // Process API results
         for (const apiCompany of apiResults.items) {
@@ -206,15 +237,20 @@ export async function POST(request: NextRequest) {
       } catch (apiError) {
         console.error('Companies House API error:', apiError)
         
-        // Log failed API call
-        await supabase.from('api_audit_log').insert({
-          api_name: 'companies_house',
-          endpoint: '/search/companies',
-          request_params: { query: searchTerm, limit, offset },
-          response_status: 500,
-          error_message: apiError instanceof Error ? apiError.message : 'Unknown error',
-          user_id: user.id
-        })
+        // Log failed API call (skip in demo mode)
+        if (!demo) {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            await supabase.from('api_audit_log').insert({
+              api_name: 'companies_house',
+              endpoint: '/search/companies',
+              request_params: { query: searchTerm, limit, offset },
+              response_status: 500,
+              error_message: apiError instanceof Error ? apiError.message : 'Unknown error',
+              user_id: user.id
+            })
+          }
+        }
 
         // If API fails but we have cached results, return them
         if (results.length > 0) {
