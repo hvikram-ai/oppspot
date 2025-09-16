@@ -3,7 +3,7 @@
  * Helps identify why similar companies search might not be working
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 interface APIStatus {

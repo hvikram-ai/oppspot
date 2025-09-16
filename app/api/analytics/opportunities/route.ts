@@ -193,7 +193,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 // DELETE: Delete expired opportunities
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
   try {
     const supabase = await createClient()
     

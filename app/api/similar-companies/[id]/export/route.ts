@@ -61,7 +61,6 @@ export async function POST(
       exportFormat = 'pdf',
       includeDetails = true,
       maxMatches = 10,
-      customBranding = null,
       templateVersion = 'v1.0'
     } = body
 
@@ -389,7 +388,7 @@ async function generatePDFExport(
     console.error('PDF generation error:', error)
     
     // Fallback: Create export record for background processing
-    const { data: exportRecord, error: dbError } = await supabase
+    const { data: exportRecord } = await supabase
       .from('similarity_analysis_exports')
       .insert({
         similarity_analysis_id: analysisId,

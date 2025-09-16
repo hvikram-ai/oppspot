@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
     if (profilesError) throw profilesError
     
     // Fetch website data
-    const { data: websiteData, error: websiteError } = await supabase
+    const { data: websiteData } = await supabase
       .from('website_data')
       .select('*')
       .eq('business_id', businessId)

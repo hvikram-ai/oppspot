@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create profile
-    const { data: profile, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .insert({
         id: authData.user.id,

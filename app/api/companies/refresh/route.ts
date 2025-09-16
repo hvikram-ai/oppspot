@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     
     // Check authentication - require service role or admin
-    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.auth.getUser()
     
     // Get optional parameters from request body
     const body = await request.json().catch(() => ({}))

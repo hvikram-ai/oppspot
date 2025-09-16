@@ -61,7 +61,7 @@ export async function GET() {
         } else {
           demoAccountStatus = 'Not found'
         }
-      } catch (err) {
+      } catch {
         demoAccountStatus = 'Check failed'
       }
     }
