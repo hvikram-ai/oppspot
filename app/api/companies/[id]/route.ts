@@ -183,7 +183,11 @@ export async function GET(
 
       // Update database with additional data
       if (officers || filings) {
-        const additionalUpdates: any = {}
+        interface AdditionalUpdates {
+          officers?: unknown
+          filing_history?: unknown[]
+        }
+        const additionalUpdates: AdditionalUpdates = {}
         if (officers) additionalUpdates.officers = officers
         if (filings) additionalUpdates.filing_history = filings.slice(0, 10)
 
@@ -269,8 +273,8 @@ export async function POST(
     }
 
     const companiesHouse = getCompaniesHouseService()
-    const updates: any = {}
-    const results: any = {}
+    const updates: Record<string, unknown> = {}
+    const results: Record<string, unknown> = {}
 
     // Fetch requested data from Companies House
     for (const enrichment of enrichments) {
@@ -363,8 +367,8 @@ function calculateCompleteness(business: Business): number {
     business.description,
     business.company_number,
     business.website,
-    business.phone_numbers && (business.phone_numbers as any[]).length > 0,
-    business.emails && (business.emails as any[]).length > 0,
+    business.phone_numbers && (business.phone_numbers as unknown[]).length > 0,
+    business.emails && (business.emails as unknown[]).length > 0,
     business.address,
     business.categories && business.categories.length > 0,
     business.company_status,

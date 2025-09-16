@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       // Search for the company on LinkedIn
       const searchResult = await linkedInClient.searchCompany(
         business.name,
-        business.address ? (business.address as any).city : undefined
+        business.address ? ((business.address as Record<string, unknown>).city as string) : undefined
       )
 
       if (searchResult && searchResult.linkedin_url) {
@@ -80,7 +80,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Get LinkedIn data
-    let linkedInData: any = null
+    interface LinkedInData {
+      url: string
+      name?: string
+      tagline?: string
+      description?: string
+      industry?: string
+      company_size?: string
+      employee_count?: number
+      headquarters?: string | null
+      founded?: number
+      website?: string
+      specialties?: string[]
+      followers?: number
+      locations?: unknown[]
+      data_source?: string
+      last_updated?: string
+    }
+
+    let linkedInData: LinkedInData | null = null
     let dataSource = 'basic'
 
     // Try to use Proxycurl if available
@@ -126,7 +144,7 @@ export async function POST(request: NextRequest) {
     // Prepare updates for the business
     const updates: Partial<Business> = {
       metadata: {
-        ...(business.metadata as any || {}),
+        ...((business.metadata as Record<string, unknown>) || {}),
         linkedin: {
           ...linkedInData,
           data_source: dataSource,
@@ -134,7 +152,7 @@ export async function POST(request: NextRequest) {
         }
       },
       social_links: {
-        ...(business.social_links as any || {}),
+        ...((business.social_links as Record<string, unknown>) || {}),
         linkedin: finalLinkedInUrl
       }
     }
@@ -244,7 +262,15 @@ export async function PUT(request: NextRequest) {
     let errorCount = 0
 
     for (const business of businesses) {
-      const businessResult: any = {
+      interface BusinessResult {
+        id: string
+        name: string | null
+        status?: string
+        linkedin_url?: string
+        error?: string
+      }
+
+      const businessResult: BusinessResult = {
         id: business.id,
         name: business.name
       }
@@ -253,7 +279,7 @@ export async function PUT(request: NextRequest) {
         // Search for LinkedIn profile
         const searchResult = await linkedInClient.searchCompany(
           business.name,
-          business.address ? (business.address as any).city : undefined
+          business.address ? ((business.address as Record<string, unknown>).city as string) : undefined
         )
 
         if (searchResult && searchResult.linkedin_url) {
@@ -264,7 +290,7 @@ export async function PUT(request: NextRequest) {
             // Update business with LinkedIn data
             const updates: Partial<Business> = {
               metadata: {
-                ...(business.metadata as any || {}),
+                ...((business.metadata as Record<string, unknown>) || {}),
                 linkedin: {
                   ...linkedInData,
                   data_source: 'bulk_search',
@@ -272,7 +298,7 @@ export async function PUT(request: NextRequest) {
                 }
               },
               social_links: {
-                ...(business.social_links as any || {}),
+                ...((business.social_links as Record<string, unknown>) || {}),
                 linkedin: searchResult.linkedin_url
               }
             }

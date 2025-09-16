@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { WebsiteScraper } from '@/lib/scraping/website-scraper'
 import { SocialMediaScraper } from '@/lib/scraping/social-media-scraper'
+import { Database } from '@/lib/supabase/database.types'
 
 // POST: Scrape and save social media data for a business
 export async function POST(request: NextRequest) {
@@ -49,7 +50,16 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const results: any = {
+    interface SocialResults {
+      business: {
+        id: string
+        name: string | null
+      }
+      website: unknown
+      social: unknown[]
+    }
+
+    const results: SocialResults = {
       business: {
         id: business.id,
         name: business.name
@@ -199,7 +209,7 @@ export async function POST(request: NextRequest) {
         website_scraped: scrapeWebsite && !!business.website,
         social_profiles_found: results.social.length
       }
-    } as any)
+    } as Database['public']['Tables']['events']['Insert'])
     
     return NextResponse.json({
       message: 'Social data scraped successfully',
