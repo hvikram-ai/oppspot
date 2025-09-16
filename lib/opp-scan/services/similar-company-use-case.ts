@@ -752,7 +752,7 @@ export class SimilarCompanyUseCase {
     status: SimilarityAnalysisStatus,
     errorMessage?: string
   ): Promise<void> {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status,
       updated_at: new Date().toISOString()
     }

@@ -290,7 +290,7 @@ export class WebsiteScraper {
     for (const selector of selectors) {
       $(selector).each((_, elem) => {
         const $member = $(elem)
-        const member: any = {}
+        const member: Record<string, unknown> = {}
         
         // Extract name
         const nameSelectors = ['h3', 'h4', '.name', '[class*="name"]']
@@ -349,7 +349,7 @@ export class WebsiteScraper {
     for (const selector of selectors) {
       $(selector).each((_, elem) => {
         const $testimonial = $(elem)
-        const testimonial: any = {}
+        const testimonial: Record<string, unknown> = {}
         
         // Extract text
         const text = $testimonial.find('p, .text, .content').first().text().trim() ||

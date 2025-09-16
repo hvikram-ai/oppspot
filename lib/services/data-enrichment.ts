@@ -183,7 +183,7 @@ export class DataEnrichmentService {
    */
   private async enrichFromSocialMedia(business: Business): Promise<EnrichmentResult> {
     const enrichedData: Partial<BusinessUpdate> = {}
-    const socialLinks: any = {}
+    const socialLinks: Record<string, unknown> = {}
 
     // Extract social media links from website if available
     if (business.website) {

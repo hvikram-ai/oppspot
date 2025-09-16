@@ -479,7 +479,7 @@ export class SimilarityPDFGenerator {
 
   private async updateExportRecord(exportId: string, status: string, filename?: string) {
     const supabase = await this.getSupabase()
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       generation_status: status,
       completed_at: new Date().toISOString()
     }
