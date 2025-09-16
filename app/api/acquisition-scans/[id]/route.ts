@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
 
 export async function GET(
   request: NextRequest,
@@ -256,7 +260,7 @@ export async function DELETE(
 }
 
 // Helper function to check organization access
-async function checkOrgAccess(supabase: any, userId: string, orgId: string): Promise<boolean> {
+async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
     const { data: profile } = await supabase
       .from('profiles')

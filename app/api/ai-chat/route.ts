@@ -169,8 +169,31 @@ export async function POST(request: NextRequest) {
     let aiResponse: string
     let confidence = 0.85
     let usedModel = 'fallback'
-    let platformData: any = null
-    let collectedCitations: any[] = []
+    interface PlatformData {
+      topMatches?: Array<{
+        company_name?: string
+        name?: string
+        website?: string
+        similarity_reasoning?: string
+        relevance?: number
+        overall_score?: number
+      }>
+      [key: string]: unknown
+    }
+    
+    interface Citation {
+      id: string
+      source_type: string
+      title: string
+      url?: string
+      snippet: string
+      relevance?: number
+      confidence?: number
+      metadata?: { source: string }
+    }
+    
+    let platformData: PlatformData | null = null
+    let collectedCitations: Citation[] = []
     
     // Short-circuit: answer LLM/model identity questions directly
     const lower = String(message).toLowerCase()
@@ -271,7 +294,7 @@ export async function POST(request: NextRequest) {
         // Derive lightweight citations from platform data if available
         try {
           if (platformResult.data?.topMatches?.length) {
-            collectedCitations = platformResult.data.topMatches.slice(0, 5).map((m: any, idx: number) => ({
+            collectedCitations = (platformResult.data as PlatformData).topMatches!.slice(0, 5).map((m, idx: number) => ({
               id: `${Date.now()}-${idx}`,
               source_type: 'analysis',
               title: m.company_name || m.name || 'Similar company',
