@@ -62,9 +62,9 @@ export function MapView({
   className
 }: MapViewProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [map, setMap] = useState<any>(null)
+  const [map, setMap] = useState<unknown>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [L, setL] = useState<any>(null)
+  const [L, setL] = useState<unknown>(null)
 
   useEffect(() => {
     import('leaflet').then((leaflet) => {

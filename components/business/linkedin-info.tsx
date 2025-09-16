@@ -51,7 +51,7 @@ export function LinkedInInfo({
   onUpdate
 }: LinkedInInfoProps) {
   const [loading, setLoading] = useState(false)
-  const [searchResult, setSearchResult] = useState<any>(null)
+  const [searchResult, setSearchResult] = useState<unknown>(null)
 
   const handleSearchLinkedIn = async () => {
     setLoading(true)

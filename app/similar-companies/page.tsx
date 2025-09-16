@@ -68,7 +68,7 @@ function SimilarCompaniesPageContent() {
   
   const [analyses, setAnalyses] = useState<SimilarityAnalysis[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<unknown>(null)
   const [showNewAnalysis, setShowNewAnalysis] = useState(false)
   
   // New analysis form state
@@ -84,7 +84,7 @@ function SimilarCompaniesPageContent() {
     risk: 10
   })
   const [isValidating, setIsValidating] = useState(false)
-  const [validationResult, setValidationResult] = useState<any>(null)
+  const [validationResult, setValidationResult] = useState<unknown>(null)
 
   useEffect(() => {
     const getUser = async () => {

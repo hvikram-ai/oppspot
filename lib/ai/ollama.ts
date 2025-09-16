@@ -342,7 +342,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   /**
    * Get model capabilities and configuration
    */
-  getModelCapabilities(): Record<string, any> {
+  getModelCapabilities(): Record<string, unknown> {
     return {
       primaryModel: {
         name: this.primaryModel,

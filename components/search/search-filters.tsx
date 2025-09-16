@@ -35,7 +35,7 @@ interface FilterProps {
     sortBy?: string
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange: (filters: any) => void
+  onChange: (filters: unknown) => void
   resultCount?: number
 }
 

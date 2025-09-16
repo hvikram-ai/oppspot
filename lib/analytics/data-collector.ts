@@ -7,7 +7,7 @@ interface MetricData {
   metricType: string
   value: number
   period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export class DataCollector {
@@ -423,7 +423,7 @@ export class DataCollector {
     }
 
     // Calculate statistical features
-    const features: Record<string, any> = {}
+    const features: Record<string, unknown> = {}
     
     for (const [metricType, values] of Object.entries(groupedMetrics)) {
       const nums = values.map(v => v.value)

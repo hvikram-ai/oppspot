@@ -275,7 +275,7 @@ export class CompanyEntity {
   }
 
   // Serialization
-  toJSON(): Record<string, any> {
+  toJSON(): Record<string, unknown> {
     return {
       id: this._id,
       name: this._name,
@@ -296,7 +296,7 @@ export class CompanyEntity {
     }
   }
 
-  static fromJSON(data: Record<string, any>): CompanyEntity {
+  static fromJSON(data: Record<string, unknown>): CompanyEntity {
     return new CompanyEntity(
       data.id,
       data.name,

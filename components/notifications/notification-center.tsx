@@ -88,7 +88,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
     }
   }
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: unknown) => {
     if (!notification.is_read) {
       await markAsRead(notification.id)
     }

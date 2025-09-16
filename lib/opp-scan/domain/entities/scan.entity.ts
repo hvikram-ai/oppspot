@@ -420,7 +420,7 @@ export class ScanEntity {
   }
 
   // Serialization
-  toJSON(): Record<string, any> {
+  toJSON(): Record<string, unknown> {
     return {
       id: this._id,
       configuration: this._configuration,
@@ -439,7 +439,7 @@ export class ScanEntity {
     }
   }
 
-  static fromJSON(data: Record<string, any>): ScanEntity {
+  static fromJSON(data: Record<string, unknown>): ScanEntity {
     return ScanEntity.fromSnapshot(
       data.id,
       data.configuration,

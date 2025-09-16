@@ -1190,8 +1190,8 @@ export class WebSearchService implements IWebSearchService {
     )
   }
 
-  getProviderStats(): Record<string, any> {
-    const stats: Record<string, any> = {}
+  getProviderStats(): Record<string, unknown> {
+    const stats: Record<string, unknown> = {}
     
     for (const provider of this.config.providers) {
       const tracker = this.rateLimitTrackers.get(provider.name)

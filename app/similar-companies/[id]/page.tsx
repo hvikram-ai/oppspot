@@ -133,7 +133,7 @@ function SimilarCompanyDetailContent() {
   
   const [analysis, setAnalysis] = useState<SimilarityAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<unknown>(null)
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
   const [exportLoading, setExportLoading] = useState(false)
   const [pageExportLoading, setPageExportLoading] = useState(false)
@@ -599,7 +599,7 @@ function SimilarCompanyDetailContent() {
       status: 'completed',
       total_companies_analyzed: intelligent_competitors.length + 50, // Add some buffer
       average_similarity_score: Math.round(intelligent_competitors.reduce((sum: number, comp: any) => sum + comp.similarity_score, 0) / intelligent_competitors.length * 10) / 10,
-      top_similarity_score: Math.max(...intelligent_competitors.map((comp: any) => comp.similarity_score)),
+      top_similarity_score: Math.max(...intelligent_competitors.map((comp: unknown) => comp.similarity_score)),
       executive_summary: strategic_insights.acquisition_rationale || `AI-powered analysis of ${targetCompanyName} identified strategic acquisition opportunities in the ${target_analysis.business_classification.market_category} sector.`,
       key_opportunities: strategic_insights.synergy_opportunities || market_intelligence.acquisition_drivers || ['Strategic market positioning', 'Technology integration', 'Customer base expansion'],
       risk_highlights: strategic_insights.integration_challenges || market_intelligence.disruption_risks || ['Integration complexity', 'Market competition'],
@@ -1060,7 +1060,7 @@ function SimilarCompanyDetailContent() {
     toast.success(`Applied ${strategy.name} strategy`)
   }
 
-  const handleCompanySelect = (company: any) => {
+  const handleCompanySelect = (company: unknown) => {
     setSelectedCompany(company.id)
     setSelectedMatch(company.id)
   }

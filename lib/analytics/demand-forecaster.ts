@@ -12,7 +12,7 @@ interface ForecastResult {
   confidenceLevel: number
   modelType: 'arima' | 'prophet' | 'lstm' | 'ensemble'
   modelAccuracy: number
-  factors: Record<string, any>
+  factors: Record<string, unknown>
 }
 
 interface HistoricalDemand {
@@ -287,7 +287,7 @@ export class DemandForecaster {
   private identifyFactors(
     data: HistoricalDemand[],
     features: number[][]
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     // Analyze correlation between features and demand
     const correlations: Record<string, number> = {}
     const featureNames = ['dayOfWeek', 'month', 'reviewCount', 'avgRating', 'competitorCount']
@@ -337,7 +337,7 @@ export class DemandForecaster {
     return denominator === 0 ? 0 : numerator / denominator
   }
 
-  private detectSeasonalFactors(data: HistoricalDemand[]): Record<string, any> {
+  private detectSeasonalFactors(data: HistoricalDemand[]): Record<string, unknown> {
     // Day of week patterns
     const dayOfWeekDemand: Record<number, number[]> = {}
     
@@ -366,7 +366,7 @@ export class DemandForecaster {
     }
   }
 
-  private detectTrendFactors(data: HistoricalDemand[]): Record<string, any> {
+  private detectTrendFactors(data: HistoricalDemand[]): Record<string, unknown> {
     const n = data.length
     const firstHalf = data.slice(0, Math.floor(n / 2))
     const secondHalf = data.slice(Math.floor(n / 2))

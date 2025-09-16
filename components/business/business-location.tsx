@@ -50,7 +50,7 @@ interface BusinessLocationProps {
 
 export function BusinessLocation({ business }: BusinessLocationProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [L, setL] = useState<any>(null)
+  const [L, setL] = useState<unknown>(null)
 
   useEffect(() => {
     import('leaflet').then((leaflet) => {

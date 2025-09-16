@@ -986,7 +986,7 @@ export class SimilarityScoringService {
   /**
    * Get scoring methodology explanation
    */
-  getScoringMethodology(): Record<string, any> {
+  getScoringMethodology(): Record<string, unknown> {
     return {
       weights: this.defaultWeights,
       categories: {

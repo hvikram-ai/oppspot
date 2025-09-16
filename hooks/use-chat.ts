@@ -139,7 +139,7 @@ export function useChat(options: UseChatOptions = {}) {
         const data = await response.json()
         handleNonStreamResponse(data)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err.name === 'AbortError') {
         console.log('Stream aborted')
       } else {
@@ -264,7 +264,7 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }
 
-  const handleNonStreamResponse = (data: any) => {
+  const handleNonStreamResponse = (data: unknown) => {
     const assistantMessage: ChatMessage = {
       role: 'assistant',
       content: data.message.content,

@@ -10,14 +10,14 @@ export abstract class DomainEvent<TPayload = any> implements IDomainEvent<TPaylo
   public readonly timestamp: Date
   public readonly correlationId?: string
   public readonly causationId?: string
-  public readonly metadata: Record<string, any>
+  public readonly metadata: Record<string, unknown>
 
   constructor(
     public readonly type: string,
     public readonly payload: TPayload,
     correlationId?: string,
     causationId?: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ) {
     this.id = this.generateEventId()
     this.timestamp = new Date()
@@ -42,7 +42,7 @@ export abstract class DomainEvent<TPayload = any> implements IDomainEvent<TPaylo
     })
   }
 
-  toJSON(): Record<string, any> {
+  toJSON(): Record<string, unknown> {
     return {
       id: this.id,
       type: this.type,
@@ -56,7 +56,7 @@ export abstract class DomainEvent<TPayload = any> implements IDomainEvent<TPaylo
 
   static fromJSON<T extends DomainEvent>(
     eventClass: new (...args: unknown[]) => T,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): T {
     const event = Object.create(eventClass.prototype)
     event.id = data.id
@@ -79,7 +79,7 @@ export abstract class IntegrationEvent<TPayload = any> extends DomainEvent<TPayl
     payload: TPayload,
     correlationId?: string,
     causationId?: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ) {
     super(type, payload, correlationId, causationId, {
       ...metadata,

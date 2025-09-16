@@ -209,7 +209,7 @@ export class ResilienceError extends Error {
     public readonly category: string,
     message: string,
     public readonly originalError: Error,
-    public readonly context: Record<string, any>
+    public readonly context: Record<string, unknown>
   ) {
     super(message)
     this.name = 'ResilienceError'

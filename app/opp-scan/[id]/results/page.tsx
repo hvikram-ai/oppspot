@@ -56,7 +56,7 @@ function ScanResultsPageContent() {
   const [loading, setLoading] = useState(true)
   const [scanResults, setScanResults] = useState<ScanResultsData | null>(null)
   const [activeTab, setActiveTab] = useState('targets')
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<unknown>(null)
 
   useEffect(() => {
     const loadData = async () => {

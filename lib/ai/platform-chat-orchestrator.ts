@@ -12,7 +12,7 @@ import { SimpleOllamaClient } from './simple-ollama'
 
 export interface PlatformAction {
   type: 'similarity_analysis' | 'company_search' | 'company_analysis' | 'oppscan' | 'general'
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
   confidence: number
   reasoning?: string
 }
@@ -23,7 +23,7 @@ export interface PlatformContext {
   currentCompany?: string
   previousCompanies?: string[]
   lastAction?: string
-  userPreferences?: Record<string, any>
+  userPreferences?: Record<string, unknown>
 }
 
 export interface PlatformActionResult {
@@ -32,7 +32,7 @@ export interface PlatformActionResult {
   message: string
   formattedResponse?: string
   suggestedActions?: string[]
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export class PlatformChatOrchestrator {

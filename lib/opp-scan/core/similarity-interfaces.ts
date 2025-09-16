@@ -423,7 +423,7 @@ export interface CompanySearchResult {
   readonly company: CompanyEntity
   readonly relevanceScore: number
   readonly source: string
-  readonly additionalData: Record<string, any>
+  readonly additionalData: Record<string, unknown>
 }
 
 export interface EnrichedCompanyData {

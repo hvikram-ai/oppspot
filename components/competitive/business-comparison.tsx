@@ -424,7 +424,7 @@ export function BusinessComparison({
                   <div>
                     <h4 className="font-semibold mb-2">Market Position</h4>
                     <div className="space-y-2">
-                      {insights.market_position.map((pos: any) => (
+                      {insights.market_position.map((pos: unknown) => (
                         <div key={pos.id} className="flex items-center justify-between">
                           <span className="text-sm">{pos.name}</span>
                           <Badge variant={

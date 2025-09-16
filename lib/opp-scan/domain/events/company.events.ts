@@ -260,7 +260,7 @@ export interface EnrichmentError {
   errorCode?: string
   isRetryable: boolean
   retryCount?: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 // ==========================================

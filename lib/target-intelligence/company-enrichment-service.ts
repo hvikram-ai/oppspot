@@ -13,14 +13,14 @@ export interface CompanyEnrichmentRequest {
   linkedin_url?: string
   industry?: string
   country?: string
-  known_info?: Record<string, any>
+  known_info?: Record<string, unknown>
 }
 
 export interface EnrichmentSource {
   source: string
   confidence: number
   timestamp: string
-  data: Record<string, any>
+  data: Record<string, unknown>
 }
 
 export interface CompanyEnrichmentResult {
@@ -512,7 +512,7 @@ Return as a JSON array of strings, each optimized for search engines.`
    */
   private async consolidateEnrichmentData(
     request: CompanyEnrichmentRequest,
-    enrichmentData: Record<string, any>,
+    enrichmentData: Record<string, unknown>,
     sources: EnrichmentSource[]
   ): Promise<unknown> {
     const prompt = `Consolidate and structure comprehensive company data for ${request.company_name}:

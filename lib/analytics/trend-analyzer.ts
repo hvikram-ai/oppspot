@@ -249,7 +249,7 @@ export class TrendAnalyzer {
     return (recentValue - pastValue) / pastValue
   }
 
-  private detectSeasonality(data: TimeSeriesData[]): Record<string, any> {
+  private detectSeasonality(data: TimeSeriesData[]): Record<string, unknown> {
     // Simple seasonality detection
     // In production, would use FFT or more sophisticated methods
     
@@ -344,11 +344,11 @@ export class TrendAnalyzer {
   private generatePredictions(
     data: TimeSeriesData[],
     trendLine: { slope: number; intercept: number },
-    seasonality: Record<string, any>
-  ): Record<string, any> {
+    seasonality: Record<string, unknown>
+  ): Record<string, unknown> {
     const lastValue = data[data.length - 1]?.value || 0
     const daysAhead = [1, 7, 30]
-    const predictions: Record<string, any> = {}
+    const predictions: Record<string, unknown> = {}
     
     for (const days of daysAhead) {
       // Linear prediction
@@ -384,8 +384,8 @@ export class TrendAnalyzer {
     strength: number,
     volatility: number,
     momentum: number,
-    seasonality: Record<string, any>,
-    predictions: Record<string, any>
+    seasonality: Record<string, unknown>,
+    predictions: Record<string, unknown>
   ): string[] {
     const insights: string[] = []
     

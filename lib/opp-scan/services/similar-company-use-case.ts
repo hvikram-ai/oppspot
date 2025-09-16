@@ -986,7 +986,7 @@ export class SimilarCompanyUseCase {
   /**
    * Get service health status
    */
-  async getServiceHealth(): Promise<Record<string, any>> {
+  async getServiceHealth(): Promise<Record<string, unknown>> {
     const health = {
       webSearch: await this.webSearchService.validateAPIAccess?.() || false,
       llmService: await this.explanationService.validateAPIAccess() || false,

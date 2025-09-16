@@ -45,10 +45,10 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
   const [activeTab, setActiveTab] = useState('overview')
   
   // Analytics data
-  const [trendAnalysis, setTrendAnalysis] = useState<any>(null)
+  const [trendAnalysis, setTrendAnalysis] = useState<unknown>(null)
   const [forecasts, setForecasts] = useState<any[]>([])
   const [opportunities, setOpportunities] = useState<any[]>([])
-  const [marketMetrics, setMarketMetrics] = useState<any>(null)
+  const [marketMetrics, setMarketMetrics] = useState<unknown>(null)
 
   useEffect(() => {
     if (category) {

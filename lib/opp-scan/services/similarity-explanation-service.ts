@@ -25,7 +25,7 @@ interface ExplanationPromptContext {
   targetCompany: CompanyEntity
   similarCompany: CompanyEntity
   benchmarkScores: MnABenchmarkScores
-  additionalContext?: Record<string, any>
+  additionalContext?: Record<string, unknown>
 }
 
 interface MnAInsightsContext {
@@ -203,7 +203,7 @@ Provide a professional risk assessment suitable for MnA directors, including:
   async generateOpportunityAnalysis(
     targetCompany: CompanyEntity,
     opportunities: string[],
-    synergies: Record<string, any>
+    synergies: Record<string, unknown>
   ): Promise<string> {
     const prompt = `Analyze the acquisition opportunities for ${targetCompany.name}.
 
@@ -764,7 +764,7 @@ Frame recommendations in terms of:
     }
   }
 
-  getModelCapabilities(): Record<string, any> {
+  getModelCapabilities(): Record<string, unknown> {
     return {
       'anthropic/claude-3.5-sonnet': {
         name: 'Claude 3.5 Sonnet',
