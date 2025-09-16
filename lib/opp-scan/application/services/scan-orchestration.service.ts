@@ -336,7 +336,7 @@ interface ScanProgressInfo {
   companiesAnalyzed: number
   currentCosts: any
   estimatedTimeRemaining: number | null
-  errors: any[]
+  errors: unknown[]
   createdAt: Date
   startedAt?: Date
   updatedAt: Date

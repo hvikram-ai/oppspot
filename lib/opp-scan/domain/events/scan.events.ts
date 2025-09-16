@@ -40,8 +40,8 @@ export interface ScanCreatedEventPayload {
   scanId: string
   userId: string
   name: string
-  industries: readonly any[]
-  regions: readonly any[]
+  industries: readonly unknown[]
+  regions: readonly unknown[]
   dataSources: readonly string[]
   scanDepth: string
 }

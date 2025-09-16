@@ -461,7 +461,7 @@ Response (JSON only):`;
     toolResults: ToolCall[],
     citations: Citation[],
     onStream?: (chunk: StreamChunk) => void
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
     // Build context from conversation history
     const conversationContext = this.conversationHistory

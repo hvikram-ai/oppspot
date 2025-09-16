@@ -84,7 +84,7 @@ interface CompaniesHouseFiling {
 
 export class CompaniesHouseAPI {
   private config: CompaniesHouseConfig
-  private requestQueue: Array<() => Promise<any>> = []
+  private requestQueue: Array<() => Promise<unknown>> = []
   private isProcessingQueue = false
   private lastRequestTime = 0
   private requestCount = 0
@@ -381,7 +381,7 @@ export class CompaniesHouseAPI {
   /**
    * Make rate-limited API request
    */
-  private async makeRequest(endpoint: string): Promise<any> {
+  private async makeRequest(endpoint: string): Promise<unknown> {
     return new Promise((resolve, reject) => {
       this.requestQueue.push(async () => {
         try {

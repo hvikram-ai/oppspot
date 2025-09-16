@@ -53,7 +53,7 @@ interface IrishCROSearchResponse {
 
 export class IrishCROAPI {
   private config: IrishCROConfig
-  private requestQueue: Array<() => Promise<any>> = []
+  private requestQueue: Array<() => Promise<unknown>> = []
   private isProcessingQueue = false
   private lastRequestTime = 0
   private requestCount = 0

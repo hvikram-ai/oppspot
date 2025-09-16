@@ -236,7 +236,7 @@ export const TestDataBuilder = {
   scan: () => ({
     withId: (id: string) => ({ ...TestUtils.createMockScanConfiguration({ id }) }),
     withName: (name: string) => ({ ...TestUtils.createMockScanConfiguration({ name }) }),
-    withIndustries: (industries: any[]) => ({ ...TestUtils.createMockScanConfiguration({ selectedIndustries: industries }) }),
+    withIndustries: (industries: unknown[]) => ({ ...TestUtils.createMockScanConfiguration({ selectedIndustries: industries }) }),
     withSources: (sources: string[]) => ({ ...TestUtils.createMockScanConfiguration({ dataSources: sources }) }),
   })
 }

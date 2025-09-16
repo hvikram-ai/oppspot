@@ -413,7 +413,7 @@ export class SimilarCompanyUseCase {
   private async createAnalysisRecord(
     request: AnalysisRequest,
     analysisId: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     const cacheKey = this.generateCacheKey(request.targetCompanyName, request.configuration)
     const supabase = await this.getSupabase()
     
@@ -953,7 +953,7 @@ export class SimilarCompanyUseCase {
   /**
    * Get analysis status
    */
-  async getAnalysisStatus(analysisId: string, userId: string): Promise<any> {
+  async getAnalysisStatus(analysisId: string, userId: string): Promise<unknown> {
     const supabase = await this.getSupabase()
     const { data, error } = await supabase
       .from('similarity_analyses')

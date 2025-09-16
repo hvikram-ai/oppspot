@@ -258,7 +258,7 @@ export class TargetIntelligenceService {
   /**
    * Analyze company website for detailed information
    */
-  private async analyzeWebsite(url: string): Promise<any> {
+  private async analyzeWebsite(url: string): Promise<unknown> {
     try {
       return await this.websiteScraper.scrapeWebsite(url)
     } catch (error) {
@@ -277,7 +277,7 @@ export class TargetIntelligenceService {
   /**
    * Gather intelligence from web search
    */
-  private async gatherWebIntelligence(companyName: string, industry?: string): Promise<any> {
+  private async gatherWebIntelligence(companyName: string, industry?: string): Promise<unknown> {
     try {
       const searchQueries = [
         `"${companyName}" company profile revenue employees`,
@@ -315,7 +315,7 @@ export class TargetIntelligenceService {
     input: TargetCompanyInput, 
     websiteData: Record<string, unknown>, 
     webIntelligence: Record<string, unknown>
-  ): Promise<any> {
+  ): Promise<unknown> {
     const prompt = `Analyze the financial profile for ${input.company_name} based on available data:
 
 Company Information:
@@ -362,7 +362,7 @@ Return the analysis in JSON format with specific numerical estimates where possi
   /**
    * Analyze market position and competitive landscape using LLM
    */
-  private async analyzeMarketPosition(input: TargetCompanyInput, webIntelligence: Record<string, unknown>): Promise<any> {
+  private async analyzeMarketPosition(input: TargetCompanyInput, webIntelligence: Record<string, unknown>): Promise<unknown> {
     const prompt = `Conduct a comprehensive competitive analysis for ${input.company_name}:
 
 Company: ${input.company_name}
@@ -400,7 +400,7 @@ Structure the response as detailed JSON with confidence scores.`
     input: TargetCompanyInput, 
     websiteData: Record<string, unknown>, 
     webIntelligence: Record<string, unknown>
-  ): Promise<any> {
+  ): Promise<unknown> {
     const prompt = `Conduct comprehensive ESG (Environmental, Social, Governance) assessment for ${input.company_name}:
 
 Available Data:
@@ -435,7 +435,7 @@ Return as structured JSON with detailed explanations.`
   /**
    * Analyze market sentiment using LLM
    */
-  private async analyzeMarketSentiment(companyName: string): Promise<any> {
+  private async analyzeMarketSentiment(companyName: string): Promise<unknown> {
     const prompt = `Analyze current market sentiment and recent developments for ${companyName}:
 
 Provide analysis of:
@@ -466,7 +466,7 @@ Return as structured JSON with specific sentiment scores.`
   /**
    * Generate comprehensive AI insights using LLM
    */
-  private async generateAIInsights(input: TargetCompanyInput, analysisData: Record<string, unknown>): Promise<any> {
+  private async generateAIInsights(input: TargetCompanyInput, analysisData: Record<string, unknown>): Promise<unknown> {
     const prompt = `Generate comprehensive M&A intelligence insights for ${input.company_name}:
 
 Complete Analysis Data:

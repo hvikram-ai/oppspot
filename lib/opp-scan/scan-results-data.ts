@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/client'
 // Types for comprehensive data structure
 export interface ScanResultsData {
   scan: ScanData
-  targets: TargetCompany[]
+  targets: TargetCompunknown[]
   financialData: FinancialAnalysis[]
   riskData: RiskAssessment[]
   marketIntelligence: MarketIntelligence[]
@@ -268,7 +268,7 @@ export interface ScanSummary {
   industryBreakdown: { [key: string]: number }
   regionBreakdown: { [key: string]: number }
   sizeBreakdown: { [key: string]: number }
-  topOpportunities: TargetCompany[]
+  topOpportunities: TargetCompunknown[]
   riskAlerts: Array<{ target: TargetCompany; risks: string[] }>
   keyInsights: string[]
   nextActions: string[]
@@ -340,7 +340,7 @@ export class ScanResultsDataService {
     return data
   }
 
-  private async loadTargetCompanies(scanId: string): Promise<TargetCompany[]> {
+  private async loadTargetCompanies(scanId: string): Promise<TargetCompunknown[]> {
     const { data, error } = await this.supabase
       .from('target_companies')
       .select('*')
@@ -485,7 +485,7 @@ export class ScanResultsDataService {
   }
 
   private generateScanSummary(
-    targets: TargetCompany[],
+    targets: TargetCompunknown[],
     financialData: FinancialAnalysis[],
     riskData: RiskAssessment[]
   ): ScanSummary {
@@ -582,7 +582,7 @@ export class ScanResultsDataService {
   }
 
   private generateKeyInsights(
-    targets: TargetCompany[],
+    targets: TargetCompunknown[],
     financialData: FinancialAnalysis[],
     riskData: RiskAssessment[]
   ): string[] {
@@ -610,7 +610,7 @@ export class ScanResultsDataService {
     return insights
   }
 
-  private generateNextActions(targets: TargetCompany[], riskData: RiskAssessment[]): string[] {
+  private generateNextActions(targets: TargetCompunknown[], riskData: RiskAssessment[]): string[] {
     const actions: string[] = []
 
     // Priority targets for immediate follow-up

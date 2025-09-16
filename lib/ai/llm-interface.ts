@@ -99,7 +99,7 @@ export interface ManagedLLMProvider extends LLMProvider {
   /**
    * List available models
    */
-  listModels(): Promise<any[]>
+  listModels(): Promise<unknown[]>
 
   /**
    * Check if a specific model is available

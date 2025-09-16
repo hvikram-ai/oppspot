@@ -300,7 +300,7 @@ export class LegacyScanningEngineAdapter {
     this.orchestrationService = container.resolve<IScanOrchestrationService>('IScanOrchestrationService')
   }
 
-  async startScan(scanId: string): Promise<any> {
+  async startScan(scanId: string): Promise<unknown> {
     return this.orchestrationService.executeScan(scanId)
   }
 
@@ -316,7 +316,7 @@ export class LegacyScanningEngineAdapter {
     return this.orchestrationService.cancelScan(scanId, 'User requested cancellation')
   }
 
-  async getScanStatus(scanId: string): Promise<any> {
+  async getScanStatus(scanId: string): Promise<unknown> {
     return this.orchestrationService.getScanProgress(scanId)
   }
 }

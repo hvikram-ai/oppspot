@@ -10,7 +10,7 @@ interface WebsiteData {
   emails?: string[]
   phones?: string[]
   socialLinks?: Record<string, string>
-  addresses?: any[]
+  addresses?: unknown[]
   businessHours?: any
   technologies?: string[]
   hasSsl?: boolean

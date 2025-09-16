@@ -55,7 +55,7 @@ export abstract class DomainEvent<TPayload = any> implements IDomainEvent<TPaylo
   }
 
   static fromJSON<T extends DomainEvent>(
-    eventClass: new (...args: any[]) => T,
+    eventClass: new (...args: unknown[]) => T,
     data: Record<string, any>
   ): T {
     const event = Object.create(eventClass.prototype)

@@ -284,7 +284,7 @@ export class JobQueue {
     }
   }
 
-  private async getRedisQueueStats(): Promise<any> {
+  private async getRedisQueueStats(): Promise<unknown> {
     // TODO: Get Redis queue statistics
     return this.getQueueStats()
   }

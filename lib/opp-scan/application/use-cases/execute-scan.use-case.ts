@@ -155,7 +155,7 @@ export class ExecuteScanUseCase implements UseCase<ExecuteScanRequest, ExecuteSc
     scan.markEventsAsHandled()
   }
 
-  private calculateErrorRate(discovered: any[], analyzed: any[]): number {
+  private calculateErrorRate(discovered: unknown[], analyzed: unknown[]): number {
     if (discovered.length === 0) return 0
     const errorCount = discovered.length - analyzed.length
     return (errorCount / discovered.length) * 100

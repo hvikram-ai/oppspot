@@ -89,8 +89,8 @@ export class DemoResultsDataGenerator {
     }
   }
 
-  private generateDemoTargets(scanId: string, count: number): TargetCompany[] {
-    const targets: TargetCompany[] = []
+  private generateDemoTargets(scanId: string, count: number): TargetCompunknown[] {
+    const targets: TargetCompunknown[] = []
     
     const finTechCompanies = [
       { name: 'PayFlow Solutions Ltd', website: 'payflow.com', description: 'Digital payment processing platform for SMEs' },
@@ -161,7 +161,7 @@ export class DemoResultsDataGenerator {
     return targets.sort((a, b) => b.overall_score - a.overall_score)
   }
 
-  private generateDemoFinancialData(targets: TargetCompany[]): FinancialAnalysis[] {
+  private generateDemoFinancialData(targets: TargetCompunknown[]): FinancialAnalysis[] {
     return targets.map((target, index) => {
       const revenue = this.generateRevenueBySize(target.employee_count_range || '11-50')
       const grossProfit = revenue * (Math.random() * 0.4 + 0.3) // 30-70% gross margin
@@ -213,7 +213,7 @@ export class DemoResultsDataGenerator {
     })
   }
 
-  private generateDemoRiskData(targets: TargetCompany[]): RiskAssessment[] {
+  private generateDemoRiskData(targets: TargetCompunknown[]): RiskAssessment[] {
     return targets.map((target, index) => {
       const overallRisk = Math.random() * 0.6 + 0.1 // 0.1-0.7
       const hasRedFlags = Math.random() > 0.85 // 15% chance of red flags
@@ -324,7 +324,7 @@ export class DemoResultsDataGenerator {
     ]
   }
 
-  private generateDemoDueDiligence(targets: TargetCompany[]): DueDiligence[] {
+  private generateDemoDueDiligence(targets: TargetCompunknown[]): DueDiligence[] {
     return targets.slice(0, 8).map((target, index) => ({
       id: `demo-dd-${index + 1}`,
       target_company_id: target.id,
@@ -435,7 +435,7 @@ export class DemoResultsDataGenerator {
     }))
   }
 
-  private generateDemoValuationModels(targets: TargetCompany[]): ValuationModel[] {
+  private generateDemoValuationModels(targets: TargetCompunknown[]): ValuationModel[] {
     return targets.slice(0, 10).map((target, index) => {
       const baseValuation = Math.random() * 20000000 + 5000000 // £5M - £25M
       
@@ -493,7 +493,7 @@ export class DemoResultsDataGenerator {
   }
 
   private generateDemoSummary(
-    targets: TargetCompany[],
+    targets: TargetCompunknown[],
     financialData: FinancialAnalysis[],
     riskData: RiskAssessment[]
   ): ScanSummary {

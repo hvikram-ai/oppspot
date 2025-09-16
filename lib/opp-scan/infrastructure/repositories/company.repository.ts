@@ -65,7 +65,7 @@ export class CompanyRepository implements ICompanyRepository {
   async search(criteria: SearchCriteria, limit: number = 100): Promise<CompanyEntity[]> {
     try {
       let query = 'SELECT * FROM companies WHERE 1=1'
-      const params: any[] = []
+      const params: unknown[] = []
       let paramIndex = 1
 
       // Industry filtering
@@ -226,7 +226,7 @@ export class CompanyRepository implements ICompanyRepository {
       await this.db.query('BEGIN')
 
       // Build bulk insert query
-      const values: any[] = []
+      const values: unknown[] = []
       const valueRows: string[] = []
       let paramIndex = 1
 
@@ -348,7 +348,7 @@ export class CompanyRepository implements ICompanyRepository {
     try {
       // Simple similarity search - in production would use more sophisticated algorithms
       let query = 'SELECT * FROM companies WHERE id != $1'
-      const params: any[] = [company.id]
+      const params: unknown[] = [company.id]
       let paramIndex = 2
 
       // Search by registration number first (exact match)

@@ -152,7 +152,7 @@ export class DemandForecaster {
     return Array.from(dailyDemand.values())
   }
 
-  private calculateDailyDemand(businesses: any[], date: string): number {
+  private calculateDailyDemand(businesses: unknown[], date: string): number {
     // Simplified demand calculation
     // In production, this would use actual transaction or search data
     const baselineDemand = 100

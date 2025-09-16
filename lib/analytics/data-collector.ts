@@ -410,7 +410,7 @@ export class DataCollector {
     }
 
     // Group metrics by type
-    const groupedMetrics: Record<string, any[]> = {}
+    const groupedMetrics: Record<string, unknown[]> = {}
     
     for (const metric of metrics) {
       if (!groupedMetrics[metric.metric_type]) {

@@ -103,7 +103,7 @@ describe('Complete Scan Pipeline E2E Tests', () => {
       jest.spyOn(scanRepository, 'findById').mockResolvedValue(scan)
       jest.spyOn(scanRepository, 'save').mockResolvedValue()
 
-      const progressUpdates: any[] = []
+      const progressUpdates: unknown[] = []
       
       // Start scan in background
       const scanPromise = orchestrationService.executeScan('progress-scan')

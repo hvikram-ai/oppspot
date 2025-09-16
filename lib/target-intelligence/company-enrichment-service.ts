@@ -317,7 +317,7 @@ export class CompanyEnrichmentService {
   private async enrichFromWebsite(
     request: CompanyEnrichmentRequest, 
     sources: EnrichmentSource[]
-  ): Promise<any> {
+  ): Promise<unknown> {
     if (!request.website) {
       return null
     }
@@ -352,7 +352,7 @@ export class CompanyEnrichmentService {
   private async enrichFromLinkedIn(
     request: CompanyEnrichmentRequest,
     sources: EnrichmentSource[]
-  ): Promise<any> {
+  ): Promise<unknown> {
     // Placeholder for LinkedIn API integration
     // In production, this would use LinkedIn Company API
     
@@ -372,7 +372,7 @@ export class CompanyEnrichmentService {
   private async enrichFromSearch(
     request: CompanyEnrichmentRequest,
     sources: EnrichmentSource[]
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
       // Use LLM to generate targeted search queries
       const searchQueries = await this.generateSearchQueries(request)
@@ -406,7 +406,7 @@ export class CompanyEnrichmentService {
   private async enrichFromFinancialSources(
     request: CompanyEnrichmentRequest,
     sources: EnrichmentSource[]
-  ): Promise<any> {
+  ): Promise<unknown> {
     // Placeholder for financial data providers (Yahoo Finance, Alpha Vantage, etc.)
     
     sources.push({
@@ -425,7 +425,7 @@ export class CompanyEnrichmentService {
   private async enrichFromIPSources(
     request: CompanyEnrichmentRequest,
     sources: EnrichmentSource[]
-  ): Promise<any> {
+  ): Promise<unknown> {
     // Placeholder for patent database APIs (USPTO, Google Patents, etc.)
     
     sources.push({
@@ -444,7 +444,7 @@ export class CompanyEnrichmentService {
   private async enrichFromMediaSources(
     request: CompanyEnrichmentRequest,
     sources: EnrichmentSource[]
-  ): Promise<any> {
+  ): Promise<unknown> {
     // Placeholder for news APIs (NewsAPI, Bing News, etc.)
     
     sources.push({
@@ -514,7 +514,7 @@ Return as a JSON array of strings, each optimized for search engines.`
     request: CompanyEnrichmentRequest,
     enrichmentData: Record<string, any>,
     sources: EnrichmentSource[]
-  ): Promise<any> {
+  ): Promise<unknown> {
     const prompt = `Consolidate and structure comprehensive company data for ${request.company_name}:
 
 Available Data Sources:
