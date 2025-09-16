@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const aiClient = getAIClient()
     const updates: Partial<Business> = {}
-    const results: Record<string, any> = {}
+    const results: Record<string, unknown> = {}
 
     // Generate requested enhancements
     for (const enhancement of enhancements) {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           case 'insights':
             const insights = await aiClient.generateBusinessInsights(business)
             updates.ai_insights = {
-              ...(business.ai_insights as any || {}),
+              ...((business.ai_insights as Record<string, unknown>) || {}),
               ...insights,
               generated_at: new Date().toISOString()
             }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           case 'keywords':
             const keywords = await aiClient.generateSEOKeywords(business)
             updates.metadata = {
-              ...(business.metadata as any || {}),
+              ...((business.metadata as Record<string, unknown>) || {}),
               seo_keywords: keywords
             }
             results.keywords = keywords
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
           case 'tagline':
             const tagline = await aiClient.generateTagline(business)
             updates.metadata = {
-              ...(business.metadata as any || {}),
+              ...((business.metadata as Record<string, unknown>) || {}),
               tagline
             }
             results.tagline = tagline
@@ -221,7 +221,15 @@ export async function PUT(request: NextRequest) {
 
     // Process each business
     for (const business of businesses) {
-      const businessResult: any = {
+      interface BusinessResult {
+        id: string
+        name: string | null
+        enhancements: Record<string, string | string[]>
+        status?: string
+        error?: string
+      }
+
+      const businessResult: BusinessResult = {
         id: business.id,
         name: business.name,
         enhancements: {}
@@ -245,7 +253,7 @@ export async function PUT(request: NextRequest) {
               case 'insights':
                 const insights = await aiClient.generateBusinessInsights(business)
                 updates.ai_insights = {
-                  ...(business.ai_insights as any || {}),
+                  ...((business.ai_insights as Record<string, unknown>) || {}),
                   ...insights,
                   generated_at: new Date().toISOString()
                 }

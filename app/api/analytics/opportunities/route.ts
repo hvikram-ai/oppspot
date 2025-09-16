@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { OpportunityIdentifier } from '@/lib/analytics/opportunity-identifier'
 
@@ -113,7 +113,13 @@ export async function PATCH(request: NextRequest) {
       )
     }
     
-    let updateData: any = {}
+    interface UpdateData {
+      status: string
+      captured_by?: string
+      captured_at?: string
+    }
+
+    let updateData: UpdateData = { status: '' }
     
     switch (action) {
       case 'capture':

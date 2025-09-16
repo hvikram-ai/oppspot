@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { Database } from '@/lib/supabase/database.types'
 
 // POST: Follow or unfollow a business
 export async function POST(request: NextRequest) {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
           business_id: businessId,
           business_name: business.name
         }
-      } as any)
+      } as Database['public']['Tables']['events']['Insert'])
       
       return NextResponse.json({
         following: false,
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
           business_name: business.name,
           notification_preference: notificationPreference
         }
-      } as any)
+      } as Database['public']['Tables']['events']['Insert'])
       
       return NextResponse.json({
         following: true,

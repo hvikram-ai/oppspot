@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { OppScanEngine } from '@/lib/opp-scan/scanning-engine'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
+type Scan = Database['public']['Tables']['acquisition_scans']['Row']
 
 export async function POST(
   request: NextRequest,
@@ -115,7 +120,7 @@ export async function POST(
 }
 
 // Validate scan configuration
-function validateScanConfiguration(scan: any): string | null {
+function validateScanConfiguration(scan: Scan): string | null {
   if (!scan.selected_industries || scan.selected_industries.length === 0) {
     return 'No industries selected'
   }
@@ -146,7 +151,7 @@ function validateScanConfiguration(scan: any): string | null {
 }
 
 // Estimate completion time based on scan configuration
-function getEstimatedCompletion(scan: any): string {
+function getEstimatedCompletion(scan: Scan): string {
   let estimatedMinutes = 30 // Base time
 
   // Add time based on data sources
@@ -173,7 +178,7 @@ function getEstimatedCompletion(scan: any): string {
 }
 
 // Helper function to check organization access
-async function checkOrgAccess(supabase: any, userId: string, orgId: string): Promise<boolean> {
+async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
     const { data: profile } = await supabase
       .from('profiles')
