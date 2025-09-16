@@ -26,7 +26,16 @@ export default function ImportBusinessesPage() {
   const [loading, setLoading] = useState(false)
   const [statistics, setStatistics] = useState<ImportStatistics | null>(null)
   const [suggestions, setSuggestions] = useState<ImportSuggestion[]>([])
-  const [recentImports, setRecentImports] = useState<any[]>([])
+  interface RecentImport {
+    id: string
+    created_at: string
+    import_type: string
+    total_imported: number
+    source: string
+    metadata?: Record<string, unknown>
+  }
+  
+  const [recentImports, setRecentImports] = useState<RecentImport[]>([])
   
   // Form state
   const [query, setQuery] = useState('')
@@ -41,7 +50,7 @@ export default function ImportBusinessesPage() {
   useEffect(() => {
     checkAuth()
     fetchImportData()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser()

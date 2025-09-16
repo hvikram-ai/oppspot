@@ -24,20 +24,38 @@ import {
   RefreshCw
 } from 'lucide-react'
 
+interface AIInsights {
+  market_position?: string
+  growth_potential?: string
+  key_strengths?: string[]
+  opportunities?: string[]
+}
+
+interface BusinessMetadata {
+  source?: string
+  last_updated?: string
+  [key: string]: unknown
+}
+
 interface Business {
   id: string
   name: string
   description: string | null
   categories: string[]
-  ai_insights: any
-  metadata: any
+  ai_insights: AIInsights | null
+  metadata: BusinessMetadata | null
+}
+
+interface Enhancement {
+  value?: string | string[]
+  error?: string
 }
 
 interface EnhancementResult {
   id: string
   name: string
   status: 'success' | 'error' | 'skipped'
-  enhancements: Record<string, any>
+  enhancements: Record<string, Enhancement>
   error?: string
 }
 
@@ -49,7 +67,13 @@ export default function EnhanceBusinessesPage() {
   const [bulkLimit, setBulkLimit] = useState(10)
   const [results, setResults] = useState<EnhancementResult[]>([])
   const [progress, setProgress] = useState(0)
-  const [aiUsage, setAiUsage] = useState<any>(null)
+  interface AIUsageStats {
+    tokens_used?: number
+    api_calls?: number
+    cost?: number
+  }
+  
+  const [aiUsage, setAiUsage] = useState<AIUsageStats | null>(null)
   
   // Enhancement options
   const [enhancements, setEnhancements] = useState({
@@ -66,7 +90,7 @@ export default function EnhanceBusinessesPage() {
   useEffect(() => {
     checkAuth()
     fetchBusinesses()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -115,7 +139,7 @@ export default function EnhanceBusinessesPage() {
     
     try {
       const selectedEnhancements = Object.entries(enhancements)
-        .filter(([_, enabled]) => enabled)
+        .filter(([, enabled]) => enabled)
         .map(([key]) => key)
 
       if (selectedEnhancements.length === 0) {
@@ -138,7 +162,7 @@ export default function EnhanceBusinessesPage() {
         toast.success('Business enhanced successfully')
         
         // Show what was generated
-        Object.entries(data.enhancements).forEach(([key, value]: [string, any]) => {
+        Object.entries(data.enhancements).forEach(([key, value]: [string, Enhancement]) => {
           if (!value.error) {
             toast.info(`Generated ${key}`)
           }
@@ -165,7 +189,7 @@ export default function EnhanceBusinessesPage() {
     
     try {
       const selectedEnhancements = Object.entries(enhancements)
-        .filter(([_, enabled]) => enabled)
+        .filter(([, enabled]) => enabled)
         .map(([key]) => key)
 
       if (selectedEnhancements.length === 0) {
@@ -211,7 +235,7 @@ export default function EnhanceBusinessesPage() {
     }
   }
 
-  const getFilterLabel = (filter: string) => {
+  const getFilterLabel = (filter: string) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     switch (filter) {
       case 'missing_description':
         return 'Missing Description'
