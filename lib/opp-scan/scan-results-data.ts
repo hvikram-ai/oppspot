@@ -24,11 +24,11 @@ export interface ScanData {
   current_step: string
   targets_identified: number
   targets_analyzed: number
-  selected_industries?: any[]
-  selected_regions?: any[]
+  selected_industries?: Array<{ code: string; name: string }>
+  selected_regions?: Array<{ id: string; name: string; country: string }>
   market_maturity?: string[]
-  required_capabilities?: any[]
-  strategic_objectives?: any
+  required_capabilities?: string[]
+  strategic_objectives?: Record<string, unknown>
   data_sources?: string[]
   scan_depth: 'basic' | 'detailed' | 'comprehensive'
   created_at: string
@@ -49,7 +49,13 @@ export interface TargetCompany {
   business_description?: string
   year_incorporated?: number
   employee_count_range?: string
-  registered_address?: any
+  registered_address?: {
+    street?: string
+    city?: string
+    region?: string
+    postal_code?: string
+    country: string
+  }
   phone?: string
   email?: string
   discovery_source: string

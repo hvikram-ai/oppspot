@@ -5,11 +5,11 @@ import CostManagementService from './cost-management'
 // Types for the scanning engine
 interface ScanConfig {
   scan_id: string
-  selected_industries: any[]
-  selected_regions: any[]
+  selected_industries: Array<{ code: string; name: string }>
+  selected_regions: Array<{ id: string; name: string; country: string }>
   data_sources: string[]
   scan_depth: 'basic' | 'detailed' | 'comprehensive'
-  required_capabilities: any[]
+  required_capabilities: string[]
 }
 
 interface DataSourceResult {
@@ -33,15 +33,21 @@ interface CompanyData {
   employee_count?: string
   revenue_estimate?: number
   founding_year?: number
-  address?: any
+  address?: {
+    street?: string
+    city?: string
+    region?: string
+    postal_code?: string
+    country: string
+  }
   phone?: string
   email?: string
   confidence_score: number
-  source_metadata: any
+  source_metadata: Record<string, unknown>
 }
 
 class OppScanEngine {
-  private supabase: any
+  private supabase: ReturnType<typeof createClient>
   private dataSourceFactory: DataSourceFactory
   private costManagementService: CostManagementService
 

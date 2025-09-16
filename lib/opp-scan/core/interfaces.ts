@@ -45,7 +45,7 @@ export interface SourceMetadata {
   readonly discoveredAt: Date
   readonly searchTerms?: readonly string[]
   readonly confidence: number
-  readonly rawData?: Record<string, any>
+  readonly rawData?: Record<string, unknown>
 }
 
 export interface ScanConfiguration {
@@ -59,7 +59,7 @@ export interface ScanConfiguration {
   readonly dataSources: readonly string[]
   readonly scanDepth: ScanDepth
   readonly requiredCapabilities: readonly string[]
-  readonly strategicObjectives?: Record<string, any>
+  readonly strategicObjectives?: Record<string, unknown>
   readonly budget?: BudgetConstraints
 }
 
@@ -265,7 +265,7 @@ export interface IPipelineStage {
 export interface ScanContext {
   readonly scanId: string
   readonly configuration: ScanConfiguration
-  readonly userData: Map<string, any>
+  readonly userData: Map<string, unknown>
   readonly logger: ILogger
   readonly cancellationToken: CancellationToken
   
@@ -282,7 +282,7 @@ export interface StageResult {
   readonly duration: number
   readonly itemsProcessed: number
   readonly errors: readonly ScanError[]
-  readonly metadata?: Record<string, any>
+  readonly metadata?: Record<string, unknown>
 }
 
 export interface PipelineResult {
@@ -321,7 +321,7 @@ export interface UsageEvent {
   readonly currency: string
   readonly requestCount: number
   readonly dataVolume?: number
-  readonly metadata: Record<string, any>
+  readonly metadata: Record<string, unknown>
 }
 
 export type TransactionType = 'api_call' | 'data_enrichment' | 'analysis' | 'report_generation'
@@ -377,13 +377,13 @@ export interface BudgetImpact {
 
 export interface IJobQueue {
   enqueue<T>(job: JobDefinition<T>): Promise<JobHandle>
-  dequeue(): Promise<JobDefinition<any> | null>
+  dequeue(): Promise<JobDefinition<unknown> | null>
   getJobStatus(jobId: string): Promise<JobStatus>
   cancelJob(jobId: string): Promise<boolean>
   getQueueStats(): Promise<QueueStatistics>
 }
 
-export interface JobDefinition<T = any> {
+export interface JobDefinition<T = unknown> {
   readonly id: string
   readonly type: string
   readonly payload: T
@@ -392,7 +392,7 @@ export interface JobDefinition<T = any> {
   readonly maxRetries: number
   readonly timeout: number
   readonly scheduledAt?: Date
-  readonly metadata: Record<string, any>
+  readonly metadata: Record<string, unknown>
 }
 
 export type JobPriority = 'low' | 'normal' | 'high' | 'critical'
@@ -407,7 +407,7 @@ export interface JobStatus {
   readonly id: string
   readonly status: JobState
   readonly progress: number
-  readonly result?: any
+  readonly result?: unknown
   readonly error?: string
   readonly createdAt: Date
   readonly startedAt?: Date
@@ -421,11 +421,11 @@ export type JobState = 'queued' | 'processing' | 'completed' | 'failed' | 'cance
 // ==========================================
 
 export interface ILogger {
-  debug(message: string, meta?: Record<string, any>): void
-  info(message: string, meta?: Record<string, any>): void
-  warn(message: string, meta?: Record<string, any>): void
-  error(message: string, error?: Error, meta?: Record<string, any>): void
-  createChildLogger(context: Record<string, any>): ILogger
+  debug(message: string, meta?: Record<string, unknown>): void
+  info(message: string, meta?: Record<string, unknown>): void
+  warn(message: string, meta?: Record<string, unknown>): void
+  error(message: string, error?: Error, meta?: Record<string, unknown>): void
+  createChildLogger(context: Record<string, unknown>): ILogger
 }
 
 export interface ICacheProvider {
@@ -449,7 +449,7 @@ export interface DomainEvent<T = any> {
   readonly timestamp: Date
   readonly correlationId?: string
   readonly causationId?: string
-  readonly metadata: Record<string, any>
+  readonly metadata: Record<string, unknown>
 }
 
 export type EventHandler<T = any> = (event: DomainEvent<T>) => Promise<void> | void
@@ -471,7 +471,7 @@ export interface ScanError {
   readonly message: string
   readonly source?: string
   readonly timestamp: Date
-  readonly metadata?: Record<string, any>
+  readonly metadata?: Record<string, unknown>
   readonly isRetryable: boolean
 }
 
