@@ -11,6 +11,7 @@ import { SocialPresence } from '@/components/business/social-presence'
 import { RelatedBusinesses } from '@/components/business/related-businesses'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Navbar } from '@/components/layout/navbar'
+import { getMockCompany, getMockRelatedCompanies } from '@/lib/mock-data/companies'
 
 interface BusinessPageProps {
   params: {
@@ -19,6 +20,23 @@ interface BusinessPageProps {
 }
 
 export async function generateMetadata({ params }: BusinessPageProps) {
+  // Check if it's a mock company first
+  if (params.id.startsWith('mock-')) {
+    const mockBusiness = getMockCompany(params.id)
+    if (mockBusiness) {
+      const location = mockBusiness.address?.city ? `, ${mockBusiness.address.city}` : ''
+      return {
+        title: `${mockBusiness.name}${location} - OppSpot (Demo)`,
+        description: mockBusiness.description || `View details for ${mockBusiness.name} on OppSpot. Demo data for testing purposes.`,
+        openGraph: {
+          title: mockBusiness.name,
+          description: mockBusiness.description || `Business profile for ${mockBusiness.name}`,
+          type: 'website',
+        }
+      }
+    }
+  }
+
   const supabase = await createClient()
   
   const { data: business } = await supabase
@@ -48,43 +66,63 @@ export async function generateMetadata({ params }: BusinessPageProps) {
 }
 
 export default async function BusinessPage({ params }: BusinessPageProps) {
-  const supabase = await createClient()
-  
-  // Fetch business details
-  const { data: business, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('id', params.id)
-    .single()
+  let business: any
+  let relatedBusinesses: any[] | null = null
 
-  if (error || !business) {
-    notFound()
+  // Check if it's a mock company first
+  if (params.id.startsWith('mock-')) {
+    business = getMockCompany(params.id)
+    if (!business) {
+      notFound()
+    }
+    // Get mock related businesses
+    relatedBusinesses = getMockRelatedCompanies(params.id, 6)
+  } else {
+    // Fetch from database for real companies
+    const supabase = await createClient()
+    
+    // Fetch business details
+    const { data: dbBusiness, error } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', params.id)
+      .single()
+
+    if (error || !dbBusiness) {
+      notFound()
+    }
+    business = dbBusiness
+
+    // Fetch related businesses (same category, nearby)
+    const { data: dbRelated } = await supabase
+      .from('businesses')
+      .select('*')
+      .contains('categories', business.categories?.[0] ? [business.categories[0]] : [])
+      .neq('id', params.id)
+      .limit(6)
+    
+    relatedBusinesses = dbRelated
   }
 
-  // Fetch related businesses (same category, nearby)
-  const { data: relatedBusinesses } = await supabase
-    .from('businesses')
-    .select('*')
-    .contains('categories', business.categories?.[0] ? [business.categories[0]] : [])
-    .neq('id', params.id)
-    .limit(6)
-
-  // Log view event
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from('events').insert({
-        user_id: user.id,
-        event_type: 'business_view',
-        event_data: {
-          business_id: params.id,
-          business_name: business.name,
-        }
-      })
+  // Log view event (only for non-mock companies)
+  if (!params.id.startsWith('mock-')) {
+    try {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('events').insert({
+          user_id: user.id,
+          event_type: 'business_view',
+          event_data: {
+            business_id: params.id,
+            business_name: business.name,
+          }
+        })
+      }
+    } catch (e) {
+      // Don't fail if event logging fails
+      console.error('Failed to log view event:', e)
     }
-  } catch (e) {
-    // Don't fail if event logging fails
-    console.error('Failed to log view event:', e)
   }
 
   return (

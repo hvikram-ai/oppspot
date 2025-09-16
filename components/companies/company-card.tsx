@@ -12,9 +12,11 @@ import {
   ExternalLink,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import Link from 'next/link'
 
 interface CompanyCardProps {
   company: any
@@ -162,7 +164,18 @@ export function CompanyCard({
           {getCacheStatus()}
           
           <div className="flex gap-1">
-            {onRefresh && (
+            <Link href={`/business/${company.id}`} onClick={(e) => e.stopPropagation()}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 flex items-center gap-1"
+                title="View Details"
+              >
+                <span className="text-xs">Details</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+            {onRefresh && !company.id?.startsWith('mock-') && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -173,21 +186,23 @@ export function CompanyCard({
                 <RefreshCw className="w-3.5 h-3.5" />
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation()
-                window.open(
-                  `https://find-and-update.company-information.service.gov.uk/company/${company.company_number}`,
-                  '_blank'
-                )
-              }}
-              title="View on Companies House"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Button>
+            {company.company_number && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  window.open(
+                    `https://find-and-update.company-information.service.gov.uk/company/${company.company_number}`,
+                    '_blank'
+                  )
+                }}
+                title="View on Companies House"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
