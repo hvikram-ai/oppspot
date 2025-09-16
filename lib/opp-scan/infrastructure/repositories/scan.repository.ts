@@ -52,7 +52,7 @@ export class ScanRepository implements IScanRepository {
         [userId]
       )
 
-      return result.rows.map((row: any) => 
+      return result.rows.map((row: unknown) => 
         ScanEntity.fromSnapshot(
           row.id,
           row.configuration,
@@ -83,7 +83,7 @@ export class ScanRepository implements IScanRepository {
         [status]
       )
 
-      return result.rows.map((row: any) => 
+      return result.rows.map((row: unknown) => 
         ScanEntity.fromSnapshot(
           row.id,
           row.configuration,
@@ -212,7 +212,7 @@ export class ScanRepository implements IScanRepository {
         [limit]
       )
 
-      return result.rows.map((row: any) => 
+      return result.rows.map((row: unknown) => 
         ScanEntity.fromSnapshot(
           row.id,
           row.configuration,
@@ -257,7 +257,7 @@ export class ScanRepository implements IScanRepository {
         [startDate.toISOString(), endDate.toISOString()]
       )
 
-      return result.rows.map((row: any) => 
+      return result.rows.map((row: unknown) => 
         ScanEntity.fromSnapshot(
           row.id,
           row.configuration,

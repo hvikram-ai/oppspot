@@ -37,7 +37,7 @@ export class CompanyRepository implements ICompanyRepository {
         [`%${name}%`]
       )
 
-      return result.rows.map((row: any) => this.mapRowToEntity(row))
+      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error finding companies by name:', error)
       throw new Error(`Failed to find companies with name ${name}`)
@@ -127,7 +127,7 @@ export class CompanyRepository implements ICompanyRepository {
       params.push(limit)
 
       const result = await this.db.query(query, params)
-      return result.rows.map((row: any) => this.mapRowToEntity(row))
+      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error searching companies:', error)
       throw new Error('Failed to search companies')
@@ -314,7 +314,7 @@ export class CompanyRepository implements ICompanyRepository {
         [minScore]
       )
 
-      return result.rows.map((row: any) => this.mapRowToEntity(row))
+      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error finding high confidence companies:', error)
       throw new Error('Failed to find high confidence companies')
@@ -359,7 +359,7 @@ export class CompanyRepository implements ICompanyRepository {
         )
         
         if (regResult.rows.length > 0) {
-          return regResult.rows.map((row: any) => this.mapRowToEntity(row))
+          return regResult.rows.map((row: unknown) => this.mapRowToEntity(row))
         }
       }
 
@@ -380,7 +380,7 @@ export class CompanyRepository implements ICompanyRepository {
       query += ' ORDER BY similarity(name, $2) DESC LIMIT 10'
 
       const result = await this.db.query(query, params)
-      return result.rows.map((row: any) => this.mapRowToEntity(row))
+      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error finding similar companies:', error)
       // Fallback to simpler search if similarity extension not available
@@ -388,7 +388,7 @@ export class CompanyRepository implements ICompanyRepository {
     }
   }
 
-  private mapRowToEntity(row: any): CompanyEntity {
+  private mapRowToEntity(row: unknown): CompanyEntity {
     return CompanyEntity.fromJSON({
       id: row.id,
       name: row.name,
