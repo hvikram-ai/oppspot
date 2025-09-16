@@ -94,7 +94,7 @@ class FallbackLLMProvider implements LLMProvider, LLMService {
   }
 
   // LLMService interface methods - delegate to primary with fallback
-  async generateBusinessDescription(business: any): Promise<string> {
+  async generateBusinessDescription(business: Record<string, unknown>): Promise<string> {
     try {
       return await this.primaryProvider.generateBusinessDescription(business)
     } catch (error) {
@@ -103,7 +103,7 @@ class FallbackLLMProvider implements LLMProvider, LLMService {
     }
   }
 
-  async generateBusinessInsights(business: any) {
+  async generateBusinessInsights(business: Record<string, unknown>) {
     try {
       return await this.primaryProvider.generateBusinessInsights(business)
     } catch (error) {
@@ -112,7 +112,7 @@ class FallbackLLMProvider implements LLMProvider, LLMService {
     }
   }
 
-  async generateSEOKeywords(business: any): Promise<string[]> {
+  async generateSEOKeywords(business: Record<string, unknown>): Promise<string[]> {
     try {
       return await this.primaryProvider.generateSEOKeywords(business)
     } catch (error) {
@@ -121,7 +121,7 @@ class FallbackLLMProvider implements LLMProvider, LLMService {
     }
   }
 
-  async generateTagline(business: any): Promise<string> {
+  async generateTagline(business: Record<string, unknown>): Promise<string> {
     try {
       return await this.primaryProvider.generateTagline(business)
     } catch (error) {
@@ -130,7 +130,7 @@ class FallbackLLMProvider implements LLMProvider, LLMService {
     }
   }
 
-  async suggestCategories(business: any): Promise<string[]> {
+  async suggestCategories(business: Record<string, unknown>): Promise<string[]> {
     try {
       return await this.primaryProvider.suggestCategories(business)
     } catch (error) {

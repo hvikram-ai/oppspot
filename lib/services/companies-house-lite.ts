@@ -212,14 +212,14 @@ export class CompaniesHouseServiceLite {
   /**
    * Get company number from metadata
    */
-  getCompanyNumber(business: any): string | null {
+  getCompanyNumber(business: Record<string, unknown>): string | null {
     return business.metadata?.companies_house?.company_number || null
   }
 
   /**
    * Get Companies House data from metadata
    */
-  getCompaniesHouseData(business: any): any {
+  getCompaniesHouseData(business: Record<string, unknown>): any {
     return business.metadata?.companies_house || null
   }
 }
