@@ -175,7 +175,7 @@ export interface EnhancedCompanyData {
   
   // ESG & Governance
   board_composition: string
-  diversity_metrics: any
+  diversity_metrics: Record<string, unknown>
   sustainability_initiatives: string[]
   regulatory_compliance_score?: number
 }

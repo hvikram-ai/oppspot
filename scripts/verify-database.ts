@@ -120,9 +120,10 @@ async function verifyDatabase() {
       console.log(`${colors.green}✅ Function '${functionName}' exists${colors.reset}`)
       passedChecks++
       return true
-    } catch (e: any) {
+    } catch (e) {
       // If error is about missing parameters, the function exists
-      if (e.message && e.message.includes('parameter')) {
+      const error = e as Error
+      if (error.message && error.message.includes('parameter')) {
         console.log(`${colors.green}✅ Function '${functionName}' exists${colors.reset}`)
         passedChecks++
         return true

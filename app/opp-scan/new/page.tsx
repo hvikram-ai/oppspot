@@ -31,21 +31,26 @@ interface WorkflowStep {
   id: string
   title: string
   description: string
-  icon: any
-  component: any
+  icon: React.ComponentType
+  component: React.ComponentType<StepComponentProps>
+}
+
+interface StepComponentProps {
+  config: ScanConfig
+  updateConfig: (updates: Partial<ScanConfig>) => void
 }
 
 interface ScanConfig {
   name: string
   description: string
-  selectedIndustries: any[]
+  selectedIndustries: Array<{ industry: string; description?: string }>
   marketMaturity: string[]
-  selectedRegions: any[]
-  regulatoryRequirements: any
-  crossBorderConsiderations: any
-  requiredCapabilities: any[]
-  strategicObjectives: any
-  synergyRequirements: any
+  selectedRegions: Array<{ id: string; name: string; country: string }>
+  regulatoryRequirements: Record<string, unknown>
+  crossBorderConsiderations: Record<string, unknown>
+  requiredCapabilities: string[]
+  strategicObjectives: Record<string, unknown>
+  synergyRequirements: Record<string, unknown>
   dataSources: string[]
   scanDepth: 'basic' | 'detailed' | 'comprehensive'
   autoStart?: boolean
@@ -56,7 +61,12 @@ function NewOppScanPageContent() {
   const supabase = createClient()
   const { isDemoMode, demoData, addDemoScan } = useDemoMode()
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [user, setUser] = useState<any>(null)
+  interface User {
+    id: string
+    email?: string
+  }
+
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const [scanConfig, setScanConfig] = useState<ScanConfig>({
     name: '',
@@ -150,7 +160,7 @@ function NewOppScanPageContent() {
     setCurrentStepIndex(stepIndex)
   }
 
-  const handleConfigChange = (field: keyof ScanConfig, value: any) => {
+  const handleConfigChange = (field: keyof ScanConfig, value: unknown) => {
     setScanConfig(prev => ({
       ...prev,
       [field]: value
@@ -202,7 +212,7 @@ function NewOppScanPageContent() {
           // Simulate scan progress for demo
           setTimeout(() => {
             const scans = JSON.parse(localStorage.getItem('demoScans') || '[]')
-            const scanIndex = scans.findIndex((s: any) => s.id === newScan.id)
+            const scanIndex = scans.findIndex((s: { id: string }) => s.id === newScan.id)
             if (scanIndex >= 0) {
               scans[scanIndex] = {
                 ...scans[scanIndex],
@@ -284,14 +294,17 @@ function NewOppScanPageContent() {
       }
       
       router.push(`/opp-scan/${scan.id}`)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating scan:', error)
       
       // Check for missing table error
-      if (error?.message?.includes('acquisition_scans') || 
-          error?.code === 'PGRST204' || 
-          error?.code === 'PGRST205' ||
-          error?.message?.includes('table')) {
+      const errorMessage = error instanceof Error ? error.message : ''
+      const errorCode = (error as { code?: string })?.code
+      
+      if (errorMessage.includes('acquisition_scans') || 
+          errorCode === 'PGRST204' || 
+          errorCode === 'PGRST205' ||
+          errorMessage.includes('table')) {
         toast.error(
           'Database tables not configured. Please contact support to enable Opp Scan feature.',
           {

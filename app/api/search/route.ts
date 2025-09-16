@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/database.types'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -253,7 +254,7 @@ function getDemoSearchResults(query: string, categories: string[], location?: st
 }
 
 // Search Companies House and merge with existing results
-async function searchCompaniesHouse(query: string, supabase: any): Promise<Business[]> {
+async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Database>): Promise<Business[]> {
   if (!query || query.length < 2) return []
   
   try {
@@ -305,7 +306,7 @@ async function searchCompaniesHouse(query: string, supabase: any): Promise<Busin
               
               if (updated) companiesHouseResults.push(updated)
             }
-          } catch (err) {
+          } catch {
             // If refresh fails, use stale data
             companiesHouseResults.push(existing)
           }

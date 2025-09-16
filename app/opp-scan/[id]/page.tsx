@@ -52,8 +52,8 @@ interface ScanData {
   updated_at: string
   started_at?: string
   completed_at?: string
-  selected_industries?: any[]
-  selected_regions?: any[]
+  selected_industries?: Array<{ industry: string; description?: string }>
+  selected_regions?: Array<{ id: string; name: string; country: string }>
   current_step: string
   data_sources?: string[]
   scan_depth: string
@@ -70,7 +70,12 @@ function ScanDetailPageContent() {
   const [loading, setLoading] = useState(true)
   const [scanData, setScanData] = useState<ScanData | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
-  const [user, setUser] = useState<any>(null)
+  interface User {
+    id: string
+    email?: string
+  }
+
+  const [user, setUser] = useState<User | null>(null)
   const [startingScan, setStartingScan] = useState(false)
 
   useEffect(() => {
@@ -253,9 +258,9 @@ function ScanDetailPageContent() {
         // Reload scan data to get updated status
         await loadScanDetails(scanId)
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error starting scan:', error)
-      toast.error(error.message || 'Failed to start scan')
+      toast.error((error instanceof Error ? error.message : 'Failed to start scan'))
     } finally {
       setStartingScan(false)
     }
@@ -591,7 +596,7 @@ function ScanDetailPageContent() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {scanData.selected_industries.map((industry: any, index: number) => (
+                      {scanData.selected_industries.map((industry, index) => (
                         <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                           <span className="text-sm font-medium">{industry.industry}</span>
                           {industry.subcategory && (
@@ -615,7 +620,7 @@ function ScanDetailPageContent() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {scanData.selected_regions.map((region: any, index: number) => (
+                      {scanData.selected_regions.map((region, index) => (
                         <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                           <span className="text-sm font-medium">{region.name}</span>
                           <Badge variant="outline" className="text-xs">{region.country}</Badge>

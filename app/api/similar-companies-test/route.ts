@@ -108,25 +108,25 @@ export async function POST(request: NextRequest) {
         errors: result.errors,
         warnings: result.warnings
       })
-    } catch (analysisError: any) {
+    } catch (analysisError) {
       console.error('[TEST API] Analysis execution failed:', analysisError)
       
       return NextResponse.json({
         success: false,
         analysisId,
         status: 'failed',
-        error: analysisError.message,
+        error: analysisError instanceof Error ? analysisError.message : 'Unknown error',
         message: 'Analysis failed during execution',
         targetCompany: targetCompanyName.trim()
       }, { status: 500 })
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[TEST API] Similarity analysis error:', error)
     return NextResponse.json(
       { 
         error: 'Failed to start similarity analysis',
-        details: error.message
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     )
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET: Test endpoint status
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     status: 'ok',
     message: 'Similar Companies Test API is running',

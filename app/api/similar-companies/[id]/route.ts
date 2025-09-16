@@ -5,6 +5,16 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+
+interface CompanyMatch {
+  overall_score: number
+  confidence: number
+  financial_score: number
+  strategic_score: number
+  operational_score: number
+  market_score: number
+  risk_score: number
+}
 import { SimilarCompanyUseCase } from '@/lib/opp-scan/services/similar-company-use-case'
 
 // GET: Get detailed analysis results
@@ -95,7 +105,7 @@ export async function GET(
     // Limit matches if requested
     if (analysis.similar_company_matches && matchLimit < analysis.similar_company_matches.length) {
       analysis.similar_company_matches = analysis.similar_company_matches
-        .sort((a: any, b: any) => b.overall_score - a.overall_score)
+        .sort((a, b) => (b as CompanyMatch).overall_score - (a as CompanyMatch).overall_score)
         .slice(0, matchLimit)
     }
 
@@ -104,19 +114,19 @@ export async function GET(
     const summary = {
       totalMatches: matches.length,
       averageScore: matches.length > 0 ? 
-        matches.reduce((sum: number, match: any) => sum + match.overall_score, 0) / matches.length : 0,
+        matches.reduce((sum: number, match) => sum + (match as CompanyMatch).overall_score, 0) / matches.length : 0,
       topScore: matches.length > 0 ? 
-        Math.max(...matches.map((match: any) => match.overall_score)) : 0,
+        Math.max(...matches.map((match) => (match as CompanyMatch).overall_score)) : 0,
       scoreDistribution: {
-        excellent: matches.filter((m: any) => m.overall_score >= 85).length,
-        good: matches.filter((m: any) => m.overall_score >= 70 && m.overall_score < 85).length,
-        fair: matches.filter((m: any) => m.overall_score >= 55 && m.overall_score < 70).length,
-        poor: matches.filter((m: any) => m.overall_score < 55).length
+        excellent: matches.filter((m) => (m as CompanyMatch).overall_score >= 85).length,
+        good: matches.filter((m) => (m as CompanyMatch).overall_score >= 70 && (m as CompanyMatch).overall_score < 85).length,
+        fair: matches.filter((m) => (m as CompanyMatch).overall_score >= 55 && (m as CompanyMatch).overall_score < 70).length,
+        poor: matches.filter((m) => (m as CompanyMatch).overall_score < 55).length
       },
       confidenceDistribution: {
-        high: matches.filter((m: any) => m.confidence >= 0.8).length,
-        medium: matches.filter((m: any) => m.confidence >= 0.6 && m.confidence < 0.8).length,
-        low: matches.filter((m: any) => m.confidence < 0.6).length
+        high: matches.filter((m) => (m as CompanyMatch).confidence >= 0.8).length,
+        medium: matches.filter((m) => (m as CompanyMatch).confidence >= 0.6 && (m as CompanyMatch).confidence < 0.8).length,
+        low: matches.filter((m) => (m as CompanyMatch).confidence < 0.6).length
       }
     }
 
@@ -138,7 +148,7 @@ export async function GET(
     return NextResponse.json(
       { 
         error: 'Failed to retrieve detailed analysis',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
       },
       { status: 500 }
     )
@@ -179,7 +189,7 @@ export async function PUT(
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString()
     }
 
@@ -211,7 +221,7 @@ export async function PUT(
     return NextResponse.json(
       { 
         error: 'Failed to update analysis',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
       },
       { status: 500 }
     )
@@ -280,7 +290,7 @@ export async function DELETE(
     return NextResponse.json(
       { 
         error: 'Failed to delete analysis',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
       },
       { status: 500 }
     )

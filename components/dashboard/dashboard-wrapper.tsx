@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
+import { User } from '@supabase/supabase-js'
+
+interface Profile {
+  onboarding_completed?: boolean
+  org_id?: string | null
+  email?: string
+}
 import { Navbar } from '@/components/layout/navbar'
 import { EmailVerificationBanner } from '@/components/ui/email-verification-banner'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
@@ -16,8 +23,8 @@ import { UpcomingTasks } from '@/components/dashboard/upcoming-tasks'
 
 export function DashboardWrapper() {
   const { isDemoMode, demoData } = useDemoMode()
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
@@ -50,7 +57,7 @@ export function DashboardWrapper() {
         .from('profiles')
         .select('onboarding_completed, org_id, email')
         .eq('id', user.id)
-        .single() as any
+        .single()
 
       // Handle RLS policy errors gracefully
       if (profileError) {
@@ -89,7 +96,7 @@ export function DashboardWrapper() {
           .from('organizations')
           .select('subscription_tier')
           .eq('id', profile.org_id)
-          .single() as any
+          .single()
         
         isPremium = org?.subscription_tier === 'premium' || org?.subscription_tier === 'enterprise'
       }

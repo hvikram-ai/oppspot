@@ -13,7 +13,7 @@ interface Citation {
   snippet: string
   confidence: number
   relevance: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 interface CitationCardProps {

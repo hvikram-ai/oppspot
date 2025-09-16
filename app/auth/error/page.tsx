@@ -92,22 +92,22 @@ function AuthErrorContent() {
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {errorInfo.action === 'resend' && (
                     <>
-                      <li>" Check your email for a verification link</li>
-                      <li>" Request a new verification email</li>
-                      <li>" Check your spam folder</li>
+                      <li>• Check your email for a verification link</li>
+                      <li>• Request a new verification email</li>
+                      <li>• Check your spam folder</li>
                     </>
                   )}
                   {errorInfo.action === 'retry' && (
                     <>
-                      <li>" Double-check your email and password</li>
-                      <li>" Reset your password if you've forgotten it</li>
-                      <li>" Contact support if the problem persists</li>
+                      <li>• Double-check your email and password</li>
+                      <li>• Reset your password if you&apos;ve forgotten it</li>
+                      <li>• Contact support if the problem persists</li>
                     </>
                   )}
                   {errorInfo.action === 'login' && (
                     <>
-                      <li>" Try signing in with your existing account</li>
-                      <li>" Reset your password if needed</li>
+                      <li>• Try signing in with your existing account</li>
+                      <li>• Reset your password if needed</li>
                     </>
                   )}
                 </ul>

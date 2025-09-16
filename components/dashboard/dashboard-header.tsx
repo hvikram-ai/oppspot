@@ -9,7 +9,9 @@ import { format } from 'date-fns'
 
 interface DashboardHeaderProps {
   user: User
-  profile: any
+  profile: {
+    full_name?: string
+  } | null
 }
 
 export function DashboardHeader({ user, profile }: DashboardHeaderProps) {

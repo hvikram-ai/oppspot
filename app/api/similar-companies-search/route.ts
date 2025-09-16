@@ -82,12 +82,12 @@ export async function POST(request: NextRequest) {
       }))
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[SEARCH API] Search error:', error)
     return NextResponse.json(
       { 
         error: 'Failed to search for similar companies',
-        details: error.message
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     )
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET: Test endpoint status
-export async function GET(request: NextRequest) {
+export async function GET() {
   // Check which APIs are configured
   const apis = {
     searchapi: !!process.env.SEARCHAPI_KEY,
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
   }
   
   const configuredApis = Object.entries(apis)
-    .filter(([_, configured]) => configured)
+    .filter(([, configured]) => configured)
     .map(([name]) => name)
   
   return NextResponse.json({

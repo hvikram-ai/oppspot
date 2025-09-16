@@ -6,6 +6,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateSimilarityAnalysisPDF } from '@/lib/pdf/services/similarity-pdf-generator'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
+
+interface CompanyMatch {
+  company_name: string
+  overall_score: number
+  confidence: number
+  financial_score: number
+  strategic_score: number
+  operational_score: number
+  market_score: number
+  risk_score: number
+  market_position?: string
+  company_data?: {
+    country?: string
+    industryCodes?: string[]
+  }
+}
 
 // POST: Generate export in specified format
 export async function POST(
@@ -117,7 +137,7 @@ export async function POST(
     // Prepare export data
     const matches = analysis?.similar_company_matches || []
     const topMatches = matches
-      .sort((a: any, b: any) => b.overall_score - a.overall_score)
+      .sort((a, b) => (b as CompanyMatch).overall_score - (a as CompanyMatch).overall_score)
       .slice(0, maxMatches)
 
     const exportData = {
@@ -152,7 +172,7 @@ export async function POST(
     }
 
     // Generate export content based on format
-    let exportContent: any
+    let exportContent: string | Buffer
     let fileName: string
     let contentType: string
 
@@ -207,7 +227,7 @@ export async function POST(
     return NextResponse.json(
       { 
         error: 'Failed to generate export',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
       },
       { status: 500 }
     )
@@ -293,7 +313,7 @@ export async function GET(
     return NextResponse.json(
       { 
         error: 'Failed to retrieve export status',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
       },
       { status: 500 }
     )
@@ -302,7 +322,7 @@ export async function GET(
 
 // Helper functions
 
-function generateCSV(matches: any[]): string {
+function generateCSV(matches: CompanyMatch[]): string {
   const headers = [
     'Rank',
     'Company Name',
@@ -337,9 +357,9 @@ function generateCSV(matches: any[]): string {
 }
 
 async function generatePDFExport(
-  supabase: any,
+  supabase: DbClient,
   analysisId: string,
-  exportData: any,
+  exportData: unknown,
   userId: string
 ): Promise<NextResponse> {
   try {
@@ -381,7 +401,7 @@ async function generatePDFExport(
         export_content: exportData,
         generation_status: 'failed',
         template_version: 'v1.0',
-        error_message: error.message
+        error_message: error instanceof Error ? error.message : 'Unknown error'
       })
       .select()
       .single()
@@ -396,9 +416,9 @@ async function generatePDFExport(
 }
 
 async function generatePowerPointExport(
-  supabase: any,
+  supabase: DbClient,
   analysisId: string,
-  exportData: any,
+  exportData: { analysis: { targetCompany?: string } },
   userId: string
 ): Promise<NextResponse> {
   // Create export record
@@ -432,9 +452,9 @@ async function generatePowerPointExport(
 }
 
 async function generateExcelExport(
-  supabase: any,
+  supabase: DbClient,
   analysisId: string,
-  exportData: any,
+  exportData: { analysis: { targetCompany?: string } },
   userId: string
 ): Promise<NextResponse> {
   // Create export record

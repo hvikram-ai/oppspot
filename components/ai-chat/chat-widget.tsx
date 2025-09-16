@@ -15,7 +15,7 @@ import { useChat } from '@/hooks/use-chat'
 interface ChatWidgetProps {
   defaultOpen?: boolean
   position?: 'bottom-right' | 'bottom-left'
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 }
 
 export function ChatWidget({ 

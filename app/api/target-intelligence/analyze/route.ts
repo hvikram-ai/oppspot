@@ -8,7 +8,7 @@ interface AnalyzeRequest {
   website?: string
   industry?: string
   country?: string
-  existing_data?: any
+  existing_data?: Record<string, unknown>
   options?: {
     include_competitive_analysis?: boolean
     include_financial_deep_dive?: boolean
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Create progress tracking
     const progressStages: string[] = []
-    const progressCallback = (progress: any) => {
+    const progressCallback = (progress: { stage: string; message: string; progress?: number }) => {
       progressStages.push(`${progress.stage}: ${progress.message}`)
       console.log(`[TargetIntelligence] ${progress.stage}: ${progress.progress}% - ${progress.message}`)
     }

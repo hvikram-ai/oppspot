@@ -185,7 +185,7 @@ async function testEnrichmentService() {
       if (enrichResponse.ok) {
         const result = await enrichResponse.json()
         console.log('✅ Enrichment completed:')
-        result.results.forEach((r: any) => {
+        result.results.forEach((r) => {
           console.log(`   ${r.source}: ${r.success ? '✅' : '❌'} ${r.error || ''}`)
         })
       } else {
@@ -211,7 +211,7 @@ async function testMainSearchIntegration() {
       console.log(`✅ Main search for "Google": Found ${data.results?.length || 0} results`)
       
       // Check if any results are from Companies House
-      const companiesHouseResults = data.results?.filter((r: any) => r.metadata?.company_number)
+      const companiesHouseResults = data.results?.filter((r: { metadata?: { company_number?: string } }) => r.metadata?.company_number)
       if (companiesHouseResults?.length > 0) {
         console.log(`   ✅ ${companiesHouseResults.length} results from Companies House`)
       }

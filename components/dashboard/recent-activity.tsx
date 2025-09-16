@@ -24,7 +24,7 @@ interface Activity {
   title: string
   description: string
   timestamp: Date
-  metadata?: any
+  metadata?: Record<string, unknown>
 }
 
 interface RecentActivityProps {
