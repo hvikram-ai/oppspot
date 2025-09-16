@@ -257,7 +257,7 @@ export class CompaniesHouseAPI {
     totalResults: number
     searchMetadata: {
       searchTerms: string[]
-      filters: any
+      filters: Record<string, unknown>
       executionTime: number
     }
   }> {

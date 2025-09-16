@@ -138,12 +138,12 @@ export interface LLMService extends LLMProvider {
   /**
    * Generate business description using AI
    */
-  generateBusinessDescription(business: any): Promise<string>
+  generateBusinessDescription(business: Record<string, unknown>): Promise<string>
 
   /**
    * Generate business insights and analysis
    */
-  generateBusinessInsights(business: any): Promise<{
+  generateBusinessInsights(business: Record<string, unknown>): Promise<{
     market_position: string
     target_audience: string
     competitive_advantages: string[]
@@ -154,17 +154,17 @@ export interface LLMService extends LLMProvider {
   /**
    * Generate SEO keywords for a business
    */
-  generateSEOKeywords(business: any): Promise<string[]>
+  generateSEOKeywords(business: Record<string, unknown>): Promise<string[]>
 
   /**
    * Generate a tagline for a business
    */
-  generateTagline(business: any): Promise<string>
+  generateTagline(business: Record<string, unknown>): Promise<string>
 
   /**
    * Categorize a business based on its information
    */
-  suggestCategories(business: any): Promise<string[]>
+  suggestCategories(business: Record<string, unknown>): Promise<string[]>
 }
 
 /**

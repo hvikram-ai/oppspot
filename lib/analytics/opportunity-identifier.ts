@@ -204,7 +204,7 @@ export class OpportunityIdentifier {
     return opportunities
   }
 
-  private analyzeServiceGaps(businesses: any[]): MarketGap[] {
+  private analyzeServiceGaps(businesses: Record<string, unknown>[]): MarketGap[] {
     const gaps: MarketGap[] = []
     
     // Simplified gap analysis based on rating distribution
@@ -353,7 +353,7 @@ export class OpportunityIdentifier {
     return opportunities
   }
 
-  private analyzeCompetitorWeaknesses(competitors: any[]): string[] {
+  private analyzeCompetitorWeaknesses(competitors: Record<string, unknown>[]): string[] {
     const weaknesses: string[] = []
     
     // Analyze common patterns
@@ -439,7 +439,7 @@ export class OpportunityIdentifier {
     return opportunities
   }
 
-  private identifyPeakMonths(seasonalFactors: any): number[] {
+  private identifyPeakMonths(seasonalFactors: Record<string, unknown>): number[] {
     // Simplified peak month identification
     // In production, would use more sophisticated analysis
     return [11, 0] // November and December as default peak months

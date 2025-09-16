@@ -1,16 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { NotificationService } from './notification-service'
 
 interface TriggerContext {
   userId?: string
   businessId?: string
   competitorSetId?: string
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 }
 
 export class NotificationTriggers {
   private notificationService: NotificationService
-  private supabase: any
+  private supabase: SupabaseClient
 
   constructor() {
     this.notificationService = new NotificationService()
@@ -348,7 +349,7 @@ export class NotificationTriggers {
   }
 
   // Helper: Summarize metrics
-  private summarizeMetrics(metrics: any[]) {
+  private summarizeMetrics(metrics: Record<string, unknown>[]) {
     if (!metrics || metrics.length === 0) return null
 
     const avgRatingChange = metrics.reduce((sum, m) => {
@@ -382,7 +383,7 @@ export class NotificationTriggers {
   }
 
   // Check triggers for a specific subscription
-  private async checkSubscriptionTriggers(subscription: any) {
+  private async checkSubscriptionTriggers(subscription: Record<string, unknown>) {
     const now = new Date()
     const lastCheck = new Date(subscription.last_checked_at)
     
@@ -411,17 +412,17 @@ export class NotificationTriggers {
       .eq('id', subscription.id)
   }
 
-  private async checkBusinessTriggers(subscription: any) {
+  private async checkBusinessTriggers(subscription: Record<string, unknown>) {
     // Implementation for business-specific triggers
     // Check for rating changes, new reviews, etc.
   }
 
-  private async checkCompetitorSetTriggers(subscription: any) {
+  private async checkCompetitorSetTriggers(subscription: Record<string, unknown>) {
     // Implementation for competitor set triggers
     // Check for new competitors, competitive changes, etc.
   }
 
-  private async checkCategoryTriggers(subscription: any) {
+  private async checkCategoryTriggers(subscription: Record<string, unknown>) {
     // Implementation for category/market triggers
     // Check for market shifts, new entrants, etc.
   }

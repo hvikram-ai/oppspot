@@ -120,7 +120,7 @@ export class TrendAnalyzer {
         .gte('metric_date', startDate.toISOString())
         .order('metric_date', { ascending: true })
       
-      data = metrics?.map((m: any) => ({
+      data = metrics?.map((m: Record<string, unknown>) => ({
         date: m.metric_date,
         value: parseFloat(m.value)
       })) || []

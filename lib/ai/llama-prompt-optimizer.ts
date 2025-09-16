@@ -135,7 +135,7 @@ ${prompt.trim()}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
   /**
    * Optimize business description generation for Llama
    */
-  static optimizeBusinessDescription(businessData: any): OptimizedPrompt {
+  static optimizeBusinessDescription(businessData: Record<string, unknown>): OptimizedPrompt {
     const systemPrompt = `You are a professional business copywriter specializing in UK and Ireland businesses. Create compelling, SEO-friendly descriptions that:
 - Highlight unique value propositions
 - Appeal to target customers
@@ -153,7 +153,7 @@ Write in British English and focus on what makes each business distinctive and v
   /**
    * Optimize MnA analysis for Llama
    */
-  static optimizeMergerAnalysis(targetCompany: any, similarCompany: any, scores: any): OptimizedPrompt {
+  static optimizeMergerAnalysis(targetCompany: Record<string, unknown>, similarCompany: Record<string, unknown>, scores: Record<string, unknown>): OptimizedPrompt {
     const systemPrompt = `You are a senior MnA analyst specializing in business similarity analysis. Provide comprehensive, actionable insights for merger and acquisition decisions.
 
 Your analysis should:
@@ -191,7 +191,7 @@ Format as JSON with keys: strategic_alignment, financial_synergies, operational_
   /**
    * Optimize SEO keyword generation for Llama
    */
-  static optimizeSEOKeywords(businessData: any): OptimizedPrompt {
+  static optimizeSEOKeywords(businessData: Record<string, unknown>): OptimizedPrompt {
     const systemPrompt = `You are an SEO specialist focused on UK and Ireland markets. Generate highly relevant, local SEO keywords that:
 - Target local search intent
 - Include geographic modifiers
@@ -215,7 +215,7 @@ Focus on UK/Ireland local SEO terms including city, region, and service-based ke
   /**
    * Build business prompt with structured data
    */
-  private static buildBusinessPrompt(business: any): string {
+  private static buildBusinessPrompt(business: Record<string, unknown>): string {
     const sections = [
       `Business Name: ${business.name}`,
       business.categories?.length ? `Categories: ${business.categories.join(', ')}` : null,

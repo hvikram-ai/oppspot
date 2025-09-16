@@ -10,7 +10,7 @@ interface Notification {
   type: string
   title: string
   body: string
-  data?: any
+  data?: Record<string, unknown>
   priority: 'low' | 'medium' | 'high' | 'urgent'
   action_url?: string
   image_url?: string

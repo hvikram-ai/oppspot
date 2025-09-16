@@ -108,7 +108,7 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
   }
 
   private async analyzeFinancialHealth(company: CompanyEntity): Promise<FinancialHealthResult> {
-    const metrics: any = {}
+    const metrics: Record<string, unknown> = {}
     const indicators: string[] = []
     const concerns: string[] = []
 
@@ -164,7 +164,7 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     company: CompanyEntity,
     configuration: ScanConfiguration
   ): Promise<RiskAssessmentResult> {
-    const riskFactors: any[] = []
+    const riskFactors: string[] = []
     const redFlags: string[] = []
     const mitigationStrategies: string[] = []
 
@@ -239,7 +239,7 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     company: CompanyEntity,
     configuration: ScanConfiguration
   ): Promise<StrategicFitResult> {
-    const alignmentFactors: any[] = []
+    const alignmentFactors: string[] = []
     const synergyOpportunities: string[] = []
     
     // Industry alignment

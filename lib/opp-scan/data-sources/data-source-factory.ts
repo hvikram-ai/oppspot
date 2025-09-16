@@ -30,7 +30,7 @@ export interface DataSourceResult {
     confidence: number
     cost: number
     processing_time: number
-    search_parameters: any
+    search_parameters: Record<string, unknown>
     rate_limit_remaining?: number
     errors?: string[]
   }
@@ -161,12 +161,12 @@ export class DataSourceFactory {
   /**
    * Get data source instance
    */
-  getDataSource(sourceId: string): any {
+  getDataSource(sourceId: string): unknown {
     if (this.sources.has(sourceId)) {
       return this.sources.get(sourceId)
     }
 
-    let sourceInstance: any
+    let sourceInstance: unknown
     
     switch (sourceId) {
       case 'companies_house':
@@ -435,7 +435,7 @@ export class DataSourceFactory {
 
   private async executeCompaniesHouseSearch(
     source: CompaniesHouseAPI, 
-    criteria: any, 
+    criteria: Record<string, unknown>, 
     maxResults?: number
   ): Promise<DataSourceResult> {
     const startTime = Date.now()
@@ -485,7 +485,7 @@ export class DataSourceFactory {
 
   private async executeIrishCROSearch(
     source: IrishCROAPI, 
-    criteria: any, 
+    criteria: Record<string, unknown>, 
     maxResults?: number
   ): Promise<DataSourceResult> {
     const startTime = Date.now()
@@ -517,7 +517,7 @@ export class DataSourceFactory {
 
   private async executeSimulatedSearch(
     sourceId: string, 
-    criteria: any, 
+    criteria: Record<string, unknown>, 
     maxResults?: number
   ): Promise<DataSourceResult> {
     const startTime = Date.now()

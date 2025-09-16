@@ -270,10 +270,10 @@ export function createContainer(dependencies: ContainerDependencies = {}): ICont
  * External dependencies that can be injected into the container
  */
 export interface ContainerDependencies {
-  database?: any
-  redisClient?: any
-  logger?: any
-  metrics?: any
+  database?: unknown
+  redisClient?: unknown
+  logger?: unknown
+  metrics?: unknown
 }
 
 interface HealthCheckResult {

@@ -41,8 +41,8 @@ interface AcquisitionScan {
   updated_at: string
   started_at?: string
   completed_at?: string
-  selected_industries?: any
-  selected_regions?: any
+  selected_industries?: Array<{ key: string; industry: string; subcategory?: string }>
+  selected_regions?: Array<{ id: string; name: string; country: string }>
   current_step: string
 }
 

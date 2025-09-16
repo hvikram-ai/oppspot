@@ -137,7 +137,7 @@ export class IrishCROAPI {
     totalResults: number
     searchMetadata: {
       searchTerms: string[]
-      filters: any
+      filters: Record<string, unknown>
       executionTime: number
     }
   }> {
@@ -268,7 +268,7 @@ export class IrishCROAPI {
   /**
    * Convert Irish company data to standard format
    */
-  convertToStandardFormat(irishCompany: IrishCompany): any {
+  convertToStandardFormat(irishCompany: IrishCompany): Record<string, unknown> {
     return {
       name: irishCompany.companyName,
       registration_number: irishCompany.companyNumber,
@@ -328,7 +328,7 @@ export class IrishCROAPI {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-  private generateIrishCompanies(params: any): IrishCompany[] {
+  private generateIrishCompanies(params: Record<string, unknown>): IrishCompany[] {
     const companies: IrishCompany[] = []
     const irishCounties = ['Dublin', 'Cork', 'Galway', 'Limerick', 'Waterford', 'Kildare', 'Meath']
     const businessTypes = ['Technology', 'Manufacturing', 'Services', 'Retail', 'Healthcare', 'Construction']

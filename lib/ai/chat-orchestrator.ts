@@ -352,7 +352,7 @@ Response (JSON only):`;
   /**
    * Execute web search
    */
-  private async executeWebSearch(args: any): Promise<any> {
+  private async executeWebSearch(args: Record<string, unknown>): Promise<Record<string, unknown>> {
     const results = await this.webSearchService.searchCompanies({
       query: args.query,
       filters: {},
@@ -384,7 +384,7 @@ Response (JSON only):`;
   /**
    * Execute platform search
    */
-  private async executePlatformSearch(args: any): Promise<any> {
+  private async executePlatformSearch(args: Record<string, unknown>): Promise<Record<string, unknown>> {
     if (!this.supabase) {
       return { error: 'Database not initialized' }
     }
@@ -415,7 +415,7 @@ Response (JSON only):`;
   /**
    * Execute company analysis
    */
-  private async executeCompanyAnalysis(args: any): Promise<any> {
+  private async executeCompanyAnalysis(args: Record<string, unknown>): Promise<Record<string, unknown>> {
     // This would integrate with your existing company analysis services
     return {
       company: args.company_name,
@@ -428,7 +428,7 @@ Response (JSON only):`;
   /**
    * Execute feature explanation
    */
-  private async executeFeatureExplanation(args: any): Promise<any> {
+  private async executeFeatureExplanation(args: Record<string, unknown>): Promise<Record<string, unknown>> {
     const featureExplanations: Record<string, string> = {
       similarity_analysis: "The Similarity Analysis feature uses AI to find companies similar to your target based on multiple dimensions including financial, strategic, operational, market, and risk factors.",
       opp_scan: "OppScan is our comprehensive M&A opportunity scanner that searches across multiple data sources to identify potential acquisition targets.",
@@ -445,7 +445,7 @@ Response (JSON only):`;
   /**
    * Execute report generation
    */
-  private async executeReportGeneration(args: any): Promise<any> {
+  private async executeReportGeneration(args: Record<string, unknown>): Promise<Record<string, unknown>> {
     return {
       report_type: args.report_type,
       status: 'Report generation would be implemented here',
@@ -666,7 +666,7 @@ Response:`;
   /**
    * Get or create a chat session
    */
-  async getOrCreateSession(userId?: string, context?: any): Promise<string> {
+  async getOrCreateSession(userId?: string, context?: Record<string, unknown>): Promise<string> {
     try {
       if (!this.supabase) {
         this.supabase = await createClient()
