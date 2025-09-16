@@ -69,17 +69,17 @@ export async function generateMetadata({ params }: BusinessPageProps) {
 }
 
 export default async function BusinessPage({ params }: BusinessPageProps) {
-  let business: Business | Record<string, any> | null = null
-  let relatedBusinesses: (Business | Record<string, any>)[] | null = null
+  let business: Business | Record<string, unknown> | null = null
+  let relatedBusinesses: (Business | Record<string, unknown>)[] | null = null
 
   // Check if it's a mock company first
   if (params.id.startsWith('mock-')) {
-    business = getMockCompany(params.id) as any
+    business = getMockCompany(params.id) as Business
     if (!business) {
       notFound()
     }
     // Get mock related businesses
-    relatedBusinesses = getMockRelatedCompanies(params.id, 6) as any
+    relatedBusinesses = getMockRelatedCompanies(params.id, 6) as Business[]
   } else {
     // Fetch from database for real companies
     const supabase = await createClient()

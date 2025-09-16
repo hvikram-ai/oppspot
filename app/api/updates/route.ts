@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/lib/supabase/database.types'
 
 // GET: Fetch business updates feed
 export async function GET(request: NextRequest) {
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Check authentication for personalized feeds
     const { data: { user } } = await supabase.auth.getUser()
     
-    let updates: any[] = []
+    let updates: unknown[] = []
     let totalCount = 0
     
     switch (feedType) {
@@ -258,7 +257,7 @@ export async function POST(request: NextRequest) {
         type,
         follower_count: followers?.length || 0
       }
-    } as any)
+    })
     
     return NextResponse.json({
       message: 'Update created successfully',

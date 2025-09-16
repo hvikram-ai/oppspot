@@ -53,7 +53,7 @@ interface CompetitorSet {
   description?: string
   primary_business_id: string
   competitor_ids: string[]
-  metadata?: any
+  metadata?: Record<string, unknown>
   created_at: string
 }
 
@@ -63,9 +63,9 @@ interface MarketAnalysis {
   average_rating: number
   average_reviews: number
   market_growth_rate?: number
-  top_businesses?: any[]
-  emerging_businesses?: any[]
-  trends?: any
+  top_businesses?: unknown[]
+  emerging_businesses?: unknown[]
+  trends?: Record<string, unknown>
   opportunities?: string[]
   threats?: string[]
 }
@@ -79,7 +79,7 @@ export default function CompetitiveAnalysisPage() {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Business[]>([])
-  const [comparisonData, setComparisonData] = useState<any>(null)
+  const [comparisonData, setComparisonData] = useState<Record<string, unknown> | null>(null)
   
   // Competitor tracking state
   const [competitorSets, setCompetitorSets] = useState<CompetitorSet[]>([])
@@ -211,7 +211,7 @@ export default function CompetitiveAnalysisPage() {
         // Load businesses for comparison
         const businessIds = [
           data.primary_business?.id,
-          ...(data.competitors?.map((c: any) => c.id) || [])
+          ...(data.competitors?.map((c: { id: string }) => c.id) || [])
         ].filter(Boolean)
         
         setSelectedBusinesses(businessIds)
