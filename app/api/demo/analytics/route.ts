@@ -14,7 +14,13 @@ export async function GET(request: NextRequest) {
     
     const analyticsData = generateDemoAnalytics(days)
     
-    const response: any = {
+    interface DemoResponse {
+      success: boolean
+      timestamp: string
+      data?: unknown
+    }
+
+    const response: DemoResponse = {
       success: true,
       timestamp: new Date().toISOString()
     }

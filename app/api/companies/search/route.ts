@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
-import { Database } from '@/lib/supabase/database.types'
-
-type Business = Database['public']['Tables']['businesses']['Row']
 
 // Helper function to calculate age in hours
 function getAgeInHours(dateString: string | null): number | null {
@@ -23,7 +20,25 @@ function generateSlug(name: string): string {
 }
 
 // Mock data for demo mode
-function getMockCompanyResults(query: string): any[] {
+interface MockCompany {
+  id: string
+  company_number: string
+  name: string
+  company_status: string
+  company_type: string
+  incorporation_date: string
+  registered_office_address: {
+    address_line_1?: string
+    locality?: string
+    postal_code?: string
+    country?: string
+  }
+  sic_codes?: string[]
+  slug: string
+  source: string
+}
+
+function getMockCompanyResults(query: string): MockCompany[] {
   const mockCompanies = [
     {
       id: 'mock-1',
@@ -153,7 +168,7 @@ export async function POST(request: NextRequest) {
 
     const searchTerm = query.trim()
     const companiesHouse = getCompaniesHouseService()
-    const results: any[] = []
+    const results: unknown[] = []
     const sources = {
       cache: 0,
       api: 0,

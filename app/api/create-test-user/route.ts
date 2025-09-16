@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
 
 // This is a development-only endpoint for creating test users
 export async function POST(request: NextRequest) {
@@ -146,7 +150,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Create some sample data for the test user
-async function createSampleData(supabase: any, userId: string, orgId?: string) {
+async function createSampleData(supabase: DbClient, userId: string, orgId?: string) {
   try {
     // Create a sample search
     await supabase

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { OpportunityIdentifier } from '@/lib/analytics/opportunity-identifier'
 
 // GET: Fetch opportunities
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient()
     

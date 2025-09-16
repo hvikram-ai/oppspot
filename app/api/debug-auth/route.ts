@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   // Debug environment variables
   const debug = {
     hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -28,9 +28,9 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
     debug.authTest = response.ok ? 'Success' : 'Failed'
     debug.authResponse = response.ok ? 'User authenticated' : data.msg || data.error || 'Unknown error'
-  } catch (error: any) {
+  } catch (error) {
     debug.authTest = 'Error'
-    debug.authError = error.message
+    debug.authError = error instanceof Error ? error.message : 'Unknown error'
   }
 
   return NextResponse.json({ debug })

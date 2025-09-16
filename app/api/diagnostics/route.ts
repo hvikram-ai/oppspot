@@ -38,7 +38,7 @@ interface SystemDiagnostics {
   recommendations: string[]
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const diagnostics: SystemDiagnostics = {
       timestamp: new Date().toISOString(),
@@ -110,10 +110,10 @@ export async function GET(request: NextRequest) {
         }
 
         diagnostics.searchCapabilities.databaseFallbackAvailable = !error && (count || 0) > 0
-      } catch (dbError: any) {
+      } catch (dbError) {
         diagnostics.apis.database = {
           connected: false,
-          error: dbError.message
+          error: dbError instanceof Error ? dbError.message : 'Unknown error'
         }
       }
     }
@@ -186,13 +186,13 @@ export async function GET(request: NextRequest) {
       }
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Diagnostics error:', error)
     return NextResponse.json(
       { 
         status: 'error',
         error: 'Failed to run diagnostics',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
       },
       { status: 500 }
     )

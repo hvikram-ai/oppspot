@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to check import status or get suggestions
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient()
     
