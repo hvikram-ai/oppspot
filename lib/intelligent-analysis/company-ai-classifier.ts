@@ -126,7 +126,7 @@ export class CompanyAIClassifier {
   /**
    * Gather website intelligence for context
    */
-  private async gatherWebsiteIntelligence(input: CompanyAnalysisInput): Promise<any> {
+  private async gatherWebsiteIntelligence(input: CompanyAnalysisInput): Promise<Record<string, unknown> | null> {
     if (!input.domain) {
       // Try to infer domain from company name
       const inferredDomain = this.inferDomainFromName(input.company_name)
@@ -151,7 +151,7 @@ export class CompanyAIClassifier {
    */
   private async classifyBusinessModel(
     input: CompanyAnalysisInput, 
-    websiteData: any
+    websiteData: Record<string, unknown> | null
   ): Promise<BusinessModelClassification> {
     const prompt = `Analyze the business model of "${input.company_name}" and provide detailed classification:
 
@@ -317,7 +317,12 @@ Return ONLY a JSON object:
     businessModel: BusinessModelClassification,
     competitors: CompetitorAnalysis[],
     marketIntel: MarketIntelligence
-  ): Promise<any> {
+  ): Promise<{
+    acquisition_rationale: string
+    synergy_opportunities: string[]
+    integration_challenges: string[]
+    valuation_considerations: string[]
+  }> {
     const prompt = `Generate strategic M&A insights for acquiring "${input.company_name}":
 
 Company Profile:
@@ -400,7 +405,12 @@ Return ONLY a JSON object:
     return this.getDefaultMarketIntelligence()
   }
 
-  private parseStrategicInsightsResponse(response: string): any {
+  private parseStrategicInsightsResponse(response: string): {
+    acquisition_rationale: string
+    synergy_opportunities: string[]
+    integration_challenges: string[]
+    valuation_considerations: string[]
+  } {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -458,7 +468,12 @@ Return ONLY a JSON object:
     }
   }
 
-  private getDefaultStrategicInsights(): any {
+  private getDefaultStrategicInsights(): {
+    acquisition_rationale: string
+    synergy_opportunities: string[]
+    integration_challenges: string[]
+    valuation_considerations: string[]
+  } {
     return {
       acquisition_rationale: 'Strategic acquisition to enhance technology capabilities and market presence.',
       synergy_opportunities: ['Technology integration', 'Cross-selling opportunities', 'Operational efficiencies'],
@@ -477,7 +492,7 @@ Return ONLY a JSON object:
     return `https://${cleanName}.com`
   }
 
-  private calculateConfidenceScore(websiteData: any, businessModel: BusinessModelClassification): number {
+  private calculateConfidenceScore(websiteData: Record<string, unknown> | null, businessModel: BusinessModelClassification): number {
     let confidence = 50 // Base confidence
 
     // Website data availability

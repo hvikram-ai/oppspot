@@ -294,8 +294,19 @@ export class IntelligentSimilarityService {
   private async calculateIntelligentScores(
     target: AICompanyAnalysis,
     competitor: AICompanyAnalysis,
-    competitorInfo: any
-  ): Promise<any> {
+    competitorInfo: {
+      similarity_score: number
+      strategic_threat_level: 'high' | 'medium' | 'low'
+    }
+  ): Promise<{
+    overall_score: number
+    confidence: number
+    financial_score: number
+    strategic_score: number
+    operational_score: number
+    market_score: number
+    risk_score: number
+  }> {
     // Business model similarity
     const businessModelSimilarity = this.calculateBusinessModelSimilarity(
       target.business_classification,
@@ -463,7 +474,13 @@ Write a 2-3 sentence executive summary highlighting the key findings and strateg
   }
 
   // Similarity calculation methods
-  private calculateBusinessModelSimilarity(target: any, competitor: any): number {
+  private calculateBusinessModelSimilarity(target: {
+    business_model_type: string
+    revenue_model: string
+  }, competitor: {
+    business_model_type: string
+    revenue_model: string
+  }): number {
     let similarity = 50
 
     if (target.business_model_type === competitor.business_model_type) similarity += 30
@@ -472,7 +489,13 @@ Write a 2-3 sentence executive summary highlighting the key findings and strateg
     return Math.min(similarity, 100)
   }
 
-  private calculateMarketSimilarity(target: any, competitor: any): number {
+  private calculateMarketSimilarity(target: {
+    market_size_category: string
+    growth_stage: string
+  }, competitor: {
+    market_size_category: string
+    growth_stage: string
+  }): number {
     let similarity = 50
 
     if (target.market_size_category === competitor.market_size_category) similarity += 20
@@ -506,7 +529,24 @@ Write a 2-3 sentence executive summary highlighting the key findings and strateg
     return Math.round(similarity)
   }
 
-  private calculateSummaryStatistics(matches: IntelligentCompanyMatch[]): any {
+  private calculateSummaryStatistics(matches: IntelligentCompanyMatch[]): {
+    totalMatches: number
+    averageScore: number
+    topScore: number
+    scoreDistribution: {
+      excellent: number
+      good: number
+      fair: number
+      poor: number
+    }
+    confidenceDistribution: {
+      high: number
+      medium: number
+      low: number
+    }
+    marketCategories: { [category: string]: number }
+    competitiveRelationships: { [relationship: string]: number }
+  } {
     const scores = matches.map(m => m.overall_score)
     const confidences = matches.map(m => m.confidence)
 

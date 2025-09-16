@@ -6,7 +6,7 @@ interface NotificationData {
   type: string
   title: string
   body: string
-  data?: Record<string, any>
+  data?: Record<string, unknown>
   priority?: 'low' | 'medium' | 'high' | 'urgent'
   actionUrl?: string
   imageUrl?: string
@@ -21,7 +21,7 @@ interface NotificationPreferences {
   quiet_hours_start?: string
   quiet_hours_end?: string
   timezone?: string
-  type_preferences?: Record<string, any>
+  type_preferences?: Record<string, unknown>
 }
 
 export class NotificationService {
@@ -317,7 +317,12 @@ export class NotificationService {
   }
 
   // Get email template
-  private async getEmailTemplate(type: string): Promise<any> {
+  private async getEmailTemplate(type: string): Promise<{
+    title: string
+    body_template: string
+    email_template?: string
+    email_subject?: string
+  }> {
     const { data } = await this.supabase
       .from('notification_templates')
       .select('*')
@@ -332,7 +337,7 @@ export class NotificationService {
   }
 
   // Process template with variables
-  private processTemplate(template: string, variables: Record<string, any>): string {
+  private processTemplate(template: string, variables: Record<string, unknown>): string {
     let processed = template
     
     for (const [key, value] of Object.entries(variables)) {
@@ -380,7 +385,7 @@ export class NotificationService {
   }
 
   // Trigger real-time update via WebSocket
-  private async triggerRealtimeUpdate(userId: string, notification: any): Promise<void> {
+  private async triggerRealtimeUpdate(userId: string, notification: Record<string, unknown>): Promise<void> {
     // Supabase real-time will handle this automatically
     // when a new row is inserted in the notifications table
     console.log('Real-time update triggered for user:', userId)
@@ -427,7 +432,7 @@ export class NotificationService {
     userId: string,
     entityType: 'business' | 'competitor_set' | 'market' | 'category',
     entityId: string,
-    conditions: Record<string, any> = {}
+    conditions: Record<string, unknown> = {}
   ): Promise<void> {
     await this.supabase
       .from('notification_subscriptions')

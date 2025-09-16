@@ -228,7 +228,7 @@ export class ProxycurlClient {
    * Get company data using Proxycurl API
    * Note: Requires a Proxycurl API key
    */
-  async getCompanyProfile(linkedinUrl: string): Promise<any> {
+  async getCompanyProfile(linkedinUrl: string): Promise<LinkedInCompanyData> {
     try {
       const response = await fetch(`${this.baseUrl}/linkedin/company`, {
         method: 'GET',
@@ -262,7 +262,7 @@ export class ProxycurlClient {
   /**
    * Search for companies by name
    */
-  async searchCompanies(query: string, location?: string): Promise<any> {
+  async searchCompanies(query: string, location?: string): Promise<LinkedInSearchResult[]> {
     try {
       const params = new URLSearchParams({
         company_name: query,
