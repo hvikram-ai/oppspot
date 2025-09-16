@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
+type Organization = Database['public']['Tables']['organizations']['Row']
+type OrganizationInsert = Database['public']['Tables']['organizations']['Insert']
+type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -24,8 +28,8 @@ export async function POST(request: Request) {
       + '-' + Math.random().toString(36).substring(2, 7)
 
     // Prefer secure RPC function if present, else direct insert
-    let org: any = null
-    let orgError: any = null
+    let org: Organization | null = null
+    let orgError: Error | null = null
     try {
       const { data: rpcId, error: rpcError } = await supabase
         .rpc('create_organization_for_user', {
@@ -44,7 +48,7 @@ export async function POST(request: Request) {
         if (orgFetchErr) throw orgFetchErr
         org = orgRow
       }
-    } catch (rpcFail) {
+    } catch {  // rpcFail - fallback to direct insert
       // Fallback to direct insert (still safe via service role)
       const { data: orgRow, error: insertErr } = await supabase
         .from('organizations')
@@ -56,7 +60,7 @@ export async function POST(request: Request) {
           onboarding_step: 0,
           industry: null,
           company_size: null,
-        } as any)
+        } as OrganizationInsert)
         .select()
         .single()
       org = orgRow
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
         last_active: new Date().toISOString(),
         trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days trial
         onboarding_completed: false,
-      } as any)
+      } as ProfileInsert)
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
