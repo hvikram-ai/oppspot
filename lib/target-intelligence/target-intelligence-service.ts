@@ -313,8 +313,8 @@ export class TargetIntelligenceService {
    */
   private async analyzeFinancialProfile(
     input: TargetCompanyInput, 
-    websiteData: any, 
-    webIntelligence: any
+    websiteData: Record<string, unknown>, 
+    webIntelligence: Record<string, unknown>
   ): Promise<any> {
     const prompt = `Analyze the financial profile for ${input.company_name} based on available data:
 
@@ -362,7 +362,7 @@ Return the analysis in JSON format with specific numerical estimates where possi
   /**
    * Analyze market position and competitive landscape using LLM
    */
-  private async analyzeMarketPosition(input: TargetCompanyInput, webIntelligence: any): Promise<any> {
+  private async analyzeMarketPosition(input: TargetCompanyInput, webIntelligence: Record<string, unknown>): Promise<any> {
     const prompt = `Conduct a comprehensive competitive analysis for ${input.company_name}:
 
 Company: ${input.company_name}
@@ -398,8 +398,8 @@ Structure the response as detailed JSON with confidence scores.`
    */
   private async generateESGAssessment(
     input: TargetCompanyInput, 
-    websiteData: any, 
-    webIntelligence: any
+    websiteData: Record<string, unknown>, 
+    webIntelligence: Record<string, unknown>
   ): Promise<any> {
     const prompt = `Conduct comprehensive ESG (Environmental, Social, Governance) assessment for ${input.company_name}:
 
@@ -466,7 +466,7 @@ Return as structured JSON with specific sentiment scores.`
   /**
    * Generate comprehensive AI insights using LLM
    */
-  private async generateAIInsights(input: TargetCompanyInput, analysisData: any): Promise<any> {
+  private async generateAIInsights(input: TargetCompanyInput, analysisData: Record<string, unknown>): Promise<any> {
     const prompt = `Generate comprehensive M&A intelligence insights for ${input.company_name}:
 
 Complete Analysis Data:
@@ -505,13 +505,13 @@ Return as detailed JSON with specific scores and recommendations.`
    */
   private async assembleEnhancedProfile(
     input: TargetCompanyInput,
-    websiteData: any,
-    webIntelligence: any,
-    financialProfile: any,
-    marketPosition: any,
-    esgAssessment: any,
-    marketSentiment: any,
-    aiInsights: any,
+    websiteData: Record<string, unknown>,
+    webIntelligence: Record<string, unknown>,
+    financialProfile: Record<string, unknown>,
+    marketPosition: Record<string, unknown>,
+    esgAssessment: Record<string, unknown>,
+    marketSentiment: Record<string, unknown>,
+    aiInsights: Record<string, unknown>,
     startTime: number
   ): Promise<EnhancedCompanyProfile> {
     const processingTime = Date.now() - startTime
@@ -563,7 +563,7 @@ Return as detailed JSON with specific scores and recommendations.`
   }
 
   // Helper methods for parsing LLM responses
-  private parseFinancialAnalysis(response: string): any {
+  private parseFinancialAnalysis(response: string): Record<string, unknown> {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -575,7 +575,7 @@ Return as detailed JSON with specific scores and recommendations.`
     return this.getDefaultFinancialProfile()
   }
 
-  private parseMarketPositionAnalysis(response: string): any {
+  private parseMarketPositionAnalysis(response: string): Record<string, unknown> {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -587,7 +587,7 @@ Return as detailed JSON with specific scores and recommendations.`
     return this.getDefaultMarketPosition()
   }
 
-  private parseESGAssessment(response: string): any {
+  private parseESGAssessment(response: string): Record<string, unknown> {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -599,7 +599,7 @@ Return as detailed JSON with specific scores and recommendations.`
     return this.getDefaultESGAssessment()
   }
 
-  private parseMarketSentiment(response: string): any {
+  private parseMarketSentiment(response: string): Record<string, unknown> {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -611,7 +611,7 @@ Return as detailed JSON with specific scores and recommendations.`
     return this.getDefaultMarketSentiment()
   }
 
-  private parseAIInsights(response: string): any {
+  private parseAIInsights(response: string): Record<string, unknown> {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -624,7 +624,7 @@ Return as detailed JSON with specific scores and recommendations.`
   }
 
   // Default fallback data methods
-  private generateFallbackFinancialProfile(input: TargetCompanyInput, websiteData: any, webIntelligence: any): any {
+  private generateFallbackFinancialProfile(input: TargetCompanyInput, websiteData: Record<string, unknown>, webIntelligence: Record<string, unknown>): Record<string, unknown> {
     // Generate intelligent fallback based on available data
     const hasWebsite = !!websiteData?.title
     const hasWebData = webIntelligence && webIntelligence.length > 0
@@ -652,7 +652,7 @@ Return as detailed JSON with specific scores and recommendations.`
     }
   }
   
-  private getDefaultFinancialProfile(): any {
+  private getDefaultFinancialProfile(): Record<string, unknown> {
     return {
       revenue_estimate: {
         value: 0,
@@ -669,7 +669,7 @@ Return as detailed JSON with specific scores and recommendations.`
     }
   }
 
-  private getDefaultMarketPosition(): any {
+  private getDefaultMarketPosition(): Record<string, unknown> {
     return {
       competitive_position: 'follower' as const,
       key_competitors: [],
@@ -682,7 +682,7 @@ Return as detailed JSON with specific scores and recommendations.`
     }
   }
 
-  private getDefaultESGAssessment(): any {
+  private getDefaultESGAssessment(): Record<string, unknown> {
     return {
       environmental_score: 50,
       social_score: 50,
@@ -694,7 +694,7 @@ Return as detailed JSON with specific scores and recommendations.`
     }
   }
 
-  private getDefaultMarketSentiment(): any {
+  private getDefaultMarketSentiment(): Record<string, unknown> {
     return {
       overall_sentiment: 'neutral' as const,
       sentiment_score: 50,
@@ -703,7 +703,7 @@ Return as detailed JSON with specific scores and recommendations.`
     }
   }
 
-  private getDefaultAIInsights(): any {
+  private getDefaultAIInsights(): Record<string, unknown> {
     return {
       executive_summary: 'Comprehensive analysis pending - additional data sources needed for complete assessment.',
       investment_thesis: 'Investment opportunity requires further evaluation.',
@@ -718,7 +718,7 @@ Return as detailed JSON with specific scores and recommendations.`
   }
 
   // Utility methods
-  private calculateDigitalMaturityScore(websiteData: any): number {
+  private calculateDigitalMaturityScore(websiteData: Record<string, unknown>): number {
     let score = 0
     if (websiteData?.hasSsl) score += 20
     if (websiteData?.mobileFriendly) score += 20
@@ -728,7 +728,7 @@ Return as detailed JSON with specific scores and recommendations.`
     return score
   }
 
-  private calculateOverallConfidence(financial: any, market: any, esg: any): number {
+  private calculateOverallConfidence(financial: Record<string, unknown>, market: Record<string, unknown>, esg: Record<string, unknown>): number {
     // Calculate weighted confidence based on data availability and quality
     let confidence = 0
     confidence += (financial?.revenue_estimate?.confidence || 0) * 0.4

@@ -561,7 +561,7 @@ Return as structured JSON matching the CompanyEnrichmentResult format.`
   /**
    * Calculate confidence score based on source reliability
    */
-  private calculateConfidenceScore(sources: EnrichmentSource[], data: any): number {
+  private calculateConfidenceScore(sources: EnrichmentSource[], data: Record<string, unknown>): number {
     if (sources.length === 0) return 0
     
     const totalConfidence = sources.reduce((sum, source) => sum + source.confidence, 0)
@@ -576,7 +576,7 @@ Return as structured JSON matching the CompanyEnrichmentResult format.`
   /**
    * Calculate data completeness score
    */
-  private calculateCompletenessScore(data: any): number {
+  private calculateCompletenessScore(data: Record<string, unknown>): number {
     const requiredFields = [
       'headquarters', 'industry_classification', 'business_description',
       'company_size', 'offerings', 'leadership', 'digital_presence'
@@ -595,7 +595,7 @@ Return as structured JSON matching the CompanyEnrichmentResult format.`
   /**
    * Identify data gaps for improvement
    */
-  private identifyDataGaps(data: any): string[] {
+  private identifyDataGaps(data: Record<string, unknown>): string[] {
     const gaps: string[] = []
     
     if (!data.company_size?.employee_count) gaps.push('Employee count estimation')
@@ -611,7 +611,7 @@ Return as structured JSON matching the CompanyEnrichmentResult format.`
   /**
    * Generate recommendations for data improvement
    */
-  private generateRecommendations(data: any): string[] {
+  private generateRecommendations(data: Record<string, unknown>): string[] {
     const recommendations: string[] = []
     
     const completeness = this.calculateCompletenessScore(data)
@@ -640,7 +640,7 @@ Return as structured JSON matching the CompanyEnrichmentResult format.`
   /**
    * Get default enriched data structure
    */
-  private getDefaultEnrichedData(request: CompanyEnrichmentRequest): any {
+  private getDefaultEnrichedData(request: CompanyEnrichmentRequest): Record<string, unknown> {
     return {
       legal_name: request.company_name,
       trade_names: [request.company_name],

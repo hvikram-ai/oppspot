@@ -19,7 +19,7 @@ export interface PlatformAction {
 
 export interface PlatformContext {
   sessionId: string
-  conversationHistory: any[]
+  conversationHistory: Record<string, unknown>[]
   currentCompany?: string
   previousCompanies?: string[]
   lastAction?: string
@@ -28,7 +28,7 @@ export interface PlatformContext {
 
 export interface PlatformActionResult {
   success: boolean
-  data?: any
+  data?: Record<string, unknown>
   message: string
   formattedResponse?: string
   suggestedActions?: string[]
@@ -185,7 +185,7 @@ export class PlatformChatOrchestrator {
    * Execute similarity analysis using IntelligentSimilarityService
    */
   private async executeSimilarityAnalysis(
-    params: any,
+    params: Record<string, unknown>,
     context: PlatformContext
   ): Promise<PlatformActionResult> {
     const { companyName } = params
@@ -244,7 +244,7 @@ export class PlatformChatOrchestrator {
    * Execute company search
    */
   private async executeCompanySearch(
-    params: any,
+    params: Record<string, unknown>,
     context: PlatformContext
   ): Promise<PlatformActionResult> {
     const { query, location, industry, size } = params
@@ -329,7 +329,7 @@ export class PlatformChatOrchestrator {
    * Execute detailed company analysis
    */
   private async executeCompanyAnalysis(
-    params: any,
+    params: Record<string, unknown>,
     context: PlatformContext
   ): Promise<PlatformActionResult> {
     const { companyName } = params
@@ -391,7 +391,7 @@ export class PlatformChatOrchestrator {
    * Execute OppScan for M&A opportunities
    */
   private async executeOppScan(
-    params: any,
+    params: Record<string, unknown>,
     context: PlatformContext
   ): Promise<PlatformActionResult> {
     return {
@@ -414,7 +414,7 @@ export class PlatformChatOrchestrator {
    * Handle general queries with context
    */
   private async handleGeneralQuery(
-    params: any,
+    params: Record<string, unknown>,
     context: PlatformContext
   ): Promise<PlatformActionResult> {
     return {
@@ -445,7 +445,7 @@ export class PlatformChatOrchestrator {
       if (topMatches.length > 0) {
         response += `**Top Similar Companies:**\n\n`
         
-        topMatches.forEach((match: any, index: number) => {
+        topMatches.forEach((match: Record<string, unknown>, index: number) => {
           response += `${index + 1}. **${match.company_name}** (${match.overall_score}% match)\n`
           if (match.similarity_reasoning) {
             response += `   • ${match.similarity_reasoning}\n`
@@ -486,7 +486,7 @@ export class PlatformChatOrchestrator {
       
       let response = `I found **${totalFound || companies.length} companies** matching your search criteria:\n\n`
       
-      companies.slice(0, 5).forEach((company: any, index: number) => {
+      companies.slice(0, 5).forEach((company: Record<string, unknown>, index: number) => {
         response += `${index + 1}. **${company.name}**\n`
         if (company.industry) response += `   • Industry: ${company.industry}\n`
         if (company.location) response += `   • Location: ${company.location}\n`
@@ -603,8 +603,8 @@ export class PlatformChatOrchestrator {
     return null
   }
 
-  private extractSearchParameters(message: string): any {
-    const params: any = { query: '' }
+  private extractSearchParameters(message: string): Record<string, unknown> {
+    const params: Record<string, unknown> = { query: '' }
     
     // Extract location
     const locationMatch = message.match(/in\s+([a-zA-Z\s]+?)(?:\s|$)/i)
@@ -634,7 +634,7 @@ export class PlatformChatOrchestrator {
     return params
   }
 
-  private extractOppScanParameters(message: string): any {
+  private extractOppScanParameters(message: string): Record<string, unknown> {
     return {
       scanType: message.includes('quick') ? 'quick' : 'comprehensive',
       industries: message.includes('tech') ? ['technology'] : [],

@@ -453,7 +453,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   }
 
   // LLMService interface methods
-  async generateBusinessDescription(business: any): Promise<string> {
+  async generateBusinessDescription(business: Record<string, unknown>): Promise<string> {
     // Use Llama-optimized prompts if available
     const optimized = LlamaPromptOptimizer.optimizeBusinessDescription(business)
     
@@ -468,7 +468,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     return response.trim()
   }
 
-  async generateBusinessInsights(business: any): Promise<{
+  async generateBusinessInsights(business: Record<string, unknown>): Promise<{
     market_position: string
     target_audience: string
     competitive_advantages: string[]
@@ -502,7 +502,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     }
   }
 
-  async generateSEOKeywords(business: any): Promise<string[]> {
+  async generateSEOKeywords(business: Record<string, unknown>): Promise<string[]> {
     // Use Llama-optimized SEO keyword generation
     const optimized = LlamaPromptOptimizer.optimizeSEOKeywords(business)
     
@@ -517,7 +517,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     return response.split(',').map(keyword => keyword.trim()).filter(Boolean)
   }
 
-  async generateTagline(business: any): Promise<string> {
+  async generateTagline(business: Record<string, unknown>): Promise<string> {
     const prompt = `Create a memorable tagline (max 10 words) for:
     ${business.name} - ${business.categories?.join(', ')}
     ${business.description ? `Current description: ${business.description}` : ''}
@@ -532,7 +532,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     return response.trim().replace(/['"]/g, '')
   }
 
-  async suggestCategories(business: any): Promise<string[]> {
+  async suggestCategories(business: Record<string, unknown>): Promise<string[]> {
     const prompt = `Suggest 3-5 relevant business categories for:
     Name: ${business.name}
     Current categories: ${business.categories?.join(', ') || 'None'}
@@ -554,7 +554,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   }
 
   // Helper methods for business prompts
-  private buildDescriptionPrompt(business: any): string {
+  private buildDescriptionPrompt(business: Record<string, unknown>): string {
     const parts = [`Generate a compelling business description for ${business.name}.`]
     
     if (business.categories && business.categories.length > 0) {
@@ -594,7 +594,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     return parts.join('\n')
   }
 
-  private buildInsightsPrompt(business: any): string {
+  private buildInsightsPrompt(business: Record<string, unknown>): string {
     return `Analyze this business and provide strategic insights in JSON format:
     
     Business: ${business.name}

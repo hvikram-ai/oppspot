@@ -621,10 +621,10 @@ export class WebSearchService implements IWebSearchService {
 
   // Result parsers for different providers
 
-  private parseGoogleResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
+  private parseGoogleResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
     if (!data.items) return []
 
-    return data.items.map((item: any) => {
+    return data.items.map((item: Record<string, unknown>) => {
       const companyData = this.extractCompanyFromGoogleResult(item)
       return {
         company: companyData,
@@ -639,10 +639,10 @@ export class WebSearchService implements IWebSearchService {
     })
   }
 
-  private parseBingResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
+  private parseBingResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
     if (!data.webPages?.value) return []
 
-    return data.webPages.value.map((item: any) => {
+    return data.webPages.value.map((item: Record<string, unknown>) => {
       const companyData = this.extractCompanyFromBingResult(item)
       return {
         company: companyData,
@@ -657,10 +657,10 @@ export class WebSearchService implements IWebSearchService {
     })
   }
 
-  private parseCompaniesHouseResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
+  private parseCompaniesHouseResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
     if (!data.items) return []
 
-    return data.items.map((item: any) => {
+    return data.items.map((item: Record<string, unknown>) => {
       const companyData: CompanyEntity = {
         id: item.company_number,
         name: item.title,
@@ -699,14 +699,14 @@ export class WebSearchService implements IWebSearchService {
     })
   }
 
-  private parseSearchAPIResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
+  private parseSearchAPIResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
     if (!data.organic_results && !data.knowledge_graph) return []
 
     const results: CompanySearchResult[] = []
 
     // Parse organic search results
     if (data.organic_results) {
-      data.organic_results.forEach((item: any) => {
+      data.organic_results.forEach((item: Record<string, unknown>) => {
         const domain = this.extractDomain(item.link)
         const companyName = this.extractCompanyNameFromTitle(item.title)
 
@@ -779,10 +779,10 @@ export class WebSearchService implements IWebSearchService {
     return results
   }
 
-  private parseClearbitResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
+  private parseClearbitResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
     if (!data.results) return []
 
-    return data.results.map((item: any) => {
+    return data.results.map((item: Record<string, unknown>) => {
       const companyData: CompanyEntity = {
         id: item.domain || this.generateId(),
         name: item.name,
@@ -820,16 +820,16 @@ export class WebSearchService implements IWebSearchService {
     })
   }
 
-  private parseCrunchbaseResults(data: any, query: CompanySearchQuery): CompanySearchResult[] {
+  private parseCrunchbaseResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
     if (!data.entities) return []
 
-    return data.entities.map((item: any) => {
+    return data.entities.map((item: Record<string, unknown>) => {
       const props = item.properties
       const companyData: CompanyEntity = {
         id: item.uuid,
         name: props.name,
         country: props.location_identifiers?.[0]?.value?.split(',').pop()?.trim() || 'Unknown',
-        industryCodes: props.categories?.map((cat: any) => cat.value) || [],
+        industryCodes: props.categories?.map((cat: Record<string, unknown>) => cat.value) || [],
         website: props.website?.value,
         description: props.short_description,
         confidenceScore: 0.88,
@@ -850,7 +850,7 @@ export class WebSearchService implements IWebSearchService {
         additionalData: {
           fundingTotal: props.funding_total?.value_usd,
           numEmployees: props.num_employees_enum,
-          categories: props.categories?.map((cat: any) => cat.value)
+          categories: props.categories?.map((cat: Record<string, unknown>) => cat.value)
         }
       }
     })
@@ -858,7 +858,7 @@ export class WebSearchService implements IWebSearchService {
 
   // Company data extraction helpers
 
-  private extractCompanyFromGoogleResult(item: any): CompanyEntity {
+  private extractCompanyFromGoogleResult(item: Record<string, unknown>): CompanyEntity {
     const domain = this.extractDomain(item.link)
     const companyName = this.extractCompanyNameFromTitle(item.title)
 
@@ -882,7 +882,7 @@ export class WebSearchService implements IWebSearchService {
     }
   }
 
-  private extractCompanyFromBingResult(item: any): CompanyEntity {
+  private extractCompanyFromBingResult(item: Record<string, unknown>): CompanyEntity {
     const domain = this.extractDomain(item.url)
     const companyName = this.extractCompanyNameFromTitle(item.name)
 
@@ -1166,7 +1166,7 @@ export class WebSearchService implements IWebSearchService {
     return cleanTitle || title
   }
 
-  private parseCompanyCountry(address: any): string {
+  private parseCompanyCountry(address: Record<string, unknown>): string {
     if (!address) return 'UK'
     
     // Companies House addresses

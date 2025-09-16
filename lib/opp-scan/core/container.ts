@@ -9,10 +9,10 @@ export enum ServiceLifetime {
   SCOPED = 'scoped'
 }
 
-export interface ServiceDescriptor<T = any> {
+export interface ServiceDescriptor<T = unknown> {
   token: string | symbol | Function
-  implementation?: new (...args: any[]) => T
-  factory?: (...args: any[]) => T | Promise<T>
+  implementation?: new (...args: unknown[]) => T
+  factory?: (...args: unknown[]) => T | Promise<T>
   instance?: T
   lifetime: ServiceLifetime
   dependencies?: Array<string | symbol | Function>
@@ -20,10 +20,10 @@ export interface ServiceDescriptor<T = any> {
 
 export interface IContainer {
   register<T>(descriptor: ServiceDescriptor<T>): void
-  registerSingleton<T>(token: string | symbol | Function, implementation: new (...args: any[]) => T): void
-  registerTransient<T>(token: string | symbol | Function, implementation: new (...args: any[]) => T): void
-  registerScoped<T>(token: string | symbol | Function, implementation: new (...args: any[]) => T): void
-  registerFactory<T>(token: string | symbol | Function, factory: (...args: any[]) => T | Promise<T>, lifetime?: ServiceLifetime): void
+  registerSingleton<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void
+  registerTransient<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void
+  registerScoped<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void
+  registerFactory<T>(token: string | symbol | Function, factory: (...args: unknown[]) => T | Promise<T>, lifetime?: ServiceLifetime): void
   resolve<T>(token: string | symbol | Function): T
   resolveAsync<T>(token: string | symbol | Function): Promise<T>
   createScope(): IContainer
@@ -31,8 +31,8 @@ export interface IContainer {
 
 export class Container implements IContainer {
   private services = new Map<string | symbol | Function, ServiceDescriptor>()
-  private instances = new Map<string | symbol | Function, any>()
-  private scopedInstances = new Map<string | symbol | Function, any>()
+  private instances = new Map<string | symbol | Function, unknown>()
+  private scopedInstances = new Map<string | symbol | Function, unknown>()
   private parent?: Container
 
   constructor(parent?: Container) {
@@ -43,7 +43,7 @@ export class Container implements IContainer {
     this.services.set(descriptor.token, descriptor)
   }
 
-  registerSingleton<T>(token: string | symbol | Function, implementation: new (...args: any[]) => T): void {
+  registerSingleton<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void {
     this.register({
       token,
       implementation,
@@ -51,7 +51,7 @@ export class Container implements IContainer {
     })
   }
 
-  registerTransient<T>(token: string | symbol | Function, implementation: new (...args: any[]) => T): void {
+  registerTransient<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void {
     this.register({
       token,
       implementation,
@@ -59,7 +59,7 @@ export class Container implements IContainer {
     })
   }
 
-  registerScoped<T>(token: string | symbol | Function, implementation: new (...args: any[]) => T): void {
+  registerScoped<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void {
     this.register({
       token,
       implementation,
@@ -69,7 +69,7 @@ export class Container implements IContainer {
 
   registerFactory<T>(
     token: string | symbol | Function, 
-    factory: (...args: any[]) => T | Promise<T>, 
+    factory: (...args: unknown[]) => T | Promise<T>, 
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT
   ): void {
     this.register({
@@ -205,11 +205,11 @@ export class Container implements IContainer {
     throw new Error(`No implementation or factory provided for ${String(descriptor.token)}`)
   }
 
-  private resolveDependencies(dependencies: Array<string | symbol | Function>): any[] {
+  private resolveDependencies(dependencies: Array<string | symbol | Function>): unknown[] {
     return dependencies.map(dep => this.resolve(dep))
   }
 
-  private async resolveDependenciesAsync(dependencies: Array<string | symbol | Function>): Promise<any[]> {
+  private async resolveDependenciesAsync(dependencies: Array<string | symbol | Function>): Promise<unknown[]> {
     return Promise.all(dependencies.map(dep => this.resolveAsync(dep)))
   }
 
