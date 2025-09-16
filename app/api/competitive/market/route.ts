@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
 
 // GET: Fetch market analysis
 export async function GET(request: NextRequest) {
@@ -139,7 +143,7 @@ export async function POST(request: NextRequest) {
 
 // Helper function to generate market analysis
 async function generateMarketAnalysis(
-  supabase: any,
+  supabase: DbClient,
   category: string,
   location: string | null,
   periodDays: number
@@ -274,7 +278,19 @@ async function generateMarketAnalysis(
 }
 
 // Helper function to generate SWOT analysis
-async function generateSWOTAnalysis(supabase: any, business: any) {
+interface BusinessSWOT {
+  id: string
+  rating?: number
+  review_count?: number
+  verified?: boolean
+  website?: string
+  categories?: string[]
+  description?: string
+  photos?: unknown[]
+  created_at: string
+}
+
+async function generateSWOTAnalysis(supabase: DbClient, business: BusinessSWOT) {
   const strengths = []
   const weaknesses = []
   const opportunities = []
@@ -374,7 +390,7 @@ async function generateSWOTAnalysis(supabase: any, business: any) {
 }
 
 // Helper function to calculate growth rate
-function calculateGrowthRate(businesses: any[], periodDays: number) {
+function calculateGrowthRate(businesses: BusinessSWOT[], periodDays: number): number {
   const recentDate = new Date()
   recentDate.setDate(recentDate.getDate() - periodDays)
   

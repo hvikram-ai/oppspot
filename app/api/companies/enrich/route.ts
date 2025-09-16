@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         .select('*')
         .in('id', businessIds)
       
-      const statsMap: Record<string, any> = {}
+      const statsMap: Record<string, unknown> = {}
       if (businesses) {
         for (const business of businesses) {
           statsMap[business.id] = enrichmentService.getEnrichmentStats(business)
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
     if (!business.google_place_id) {
       availableSources.push('google_places')
     }
-    if (!business.social_links || Object.keys(business.social_links as any).length === 0) {
+    if (!business.social_links || Object.keys(business.social_links as Record<string, unknown>).length === 0) {
       availableSources.push('social_media')
     }
     if (business.website) {

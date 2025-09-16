@@ -147,8 +147,28 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to calculate comparison metrics
-function calculateComparisonMetrics(businesses: any[]) {
-  const metrics: any = {
+interface Business {
+  id: string
+  name?: string
+  rating?: number
+  review_count?: number
+  categories?: string[]
+  price_level?: number
+  verified?: boolean
+  website?: string
+  description?: string
+}
+
+interface ComparisonMetrics {
+  rating: Record<string, unknown>
+  reviews: Record<string, unknown>
+  categories: Record<string, unknown>
+  pricing: Record<string, unknown>
+  features: Record<string, unknown>
+}
+
+function calculateComparisonMetrics(businesses: Business[]): ComparisonMetrics {
+  const metrics: ComparisonMetrics = {
     rating: {},
     reviews: {},
     categories: {},
@@ -184,7 +204,7 @@ function calculateComparisonMetrics(businesses: any[]) {
     common: findCommonElements(businesses.map(b => b.categories || [])),
     unique: businesses.map(b => ({
       id: b.id,
-      categories: (b.categories || []).filter((cat: string) => 
+      categories: (b.categories || []).filter((cat) => 
         !businesses.every(other => other.id === b.id || (other.categories || []).includes(cat))
       )
     }))
@@ -204,7 +224,7 @@ function calculateComparisonMetrics(businesses: any[]) {
 }
 
 // Helper function to find common elements
-function findCommonElements(arrays: any[][]) {
+function findCommonElements(arrays: string[][]): string[] {
   if (arrays.length === 0) return []
   return arrays.reduce((common, current) => 
     common.filter(item => current.includes(item))
@@ -212,7 +232,7 @@ function findCommonElements(arrays: any[][]) {
 }
 
 // Helper function to generate AI insights
-async function generateComparisonInsights(businesses: any[]) {
+async function generateComparisonInsights(businesses: Business[]) {
   // This would integrate with your AI service
   // For now, return structured insights
   return {
@@ -235,7 +255,7 @@ async function generateComparisonInsights(businesses: any[]) {
   }
 }
 
-function determineStrengths(business: any) {
+function determineStrengths(business: Business): string[] {
   const strengths = []
   if (business.rating >= 4.5) strengths.push('Excellent customer ratings')
   if (business.review_count > 100) strengths.push('Strong review volume')
@@ -244,7 +264,7 @@ function determineStrengths(business: any) {
   return strengths
 }
 
-function determineOpportunities(business: any) {
+function determineOpportunities(business: Business): string[] {
   const opportunities = []
   if (business.rating < 4.0) opportunities.push('Improve customer satisfaction')
   if (business.review_count < 50) opportunities.push('Increase review volume')
@@ -253,7 +273,7 @@ function determineOpportunities(business: any) {
   return opportunities
 }
 
-function determineMarketPosition(business: any, competitors: any[]) {
+function determineMarketPosition(business: Business, competitors: Business[]): string {
   const ratingRank = competitors
     .sort((a, b) => (b.rating || 0) - (a.rating || 0))
     .findIndex(b => b.id === business.id) + 1

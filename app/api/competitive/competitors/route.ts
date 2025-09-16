@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
 
 // POST: Create or update competitor set
 export async function POST(request: NextRequest) {
@@ -280,7 +284,7 @@ export async function DELETE(request: NextRequest) {
 
 // Helper function to auto-discover competitors
 async function discoverCompetitors(
-  supabase: any,
+  supabase: DbClient,
   primaryBusinessId: string,
   categories: string[]
 ) {
@@ -308,7 +312,10 @@ async function discoverCompetitors(
       .order('rating', { ascending: false })
       .limit(10)
     
-    return (competitors || []).map((c: any) => c.id)
+    interface Competitor {
+      id: string
+    }
+    return (competitors || []).map((c: Competitor) => c.id)
     
   } catch (error) {
     console.error('Auto-discover error:', error)
