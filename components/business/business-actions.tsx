@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,11 +40,35 @@ interface BusinessActionsProps {
 export function BusinessActions({ business }: BusinessActionsProps) {
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  const supabase = createClient()
+
+  // Check if business is already saved on mount
+  useEffect(() => {
+    checkIfSaved()
+  }, [business.id])
+
+  const checkIfSaved = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('saved_businesses')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('business_id', business.id)
+        .single()
+
+      setIsSaved(!!data)
+    } catch (error) {
+      // Business not saved, which is fine
+      setIsSaved(false)
+    }
+  }
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
@@ -55,30 +79,39 @@ export function BusinessActions({ business }: BusinessActionsProps) {
       // Toggle save status
       if (isSaved) {
         // Remove from saved
-        const { error } = await supabase
-          .from('saved_businesses')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('business_id', business.id)
+        const response = await fetch(`/api/saved-businesses?business_id=${business.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
 
-        if (error) throw error
+        if (!response.ok) throw new Error('Failed to remove')
         
         setIsSaved(false)
         toast.success('Removed from saved businesses')
       } else {
         // Add to saved
-        const { error } = await supabase
-          .from('saved_businesses')
-          .insert({
-            user_id: user.id,
+        const response = await fetch('/api/saved-businesses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
             business_id: business.id,
-            saved_at: new Date().toISOString()
+            tags: []
           })
+        })
 
-        if (error) throw error
-        
-        setIsSaved(true)
-        toast.success('Business saved successfully')
+        if (!response.ok) {
+          const error = await response.json()
+          if (error.error === 'Business already saved') {
+            setIsSaved(true)
+            toast.info('Business is already saved')
+          } else {
+            throw new Error('Failed to save')
+          }
+        } else {
+          setIsSaved(true)
+          toast.success('Business saved successfully')
+        }
       }
     } catch (error) {
       console.error('Error saving business:', error)
