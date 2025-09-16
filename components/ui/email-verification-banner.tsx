@@ -27,7 +27,7 @@ export function EmailVerificationBanner() {
         .select('email_verified_at')
         .eq('id', user.id)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .single() as any
+        .single() as unknown
       
       if (profile?.email_verified_at) {
         setIsVerified(true)

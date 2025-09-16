@@ -326,7 +326,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
 
     let newSelection
     if (existingIndex >= 0) {
-      newSelection = selectedRegions.filter((_: any, index: number) => index !== existingIndex)
+      newSelection = selectedRegions.filter((_: unknown, index: number) => index !== existingIndex)
     } else {
       newSelection = [...selectedRegions, region]
     }
@@ -448,7 +448,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                     {region.name}, {region.country}
                     <button
                       onClick={() => {
-                        const newSelection = config.selectedRegions.filter((_: any, i: number) => i !== index)
+                        const newSelection = config.selectedRegions.filter((_: unknown, i: number) => i !== index)
                         onChange('selectedRegions', newSelection)
                       }}
                       className="ml-1 hover:text-destructive"

@@ -242,7 +242,7 @@ async function displayStatus(): Promise<void> {
     
     // Show cache stats if available
     if ('getCacheStats' in provider) {
-      const cacheStats = (provider as any).getCacheStats()
+      const cacheStats = (provider as unknown).getCacheStats()
       console.log(`   Cache: ${cacheStats.size} entries, ${(cacheStats.hitRate * 100).toFixed(1)}% hit rate`)
     }
     
@@ -308,7 +308,7 @@ async function startInteractiveMode(): Promise<void> {
         
       case 'models':
         if ('listModels' in provider) {
-          const models = await (provider as any).listModels()
+          const models = await (provider as unknown).listModels()
           console.log('Available models:')
           models.forEach((m: any) => console.log(`  - ${m.name} (${m.size})`))
         } else {

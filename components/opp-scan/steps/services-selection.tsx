@@ -311,7 +311,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
 
     let newSelection
     if (existingIndex >= 0) {
-      newSelection = selected.filter((_: any, index: number) => index !== existingIndex)
+      newSelection = selected.filter((_: unknown, index: number) => index !== existingIndex)
     } else {
       newSelection = [...selected, capability]
     }
@@ -489,7 +489,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     {capability.name}
                     <button
                       onClick={() => {
-                        const newSelection = config.requiredCapabilities.filter((_: any, i: number) => i !== index)
+                        const newSelection = config.requiredCapabilities.filter((_: unknown, i: number) => i !== index)
                         onChange('requiredCapabilities', newSelection)
                       }}
                       className="ml-1 hover:text-destructive"

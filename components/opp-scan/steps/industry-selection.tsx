@@ -218,7 +218,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
     let newSelection
     if (existingIndex >= 0) {
       // Remove if already selected
-      newSelection = selectedIndustries.filter((_: any, index: number) => index !== existingIndex)
+      newSelection = selectedIndustries.filter((_: unknown, index: number) => index !== existingIndex)
     } else {
       // Add new selection
       const newItem = {
@@ -356,7 +356,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
                 {item.subcategory ? `${item.industry} - ${item.subcategory}` : item.industry}
                 <button
                   onClick={() => {
-                    const newSelection = config.selectedIndustries.filter((_: any, i: number) => i !== index)
+                    const newSelection = config.selectedIndustries.filter((_: unknown, i: number) => i !== index)
                     onChange('selectedIndustries', newSelection)
                   }}
                   className="ml-1 hover:text-destructive"

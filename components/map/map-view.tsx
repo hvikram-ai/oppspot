@@ -72,7 +72,7 @@ export function MapView({
       
       // Fix Leaflet icon issue
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (leaflet.default.Icon.Default.prototype as any)._getIconUrl
+      delete (leaflet.default.Icon.Default.prototype as unknown)._getIconUrl
       leaflet.default.Icon.Default.mergeOptions({
         iconRetinaUrl: '/leaflet/marker-icon-2x.png',
         iconUrl: '/leaflet/marker-icon.png',

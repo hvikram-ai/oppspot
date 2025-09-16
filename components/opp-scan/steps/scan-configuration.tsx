@@ -362,7 +362,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                     className={`cursor-pointer transition-all ${
                       config.scanDepth === depth.id ? 'ring-2 ring-primary' : 'hover:shadow-md'
                     }`}
-                    onClick={() => handleScanDepthChange(depth.id as any)}
+                    onClick={() => handleScanDepthChange(depth.id as unknown)}
                   >
                     <CardHeader>
                       <div className="flex items-center gap-2">
