@@ -117,7 +117,7 @@ export class CompaniesHouseServiceLite {
       start_index: startIndex.toString(),
     })
 
-    return this.makeRequest<any>(`/search/companies?${params}`)
+    return this.makeRequest<unknown>(`/search/companies?${params}`)
   }
 
   /**
@@ -152,7 +152,7 @@ export class CompaniesHouseServiceLite {
         companies_house: companiesHouseData,
         data_sources: ['companies_house'],
         last_enriched: new Date().toISOString(),
-      } as any,
+      } as unknown,
       address: companyData.registered_office_address ? {
         formatted: [
           companyData.registered_office_address.address_line_1,
@@ -165,7 +165,7 @@ export class CompaniesHouseServiceLite {
         city: companyData.registered_office_address.locality,
         postal_code: companyData.registered_office_address.postal_code,
         country: companyData.registered_office_address.country,
-      } as any : {},
+      } as unknown : {},
       verified_at: new Date().toISOString(),
       categories: this.mapSicCodesToCategories(companyData.sic_codes),
     }

@@ -330,7 +330,7 @@ export class SimilarCompanyUseCase {
       await this.updateAnalysisStatus(analysisId, 'failed', error.message)
 
       return {
-        similarityAnalysis: null as any,
+        similarityAnalysis: null as unknown,
         metrics: {
           ...metrics,
           totalProcessingTime: Date.now() - startTime
@@ -572,7 +572,7 @@ export class SimilarCompanyUseCase {
         benchmarks.push(benchmark)
       } catch (error) {
         console.error(`Error creating benchmark for ${enrichedCandidate.company.name}:`, error)
-        benchmarks.push(null as any) // Push null to maintain array alignment
+        benchmarks.push(null as unknown) // Push null to maintain array alignment
       }
     }
 

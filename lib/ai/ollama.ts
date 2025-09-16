@@ -562,7 +562,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     }
     
     if (business.address) {
-      const addr = business.address as any
+      const addr = business.address as unknown
       parts.push(`Location: ${addr.formatted || addr.vicinity || 'UK/Ireland'}`)
     }
     
@@ -575,7 +575,7 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     }
     
     if (business.metadata) {
-      const meta = business.metadata as any
+      const meta = business.metadata as unknown
       if (meta.google_data?.types) {
         parts.push(`Business Types: ${meta.google_data.types.join(', ')}`)
       }

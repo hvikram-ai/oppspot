@@ -448,7 +448,7 @@ export class MonitoredLLMProvider<T extends any> {
         model: options.model || 'default',
         message: error instanceof Error ? error.message : 'Unknown error',
         name: error instanceof Error ? error.constructor.name : 'Error'
-      } as any)
+      } as unknown)
       
       throw error
     }

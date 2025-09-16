@@ -84,7 +84,7 @@ export const TestUtils = {
   /**
    * Creates mock company data for testing
    */
-  createMockCompany: (overrides: Partial<any> = {}) => ({
+  createMockCompany: (overrides: Partial<unknown> = {}) => ({
     id: `company-${Math.random().toString(36).substr(2, 9)}`,
     name: 'Test Company Ltd',
     country: 'UK',
@@ -103,7 +103,7 @@ export const TestUtils = {
   /**
    * Creates mock scan configuration for testing
    */
-  createMockScanConfiguration: (overrides: Partial<any> = {}) => ({
+  createMockScanConfiguration: (overrides: Partial<unknown> = {}) => ({
     id: `scan-${Math.random().toString(36).substr(2, 9)}`,
     userId: 'test-user',
     name: 'Test Scan',
@@ -124,7 +124,7 @@ export const TestUtils = {
   /**
    * Mock cost breakdown for testing
    */
-  createMockCosts: (overrides: Partial<any> = {}) => ({
+  createMockCosts: (overrides: Partial<unknown> = {}) => ({
     totalCost: 123.45,
     currency: 'GBP',
     costBySource: {

@@ -302,11 +302,11 @@ export class LLMProviderManager {
       // If it's an Ollama client or has an Ollama client, warm up the models
       if ('warmModels' in provider) {
         console.log('[LLM Manager] Warming up models...')
-        await (provider as any).warmModels()
-      } else if ('provider' in provider && 'warmModels' in (provider as any).provider) {
+        await (provider as unknown).warmModels()
+      } else if ('provider' in provider && 'warmModels' in (provider as unknown).provider) {
         // For cached or wrapped providers
         console.log('[LLM Manager] Warming up wrapped models...')
-        await (provider as any).provider.warmModels()
+        await (provider as unknown).provider.warmModels()
       }
       
       // Test with a simple request

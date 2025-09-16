@@ -97,7 +97,7 @@ describe('DataCollectionService Integration Tests', () => {
       findHighConfidenceCompanies: jest.fn(),
       countByIndustry: jest.fn(),
       findSimilarCompanies: jest.fn()
-    } as any
+    } as unknown
 
     mockRateLimitingService = {
       checkLimit: jest.fn(),
@@ -109,7 +109,7 @@ describe('DataCollectionService Integration Tests', () => {
       getAllSourceStatus: jest.fn(),
       resetSourceLimits: jest.fn(),
       resetAllLimits: jest.fn()
-    } as any
+    } as unknown
 
     mockCacheService = {
       get: jest.fn(),
@@ -121,7 +121,7 @@ describe('DataCollectionService Integration Tests', () => {
       getMultiple: jest.fn(),
       setMultiple: jest.fn(),
       getStats: jest.fn()
-    } as any
+    } as unknown
 
     mockEventBus = {
       publish: jest.fn(),
@@ -129,7 +129,7 @@ describe('DataCollectionService Integration Tests', () => {
       subscribe: jest.fn(),
       unsubscribe: jest.fn(),
       clear: jest.fn()
-    } as any
+    } as unknown
 
     service = new DataCollectionService(
       mockDataSources,
@@ -324,7 +324,7 @@ describe('DataCollectionService Integration Tests', () => {
       jest.clearAllMocks()
 
       // Second run - all companies exist
-      mockCompanyRepository.findById.mockResolvedValue({} as any)
+      mockCompanyRepository.findById.mockResolvedValue({} as unknown)
       await service.collectData(mockConfiguration)
 
       expect(mockCompanyRepository.findById).toHaveBeenCalledTimes(3)

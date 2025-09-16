@@ -217,8 +217,8 @@ export class CompaniesHouseService {
       company_type: companyData.type,
       incorporation_date: companyData.date_of_incorporation,
       sic_codes: companyData.sic_codes || [],
-      registered_office_address: companyData.registered_office_address as any,
-      companies_house_data: companyData as any,
+      registered_office_address: companyData.registered_office_address as unknown,
+      companies_house_data: companyData as unknown,
       companies_house_last_updated: new Date().toISOString(),
       cache_expires_at: new Date(Date.now() + this.cacheTTL * 1000).toISOString(),
       data_sources: {
@@ -226,7 +226,7 @@ export class CompaniesHouseService {
           last_updated: new Date().toISOString(),
           version: companyData.etag,
         }
-      } as any,
+      } as unknown,
       // Map address for consistency with existing schema
       address: companyData.registered_office_address ? {
         formatted: [
@@ -240,7 +240,7 @@ export class CompaniesHouseService {
         city: companyData.registered_office_address.locality,
         postal_code: companyData.registered_office_address.postal_code,
         country: companyData.registered_office_address.country,
-      } as any : null,
+      } as unknown : null,
     }
   }
 
@@ -337,8 +337,8 @@ export class CompaniesHouseService {
       // Add officers and filing history
       return {
         ...updates,
-        officers: officers.items as any,
-        filing_history: filingHistory.items.slice(0, 10) as any, // Keep last 10 filings
+        officers: officers.items as unknown,
+        filing_history: filingHistory.items.slice(0, 10) as unknown, // Keep last 10 filings
       }
     } catch (error) {
       console.error('Failed to enrich business data:', error)

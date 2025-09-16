@@ -276,7 +276,7 @@ export class JobQueue {
       job.progress = progress
       job.currentStep = currentStep
       if (status) {
-        job.status = status as any
+        job.status = status as unknown
       }
       if (error) {
         job.error = error

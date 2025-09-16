@@ -165,7 +165,7 @@ export class DataEnrichmentService {
     if (business.google_place_id) {
       // In a real implementation, this would call Google Places API
       enrichedData.metadata = {
-        ...(business.metadata as any || {}),
+        ...(business.metadata as unknown || {}),
         google_places_enriched: true,
         enriched_at: new Date().toISOString()
       }
@@ -201,7 +201,7 @@ export class DataEnrichmentService {
     if (Object.keys(socialLinks).length > 0) {
       enrichedData.social_links = socialLinks
       enrichedData.metadata = {
-        ...(business.metadata as any || {}),
+        ...(business.metadata as unknown || {}),
         social_media_enriched: true,
         enriched_at: new Date().toISOString()
       }
@@ -224,7 +224,7 @@ export class DataEnrichmentService {
     // For now, add basic metadata
     if (business.website) {
       enrichedData.metadata = {
-        ...(business.metadata as any || {}),
+        ...(business.metadata as unknown || {}),
         website_scraped: true,
         scraped_at: new Date().toISOString()
       }
@@ -251,8 +251,8 @@ export class DataEnrichmentService {
         // Special handling for metadata - merge instead of replace
         if (result.data.metadata && merged.metadata) {
           merged.metadata = {
-            ...(merged.metadata as any),
-            ...(result.data.metadata as any)
+            ...(merged.metadata as unknown),
+            ...(result.data.metadata as unknown)
           }
         }
       }
@@ -335,7 +335,7 @@ export class DataEnrichmentService {
     }
 
     // Check social media enrichment
-    if (business.social_links && Object.keys(business.social_links as any).length > 0) {
+    if (business.social_links && Object.keys(business.social_links as unknown).length > 0) {
       enrichedSources.push('social_media')
     }
 
@@ -343,7 +343,7 @@ export class DataEnrichmentService {
     const completeness = fieldCount > 0 ? Math.round((filledCount / fieldCount) * 100) : 0
 
     // Get last enriched date
-    const metadata = business.metadata as any
+    const metadata = business.metadata as unknown
     const lastEnriched = metadata?.enriched_at || business.companies_house_last_updated || null
 
     return {
