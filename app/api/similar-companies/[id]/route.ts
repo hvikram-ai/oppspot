@@ -15,7 +15,6 @@ interface CompanyMatch {
   market_score: number
   risk_score: number
 }
-import { SimilarCompanyUseCase } from '@/lib/opp-scan/services/similar-company-use-case'
 
 // GET: Get detailed analysis results
 export async function GET(
