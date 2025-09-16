@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
+type Scan = Database['public']['Tables']['acquisition_scans']['Row']
+type Industry = { industry: string; description?: string }
+type Region = { id: string; name: string; country: string }
 
 export async function POST(
   request: NextRequest,
@@ -153,15 +160,15 @@ export async function POST(
 }
 
 // Initialize the scanning process
-async function initializeScanExecution(supabase: any, scanId: string, scan: any) {
+async function initializeScanExecution(supabase: DbClient, scanId: string, scan: Scan) {
   try {
     // Create market intelligence entry
     await supabase
       .from('market_intelligence')
       .insert({
         scan_id: scanId,
-        industry_sector: scan.selected_industries.map((i: any) => i.industry).join(', '),
-        geographic_scope: scan.selected_regions.map((r: any) => ({ 
+        industry_sector: (scan.selected_industries as Industry[]).map((i: Industry) => i.industry).join(', '),
+        geographic_scope: (scan.selected_regions as Region[]).map((r: Region) => ({ 
           id: r.id, 
           name: r.name, 
           country: r.country 
@@ -205,7 +212,7 @@ async function initializeScanExecution(supabase: any, scanId: string, scan: any)
 }
 
 // Helper function to check organization access
-async function checkOrgAccess(supabase: any, userId: string, orgId: string): Promise<boolean> {
+async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
     const { data: profile } = await supabase
       .from('profiles')
