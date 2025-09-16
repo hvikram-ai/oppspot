@@ -109,14 +109,14 @@ class OppScanEngine {
   }
 
   // Collect data from all configured sources using real APIs
-  private async collectDataFromSources(scan: any): Promise<DataSourceResult[]> {
+  private async collectDataFromSources(scan: ScanConfig): Promise<DataSourceResult[]> {
     console.log('Starting real data collection from external APIs...')
     
     try {
       // Convert scan configuration to search criteria
       const searchCriteria = {
         industries: scan.selected_industries || [],
-        regions: scan.selected_regions?.map((r: any) => r.country || r.name) || [],
+        regions: scan.selected_regions?.map((r) => r.country || r.name) || [],
         minIncorporationYear: this.extractMinIncorporationYear(scan),
         maxIncorporationYear: this.extractMaxIncorporationYear(scan),
         companyTypes: this.extractCompanyTypes(scan)
@@ -145,7 +145,7 @@ class OppScanEngine {
   }
 
   // Helper methods for scan configuration extraction
-  private extractMinIncorporationYear(scan: any): number | undefined {
+  private extractMinIncorporationYear(scan: ScanConfig): number | undefined {
     // Extract from scan configuration or use reasonable default
     if (scan.strategic_objectives?.timeframe === 'recent') {
       return new Date().getFullYear() - 5
@@ -153,11 +153,11 @@ class OppScanEngine {
     return 2000 // Default minimum year
   }
 
-  private extractMaxIncorporationYear(scan: any): number | undefined {
+  private extractMaxIncorporationYear(scan: ScanConfig): number | undefined {
     return new Date().getFullYear() // Current year
   }
 
-  private extractCompanyTypes(scan: any): string[] {
+  private extractCompanyTypes(scan: ScanConfig): string[] {
     // Default to common UK company types
     return ['ltd', 'plc', 'limited-partnership']
   }
@@ -172,7 +172,7 @@ class OppScanEngine {
   }
 
   // Fallback to simulated data collection if APIs fail
-  private async fallbackToSimulatedCollection(scan: any): Promise<DataSourceResult[]> {
+  private async fallbackToSimulatedCollection(scan: ScanConfig): Promise<DataSourceResult[]> {
     const results: DataSourceResult[] = []
 
     for (const sourceId of scan.data_sources) {
@@ -193,7 +193,7 @@ class OppScanEngine {
   }
 
   // Companies House data collection (simplified simulation)
-  private async collectFromCompaniesHouse(scan: any): Promise<DataSourceResult> {
+  private async collectFromCompaniesHouse(scan: ScanConfig): Promise<DataSourceResult> {
     console.log('Collecting from Companies House...')
     
     // In a real implementation, this would make API calls to Companies House
@@ -205,7 +205,7 @@ class OppScanEngine {
       const industryCompanies = this.generateSimulatedCompanies(
         'companies_house',
         industry,
-        scan.selected_regions.filter((r: any) => r.country === 'England' || r.country === 'Scotland' || r.country === 'Wales'),
+        scan.selected_regions.filter((r) => r.country === 'England' || r.country === 'Scotland' || r.country === 'Wales'),
         Math.floor(Math.random() * 50) + 10
       )
       companies.push(...industryCompanies)
@@ -224,12 +224,12 @@ class OppScanEngine {
   }
 
   // Irish CRO data collection (simplified simulation)
-  private async collectFromIrishCRO(scan: any): Promise<DataSourceResult> {
+  private async collectFromIrishCRO(scan: ScanConfig): Promise<DataSourceResult> {
     console.log('Collecting from Irish Companies Registration Office...')
     
     const companies: CompanyData[] = []
     
-    const irishRegions = scan.selected_regions.filter((r: any) => r.country === 'Ireland')
+    const irishRegions = scan.selected_regions.filter((r) => r.country === 'Ireland')
     if (irishRegions.length > 0) {
       for (const industry of scan.selected_industries) {
         const industryCompanies = this.generateSimulatedCompanies(
@@ -255,7 +255,7 @@ class OppScanEngine {
   }
 
   // Financial data collection (simulation)
-  private async collectFromFinancialData(scan: any): Promise<DataSourceResult> {
+  private async collectFromFinancialData(scan: ScanConfig): Promise<DataSourceResult> {
     console.log('Collecting financial intelligence data...')
     
     // This would integrate with services like Experian, D&B, etc.
@@ -275,7 +275,7 @@ class OppScanEngine {
   }
 
   // Digital footprint analysis (simulation)
-  private async collectFromDigitalFootprint(scan: any): Promise<DataSourceResult> {
+  private async collectFromDigitalFootprint(scan: ScanConfig): Promise<DataSourceResult> {
     console.log('Analyzing digital footprint...')
     
     const companies = this.generateDigitalFootprintData(scan)
@@ -293,7 +293,7 @@ class OppScanEngine {
   }
 
   // Patents and IP data collection (simulation)
-  private async collectFromPatentsIP(scan: any): Promise<DataSourceResult> {
+  private async collectFromPatentsIP(scan: ScanConfig): Promise<DataSourceResult> {
     console.log('Collecting intellectual property data...')
     
     const companies = this.generateIPData(scan)
@@ -311,7 +311,7 @@ class OppScanEngine {
   }
 
   // Simulate data collection for other sources
-  private async simulateDataCollection(sourceId: string, scan: any): Promise<DataSourceResult> {
+  private async simulateDataCollection(sourceId: string, scan: ScanConfig): Promise<DataSourceResult> {
     console.log(`Simulating data collection from ${sourceId}...`)
     
     const companies = this.generateSimulatedCompanies(
@@ -336,8 +336,8 @@ class OppScanEngine {
   // Generate simulated company data
   private generateSimulatedCompanies(
     source: string,
-    industry: any,
-    regions: any[],
+    industry: { code: string; name: string },
+    regions: Array<{ id: string; name: string; country: string }>,
     count: number
   ): CompanyData[] {
     const companies: CompanyData[] = []
@@ -380,7 +380,7 @@ class OppScanEngine {
   // Process and deduplicate results
   private async processAndDeduplicateResults(
     results: DataSourceResult[],
-    scan: any
+    scan: ScanConfig
   ): Promise<CompanyData[]> {
     console.log('Processing and deduplicating results...')
     
@@ -463,7 +463,7 @@ class OppScanEngine {
   }
 
   // Analyze target companies
-  private async analyzeTargets(scanId: string, targetIds: string[], scan: any): Promise<void> {
+  private async analyzeTargets(scanId: string, targetIds: string[], scan: ScanConfig): Promise<void> {
     console.log(`Analyzing ${targetIds.length} target companies...`)
     
     let processedCount = 0
@@ -511,7 +511,7 @@ class OppScanEngine {
   }
 
   // Generate market intelligence with enhanced analysis
-  private async generateMarketIntelligence(scanId: string, scan: any, companies: CompanyData[]): Promise<void> {
+  private async generateMarketIntelligence(scanId: string, scan: ScanConfig, companies: CompanyData[]): Promise<void> {
     console.log('Generating enhanced market intelligence...')
     
     const industryAnalysis = this.analyzeIndustryTrends(companies, scan)
@@ -565,22 +565,22 @@ class OppScanEngine {
   }
 
   // Helper methods for analysis
-  private calculateStrategicFit(company: CompanyData, scan: any): number {
+  private calculateStrategicFit(company: CompanyData, scan: ScanConfig): number {
     let fitScore = 0.5 // Base score
     
     // Industry alignment
-    const industryMatch = scan.selected_industries.some((industry: any) =>
+    const industryMatch = scan.selected_industries.some((industry) =>
       company.industry_codes.some((code: string) => code.startsWith(industry.sic_code?.substring(0, 2)))
     )
     if (industryMatch) fitScore += 0.2
     
     // Regional preference
-    const regionMatch = scan.selected_regions.some((region: any) => region.country === company.country)
+    const regionMatch = scan.selected_regions.some((region) => region.country === company.country)
     if (regionMatch) fitScore += 0.15
     
     // Capability alignment (simplified)
     if (scan.required_capabilities.length > 0) {
-      const capabilityMatch = scan.required_capabilities.some((cap: any) =>
+      const capabilityMatch = scan.required_capabilities.some((cap) =>
         company.description?.toLowerCase().includes(cap.name.toLowerCase().split(' ')[0])
       )
       if (capabilityMatch) fitScore += 0.15
@@ -597,7 +597,7 @@ class OppScanEngine {
     progress?: number | null,
     error?: string
   ): Promise<void> {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status,
       current_step: step,
       updated_at: new Date().toISOString()
@@ -667,7 +667,13 @@ class OppScanEngine {
     return ranges[Math.floor(Math.random() * ranges.length)]
   }
 
-  private generateAddress(region: any): any {
+  private generateAddress(region: { id: string; name: string; country: string }): {
+    street?: string
+    city?: string
+    region?: string
+    postal_code?: string
+    country: string
+  } {
     return {
       street: `${Math.floor(Math.random() * 999) + 1} Business Park`,
       city: region?.name || 'London',
@@ -709,7 +715,7 @@ class OppScanEngine {
   }
 
   // Market analysis helpers (simplified)
-  private analyzeIndustryTrends(companies: CompanyData[], scan: any) {
+  private analyzeIndustryTrends(companies: CompanyData[], scan: ScanConfig) {
     return {
       trends: ['Digital transformation acceleration', 'Sustainability focus increasing', 'Remote work normalization'],
       drivers: ['Technology adoption', 'Regulatory changes', 'Consumer behavior shifts'],
@@ -717,7 +723,7 @@ class OppScanEngine {
     }
   }
 
-  private analyzeCompetition(companies: CompanyData[], scan: any) {
+  private analyzeCompetition(companies: CompanyData[], scan: ScanConfig) {
     return {
       recent_deals: [`Acquisition of ${companies[0]?.name} for £${Math.floor(Math.random() * 50)}M`],
       valuations: {
@@ -727,7 +733,7 @@ class OppScanEngine {
     }
   }
 
-  private identifyOpportunities(companies: CompanyData[], scan: any) {
+  private identifyOpportunities(companies: CompanyData[], scan: ScanConfig) {
     return {
       market_gaps: ['Underserved SME segment', 'Rural market penetration'],
       consolidation_opportunities: companies.length > 50 ? 'high' : 'moderate'
@@ -743,30 +749,30 @@ class OppScanEngine {
   }
 
   // Additional data generation methods for different sources
-  private generateFinancialEnrichmentData(scan: any): CompanyData[] {
+  private generateFinancialEnrichmentData(scan: ScanConfig): CompanyData[] {
     // This would enhance existing company data with financial metrics
     return []
   }
 
-  private generateDigitalFootprintData(scan: any): CompanyData[] {
+  private generateDigitalFootprintData(scan: ScanConfig): CompanyData[] {
     // This would analyze web presence, SEO, social media
     return []
   }
 
-  private generateIPData(scan: any): CompanyData[] {
+  private generateIPData(scan: ScanConfig): CompanyData[] {
     // This would analyze patent portfolios, trademarks
     return []
   }
 
   // Enhanced market intelligence analysis methods
-  private extractPrimarySector(scan: any): string {
+  private extractPrimarySector(scan: ScanConfig): string {
     if (scan.selected_industries && scan.selected_industries.length > 0) {
       return scan.selected_industries[0].industry || 'Technology'
     }
     return 'Mixed Sectors'
   }
 
-  private estimateMarketSize(companies: CompanyData[], scan: any): number {
+  private estimateMarketSize(companies: CompanyData[], scan: ScanConfig): number {
     // Estimate total addressable market based on company data
     const totalRevenue = companies.reduce((sum, company) => 
       sum + (company.revenue_estimate || 0), 0)
@@ -786,7 +792,7 @@ class OppScanEngine {
     return Math.min(0.25, Math.max(0.02, growthRate)) // Between 2% and 25%
   }
 
-  private assessMarketMaturity(companies: CompanyData[], scan: any): string {
+  private assessMarketMaturity(companies: CompanyData[], scan: ScanConfig): string {
     const avgAge = companies.reduce((sum, company) => {
       const age = company.founding_year ? new Date().getFullYear() - company.founding_year : 10
       return sum + age
@@ -798,7 +804,7 @@ class OppScanEngine {
     return 'declining'
   }
 
-  private identifyTopCompetitors(companies: CompanyData[]): any[] {
+  private identifyTopCompetitors(companies: CompanyData[]): CompanyData[] {
     return companies
       .sort((a, b) => (b.revenue_estimate || 0) - (a.revenue_estimate || 0))
       .slice(0, 10)
@@ -810,10 +816,10 @@ class OppScanEngine {
       }))
   }
 
-  private assessBarriersToEntry(companies: CompanyData[], scan: any): string {
+  private assessBarriersToEntry(companies: CompanyData[], scan: ScanConfig): string {
     // Assess based on industry type and company distribution
     const industryTypes = scan.selected_industries || []
-    const hasRegulatedIndustries = industryTypes.some((ind: any) => 
+    const hasRegulatedIndustries = industryTypes.some((ind) => 
       ['financial', 'healthcare', 'energy', 'aviation'].some(regulated =>
         (ind.industry || '').toLowerCase().includes(regulated)
       )
@@ -825,9 +831,9 @@ class OppScanEngine {
     return 'low'
   }
 
-  private assessRegulatoryEnvironment(scan: any): string {
+  private assessRegulatoryEnvironment(scan: ScanConfig): string {
     // Assess based on regions and industries
-    const hasEURegions = scan.selected_regions?.some((region: any) => 
+    const hasEURegions = scan.selected_regions?.some((region) => 
       ['Ireland', 'EU'].includes(region.country || region.name)
     )
     
@@ -835,7 +841,11 @@ class OppScanEngine {
     return 'stable'
   }
 
-  private identifyUpcomingRegulations(scan: any): any[] {
+  private identifyUpcomingRegulations(scan: ScanConfig): Array<{
+    regulation: string
+    impact: string
+    timeline: string
+  }> {
     return [
       {
         title: 'Digital Services Act Implementation',
@@ -850,7 +860,7 @@ class OppScanEngine {
     ]
   }
 
-  private analyzeGeographicDistribution(companies: CompanyData[], scan: any): any {
+  private analyzeGeographicDistribution(companies: CompanyData[], scan: ScanConfig): Record<string, number> {
     const distribution: { [key: string]: number } = {}
     
     companies.forEach(company => {
@@ -866,7 +876,7 @@ class OppScanEngine {
     }
   }
 
-  private calculateAnalysisConfidence(companies: CompanyData[], scan: any): number {
+  private calculateAnalysisConfidence(companies: CompanyData[], scan: ScanConfig): number {
     // Calculate confidence based on data quality and source reliability
     const avgConfidence = companies.reduce((sum, company) => 
       sum + company.confidence_score, 0) / companies.length
@@ -878,7 +888,10 @@ class OppScanEngine {
   }
 
   // Record cost transactions for data collection
-  private async recordDataCollectionCosts(scan: any, searchResult: any): Promise<void> {
+  private async recordDataCollectionCosts(scan: ScanConfig, searchResult: {
+    summary: Record<string, unknown>
+    results: DataSourceResult[]
+  }): Promise<void> {
     try {
       for (const result of searchResult.results) {
         if (result.metadata.cost > 0) {
@@ -991,12 +1004,12 @@ class OppScanEngine {
   }
 
   // Helper methods for enhanced analysis
-  private estimateDataVolume(companies: any[]): number {
+  private estimateDataVolume(companies: CompanyData[]): number {
     // Estimate data volume in MB based on number of companies and data richness
     return companies.length * 0.05 // ~50KB per company record
   }
 
-  private estimateResponseSize(companies: any[]): number {
+  private estimateResponseSize(companies: CompanyData[]): number {
     // Estimate response size in bytes
     return companies.length * 2048 // ~2KB per company in JSON
   }

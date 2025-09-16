@@ -97,13 +97,13 @@ export interface FinancialAnalysis {
   employee_growth_3y?: number
   altman_z_score?: number
   credit_rating?: string
-  financial_distress_signals?: any[]
+  financial_distress_signals?: string[]
   estimated_revenue_multiple?: number
   estimated_ebitda_multiple?: number
   estimated_enterprise_value?: number
   valuation_method?: string
   valuation_confidence?: 'low' | 'medium' | 'high'
-  data_sources?: any
+  data_sources?: Record<string, unknown>
   data_quality_score: number
   last_financial_update?: string
   created_at: string
@@ -114,35 +114,35 @@ export interface RiskAssessment {
   id: string
   target_company_id: string
   financial_risk_score: number
-  financial_risk_factors?: any[]
+  financial_risk_factors?: string[]
   operational_risk_score: number
   key_person_dependency: boolean
   customer_concentration_risk?: number
   supplier_concentration_risk?: number
-  operational_risk_factors?: any[]
+  operational_risk_factors?: string[]
   regulatory_risk_score: number
-  compliance_status?: any
-  pending_investigations?: any[]
-  regulatory_risk_factors?: any[]
+  compliance_status?: Record<string, unknown>
+  pending_investigations?: string[]
+  regulatory_risk_factors?: string[]
   market_risk_score: number
   competitive_position?: 'leader' | 'strong' | 'moderate' | 'weak' | 'unknown'
   market_share_estimate?: number
-  competitive_threats?: any[]
-  market_risk_factors?: any[]
+  competitive_threats?: string[]
+  market_risk_factors?: string[]
   technology_risk_score: number
   ip_portfolio_strength?: 'strong' | 'moderate' | 'weak' | 'none' | 'unknown'
   technology_obsolescence_risk?: number
-  cybersecurity_assessment?: any
-  technology_risk_factors?: any[]
+  cybersecurity_assessment?: Record<string, unknown>
+  technology_risk_factors?: string[]
   esg_risk_score: number
-  environmental_compliance?: any
-  social_responsibility_issues?: any[]
-  governance_concerns?: any[]
-  esg_risk_factors?: any[]
+  environmental_compliance?: Record<string, unknown>
+  social_responsibility_issues?: string[]
+  governance_concerns?: string[]
+  esg_risk_factors?: string[]
   overall_risk_score: number
   risk_category: 'low' | 'moderate' | 'high' | 'critical'
-  risk_mitigation_strategies?: any[]
-  red_flags?: any[]
+  risk_mitigation_strategies?: string[]
+  red_flags?: string[]
   assessment_method: string
   confidence_level: number
   created_at: string
@@ -153,23 +153,23 @@ export interface MarketIntelligence {
   id: string
   scan_id: string
   industry_sector: string
-  geographic_scope?: any
+  geographic_scope?: Record<string, unknown>
   market_size_gbp?: number
   market_growth_rate?: number
   market_maturity?: 'emerging' | 'growth' | 'mature' | 'declining'
   total_competitors?: number
   market_concentration?: 'fragmented' | 'moderate' | 'concentrated' | 'monopolistic'
-  top_competitors?: any[]
+  top_competitors?: string[]
   barriers_to_entry?: 'low' | 'moderate' | 'high' | 'very_high'
-  key_trends?: any[]
-  growth_drivers?: any[]
-  challenges?: any[]
+  key_trends?: string[]
+  growth_drivers?: string[]
+  challenges?: string[]
   ma_activity_level?: 'low' | 'moderate' | 'high' | 'very_high'
-  recent_transactions?: any[]
-  average_valuation_multiples?: any
+  recent_transactions?: string[]
+  average_valuation_multiples?: Record<string, unknown>
   regulatory_environment?: 'favorable' | 'stable' | 'changing' | 'restrictive'
-  upcoming_regulations?: any[]
-  data_sources?: any
+  upcoming_regulations?: string[]
+  data_sources?: Record<string, unknown>
   analysis_date: string
   confidence_level: number
   created_at: string
@@ -179,35 +179,35 @@ export interface MarketIntelligence {
 export interface DueDiligence {
   id: string
   target_company_id: string
-  documents_analyzed?: any[]
+  documents_analyzed?: string[]
   document_completeness_score: number
-  missing_documents?: any[]
-  corporate_structure?: any
-  subsidiary_companies?: any[]
+  missing_documents?: string[]
+  corporate_structure?: Record<string, unknown>
+  subsidiary_companies?: string[]
   legal_entity_type?: string
   jurisdiction?: string
-  key_contracts?: any[]
-  contract_risk_assessment?: any
-  intellectual_property?: any[]
-  employee_structure?: any
-  employment_contracts_review?: any
+  key_contracts?: string[]
+  contract_risk_assessment?: Record<string, unknown>
+  intellectual_property?: string[]
+  employee_structure?: Record<string, unknown>
+  employment_contracts_review?: Record<string, unknown>
   pension_obligations?: number
-  hr_compliance_status?: any
-  operational_metrics?: any
-  it_infrastructure_assessment?: any
-  supply_chain_analysis?: any
-  customer_analysis?: any
-  environmental_assessments?: any[]
-  sustainability_metrics?: any
-  esg_compliance?: any
-  legal_issues?: any[]
-  compliance_violations?: any[]
-  financial_irregularities?: any[]
-  operational_concerns?: any[]
+  hr_compliance_status?: Record<string, unknown>
+  operational_metrics?: Record<string, unknown>
+  it_infrastructure_assessment?: Record<string, unknown>
+  supply_chain_analysis?: Record<string, unknown>
+  customer_analysis?: Record<string, unknown>
+  environmental_assessments?: string[]
+  sustainability_metrics?: Record<string, unknown>
+  esg_compliance?: Record<string, unknown>
+  legal_issues?: string[]
+  compliance_violations?: string[]
+  financial_irregularities?: string[]
+  operational_concerns?: string[]
   due_diligence_score: number
   recommendation: 'proceed' | 'proceed_with_conditions' | 'further_investigation' | 'reject'
-  key_findings?: any[]
-  next_steps?: any[]
+  key_findings?: string[]
+  next_steps?: string[]
   analysis_depth: 'preliminary' | 'standard' | 'comprehensive'
   automation_confidence: number
   manual_review_required: boolean
@@ -222,8 +222,8 @@ export interface ValuationModel {
   base_case_valuation?: number
   bull_case_valuation?: number
   bear_case_valuation?: number
-  key_assumptions?: any
-  sensitivity_analysis?: any
+  key_assumptions?: Record<string, unknown>
+  sensitivity_analysis?: Record<string, unknown>
   valuation_date: string
   model_confidence: 'low' | 'medium' | 'high'
   created_by?: string
@@ -239,7 +239,7 @@ export interface ScanReport {
   report_type: 'executive_summary' | 'detailed_analysis' | 'target_comparison' | 'market_overview' | 'due_diligence_summary' | 'valuation_analysis' | 'risk_assessment' | 'compliance_report'
   report_title: string
   report_description?: string
-  content?: any
+  content?: Record<string, unknown>
   format: 'pdf' | 'excel' | 'powerpoint' | 'html'
   file_size?: number
   download_url?: string
