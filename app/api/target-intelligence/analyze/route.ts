@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     console.log(`[TargetIntelligence API] Starting analysis for: ${body.company_name}`)
 
     // Create progress tracking
-    let progressStages: string[] = []
+    const progressStages: string[] = []
     const progressCallback = (progress: any) => {
       progressStages.push(`${progress.stage}: ${progress.message}`)
       console.log(`[TargetIntelligence] ${progress.stage}: ${progress.progress}% - ${progress.message}`)

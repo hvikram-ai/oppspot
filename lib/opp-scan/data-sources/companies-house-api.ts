@@ -263,7 +263,7 @@ export class CompaniesHouseAPI {
   }> {
     const startTime = Date.now()
     const searchTerms: string[] = []
-    let allCompanies: CompaniesHouseCompany[] = []
+    const allCompanies: CompaniesHouseCompany[] = []
 
     // Search by industry SIC codes
     for (const industry of params.industries) {

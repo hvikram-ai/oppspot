@@ -61,8 +61,8 @@ export class SimilarityExplanationService {
     metrics: ExplanationMetrics
   }> {
     const startTime = Date.now()
-    let retryCount = 0
-    let tokensUsed = 0
+    const retryCount = 0
+    const tokensUsed = 0
 
     const prompt = this.buildSimilarityExplanationPrompt(context)
     
@@ -101,7 +101,7 @@ export class SimilarityExplanationService {
     metrics: ExplanationMetrics
   }> {
     const startTime = Date.now()
-    let tokensUsed = 0
+    const tokensUsed = 0
 
     const prompt = this.buildMnAInsightsPrompt(context)
     
@@ -720,7 +720,7 @@ Frame recommendations in terms of:
   private assessDataQuality(context: ExplanationPromptContext): string {
     const { targetCompany, similarCompany, benchmarkScores } = context
     
-    let issues: string[] = []
+    const issues: string[] = []
     
     if (!targetCompany.description) issues.push('limited target company description')
     if (!similarCompany.description) issues.push('limited similar company description')

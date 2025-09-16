@@ -205,7 +205,7 @@ export class DatabaseSimilaritySearch {
     targetData: BusinessRecord | null
   ): CompanySearchResult {
     let similarityScore = 0
-    let matchFactors: string[] = []
+    const matchFactors: string[] = []
 
     // Name similarity (0-0.3)
     const nameSimilarity = this.calculateNameSimilarity(business.name, targetName)

@@ -12,6 +12,9 @@ import { RelatedBusinesses } from '@/components/business/related-businesses'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Navbar } from '@/components/layout/navbar'
 import { getMockCompany, getMockRelatedCompanies } from '@/lib/mock-data/companies'
+import { Database } from '@/lib/supabase/database.types'
+
+type Business = Database['public']['Tables']['businesses']['Row']
 
 interface BusinessPageProps {
   params: {
@@ -66,17 +69,17 @@ export async function generateMetadata({ params }: BusinessPageProps) {
 }
 
 export default async function BusinessPage({ params }: BusinessPageProps) {
-  let business: any
-  let relatedBusinesses: any[] | null = null
+  let business: Business | Record<string, any> | null = null
+  let relatedBusinesses: (Business | Record<string, any>)[] | null = null
 
   // Check if it's a mock company first
   if (params.id.startsWith('mock-')) {
-    business = getMockCompany(params.id)
+    business = getMockCompany(params.id) as any
     if (!business) {
       notFound()
     }
     // Get mock related businesses
-    relatedBusinesses = getMockRelatedCompanies(params.id, 6)
+    relatedBusinesses = getMockRelatedCompanies(params.id, 6) as any
   } else {
     // Fetch from database for real companies
     const supabase = await createClient()

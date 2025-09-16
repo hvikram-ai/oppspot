@@ -84,8 +84,8 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     } = options
 
     try {
-      let finalPrompt = prompt
-      let finalSystemPrompt = system_prompt
+      const finalPrompt = prompt
+      const finalSystemPrompt = system_prompt
       let finalOptions = options
 
       // Apply Llama optimization if using Llama model

@@ -444,7 +444,7 @@ export class SimilarityScoringService {
 
     if (!targetDebt || !candidateDebt) return 0.5
 
-    let similarities: number[] = []
+    const similarities: number[] = []
 
     // Debt-to-equity ratio similarity
     if (targetDebt.debtToEquityRatio && candidateDebt.debtToEquityRatio) {
@@ -471,7 +471,7 @@ export class SimilarityScoringService {
 
     if (!targetVal || !candidateVal) return 0.5
 
-    let similarities: number[] = []
+    const similarities: number[] = []
 
     // EV/Revenue multiple similarity
     if (targetVal.evToRevenue && candidateVal.evToRevenue) {
@@ -496,7 +496,7 @@ export class SimilarityScoringService {
 
     if (!targetCF || !candidateCF) return 0.5
 
-    let similarities: number[] = []
+    const similarities: number[] = []
 
     // Cash flow volatility similarity
     if (targetCF.cashFlowVolatility !== undefined && candidateCF.cashFlowVolatility !== undefined) {
@@ -564,7 +564,7 @@ export class SimilarityScoringService {
 
     if (!targetCustomer || !candidateCustomer) return 0.5
 
-    let similarities: number[] = []
+    const similarities: number[] = []
 
     // Customer concentration risk similarity
     if (targetCustomer.customerConcentration && candidateCustomer.customerConcentration) {
@@ -590,7 +590,7 @@ export class SimilarityScoringService {
 
     if (!targetTech || !candidateTech) return 0.5
 
-    let similarities: number[] = []
+    const similarities: number[] = []
 
     // Digital maturity similarity
     if (targetTech.digitalMaturity !== undefined && candidateTech.digitalMaturity !== undefined) {
@@ -809,7 +809,7 @@ export class SimilarityScoringService {
 
     if (!targetTech || !candidateTech) return 0.5
 
-    let similarities: number[] = []
+    const similarities: number[] = []
 
     // Technology risk levels comparison
     const riskLevels = { low: 1, medium: 2, high: 3 }
@@ -850,7 +850,7 @@ export class SimilarityScoringService {
 
   private calculateFinancialConfidence(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
     let dataPoints = 0
-    let totalPoints = 8 // Maximum possible data points
+    const totalPoints = 8 // Maximum possible data points
 
     if (target.estimatedRevenue && candidate.estimatedRevenue) dataPoints++
     if (target.profitabilityMetrics && candidate.profitabilityMetrics) dataPoints++
@@ -864,7 +864,7 @@ export class SimilarityScoringService {
 
   private calculateStrategicConfidence(target: MnAStrategicProfile, candidate: MnAStrategicProfile): number {
     let dataPoints = 0
-    let totalPoints = 5
+    const totalPoints = 5
 
     if (target.marketPosition && candidate.marketPosition) dataPoints++
     if (target.geographicPresence && candidate.geographicPresence) dataPoints++
@@ -877,7 +877,7 @@ export class SimilarityScoringService {
 
   private calculateOperationalConfidence(target: MnAOperationalProfile, candidate: MnAOperationalProfile): number {
     let dataPoints = 0
-    let totalPoints = 4
+    const totalPoints = 4
 
     if (target.businessModel && candidate.businessModel) dataPoints++
     if (target.operationalScale && candidate.operationalScale) dataPoints++
@@ -889,7 +889,7 @@ export class SimilarityScoringService {
 
   private calculateMarketConfidence(target: MnAMarketProfile, candidate: MnAMarketProfile): number {
     let dataPoints = 0
-    let totalPoints = 4
+    const totalPoints = 4
 
     if (target.industryVertical && candidate.industryVertical) dataPoints++
     if (target.marketMaturity && candidate.marketMaturity) dataPoints++
@@ -901,7 +901,7 @@ export class SimilarityScoringService {
 
   private calculateRiskConfidence(target: MnARiskProfile, candidate: MnARiskProfile): number {
     let dataPoints = 0
-    let totalPoints = 5
+    const totalPoints = 5
 
     if (target.regulatoryRisk && candidate.regulatoryRisk) dataPoints++
     if (target.integrationComplexity && candidate.integrationComplexity) dataPoints++

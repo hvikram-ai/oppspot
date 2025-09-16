@@ -147,8 +147,8 @@ export class ChatOrchestrator {
       const toolsNeeded = await this.analyzeIntent(userMessage)
       
       // Execute tools if needed
-      let toolResults: ToolCall[] = []
-      let citations: Citation[] = []
+      const toolResults: ToolCall[] = []
+      const citations: Citation[] = []
       
       if (toolsNeeded.length > 0) {
         onStream?.({

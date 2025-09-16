@@ -3,35 +3,71 @@
 import { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { CompanyCard } from '@/components/companies/company-card'
-import { CompanyStatusBadge } from '@/components/companies/company-status-badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Search, 
   Building2, 
-  RefreshCw, 
   Download, 
-  Filter, 
-  TrendingUp,
-  AlertCircle,
-  Info,
-  CheckCircle,
-  Clock
+  TrendingUp
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+interface User {
+  id: string
+  email: string
+}
+
+interface Address {
+  formatted?: string
+  street?: string
+  city?: string
+  postal_code?: string
+  country?: string
+}
+
+interface RegisteredOfficeAddress {
+  address_line_1?: string
+  address_line_2?: string
+  locality?: string
+  postal_code?: string
+  country?: string
+}
+
+interface Company {
+  id: string
+  name: string
+  company_number?: string
+  company_status?: string
+  company_type?: string
+  incorporation_date?: string
+  sic_codes?: string[]
+  registered_office_address?: RegisteredOfficeAddress
+  address?: Address
+  companies_house_last_updated?: string
+  cache_expires_at?: string
+  source?: string
+  cache_age?: number
+}
+
+interface SearchStats {
+  cache: number
+  api: number
+  created?: number
+  mock?: number
+}
+
 export default function CompaniesPage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [selectedCompany, setSelectedCompany] = useState<any>(null)
+  const [searchResults, setSearchResults] = useState<Company[]>([])
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [searchStats, setSearchStats] = useState<any>(null)
+  const [searchStats, setSearchStats] = useState<SearchStats | null>(null)
   
   // Check authentication
   useEffect(() => {
@@ -120,7 +156,6 @@ export default function CompaniesPage() {
       })
       
       if (response.ok) {
-        const data = await response.json()
         toast.success('Company data refreshed successfully!')
         // Refresh the search results
         if (searchQuery) {
@@ -135,47 +170,6 @@ export default function CompaniesPage() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    const colors: any = {
-      'active': 'bg-green-100 text-green-800',
-      'dissolved': 'bg-red-100 text-red-800',
-      'liquidation': 'bg-orange-100 text-orange-800',
-      'dormant': 'bg-gray-100 text-gray-800'
-    }
-    
-    return (
-      <Badge className={colors[status] || 'bg-gray-100 text-gray-800'}>
-        {status}
-      </Badge>
-    )
-  }
-
-  const getCacheStatus = (company: any) => {
-    if (!company.cache_age) return null
-    
-    if (company.source === 'cache') {
-      return (
-        <span className="flex items-center text-sm text-green-600">
-          <CheckCircle className="w-4 h-4 mr-1" />
-          Cached ({company.cache_age}h ago)
-        </span>
-      )
-    } else if (company.source === 'cache_expired') {
-      return (
-        <span className="flex items-center text-sm text-orange-600">
-          <AlertCircle className="w-4 h-4 mr-1" />
-          Cache expired
-        </span>
-      )
-    } else {
-      return (
-        <span className="flex items-center text-sm text-blue-600">
-          <Clock className="w-4 h-4 mr-1" />
-          Fresh data
-        </span>
-      )
-    }
-  }
 
   return (
     <>

@@ -86,7 +86,7 @@ export class SimilarCompanyUseCase {
   ): Promise<AnalysisResult> {
     const startTime = Date.now()
     const analysisId = request.analysisId || this.generateAnalysisId()
-    let metrics: AnalysisMetrics = {
+    const metrics: AnalysisMetrics = {
       totalProcessingTime: 0,
       apiCallsMade: 0,
       llmTokensUsed: 0,

@@ -18,10 +18,35 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
+interface Company {
+  id: string
+  name: string
+  company_number?: string
+  company_status?: string
+  company_type?: string
+  incorporation_date?: string
+  sic_codes?: string[]
+  registered_office_address?: {
+    address_line_1?: string
+    address_line_2?: string
+    locality?: string
+    postal_code?: string
+    country?: string
+  }
+  address?: {
+    city?: string
+    postal_code?: string
+  }
+  companies_house_last_updated?: string | null
+  cache_expires_at?: string | null
+  source?: string
+  cache_age?: number
+}
+
 interface CompanyCardProps {
-  company: any
+  company: Company
   onRefresh?: (companyId: string) => void
-  onClick?: (company: any) => void
+  onClick?: (company: Company) => void
   showCacheStatus?: boolean
 }
 
