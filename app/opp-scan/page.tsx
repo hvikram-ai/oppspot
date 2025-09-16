@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
+import { User } from '@supabase/supabase-js'
 import { Navbar } from '@/components/layout/navbar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -51,7 +52,7 @@ function OppScanPageContent() {
   const { isDemoMode, demoData, getDemoScans } = useDemoMode()
   const [scans, setScans] = useState<AcquisitionScan[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
 
   useEffect(() => {

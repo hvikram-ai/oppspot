@@ -1,4 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
 import { subDays, format } from 'date-fns'
 
 interface TrendAnalysis {
@@ -8,8 +12,8 @@ interface TrendAnalysis {
   trendStrength: number // 0-1
   confidenceScore: number // 0-1
   periodDays: number
-  metrics: Record<string, any>
-  predictions: Record<string, any>
+  metrics: Record<string, unknown>
+  predictions: Record<string, unknown>
   insights: string[]
 }
 
@@ -19,7 +23,7 @@ interface TimeSeriesData {
 }
 
 export class TrendAnalyzer {
-  private supabase: any
+  private supabase: DbClient | null = null
 
   constructor() {
     this.initSupabase()

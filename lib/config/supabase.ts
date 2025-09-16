@@ -9,11 +9,11 @@ export const supabaseConfig = {
 // Use environment variables if available, otherwise use hardcoded values
 export function getSupabaseConfig() {
   const url = typeof window !== 'undefined' 
-    ? (window as any).__NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || supabaseConfig.url
+    ? ((window as { __NEXT_PUBLIC_SUPABASE_URL?: string }).__NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || supabaseConfig.url)
     : process.env.NEXT_PUBLIC_SUPABASE_URL || supabaseConfig.url
     
   const anonKey = typeof window !== 'undefined'
-    ? (window as any).__NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || supabaseConfig.anonKey
+    ? ((window as { __NEXT_PUBLIC_SUPABASE_ANON_KEY?: string }).__NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || supabaseConfig.anonKey)
     : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || supabaseConfig.anonKey
     
   return { url, anonKey }

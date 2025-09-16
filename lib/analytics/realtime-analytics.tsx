@@ -11,13 +11,13 @@ interface MarketSignal {
   location_id?: string
   signal_strength: number
   impact_score: number
-  data: any
+  data: Record<string, unknown>
   detected_at: string
 }
 
 interface AnalyticsUpdate {
   type: 'market_signal' | 'anomaly' | 'opportunity' | 'metric_update'
-  data: any
+  data: Record<string, unknown>
   timestamp: string
 }
 

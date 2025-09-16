@@ -1,4 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/database.types'
+
+type DbClient = SupabaseClient<Database>
 import { format, addDays } from 'date-fns'
 
 interface Opportunity {
@@ -12,7 +16,7 @@ interface Opportunity {
   timeWindowEnd: string
   confidenceScore: number // 0-1
   description: string
-  evidence: Record<string, any>
+  evidence: Record<string, unknown>
   recommendedActions: string[]
   riskFactors: string[]
 }
@@ -24,7 +28,7 @@ interface MarketGap {
 }
 
 export class OpportunityIdentifier {
-  private supabase: any
+  private supabase: DbClient | null = null
 
   constructor() {
     this.initSupabase()

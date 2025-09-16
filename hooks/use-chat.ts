@@ -8,7 +8,7 @@ interface ChatMessage {
   content: string
   timestamp?: string
   confidence?: number
-  tool_calls?: any[]
+  tool_calls?: unknown[]
 }
 
 interface Citation {
@@ -19,11 +19,11 @@ interface Citation {
   snippet: string
   confidence: number
   relevance: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 interface UseChatOptions {
-  context?: Record<string, any>
+  context?: Record<string, unknown>
   onMessage?: (message: ChatMessage) => void
   onCitation?: (citations: Citation[]) => void
   onError?: (error: Error) => void
@@ -63,7 +63,7 @@ export function useChat(options: UseChatOptions = {}) {
       if (response.ok) {
         const data = await response.json()
         if (data.messages) {
-          setMessages(data.messages.map((msg: any) => ({
+          setMessages(data.messages.map((msg: { role: string; content: string; created_at?: string; confidence_score?: number; tool_calls?: unknown[] }) => ({
             role: msg.role,
             content: msg.content,
             timestamp: msg.created_at,
