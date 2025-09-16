@@ -52,7 +52,7 @@ export class SimpleOllamaClient {
       const response = await fetch(`${this.baseUrl}/api/tags`)
       if (!response.ok) return []
       const data = await response.json()
-      return data.models?.map((m: any) => m.name) || []
+      return data.models?.map((m: { name: string }) => m.name) || []
     } catch {
       return []
     }

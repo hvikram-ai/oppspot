@@ -15,14 +15,14 @@ export interface ChatMessage {
   tool_calls?: ToolCall[]
   citations?: Citation[]
   confidence?: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface ToolCall {
   id: string
   name: string
-  arguments: Record<string, any>
-  result?: any
+  arguments: Record<string, unknown>
+  result?: unknown
 }
 
 export interface Citation {
@@ -33,15 +33,15 @@ export interface Citation {
   snippet: string
   confidence: number
   relevance: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface ChatContext {
   session_id: string
   user_id?: string
   current_page?: string
-  current_context?: Record<string, any>
-  preferences?: Record<string, any>
+  current_context?: Record<string, unknown>
+  preferences?: Record<string, unknown>
 }
 
 export interface StreamChunk {

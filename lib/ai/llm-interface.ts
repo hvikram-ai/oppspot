@@ -69,7 +69,7 @@ export interface LLMProvider {
   /**
    * Get available models and their capabilities
    */
-  getModelCapabilities(): Record<string, ModelCapabilities | any>
+  getModelCapabilities(): Record<string, ModelCapabilities | unknown>
 
   /**
    * Estimate tokens in given text

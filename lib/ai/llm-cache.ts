@@ -34,7 +34,7 @@ export class MemoryLLMCache implements LLMCache {
   /**
    * Generate cache key from prompt and options
    */
-  private generateCacheKey(prompt: string, options: any = {}): string {
+  private generateCacheKey(prompt: string, options: Record<string, unknown> = {}): string {
     const normalizedOptions = {
       model: options.model || 'default',
       temperature: options.temperature || 0.7,
