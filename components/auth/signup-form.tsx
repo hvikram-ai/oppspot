@@ -191,10 +191,9 @@ export function SignupForm() {
 
   const handleGoogleSignUp = async () => {
     setLoading(true)
-    // Use the actual Vercel deployment URL that exists
-    const redirectUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/auth/callback'
-      : `${window.location.origin}/auth/callback`
+    // Always use the current window origin for OAuth callback
+    // This works for any deployment URL automatically
+    const redirectUrl = `${window.location.origin}/auth/callback`
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

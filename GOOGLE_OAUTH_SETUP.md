@@ -72,10 +72,13 @@ This guide will help you configure Google OAuth authentication for your oppSpot 
    https://fuqdbewftdthbjfcecrz.supabase.co/auth/v1/callback
    http://localhost:3000/auth/callback
    http://localhost:3001/auth/callback
-   https://oppspot.vercel.app/auth/callback
    https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/auth/callback
+   
+   # Add any other deployment URLs you use:
    https://your-custom-domain.com/auth/callback (if applicable)
    ```
+   
+   **Important**: Add the callback URL for EVERY domain you'll access the app from
 
 7. Click "Create"
 8. **IMPORTANT**: Copy and save:
