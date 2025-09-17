@@ -222,3 +222,51 @@ Password: Demo123456!
 - ✅ Safe testing environment (no real data affected)
 
 **Note**: Demo mode uses static sample data and disables certain destructive actions to protect the testing environment.
+
+## Deployment Information
+
+### Production URLs
+- **Primary Vercel Deployment**: https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/
+- **Custom Domain**: https://oppspot.vercel.app/
+- **Alternative Domain**: https://oppspot.ai/ (if configured)
+
+### Deployment Platform
+- **Hosting**: Vercel (automatic deployment on push to main branch)
+- **Repository**: https://github.com/hvikram-ai/oppspot
+- **Build Command**: `npm run build`
+- **Output Directory**: `.next`
+- **Install Command**: `npm install --legacy-peer-deps`
+
+### Authentication Configuration
+
+#### Supabase Project
+- **Project URL**: https://fuqdbewftdthbjfcecrz.supabase.co
+- **Dashboard**: https://supabase.com/dashboard/project/fuqdbewftdthbjfcecrz
+
+#### Google OAuth Setup
+- **Google Cloud Project**: oppspot-auth
+- **Client ID**: `263810366717-fq7h33gqehburgsmujusuudqfqkk67ch.apps.googleusercontent.com`
+- **OAuth Callback**: `https://fuqdbewftdthbjfcecrz.supabase.co/auth/v1/callback`
+- **Setup Guide**: See `GOOGLE_OAUTH_SETUP.md` for complete configuration
+
+### Important URLs for OAuth Configuration
+When configuring OAuth providers, use these URLs:
+
+**Authorized JavaScript Origins:**
+```
+http://localhost:3000
+http://localhost:3001
+https://oppspot.vercel.app
+https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app
+https://oppspot.ai
+```
+
+**Authorized Redirect URIs:**
+```
+https://fuqdbewftdthbjfcecrz.supabase.co/auth/v1/callback
+http://localhost:3000/auth/callback
+http://localhost:3001/auth/callback
+https://oppspot.vercel.app/auth/callback
+https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/auth/callback
+https://oppspot.ai/auth/callback
+```
