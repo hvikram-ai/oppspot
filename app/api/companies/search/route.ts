@@ -310,60 +310,29 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Process API results
+        // Process API results - return them directly without database operations for now
+        console.log(`Processing ${apiResults.items.length} search results`)
+
         for (const apiCompany of apiResults.items) {
-          // Check if company already exists in database
-          const { data: existing } = await supabase
-            .from('businesses')
-            .select('id')
-            .eq('company_number', apiCompany.company_number)
-            .single()
-
-          if (existing) {
-            // Update existing record with latest data
-            const companyProfile = await companiesHouse.getCompanyProfile(apiCompany.company_number)
-            const updates = companiesHouse.formatForDatabase(companyProfile)
-            
-            await supabase
-              .from('businesses')
-              .update(updates)
-              .eq('id', existing.id)
-
-            const { data: updated } = await supabase
-              .from('businesses')
-              .select('*')
-              .eq('id', existing.id)
-              .single()
-
+          try {
+            // For now, just return the search results directly
+            // Database operations can be done later if needed
             results.push({
-              ...updated,
-              source: 'api_updated',
+              id: `api-${apiCompany.company_number}`,
+              company_number: apiCompany.company_number,
+              name: apiCompany.title || apiCompany.company_name,
+              company_status: apiCompany.company_status,
+              company_type: apiCompany.company_type,
+              date_of_creation: apiCompany.date_of_creation,
+              registered_office_address: apiCompany.address || {},
+              snippet: apiCompany.snippet,
+              source: 'api',
               cache_age: 0
             })
             sources.api++
-          } else {
-            // Create new business record
-            const companyProfile = await companiesHouse.getCompanyProfile(apiCompany.company_number)
-            const newBusiness = companiesHouse.formatForDatabase(companyProfile)
-            
-            const { data: created, error } = await supabase
-              .from('businesses')
-              .insert({
-                ...newBusiness,
-                slug: generateSlug(companyProfile.company_name),
-                verified_at: new Date().toISOString()
-              })
-              .select()
-              .single()
-
-            if (!error && created) {
-              results.push({
-                ...created,
-                source: 'api_created',
-                cache_age: 0
-              })
-              sources.created++
-            }
+          } catch (itemError) {
+            console.error(`Failed to process company ${apiCompany.company_number}:`, itemError)
+            // Continue processing other results
           }
         }
 
