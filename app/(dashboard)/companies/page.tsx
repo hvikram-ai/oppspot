@@ -110,9 +110,10 @@ export default function CompaniesPage() {
         credentials: 'include',
         body: JSON.stringify({ query: searchQuery, limit: 10, demo: isDemo })
       })
-      
+
       if (!response.ok) {
-        throw new Error('Search failed')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || errorData.message || 'Search failed')
       }
       
       const data = await response.json()
@@ -137,8 +138,9 @@ export default function CompaniesPage() {
         toast.success(message)
       }
     } catch (err) {
-      setError('Failed to search companies. Please try again.')
-      console.error(err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search companies'
+      setError(errorMessage)
+      console.error('Search error:', err)
     } finally {
       setLoading(false)
     }
