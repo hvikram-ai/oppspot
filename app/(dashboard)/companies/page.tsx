@@ -44,13 +44,17 @@ interface Company {
   company_status?: string
   company_type?: string
   incorporation_date?: string
+  date_of_creation?: string
   sic_codes?: string[]
   registered_office_address?: RegisteredOfficeAddress
   address?: Address
   companies_house_last_updated?: string
+  companies_house_data?: any
   cache_expires_at?: string
   source?: string
   cache_age?: number
+  enrichment_status?: string
+  snippet?: string
 }
 
 interface SearchStats {
@@ -69,6 +73,8 @@ export default function CompaniesPage() {
   const [error, setError] = useState('')
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [enrichmentStatus, setEnrichmentStatus] = useState<Record<string, string>>({})
+  const [enrichedData, setEnrichedData] = useState<Record<string, Company>>({})
 
   // Check authentication
   useEffect(() => {
@@ -92,6 +98,87 @@ export default function CompaniesPage() {
     }
     checkAuth()
   }, [])
+
+  // Function to fetch enriched company data
+  const fetchEnrichedData = async (companyNumber: string) => {
+    try {
+      const response = await fetch(`/api/companies/${companyNumber}/enrich`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.exists) {
+          // Fetch the full enriched data
+          const enrichResponse = await fetch(`/api/companies/${companyNumber}/enrich`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+          })
+
+          if (enrichResponse.ok) {
+            const enrichedCompany = await enrichResponse.json()
+            if (enrichedCompany.company) {
+              setEnrichedData(prev => ({
+                ...prev,
+                [companyNumber]: enrichedCompany.company
+              }))
+              setEnrichmentStatus(prev => ({
+                ...prev,
+                [companyNumber]: 'completed'
+              }))
+
+              // Update the search results with enriched data
+              setSearchResults(prev => prev.map(company =>
+                company.company_number === companyNumber
+                  ? { ...company, ...enrichedCompany.company }
+                  : company
+              ))
+
+              // Update selected company if it's the one being enriched
+              if (selectedCompany?.company_number === companyNumber) {
+                setSelectedCompany({ ...selectedCompany, ...enrichedCompany.company })
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to fetch enriched data for ${companyNumber}:`, err)
+      setEnrichmentStatus(prev => ({
+        ...prev,
+        [companyNumber]: 'failed'
+      }))
+    }
+  }
+
+  // Poll for enrichment status after search
+  useEffect(() => {
+    const pendingCompanies = searchResults.filter(
+      company => company.company_number && enrichmentStatus[company.company_number] === 'pending'
+    )
+
+    if (pendingCompanies.length === 0) return
+
+    const interval = setInterval(() => {
+      pendingCompanies.forEach(company => {
+        if (company.company_number) {
+          fetchEnrichedData(company.company_number)
+        }
+      })
+    }, 3000) // Poll every 3 seconds
+
+    // Stop polling after 30 seconds
+    const timeout = setTimeout(() => {
+      clearInterval(interval)
+    }, 30000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeout)
+    }
+  }, [searchResults, enrichmentStatus])
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
@@ -119,6 +206,15 @@ export default function CompaniesPage() {
       const data = await response.json()
       setSearchResults(data.results || [])
       setSearchStats(data.sources || null)
+
+      // Track enrichment status for each company
+      const statusMap: Record<string, string> = {}
+      data.results?.forEach((company: Company) => {
+        if (company.company_number) {
+          statusMap[company.company_number] = company.enrichment_status || 'pending'
+        }
+      })
+      setEnrichmentStatus(statusMap)
       
       // Show warning if API error
       if (data.warning) {
@@ -325,24 +421,72 @@ export default function CompaniesPage() {
                 </TabsList>
                 
                 <TabsContent value="overview" className="space-y-4">
+                  {enrichmentStatus[selectedCompany.company_number!] === 'pending' && (
+                    <Alert>
+                      <AlertDescription>
+                        🔄 Fetching full company profile from Companies House...
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="font-medium">Status</p>
-                      <p>{selectedCompany.company_status || 'N/A'}</p>
+                      <p className="capitalize">{selectedCompany.company_status || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="font-medium">Type</p>
-                      <p>{selectedCompany.company_type || 'N/A'}</p>
+                      <p className="uppercase">{selectedCompany.company_type || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="font-medium">Incorporated</p>
-                      <p>{selectedCompany.incorporation_date || 'N/A'}</p>
+                      <p>{selectedCompany.incorporation_date || selectedCompany.date_of_creation || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="font-medium">SIC Codes</p>
                       <p>{selectedCompany.sic_codes?.join(', ') || 'N/A'}</p>
                     </div>
                   </div>
+
+                  {/* Show additional data if enriched */}
+                  {selectedCompany.companies_house_data && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-semibold mb-2">Additional Information</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        {selectedCompany.companies_house_data.accounts && (
+                          <>
+                            <div>
+                              <p className="font-medium">Next Accounts Due</p>
+                              <p>{selectedCompany.companies_house_data.accounts.next_due || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Last Accounts</p>
+                              <p>{selectedCompany.companies_house_data.accounts.last_accounts?.made_up_to || 'N/A'}</p>
+                            </div>
+                          </>
+                        )}
+                        {selectedCompany.companies_house_data.confirmation_statement && (
+                          <div>
+                            <p className="font-medium">Next Statement Due</p>
+                            <p>{selectedCompany.companies_house_data.confirmation_statement.next_due || 'N/A'}</p>
+                          </div>
+                        )}
+                        {selectedCompany.companies_house_data.jurisdiction && (
+                          <div>
+                            <p className="font-medium">Jurisdiction</p>
+                            <p>{selectedCompany.companies_house_data.jurisdiction}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cache status */}
+                  {selectedCompany.cache_expires_at && (
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Data cached until: {new Date(selectedCompany.cache_expires_at).toLocaleString()}
+                    </div>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="address">

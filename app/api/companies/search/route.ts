@@ -310,13 +310,12 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Process API results - return them directly without database operations for now
+        // Process API results - return them immediately and trigger background enrichment
         console.log(`Processing ${apiResults.items.length} search results`)
 
         for (const apiCompany of apiResults.items) {
           try {
-            // For now, just return the search results directly
-            // Database operations can be done later if needed
+            // Return the search results immediately
             results.push({
               id: `api-${apiCompany.company_number}`,
               company_number: apiCompany.company_number,
@@ -327,13 +326,51 @@ export async function POST(request: NextRequest) {
               registered_office_address: apiCompany.address || {},
               snippet: apiCompany.snippet,
               source: 'api',
-              cache_age: 0
+              cache_age: 0,
+              enrichment_status: 'pending' // Indicate enrichment will happen
             })
             sources.api++
           } catch (itemError) {
             console.error(`Failed to process company ${apiCompany.company_number}:`, itemError)
             // Continue processing other results
           }
+        }
+
+        // Trigger background enrichment for all companies (non-blocking)
+        if (results.length > 0 && !demo) {
+          console.log(`Triggering background enrichment for ${results.length} companies`)
+
+          // Use Promise.allSettled to enrich all companies in parallel without blocking
+          const enrichmentPromises = results
+            .filter(company => company.company_number) // Only companies with numbers
+            .map(company => {
+              // Call the enrich endpoint for each company
+              const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+                              `https://${process.env.VERCEL_URL}` ||
+                              'http://localhost:3000'
+
+              return fetch(`${baseUrl}/api/companies/${company.company_number}/enrich`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              })
+              .then(res => res.json())
+              .then(data => {
+                console.log(`Enriched ${company.company_number}:`, data.source)
+                return data
+              })
+              .catch(err => {
+                console.error(`Failed to enrich ${company.company_number}:`, err)
+                return null
+              })
+            })
+
+          // Don't await - let enrichment happen in background
+          Promise.allSettled(enrichmentPromises)
+            .then(results => {
+              const succeeded = results.filter(r => r.status === 'fulfilled' && r.value).length
+              console.log(`Background enrichment completed: ${succeeded}/${results.length} succeeded`)
+            })
+            .catch(err => console.error('Background enrichment error:', err))
         }
 
         // Add pagination info
