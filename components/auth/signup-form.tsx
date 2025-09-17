@@ -175,10 +175,10 @@ export function SignupForm() {
         }
 
         // Success! User is automatically logged in
-        toast.success('Welcome to oppSpot! Let&apos;s get you set up.')
+        toast.success('Welcome to oppSpot! Your account is ready.')
         
-        // Redirect to onboarding
-        router.push('/onboarding')
+        // Redirect directly to dashboard
+        router.push('/dashboard')
       }
     } catch (error) {
       console.error('Signup error:', error)
@@ -194,7 +194,7 @@ export function SignupForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/onboarding`,
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     })
 

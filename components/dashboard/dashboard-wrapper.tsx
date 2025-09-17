@@ -20,12 +20,17 @@ import { SavedSearches } from '@/components/dashboard/saved-searches'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { BusinessInsights } from '@/components/dashboard/business-insights'
 import { UpcomingTasks } from '@/components/dashboard/upcoming-tasks'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Sparkles, X } from 'lucide-react'
+import Link from 'next/link'
 
 export function DashboardWrapper() {
   const { isDemoMode, demoData } = useDemoMode()
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showOnboardingPrompt, setShowOnboardingPrompt] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -104,11 +109,11 @@ export function DashboardWrapper() {
       // Special bypass for demo account
       const isDemoAccount = user.email === 'demo@oppspot.com' || profile?.email === 'demo@oppspot.com'
       
-      // Redirect to onboarding if not completed (unless premium user or demo)
-      if (!profile?.onboarding_completed && !isPremium && !isDemoAccount) {
-        router.push('/onboarding')
-        return
-      }
+      // Don't auto-redirect to onboarding anymore - it's optional
+      // Show prompt instead if onboarding not completed
+      const preferences = profile?.preferences as Record<string, unknown> | undefined
+      const hasCompletedOnboarding = preferences?.onboarding_completed === true || profile?.onboarding_completed === true
+      setShowOnboardingPrompt(!hasCompletedOnboarding && !isPremium && !isDemoAccount)
 
       setProfile(profile)
       setLoading(false)
@@ -136,6 +141,34 @@ export function DashboardWrapper() {
       <DashboardHeader user={user} profile={profile} />
       
       <div className="container mx-auto px-4 py-8">
+        {/* Onboarding Prompt */}
+        {showOnboardingPrompt && (
+          <Alert className="mb-6 relative">
+            <Sparkles className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <div>
+                <strong>Personalize your experience!</strong>
+                <p className="text-sm mt-1">
+                  Take a moment to tell us about your business goals and we'll tailor oppSpot just for you.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 ml-4">
+                <Link href="/onboarding">
+                  <Button size="sm">
+                    Get Started
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowOnboardingPrompt(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <StatsOverview />

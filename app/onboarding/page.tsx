@@ -27,8 +27,8 @@ import {
 const steps = [
   {
     id: 'company',
-    title: 'Tell us about your company',
-    description: 'Help us personalize your experience',
+    title: 'Personalize Your Experience (Optional)',
+    description: 'Help us tailor oppSpot to your needs',
     icon: Building2,
   },
   {
@@ -93,6 +93,11 @@ export default function OnboardingPage() {
       router.push('/login')
     }
   }, [router, supabase])
+
+  const skipOnboarding = async () => {
+    toast.success('You can personalize your experience anytime from Settings')
+    router.push('/dashboard')
+  }
 
   useEffect(() => {
     checkAuth()
@@ -391,13 +396,17 @@ export default function OnboardingPage() {
         </AnimatePresence>
 
         {/* Skip Option */}
-        <div className="text-center mt-4">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-sm text-muted-foreground hover:text-primary"
+        <div className="text-center mt-6 space-y-2">
+          <Button
+            variant="ghost"
+            onClick={skipOnboarding}
+            className="text-muted-foreground hover:text-primary"
           >
-            Skip for now
-          </button>
+            Skip for now →
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            You can personalize your experience anytime from Settings
+          </p>
         </div>
       </div>
     </div>
