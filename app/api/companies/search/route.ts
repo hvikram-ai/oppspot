@@ -139,25 +139,38 @@ function getMockCompanyResults(query: string): MockCompany[] {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    
+
     const body = await request.json()
-    const { 
-      query, 
-      useCache = true, 
+    const {
+      query,
+      useCache = true,
       limit = 20,
       offset = 0,
-      demo = false 
+      demo = false
     } = body
-    
+
     console.log('Companies search request:', { query, demo, useCache })
-    
-    // Check authentication (skip for demo mode)
-    if (!demo) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Check authentication but make it optional
+    let user = null
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser()
+      if (authError) {
+        console.log('Auth check error:', authError.message)
+      } else {
+        user = authData.user
       }
+    } catch (authCheckError) {
+      console.error('Failed to check auth:', authCheckError)
     }
+
+    // Log auth status for debugging
+    console.log('Auth status:', {
+      isAuthenticated: !!user,
+      userId: user?.id,
+      demo,
+      hasApiKey: !!process.env.COMPANIES_HOUSE_API_KEY
+    })
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json(
@@ -280,10 +293,9 @@ export async function POST(request: NextRequest) {
           })
         }
         
-        // Log API call for auditing (skip in demo mode)
-        if (!demo) {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
+        // Log API call for auditing (only if user is authenticated)
+        if (user && !demo) {
+          try {
             await supabase.from('api_audit_log').insert({
               api_name: 'companies_house',
               endpoint: '/search/companies',
@@ -292,6 +304,9 @@ export async function POST(request: NextRequest) {
               response_data: { total_results: apiResults.total_results },
               user_id: user.id
             })
+          } catch (logError) {
+            console.log('Failed to log API call:', logError)
+            // Continue even if logging fails
           }
         }
 
@@ -371,10 +386,9 @@ export async function POST(request: NextRequest) {
       } catch (apiError) {
         console.error('Companies House API error:', apiError)
         
-        // Log failed API call (skip in demo mode)
-        if (!demo) {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
+        // Log failed API call (only if user is authenticated)
+        if (user && !demo) {
+          try {
             await supabase.from('api_audit_log').insert({
               api_name: 'companies_house',
               endpoint: '/search/companies',
@@ -383,6 +397,9 @@ export async function POST(request: NextRequest) {
               error_message: apiError instanceof Error ? apiError.message : 'Unknown error',
               user_id: user.id
             })
+          } catch (logError) {
+            console.log('Failed to log API error:', logError)
+            // Continue even if logging fails
           }
         }
 

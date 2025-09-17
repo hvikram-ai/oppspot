@@ -141,6 +141,31 @@ export default function CompaniesPage() {
       const errorMessage = err instanceof Error ? err.message : 'Failed to search companies'
       setError(errorMessage)
       console.error('Search error:', err)
+
+      // Check configuration if search fails
+      try {
+        const configResponse = await fetch('/api/companies/check-config')
+        const configData = await configResponse.json()
+        console.log('Configuration status:', configData)
+
+        if (configData.config?.companies_house?.api_key_configured === false) {
+          setError('Companies House API is not configured. Using demo data.')
+          // Try demo search
+          const demoResponse = await fetch('/api/companies/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ query: searchQuery, limit: 10, demo: true })
+          })
+          if (demoResponse.ok) {
+            const demoData = await demoResponse.json()
+            setSearchResults(demoData.results || [])
+            toast.info('Showing demo results - API not configured')
+          }
+        }
+      } catch (configError) {
+        console.error('Config check failed:', configError)
+      }
     } finally {
       setLoading(false)
     }
