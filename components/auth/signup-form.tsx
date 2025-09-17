@@ -191,9 +191,9 @@ export function SignupForm() {
 
   const handleGoogleSignUp = async () => {
     setLoading(true)
-    // Use production URL for OAuth callback to avoid Vercel auth issues
+    // Use the actual Vercel deployment URL that exists
     const redirectUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://oppspot.vercel.app/auth/callback'
+      ? 'https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/auth/callback'
       : `${window.location.origin}/auth/callback`
     
     const { error } = await supabase.auth.signInWithOAuth({
