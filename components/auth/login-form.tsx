@@ -101,7 +101,12 @@ export function LoginForm() {
     })
 
     if (error) {
-      toast.error(error.message)
+      console.error('Google OAuth error:', error)
+      if (error.message.includes('OAuth')) {
+        toast.error('Google sign-in is not configured. Please use email/password login or contact support.')
+      } else {
+        toast.error(error.message)
+      }
     }
     setLoading(false)
   }
