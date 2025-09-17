@@ -63,6 +63,7 @@ This guide will help you configure Google OAuth authentication for your oppSpot 
    http://localhost:3000
    http://localhost:3001
    https://oppspot.vercel.app
+   https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app
    https://your-custom-domain.com (if applicable)
    ```
 
@@ -72,6 +73,7 @@ This guide will help you configure Google OAuth authentication for your oppSpot 
    http://localhost:3000/auth/callback
    http://localhost:3001/auth/callback
    https://oppspot.vercel.app/auth/callback
+   https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/auth/callback
    https://your-custom-domain.com/auth/callback (if applicable)
    ```
 
