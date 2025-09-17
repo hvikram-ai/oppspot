@@ -2,11 +2,10 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  // Skip middleware for static assets and API routes
+  // Skip middleware for static assets only
   const pathname = request.nextUrl.pathname
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
     pathname.includes('.') // Static files
   ) {
     return NextResponse.next()
