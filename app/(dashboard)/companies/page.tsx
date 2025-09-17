@@ -80,9 +80,17 @@ export default function CompaniesPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Add timeout to prevent infinite loading
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
         const response = await fetch('/api/auth/check', {
-          credentials: 'include'
+          credentials: 'include',
+          signal: controller.signal
         })
+
+        clearTimeout(timeoutId)
+
         if (response.ok) {
           const data = await response.json()
           setUser(data.user)
@@ -90,7 +98,11 @@ export default function CompaniesPage() {
         // Don't redirect to demo mode automatically
         // Let users stay authenticated or choose demo mode explicitly
       } catch (err) {
-        console.error('Auth check failed:', err)
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('Auth check timed out')
+        } else {
+          console.error('Auth check failed:', err)
+        }
         // Don't force demo mode on error
       } finally {
         setAuthLoading(false)
@@ -178,7 +190,7 @@ export default function CompaniesPage() {
       clearInterval(interval)
       clearTimeout(timeout)
     }
-  }, [searchResults, enrichmentStatus])
+  }, [searchResults]) // Remove enrichmentStatus to avoid infinite loop
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
