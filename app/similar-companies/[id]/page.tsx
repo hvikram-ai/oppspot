@@ -127,9 +127,10 @@ function SimilarCompanyDetailContent() {
   const targetCompanyFromUrl = searchParams.get('target')
   const supabase = createClient()
   const { isDemoMode: contextDemoMode, demoData } = useDemoMode()
-  
-  // Force disable demo mode for similar companies to use real APIs
-  const isDemoMode = false // Override demo mode - always use real search
+
+  // Use demo mode from context or check for demo parameter in URL
+  const isDemoParam = searchParams.get('demo') === 'true'
+  const isDemoMode = contextDemoMode || isDemoParam
   
   const [analysis, setAnalysis] = useState<SimilarityAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
