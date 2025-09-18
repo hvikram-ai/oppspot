@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { BenchmarkDashboard } from '@/components/benchmarking/benchmark-dashboard'
@@ -31,7 +31,7 @@ interface Company {
   sic_codes?: string[]
 }
 
-export default function BenchmarkingPage() {
+function BenchmarkingContent() {
   const searchParams = useSearchParams()
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -325,5 +325,22 @@ export default function BenchmarkingPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function BenchmarkingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <BenchmarkingContent />
+    </Suspense>
   )
 }
