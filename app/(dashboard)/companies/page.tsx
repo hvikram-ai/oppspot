@@ -72,44 +72,8 @@ export default function CompaniesPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null)
-  const [authLoading, setAuthLoading] = useState(true)
   const [enrichmentStatus, setEnrichmentStatus] = useState<Record<string, string>>({})
   const [enrichedData, setEnrichedData] = useState<Record<string, Company>>({})
-
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Add timeout to prevent infinite loading
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
-
-        const response = await fetch('/api/auth/check', {
-          credentials: 'include',
-          signal: controller.signal
-        })
-
-        clearTimeout(timeoutId)
-
-        if (response.ok) {
-          const data = await response.json()
-          setUser(data.user)
-        }
-        // Don't redirect to demo mode automatically
-        // Let users stay authenticated or choose demo mode explicitly
-      } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
-          console.log('Auth check timed out')
-        } else {
-          console.error('Auth check failed:', err)
-        }
-        // Don't force demo mode on error
-      } finally {
-        setAuthLoading(false)
-      }
-    }
-    checkAuth()
-  }, [])
 
   // Function to fetch enriched company data
   const fetchEnrichedData = async (companyNumber: string) => {
@@ -303,24 +267,6 @@ export default function CompaniesPage() {
       console.error('Refresh failed:', err)
       toast.error('An error occurred while refreshing')
     }
-  }
-
-
-  // Show loading state while checking authentication
-  if (authLoading) {
-    return (
-      <>
-        <Navbar />
-        <div className="container mx-auto py-8 px-4 max-w-7xl">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading...</p>
-            </div>
-          </div>
-        </div>
-      </>
-    )
   }
 
   return (
