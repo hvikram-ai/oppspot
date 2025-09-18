@@ -27,7 +27,9 @@ import {
   LogOut,
   Settings,
   User as UserIcon,
-  Newspaper
+  Newspaper,
+  Users,
+  Target
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NotificationBell } from '@/components/notifications/notification-bell'
@@ -108,6 +110,18 @@ export function Navbar() {
       label: 'Benchmarking',
       icon: BarChart3,
       tooltip: 'Compare company performance against industry standards and peer companies with AI-powered insights and recommendations.'
+    },
+    {
+      href: '/stakeholders',
+      label: 'Stakeholders',
+      icon: Users,
+      tooltip: 'Track key relationships, identify champions, manage detractors, and measure influence to optimize stakeholder engagement.'
+    },
+    {
+      href: '/qualification',
+      label: 'Qualification',
+      icon: Target,
+      tooltip: 'Manage lead qualification workflows with BANT and MEDDIC frameworks, automated routing, and intelligent recycling.'
     },
   ]
 
