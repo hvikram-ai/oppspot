@@ -158,7 +158,7 @@ export class IndustryComparisonEngine {
       const trends = this.getIndustryTrends(industryCode)
 
       // Get regulatory factors
-      const regulatoryFactors = this.getRegula toryFactors(industryCode)
+      const regulatoryFactors = this.getRegulatoryFactors(industryCode)
 
       return {
         industry_code: industryCode,
@@ -629,7 +629,7 @@ export class IndustryComparisonEngine {
   /**
    * Get regulatory factors
    */
-  private getRegulatory Factors(industryCode: string): string[] {
+  private getRegulatoryFactors(industryCode: string): string[] {
     const factors: Record<string, string[]> = {
       '62': [
         'Data protection (GDPR)',
