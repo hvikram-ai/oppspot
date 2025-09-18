@@ -97,11 +97,17 @@ export function Navbar() {
       icon: Sparkles,
       tooltip: 'Create, manage, and organize custom prospect lists with tags, notes, and follow-up tracking for your sales pipeline.'
     },
-    { 
-      href: '/analytics', 
-      label: 'Analytics', 
+    {
+      href: '/analytics',
+      label: 'Analytics',
       icon: BarChart3,
       tooltip: 'Access performance metrics, conversion analytics, ROI insights, and detailed reports to optimize your prospecting strategy.'
+    },
+    {
+      href: '/benchmarking',
+      label: 'Benchmarking',
+      icon: BarChart3,
+      tooltip: 'Compare company performance against industry standards and peer companies with AI-powered insights and recommendations.'
     },
   ]
 
