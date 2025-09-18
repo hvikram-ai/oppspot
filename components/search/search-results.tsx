@@ -256,7 +256,7 @@ export function SearchResults({
                   )}
                 </div>
                 <Button size="sm" variant="ghost" asChild>
-                  <Link href={`/businesses/${business.id}`}>
+                  <Link href={`/business/${business.id}`}>
                     View Details
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Link>
