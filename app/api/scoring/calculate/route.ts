@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
       company_number,
       company_name,
       force_refresh = false,
-      include_explanations = false
+      include_explanations = false,
+      use_ai = false,
+      ai_depth = 'detailed'
     } = body
 
     // Validate input
@@ -50,7 +52,9 @@ export async function POST(request: NextRequest) {
       {
         force_refresh,
         include_explanations,
-        org_id: profile?.org_id
+        org_id: profile?.org_id,
+        use_ai,
+        ai_depth: ai_depth as 'quick' | 'detailed'
       }
     )
 

@@ -6,10 +6,13 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { FinancialHealthScorer } from './financial-health-scorer'
+import { AIFinancialScorer } from './ai-financial-scorer'
 import { TechnologyFitScorer } from './technology-fit-scorer'
 import { GrowthIndicatorScorer } from './growth-indicator-scorer'
 import { EngagementTracker } from './engagement-tracker'
 import { IndustryAlignmentScorer } from './industry-alignment-scorer'
+import { OllamaScoringService } from './ollama-scoring-service'
+import { isOllamaEnabled } from '@/lib/ai/ollama'
 
 export interface LeadScore {
   id?: string
@@ -70,14 +73,18 @@ export interface ScoringOptions {
   include_explanations?: boolean
   custom_weights?: ScoringWeights
   org_id?: string
+  use_ai?: boolean
+  ai_depth?: 'quick' | 'detailed'
 }
 
 export class LeadScoringService {
   private financialScorer: FinancialHealthScorer
+  private aiFinancialScorer: AIFinancialScorer
   private technologyScorer: TechnologyFitScorer
   private growthScorer: GrowthIndicatorScorer
   private engagementTracker: EngagementTracker
   private industryScorer: IndustryAlignmentScorer
+  private ollamaScoring: OllamaScoringService | null = null
 
   private defaultWeights: ScoringWeights = {
     financial: 0.30,
@@ -89,10 +96,16 @@ export class LeadScoringService {
 
   constructor() {
     this.financialScorer = new FinancialHealthScorer()
+    this.aiFinancialScorer = new AIFinancialScorer()
     this.technologyScorer = new TechnologyFitScorer()
     this.growthScorer = new GrowthIndicatorScorer()
     this.engagementTracker = new EngagementTracker()
     this.industryScorer = new IndustryAlignmentScorer()
+
+    // Initialize AI scoring if Ollama is enabled
+    if (isOllamaEnabled()) {
+      this.ollamaScoring = new OllamaScoringService()
+    }
   }
 
   /**
@@ -123,10 +136,31 @@ export class LeadScoringService {
         }
       }
 
+      // Use AI scoring if requested and available
+      if (options.use_ai && this.ollamaScoring) {
+        try {
+          console.log('[LeadScoring] Using AI-powered scoring')
+          const aiAnalysis = await this.ollamaScoring.analyzeCompany(company, {
+            depth: options.ai_depth || 'detailed',
+            useCache: options.use_cache !== false,
+            includeRecommendations: options.include_explanations !== false
+          })
+
+          // Convert AI analysis to LeadScore format
+          return this.convertAIAnalysisToLeadScore(aiAnalysis, company)
+        } catch (aiError) {
+          console.error('[LeadScoring] AI scoring failed, falling back to rule-based:', aiError)
+          // Fall through to rule-based scoring
+        }
+      }
+
       // Get scoring weights (custom or org-specific)
       const weights = await this.getScoringWeights(options)
 
       // Calculate individual component scores in parallel
+      // Use AI financial scorer if available and AI is enabled
+      const useAIFinancial = options.use_ai !== false && isOllamaEnabled()
+
       const [
         financialScore,
         technologyScore,
@@ -134,7 +168,9 @@ export class LeadScoringService {
         growthScore,
         engagementScore
       ] = await Promise.all([
-        this.financialScorer.calculateScore(company),
+        useAIFinancial ?
+          this.aiFinancialScorer.calculateScore(company) :
+          this.financialScorer.calculateScore(company),
         this.technologyScorer.calculateScore(company),
         this.industryScorer.calculateScore(company),
         this.growthScorer.calculateScore(company),
@@ -602,5 +638,134 @@ export class LeadScoringService {
 
   private capitalizeFirst(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1)
+  }
+
+  /**
+   * Convert AI analysis to LeadScore format
+   */
+  private convertAIAnalysisToLeadScore(
+    aiAnalysis: any,
+    company: any
+  ): LeadScore {
+    // Build score breakdown from AI analysis
+    const scoreBreakdown: ScoreBreakdown = {
+      financial: {
+        score: aiAnalysis.financial.score,
+        weight: this.defaultWeights.financial,
+        factors: aiAnalysis.financial.key_factors.map((factor: string) => ({
+          name: 'AI Financial Analysis',
+          value: aiAnalysis.financial.score,
+          impact: aiAnalysis.financial.score > 60 ? 'positive' : aiAnalysis.financial.score < 40 ? 'negative' : 'neutral',
+          explanation: factor
+        })),
+        data_quality: aiAnalysis.financial.confidence === 'high' ? 90 :
+                     aiAnalysis.financial.confidence === 'medium' ? 70 : 50,
+        missing_data: []
+      },
+      technology: {
+        score: aiAnalysis.technology.score,
+        weight: this.defaultWeights.technology,
+        factors: aiAnalysis.technology.key_factors.map((factor: string) => ({
+          name: 'AI Technology Assessment',
+          value: aiAnalysis.technology.score,
+          impact: aiAnalysis.technology.score > 60 ? 'positive' : aiAnalysis.technology.score < 40 ? 'negative' : 'neutral',
+          explanation: factor
+        })),
+        data_quality: aiAnalysis.technology.confidence === 'high' ? 90 :
+                     aiAnalysis.technology.confidence === 'medium' ? 70 : 50,
+        missing_data: []
+      },
+      industry: {
+        score: aiAnalysis.industry.score,
+        weight: this.defaultWeights.industry,
+        factors: aiAnalysis.industry.key_factors.map((factor: string) => ({
+          name: 'AI Industry Analysis',
+          value: aiAnalysis.industry.score,
+          impact: aiAnalysis.industry.score > 60 ? 'positive' : aiAnalysis.industry.score < 40 ? 'negative' : 'neutral',
+          explanation: factor
+        })),
+        data_quality: aiAnalysis.industry.confidence === 'high' ? 90 :
+                     aiAnalysis.industry.confidence === 'medium' ? 70 : 50,
+        missing_data: []
+      },
+      growth: {
+        score: aiAnalysis.growth.score,
+        weight: this.defaultWeights.growth,
+        factors: aiAnalysis.growth.key_factors.map((factor: string) => ({
+          name: 'AI Growth Potential',
+          value: aiAnalysis.growth.score,
+          impact: aiAnalysis.growth.score > 60 ? 'positive' : aiAnalysis.growth.score < 40 ? 'negative' : 'neutral',
+          explanation: factor
+        })),
+        data_quality: aiAnalysis.growth.confidence === 'high' ? 90 :
+                     aiAnalysis.growth.confidence === 'medium' ? 70 : 50,
+        missing_data: []
+      },
+      engagement: {
+        score: aiAnalysis.engagement.score,
+        weight: this.defaultWeights.engagement,
+        factors: aiAnalysis.engagement.key_factors.map((factor: string) => ({
+          name: 'AI Engagement Analysis',
+          value: aiAnalysis.engagement.score,
+          impact: aiAnalysis.engagement.score > 60 ? 'positive' : aiAnalysis.engagement.score < 40 ? 'negative' : 'neutral',
+          explanation: factor
+        })),
+        data_quality: aiAnalysis.engagement.confidence === 'high' ? 90 :
+                     aiAnalysis.engagement.confidence === 'medium' ? 70 : 50,
+        missing_data: []
+      }
+    }
+
+    // Create scoring metadata with AI information
+    const scoringMetadata: ScoringMetadata = {
+      calculation_time_ms: aiAnalysis.ai_metadata.analysis_time_ms,
+      data_sources_used: ['companies_house', 'ai_analysis', 'engagement_tracking'],
+      scoring_version: '2.0.0-AI',
+      last_updated: new Date().toISOString(),
+      next_update: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    }
+
+    const leadScore: LeadScore = {
+      company_id: company.id,
+      company_number: company.company_number,
+      company_name: company.name,
+      overall_score: aiAnalysis.overall.score,
+      financial_health_score: aiAnalysis.financial.score,
+      technology_fit_score: aiAnalysis.technology.score,
+      industry_alignment_score: aiAnalysis.industry.score,
+      growth_indicator_score: aiAnalysis.growth.score,
+      engagement_score: aiAnalysis.engagement.score,
+      confidence_level: aiAnalysis.overall.confidence,
+      score_breakdown: scoreBreakdown,
+      scoring_metadata: scoringMetadata
+    }
+
+    // Save the AI-enhanced score with additional metadata
+    this.saveAIScore(leadScore, aiAnalysis)
+
+    return leadScore
+  }
+
+  /**
+   * Save AI-enhanced score with additional metadata
+   */
+  private async saveAIScore(score: LeadScore, aiAnalysis: any): Promise<void> {
+    const supabase = await createClient()
+
+    await supabase
+      .from('lead_scores')
+      .upsert({
+        ...score,
+        ai_analysis: aiAnalysis,
+        ai_model_used: aiAnalysis.ai_metadata.model_used,
+        ai_confidence: aiAnalysis.overall.confidence,
+        ai_reasoning: aiAnalysis.natural_language_summary,
+        use_ai_scoring: true,
+        last_calculated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('company_id', score.company_id)
+
+    console.log('[LeadScoring] AI-enhanced score saved')
   }
 }
