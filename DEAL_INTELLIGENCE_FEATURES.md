@@ -1,3 +1,5 @@
+OLLAMA set up AI_SCORING_SETUP.md
+
 # Deal Intelligence Feature Expansion Plan for oppSpot
 
 ## Executive Summary
@@ -36,7 +38,7 @@ This document outlines a comprehensive feature roadmap to transform oppSpot into
   - Engagement level scoring
 
 
------------------------------------------------
+-----------------------------------------------/home/vik/oppspot/BUYING_SIGNALS_DETECTION_IMPLEMENTATION_PLAN.md.
 
 - **Buying Signals Detection**
   - Funding round announcements
@@ -92,6 +94,7 @@ This document outlines a comprehensive feature roadmap to transform oppSpot into
   - Industry risk factors
   - Compliance violations
 
+--------------------------------------------------------------BENCHMARKING_IMPLEMENTATION_PLAN.md
 - **Benchmarking**
   - Industry comparisons
   - Peer group analysis

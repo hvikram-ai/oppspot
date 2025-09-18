@@ -16,11 +16,11 @@ import { HelpTooltip } from '@/components/ui/help-tooltip'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
-import { 
-  Search, 
-  Map, 
-  BarChart3, 
-  Building2, 
+import {
+  Search,
+  Map,
+  BarChart3,
+  Building2,
   Menu,
   X,
   Sparkles,
@@ -31,12 +31,14 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { useDemoMode } from '@/lib/demo/demo-context'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const { isDemoMode, disableDemoMode } = useDemoMode()
 
   useEffect(() => {
     const getUser = async () => {
@@ -59,7 +61,7 @@ export function Navbar() {
       router.push('/login')
     } else {
       await supabase.auth.signOut()
-      router.push('/')
+      router.push('/login')
       router.refresh()
     }
   }
