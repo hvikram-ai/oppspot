@@ -344,6 +344,7 @@ export default function CompaniesPage() {
                   company={company}
                   onRefresh={handleRefresh}
                   onClick={setSelectedCompany}
+                  showScore={true}
                 />
               ))}
             </div>

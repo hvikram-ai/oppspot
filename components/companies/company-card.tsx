@@ -1,22 +1,28 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
 import { CompanyStatusBadge } from './company-status-badge'
-import { 
-  Building2, 
-  MapPin, 
-  Calendar, 
-  Hash, 
-  RefreshCw, 
+import {
+  Building2,
+  MapPin,
+  Calendar,
+  Hash,
+  RefreshCw,
   ExternalLink,
   CheckCircle,
   Clock,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  TrendingUp,
+  Zap
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 interface Company {
   id: string
@@ -48,14 +54,79 @@ interface CompanyCardProps {
   onRefresh?: (companyId: string) => void
   onClick?: (company: Company) => void
   showCacheStatus?: boolean
+  showScore?: boolean
 }
 
-export function CompanyCard({ 
-  company, 
-  onRefresh, 
+export function CompanyCard({
+  company,
+  onRefresh,
   onClick,
-  showCacheStatus = true 
+  showCacheStatus = true,
+  showScore = false
 }: CompanyCardProps) {
+  const [leadScore, setLeadScore] = useState<number | null>(null)
+  const [scoreLoading, setScoreLoading] = useState(false)
+
+  useEffect(() => {
+    if (showScore && company.company_number) {
+      fetchLeadScore()
+    }
+  }, [showScore, company.company_number])
+
+  const fetchLeadScore = async () => {
+    if (!company.company_number) return
+
+    setScoreLoading(true)
+    try {
+      const response = await fetch(`/api/scoring/calculate?company_number=${company.company_number}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.score) {
+          setLeadScore(data.score.overall_score)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch lead score:', error)
+    } finally {
+      setScoreLoading(false)
+    }
+  }
+
+  const calculateScore = async () => {
+    if (!company.company_number) return
+
+    setScoreLoading(true)
+    try {
+      const response = await fetch('/api/scoring/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_number: company.company_number,
+          company_name: company.name
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setLeadScore(data.score.overall_score)
+        toast.success(`Lead score calculated: ${data.score.overall_score}/100`)
+      } else {
+        toast.error('Failed to calculate lead score')
+      }
+    } catch (error) {
+      console.error('Error calculating score:', error)
+      toast.error('Error calculating lead score')
+    } finally {
+      setScoreLoading(false)
+    }
+  }
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return 'bg-green-100 text-green-800'
+    if (score >= 60) return 'bg-blue-100 text-blue-800'
+    if (score >= 40) return 'bg-yellow-100 text-yellow-800'
+    return 'bg-red-100 text-red-800'
+  }
   
   const getCacheStatus = () => {
     if (!showCacheStatus || !company.companies_house_last_updated) return null
@@ -125,9 +196,37 @@ export function CompanyCard({
               </div>
             )}
           </div>
-          {company.company_status && (
-            <CompanyStatusBadge status={company.company_status} />
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {company.company_status && (
+              <CompanyStatusBadge status={company.company_status} />
+            )}
+            {showScore && leadScore !== null && (
+              <Badge className={getScoreColor(leadScore)}>
+                <TrendingUp className="w-3 h-3 mr-1" />
+                Score: {leadScore}
+              </Badge>
+            )}
+            {showScore && scoreLoading && (
+              <Badge variant="outline" className="animate-pulse">
+                <Zap className="w-3 h-3 mr-1" />
+                Scoring...
+              </Badge>
+            )}
+            {showScore && !scoreLoading && leadScore === null && company.company_number && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  calculateScore()
+                }}
+                className="h-7 text-xs"
+              >
+                <Zap className="w-3 h-3 mr-1" />
+                Calculate Score
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       
