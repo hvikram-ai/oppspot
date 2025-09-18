@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/navbar';
 import { StakeholderDashboard } from '@/components/stakeholders/stakeholder-dashboard';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Info, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-export default function StakeholdersPage() {
+function StakeholdersContent() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -97,5 +97,27 @@ export default function StakeholdersPage() {
         <StakeholderDashboard companyId={companyId || undefined} />
       </div>
     </div>
+  );
+}
+
+export default function StakeholdersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-muted rounded w-2/3 mb-8"></div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-32 bg-muted rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <StakeholdersContent />
+    </Suspense>
   );
 }
