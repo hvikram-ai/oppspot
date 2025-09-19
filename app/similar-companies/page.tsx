@@ -232,8 +232,8 @@ function SimilarCompaniesPageContent() {
       }
 
       console.log('Similar Companies: Not in demo mode, making analysis API call')
-      // Use simplified endpoint to avoid timeout issues
-      const response = await fetch('/api/similar-companies/simple', {
+      // Use optimized endpoint for better performance
+      const response = await fetch('/api/similar-companies/optimized', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

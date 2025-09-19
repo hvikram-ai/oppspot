@@ -9,6 +9,8 @@ import { LinkedInInfo } from '@/components/business/linkedin-info'
 import { BusinessUpdates } from '@/components/business/business-updates'
 import { SocialPresence } from '@/components/business/social-presence'
 import { RelatedBusinesses } from '@/components/business/related-businesses'
+import { BANTScoreCard } from '@/components/bant/bant-score-card'
+import { BenchmarkCard } from '@/components/benchmarking/benchmark-card'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Navbar } from '@/components/layout/navbar'
 import { getMockCompany, getMockRelatedCompanies } from '@/lib/mock-data/companies'
@@ -181,6 +183,18 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
           <div className="space-y-6">
             <BusinessContact business={business} />
             <BusinessActions business={business} />
+            {!params.id.startsWith('mock-') && (
+              <>
+                <BANTScoreCard
+                  companyId={business.id}
+                  companyName={business.name}
+                />
+                <BenchmarkCard
+                  companyId={business.id}
+                  companyName={business.name}
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
