@@ -227,6 +227,7 @@ Password: Demo123456!
 
 ### Production URLs
 - **Primary Vercel Deployment**: https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/
+- **Vercel Project Dashboard**: https://vercel.com/vikhs-projects/oppspot
 - **Custom Domain**: Not yet configured (would be https://oppspot.vercel.app/ or https://oppspot.ai/)
 - **Note**: OAuth uses `window.location.origin` dynamically - works with any deployment URL
 

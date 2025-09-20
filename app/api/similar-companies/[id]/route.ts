@@ -19,11 +19,11 @@ interface CompanyMatch {
 // GET: Get detailed analysis results
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const analysisId = params.id
+    const { id: analysisId } = await params
     const searchParams = request.nextUrl.searchParams
     const includeMatches = searchParams.get('includeMatches') !== 'false'
     const includeExplanations = searchParams.get('includeExplanations') !== 'false'
@@ -157,11 +157,11 @@ export async function GET(
 // PUT: Update analysis configuration or metadata
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const analysisId = params.id
+    const { id: analysisId } = await params
 
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser()
@@ -230,11 +230,11 @@ export async function PUT(
 // DELETE: Delete analysis and all related data
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const analysisId = params.id
+    const { id: analysisId } = await params
 
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser()

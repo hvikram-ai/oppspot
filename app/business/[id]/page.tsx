@@ -19,12 +19,13 @@ import { Database } from '@/lib/supabase/database.types'
 type Business = Database['public']['Tables']['businesses']['Row']
 
 interface BusinessPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
-export async function generateMetadata({ params }: BusinessPageProps) {
+export async function generateMetadata({ params: paramsPromise }: BusinessPageProps) {
+  const params = await paramsPromise
   // Check if it's a mock company first
   if (params.id.startsWith('mock-')) {
     const mockBusiness = getMockCompany(params.id)
@@ -70,7 +71,8 @@ export async function generateMetadata({ params }: BusinessPageProps) {
   }
 }
 
-export default async function BusinessPage({ params }: BusinessPageProps) {
+export default async function BusinessPage({ params: paramsPromise }: BusinessPageProps) {
+  const params = await paramsPromise
   let business: Business | Record<string, unknown> | null = null
   let relatedBusinesses: (Business | Record<string, unknown>)[] | null = null
 

@@ -68,10 +68,10 @@ const MOCK_SIMILAR_COMPANIES = [
 // GET specific analysis by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: analysisId } = params
+    const { id: analysisId } = await params
 
     if (!analysisId) {
       return NextResponse.json(
