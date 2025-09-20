@@ -424,7 +424,9 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
           console.log(`Profile fetched: ${profile ? 'success' : 'failed'}`)
           if (profile) {
             const formatted = companiesService.formatForDatabase(profile)
-            const { data: created } = await supabase
+
+            // Try to insert into database but don't fail if it doesn't work
+            const { data: created, error: insertError } = await supabase
               .from('businesses')
               .insert({
                 ...formatted,
@@ -432,9 +434,30 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
                 cache_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
               })
               .select()
-              .single()
-            
-            if (created) companiesHouseResults.push(created)
+
+            if (insertError) {
+              console.error(`Failed to insert company ${result.company_number}:`, insertError)
+              // Use the formatted data directly even if insert failed
+              const companyData = {
+                ...formatted,
+                id: `ch-${result.company_number}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              } as Business
+              companiesHouseResults.push(companyData)
+            } else if (created && created.length > 0) {
+              console.log(`Successfully inserted company ${result.company_number}`)
+              companiesHouseResults.push(created[0])
+            } else {
+              // No error but no data returned - use formatted data
+              const companyData = {
+                ...formatted,
+                id: `ch-${result.company_number}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              } as Business
+              companiesHouseResults.push(companyData)
+            }
           }
         } catch (err) {
           console.error('Failed to fetch/insert company profile:', err)
