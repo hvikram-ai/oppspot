@@ -36,6 +36,90 @@ function getDemoSearchResults(query: string, categories: string[], location?: st
       }
     },
     {
+      id: 'demo-restaurant-1',
+      name: 'The Ivy Restaurant',
+      description: 'Iconic British restaurant serving modern British cuisine in an elegant setting.',
+      address: {
+        formatted: '1-5 West Street, London, WC2H 9NQ',
+        vicinity: 'London',
+        street: '1-5 West Street',
+        city: 'London',
+        postal_code: 'WC2H 9NQ'
+      },
+      latitude: 51.5139,
+      longitude: -0.1270,
+      phone: '+44 20 7836 4751',
+      email: 'reservations@the-ivy.co.uk',
+      website: 'https://the-ivy.co.uk',
+      categories: ['Restaurant', 'British Cuisine', 'Fine Dining'],
+      rating: 4.5,
+      verified: true,
+      google_place_id: 'ChIJdd4hrwug2EcRmSrV3Vo6llI',
+      metadata: {
+        employees: '100-200',
+        founded: '1917',
+        revenue: '£10M-20M',
+        cuisine_type: 'British',
+        price_range: '£££'
+      }
+    },
+    {
+      id: 'demo-restaurant-2',
+      name: 'Dishoom London',
+      description: 'Bombay-style cafe serving innovative Indian cuisine with a vintage atmosphere.',
+      address: {
+        formatted: '12 Upper St Martin\'s Lane, London, WC2H 9FB',
+        vicinity: 'London',
+        street: '12 Upper St Martin\'s Lane',
+        city: 'London',
+        postal_code: 'WC2H 9FB'
+      },
+      latitude: 51.5127,
+      longitude: -0.1269,
+      phone: '+44 20 7420 9320',
+      email: 'coventgarden@dishoom.com',
+      website: 'https://dishoom.com',
+      categories: ['Restaurant', 'Indian Cuisine', 'Casual Dining'],
+      rating: 4.7,
+      verified: true,
+      google_place_id: 'ChIJdd4hrwug2EcRmSrV3Vo6llI',
+      metadata: {
+        employees: '50-100',
+        founded: '2010',
+        revenue: '£5M-10M',
+        cuisine_type: 'Indian',
+        price_range: '££'
+      }
+    },
+    {
+      id: 'demo-restaurant-3',
+      name: 'Hawksmoor Seven Dials',
+      description: 'Premium steakhouse known for British grass-fed beef and seafood.',
+      address: {
+        formatted: '11 Langley Street, London, WC2H 9JG',
+        vicinity: 'London',
+        street: '11 Langley Street',
+        city: 'London',
+        postal_code: 'WC2H 9JG'
+      },
+      latitude: 51.5145,
+      longitude: -0.1263,
+      phone: '+44 20 7420 9390',
+      email: 'sevendials@thehawksmoor.com',
+      website: 'https://thehawksmoor.com',
+      categories: ['Restaurant', 'Steakhouse', 'British Cuisine'],
+      rating: 4.8,
+      verified: true,
+      google_place_id: 'ChIJdd4hrwug2EcRmSrV3Vo6llI',
+      metadata: {
+        employees: '50-100',
+        founded: '2006',
+        revenue: '£10M-20M',
+        cuisine_type: 'Steakhouse',
+        price_range: '£££'
+      }
+    },
+    {
       id: 'demo-2',
       name: 'GreenTech Solutions',
       description: 'Sustainable technology solutions for businesses looking to reduce their carbon footprint.',
@@ -219,15 +303,22 @@ function getDemoSearchResults(query: string, categories: string[], location?: st
     }
   ]
 
-  // Filter by query
+  // Filter by query - search for any word in the query
   let filteredResults = demoBusinesses
   if (query) {
-    const queryLower = query.toLowerCase()
-    filteredResults = filteredResults.filter(business => 
-      business.name.toLowerCase().includes(queryLower) ||
-      business.description.toLowerCase().includes(queryLower) ||
-      business.categories.some(cat => cat.toLowerCase().includes(queryLower))
-    )
+    const queryWords = query.toLowerCase().split(' ').filter(word => word.length > 2) // Filter out small words
+    filteredResults = filteredResults.filter(business => {
+      const businessText = [
+        business.name.toLowerCase(),
+        business.description.toLowerCase(),
+        ...business.categories.map(cat => cat.toLowerCase()),
+        business.address.city.toLowerCase(),
+        business.address.vicinity.toLowerCase()
+      ].join(' ')
+
+      // Return true if ANY query word matches
+      return queryWords.some(word => businessText.includes(word))
+    })
   }
 
   // Filter by categories
@@ -383,8 +474,10 @@ export async function GET(request: Request) {
 
     // Apply location filter
     if (location) {
-      // Search in the address JSON field - use text cast for JSONB fields
-      businessQuery = businessQuery.or(`address->>formatted.ilike.%${location}%,address->>vicinity.ilike.%${location}%`)
+      // Search in the address JSON field - use proper JSONB syntax
+      businessQuery = businessQuery.or(
+        `address->>'formatted'.ilike.%${location}%,address->>'city'.ilike.%${location}%,address->>'vicinity'.ilike.%${location}%`
+      )
     }
 
     // Apply rating filter
