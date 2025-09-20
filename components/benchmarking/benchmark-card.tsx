@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDemoMode } from '@/lib/demo/demo-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -41,13 +42,19 @@ interface BenchmarkCardProps {
 }
 
 export function BenchmarkCard({ companyId, companyName }: BenchmarkCardProps) {
+  const { isDemoMode } = useDemoMode()
   const [benchmarkData, setBenchmarkData] = useState<BenchmarkData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchBenchmarkData()
-  }, [companyId])
+    if (!isDemoMode) {
+      fetchBenchmarkData()
+    } else {
+      setLoading(false)
+      setError('Benchmarks are not available in demo mode')
+    }
+  }, [companyId, isDemoMode])
 
   const fetchBenchmarkData = async () => {
     try {

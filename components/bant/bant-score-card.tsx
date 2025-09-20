@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDemoMode } from '@/lib/demo/demo-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -34,14 +35,20 @@ interface BANTScoreCardProps {
 }
 
 export function BANTScoreCard({ companyId, companyName }: BANTScoreCardProps) {
+  const { isDemoMode } = useDemoMode()
   const [bantScore, setBantScore] = useState<BANTScore | null>(null)
   const [loading, setLoading] = useState(true)
   const [calculating, setCalculating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchBANTScore()
-  }, [companyId])
+    if (!isDemoMode) {
+      fetchBANTScore()
+    } else {
+      setLoading(false)
+      setError('BANT scoring is not available in demo mode')
+    }
+  }, [companyId, isDemoMode])
 
   const fetchBANTScore = async () => {
     try {
