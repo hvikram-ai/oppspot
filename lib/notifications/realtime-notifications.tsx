@@ -241,12 +241,15 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     return () => subscription.unsubscribe()
   }, [supabase, fetchNotifications])
 
-  // Request notification permission for web push
-  useEffect(() => {
-    if (user && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission()
+  // Don't request notification permission automatically - it must be user-initiated
+  // This prevents the "permission may only be requested from inside a short running user-generated event handler" error
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission()
+      return permission === 'granted'
     }
-  }, [user])
+    return false
+  }
 
   const value = {
     notifications,
@@ -255,7 +258,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    refreshNotifications
+    refreshNotifications,
+    requestNotificationPermission
   }
 
   return (

@@ -188,12 +188,8 @@ export function RealtimeAnalyticsProvider({ children }: { children: ReactNode })
     }
   }
 
-  // Request notification permission on mount
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission()
-    }
-  }, [])
+  // Don't request notification permission automatically - it must be user-initiated
+  // Remove automatic permission request to avoid browser errors
 
   // Cleanup on unmount
   useEffect(() => {
