@@ -345,36 +345,50 @@ function getDemoSearchResults(query: string, categories: string[], location?: st
 }
 
 // Search Companies House and merge with existing results
-async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Database>): Promise<Business[]> {
-  if (!query || query.length < 2) return []
-  
+async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Database>): Promise<{ results: Business[], searched: boolean, error?: string }> {
+  if (!query || query.length < 2) {
+    return { results: [], searched: false, error: 'Query too short' }
+  }
+
   try {
     const companiesService = getCompaniesHouseService()
-    
+
+    // Check if API key is configured
+    if (!process.env.COMPANIES_HOUSE_API_KEY) {
+      console.warn('Companies House API key not configured')
+      return { results: [], searched: false, error: 'API key not configured' }
+    }
+
     // Search Companies House
     let searchResult
     try {
+      console.log(`Searching Companies House for: ${query}`)
       searchResult = await companiesService.searchCompanies(query, 5) // Limit to 5 for performance
     } catch (error) {
       console.error('Companies House search failed:', error)
-      // Return empty array if API is not configured or fails
-      return []
+      return { results: [], searched: true, error: error instanceof Error ? error.message : 'Search failed' }
     }
     
     const searchResults = searchResult?.items || []
-    if (!searchResults || searchResults.length === 0) return []
-    
+    console.log(`Companies House returned ${searchResults.length} results`)
+    if (!searchResults || searchResults.length === 0) {
+      return { results: [], searched: true }
+    }
+
     const companiesHouseResults: Business[] = []
     
     for (const result of searchResults) {
+      console.log(`Processing company: ${result.company_number} - ${result.title}`)
       // Check if company already exists in our database
-      const { data: existing } = await supabase
+      const { data: existingList, error: fetchError } = await supabase
         .from('businesses')
         .select('*')
         .eq('company_number', result.company_number)
-        .single()
-      
-      if (existing) {
+
+      const existing = existingList && existingList.length > 0 ? existingList[0] : null
+      console.log(`Fetch existing result: ${existing ? 'found' : 'not found'}, list length: ${existingList?.length || 0}`)
+
+      if (existing && !fetchError) {
         // Check if cache is still valid
         if (companiesService.isCacheValid(existing.companies_house_last_updated)) {
           companiesHouseResults.push(existing)
@@ -404,8 +418,10 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
         }
       } else {
         // Fetch full profile for new company
+        console.log(`Fetching full profile for ${result.company_number}`)
         try {
           const profile = await companiesService.getCompanyProfile(result.company_number)
+          console.log(`Profile fetched: ${profile ? 'success' : 'failed'}`)
           if (profile) {
             const formatted = companiesService.formatForDatabase(profile)
             const { data: created } = await supabase
@@ -421,15 +437,28 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
             if (created) companiesHouseResults.push(created)
           }
         } catch (err) {
-          console.error('Failed to fetch company profile:', err)
+          console.error('Failed to fetch/insert company profile:', err)
+          // Add the basic search result data without full profile
+          const basicCompany: Business = {
+            id: `ch-${result.company_number}`,
+            name: result.title || result.company_name || 'Unknown',
+            company_number: result.company_number,
+            description: result.snippet || result.description || '',
+            address: result.address_snippet ? { formatted: result.address_snippet } : {},
+            company_status: result.company_status,
+            categories: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          } as Business
+          companiesHouseResults.push(basicCompany)
         }
       }
     }
     
-    return companiesHouseResults
+    return { results: companiesHouseResults, searched: true }
   } catch (error) {
     console.error('Companies House search error:', error)
-    return []
+    return { results: [], searched: true, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -516,11 +545,14 @@ export async function GET(request: Request) {
     // Also search Companies House if we have a query
     let companiesHouseResults: Business[] = []
     let includeCompaniesHouse = false
-    
-    if (query && !categories.length && !location && !minRating && !verified) {
-      // Only search Companies House for general text queries without specific filters
-      companiesHouseResults = await searchCompaniesHouse(query, supabase)
-      includeCompaniesHouse = true
+    let companiesHouseError: string | undefined
+
+    // Search Companies House for any text query (allow location filter, but skip category/rating filters)
+    if (query && !categories.length && !minRating && !verified) {
+      const chResult = await searchCompaniesHouse(query, supabase)
+      companiesHouseResults = chResult.results
+      includeCompaniesHouse = chResult.searched
+      companiesHouseError = chResult.error
     }
 
     if (error) {
@@ -532,7 +564,11 @@ export async function GET(request: Request) {
         total: demoResults.length,
         page: page,
         limit: limit,
-        demo: true
+        demo: true,
+        companiesHouse: {
+          searched: includeCompaniesHouse,
+          error: companiesHouseError
+        }
       })
     }
     
@@ -559,7 +595,11 @@ export async function GET(request: Request) {
         total: demoResults.length,
         page: page,
         limit: limit,
-        demo: true
+        demo: true,
+        companiesHouse: {
+          searched: includeCompaniesHouse,
+          error: companiesHouseError
+        }
       })
     }
 
@@ -656,7 +696,12 @@ export async function GET(request: Request) {
       sources: includeCompaniesHouse ? {
         database: searchResults?.length || 0,
         companies_house: companiesHouseResults.length
-      } : undefined
+      } : undefined,
+      companiesHouse: {
+        searched: includeCompaniesHouse,
+        count: companiesHouseResults.length,
+        error: companiesHouseError
+      }
     })
 
   } catch (error) {
