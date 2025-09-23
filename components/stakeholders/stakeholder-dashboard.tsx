@@ -23,6 +23,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { StakeholderCard } from './stakeholder-card';
+import { StakeholderDialog } from './stakeholder-dialog';
 import type {
   Stakeholder,
   StakeholderDashboardData,
@@ -43,6 +44,8 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [dashboardData, setDashboardData] = useState<StakeholderDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -134,6 +137,21 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
     }
   };
 
+  const handleAddStakeholder = () => {
+    setSelectedStakeholder(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditStakeholder = (stakeholder: Stakeholder) => {
+    setSelectedStakeholder(stakeholder);
+    setDialogOpen(true);
+  };
+
+  const handleStakeholderSuccess = (stakeholder: Stakeholder) => {
+    // Refresh the dashboard data after successful add/edit
+    fetchDashboardData(true);
+  };
+
   const getFilteredStakeholders = () => {
     switch (activeTab) {
       case 'champions':
@@ -194,12 +212,22 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={handleAddStakeholder} disabled={!companyId}>
             <UserPlus className="h-4 w-4 mr-2" />
             Add Stakeholder
           </Button>
         </div>
       </div>
+
+      {/* Company Selection Notice */}
+      {!companyId && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Please select a company from the search results or business details page to manage stakeholders.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -374,7 +402,7 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
               <StakeholderCard
                 key={stakeholder.id}
                 stakeholder={stakeholder}
-                onEdit={(s) => console.log('Edit:', s)}
+                onEdit={handleEditStakeholder}
                 onDelete={(s) => console.log('Delete:', s)}
                 onEngagement={(s) => console.log('Engagement:', s)}
                 onViewDetails={(s) => console.log('View:', s)}
@@ -393,6 +421,17 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Dialog for Add/Edit */}
+      {companyId && (
+        <StakeholderDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          stakeholder={selectedStakeholder}
+          companyId={companyId}
+          onSuccess={handleStakeholderSuccess}
+        />
+      )}
     </div>
   );
 }

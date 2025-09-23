@@ -9,6 +9,7 @@ import { LinkedInInfo } from '@/components/business/linkedin-info'
 import { BusinessUpdates } from '@/components/business/business-updates'
 import { SocialPresence } from '@/components/business/social-presence'
 import { RelatedBusinesses } from '@/components/business/related-businesses'
+import { BusinessStakeholders } from '@/components/business/business-stakeholders'
 import { BANTScoreCard } from '@/components/bant/bant-score-card'
 import { BenchmarkCard } from '@/components/benchmarking/benchmark-card'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
@@ -187,6 +188,10 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
             <BusinessActions business={business} />
             {!params.id.startsWith('mock-') && (
               <>
+                <BusinessStakeholders
+                  businessId={business.id}
+                  businessName={business.name}
+                />
                 <BANTScoreCard
                   companyId={business.id}
                   companyName={business.name}
