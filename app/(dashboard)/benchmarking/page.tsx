@@ -1,23 +1,18 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { BenchmarkDashboard } from '@/components/benchmarking/benchmark-dashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import {
   BarChart3,
   Search,
-  Building2,
   Users,
-  TrendingUp,
-  Target,
   Sparkles,
   Info
 } from 'lucide-react'
@@ -36,29 +31,25 @@ function BenchmarkingContent() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Company[]>([])
-  const [recentComparisons, setRecentComparisons] = useState<any[]>([])
+  const [recentComparisons, setRecentComparisons] = useState<Array<{
+    id: string
+    company_id: string
+    comparison_date: string
+    overall_score: number
+    percentile_rank: number
+    businesses: { name: string; company_number?: string }
+  }>>([])
   const [loading, setLoading] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
 
   const supabase = createClient()
 
-  useEffect(() => {
-    checkUser()
-    loadRecentComparisons()
-
-    // Check if company_id is in URL params
-    const companyId = searchParams.get('company_id')
-    if (companyId) {
-      loadCompany(companyId)
-    }
-  }, [searchParams])
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
-  }
+  }, [supabase])
 
-  const loadCompany = async (companyId: string) => {
+  const loadCompany = useCallback(async (companyId: string) => {
     const { data: company } = await supabase
       .from('businesses')
       .select('id, name, company_number, sic_codes')
@@ -68,9 +59,9 @@ function BenchmarkingContent() {
     if (company) {
       setSelectedCompany(company)
     }
-  }
+  }, [supabase])
 
-  const loadRecentComparisons = async () => {
+  const loadRecentComparisons = useCallback(async () => {
     const { data } = await supabase
       .from('benchmark_comparisons')
       .select(`
@@ -87,7 +78,18 @@ function BenchmarkingContent() {
     if (data) {
       setRecentComparisons(data)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    checkUser()
+    loadRecentComparisons()
+
+    // Check if company_id is in URL params
+    const companyId = searchParams.get('company_id')
+    if (companyId) {
+      loadCompany(companyId)
+    }
+  }, [searchParams, checkUser, loadCompany, loadRecentComparisons])
 
   const searchCompanies = async () => {
     if (!searchQuery) return
@@ -142,7 +144,7 @@ function BenchmarkingContent() {
             <h1 className="text-3xl font-bold">Benchmarking & Analytics</h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Compare your company's performance against industry standards and peer companies
+            Compare your company&apos;s performance against industry standards and peer companies
           </p>
         </div>
 

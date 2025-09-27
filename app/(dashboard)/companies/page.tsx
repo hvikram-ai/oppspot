@@ -49,7 +49,7 @@ interface Company {
   registered_office_address?: RegisteredOfficeAddress
   address?: Address
   companies_house_last_updated?: string
-  companies_house_data?: any
+  companies_house_data?: Record<string, unknown>
   cache_expires_at?: string
   source?: string
   cache_age?: number
@@ -65,7 +65,6 @@ interface SearchStats {
 }
 
 export default function CompaniesPage() {
-  const [user, setUser] = useState<User | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Company[]>([])
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
@@ -73,7 +72,6 @@ export default function CompaniesPage() {
   const [error, setError] = useState('')
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null)
   const [enrichmentStatus, setEnrichmentStatus] = useState<Record<string, string>>({})
-  const [enrichedData, setEnrichedData] = useState<Record<string, Company>>({})
 
   // Function to fetch enriched company data
   const fetchEnrichedData = async (companyNumber: string) => {

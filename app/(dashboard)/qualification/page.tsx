@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -16,38 +15,27 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import {
-  BarChart3,
-  TrendingUp,
   Users,
   Target,
   Clock,
   RefreshCw,
   Download,
-  Filter,
-  ChevronRight,
   CheckCircle,
-  XCircle,
   AlertCircle,
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
 import { BANTScoreCard } from '@/components/qualification/BANTScoreCard';
 import { MEDDICScoreCard } from '@/components/qualification/MEDDICScoreCard';
-import { QualificationChecklistComponent } from '@/components/qualification/QualificationChecklist';
 import { QualificationDashboardData } from '@/lib/qualification/types/qualification';
 
 export default function QualificationDashboard() {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<QualificationDashboardData | null>(null);
   const [selectedFramework, setSelectedFramework] = useState<'BANT' | 'MEDDIC'>('BANT');
-  const [selectedLead, setSelectedLead] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('30d');
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [dateRange]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -80,7 +68,11 @@ export default function QualificationDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const MetricCard = ({
     title,

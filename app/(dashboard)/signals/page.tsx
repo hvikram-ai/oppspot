@@ -53,7 +53,12 @@ interface IntentScore {
   company_id: string
   intent_score: number
   intent_level: string
-  top_signals: any[]
+  top_signals: Array<{
+    id: string
+    type: string
+    strength: number
+    description: string
+  }>
   predicted_timeline: string
   recommended_actions: string[]
 }
@@ -65,7 +70,7 @@ export default function SignalsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [timeRange, setTimeRange] = useState('7')
   const [signalTypeFilter, setSignalTypeFilter] = useState('all')
-  const [minStrength, setMinStrength] = useState('5')
+  const [minStrength] = useState('5')
 
   const [metrics, setMetrics] = useState({
     hot_leads: 0,
