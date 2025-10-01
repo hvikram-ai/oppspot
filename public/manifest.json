@@ -2,7 +2,7 @@
   "name": "oppSpot - B2B Intelligence Platform",
   "short_name": "oppSpot",
   "description": "AI-powered B2B intelligence platform for discovering UK & Ireland business opportunities",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
@@ -82,25 +82,13 @@
   ],
   "shortcuts": [
     {
-      "name": "AI Scoring",
-      "short_name": "Scoring",
-      "description": "View AI lead scores",
-      "url": "/ai-scoring",
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View command center",
+      "url": "/dashboard",
       "icons": [
         {
-          "src": "/icons/ai-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Stakeholders",
-      "short_name": "Stakeholders",
-      "description": "Manage stakeholders",
-      "url": "/stakeholders",
-      "icons": [
-        {
-          "src": "/icons/stakeholders-96x96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96"
         }
       ]
@@ -113,6 +101,30 @@
       "icons": [
         {
           "src": "/icons/search-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Research",
+      "short_name": "Research",
+      "description": "Generate AI research",
+      "url": "/research",
+      "icons": [
+        {
+          "src": "/icons/ai-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "AI Scoring",
+      "short_name": "Scoring",
+      "description": "View AI lead scores",
+      "url": "/ai-scoring",
+      "icons": [
+        {
+          "src": "/icons/ai-96x96.png",
           "sizes": "96x96"
         }
       ]

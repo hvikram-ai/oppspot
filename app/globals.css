@@ -119,4 +119,53 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Accessibility: Screen reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Accessibility: Focus visible styles */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Accessibility: Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Touch manipulation for mobile */
+  button,
+  a,
+  [role="button"],
+  [role="link"] {
+    touch-action: manipulation;
+  }
+
+  /* Improved tap targets for mobile */
+  @media (pointer: coarse) {
+    button,
+    a,
+    [role="button"],
+    [role="link"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
 }

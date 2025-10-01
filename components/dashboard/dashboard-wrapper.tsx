@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { User } from '@supabase/supabase-js'
+import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts'
 
 interface Profile {
   onboarding_completed?: boolean
@@ -24,6 +25,7 @@ import { AIDigestCard } from '@/components/dashboard-v2/ai-digest-card'
 import { PriorityQueue } from '@/components/dashboard-v2/priority-queue'
 import { ImpactMetrics } from '@/components/dashboard-v2/impact-metrics'
 import { FeatureSpotlight } from '@/components/dashboard-v2/feature-spotlight'
+import { CommandPalette } from '@/components/navigation/command-palette'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Sparkles, X } from 'lucide-react'
@@ -37,6 +39,9 @@ export function DashboardWrapper() {
   const [showOnboardingPrompt, setShowOnboardingPrompt] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts()
 
   useEffect(() => {
     const getUser = async () => {
@@ -142,6 +147,7 @@ export function DashboardWrapper() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <EmailVerificationBanner />
+      <CommandPalette />
       <DashboardHeader user={user} profile={profile} />
       
       <div className="container mx-auto px-4 py-8" data-testid="dashboard-wrapper">
