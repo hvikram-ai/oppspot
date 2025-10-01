@@ -67,15 +67,18 @@ export function AIDigestCard() {
     }
   }, [digest])
 
-  if (error || !digest) {
+  // Gracefully handle errors and missing data
+  if (error || !digest || !digest.digest_data) {
     return null // Gracefully hide if no digest available
   }
 
   const { digest_data } = digest
-  const discoveryCount = digest_data.overnight_discoveries?.length || 0
-  const alertCount = digest_data.urgent_alerts?.length || 0
-  const completedCount = digest_data.completed_work?.length || 0
-  const recommendationCount = digest_data.recommendations?.length || 0
+
+  // Safely check for content with null checks
+  const discoveryCount = digest_data?.overnight_discoveries?.length || 0
+  const alertCount = digest_data?.urgent_alerts?.length || 0
+  const completedCount = digest_data?.completed_work?.length || 0
+  const recommendationCount = digest_data?.recommendations?.length || 0
 
   const hasContent = discoveryCount + alertCount + completedCount + recommendationCount > 0
 

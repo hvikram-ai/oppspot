@@ -33,7 +33,8 @@ export function ImpactMetrics() {
     refreshInterval: 60000 // Refresh every minute
   })
 
-  if (error || !data) {
+  // Gracefully handle errors and missing data
+  if (error || !data || !data.metrics) {
     return null
   }
 

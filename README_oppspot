@@ -1,3 +1,19 @@
+  Migrations (6 files):
+  - /home/vik/oppspot/supabase/migrations/20251001_dashboard_preferences.sql
+  - /home/vik/oppspot/supabase/migrations/20251001_ai_digest.sql
+  - /home/vik/oppspot/supabase/migrations/20251001_priority_queue.sql
+  - /home/vik/oppspot/supabase/migrations/20251001_feature_tracking.sql
+  - /home/vik/oppspot/supabase/migrations/20251001_feature_spotlight.sql
+  - /home/vik/oppspot/supabase/migrations/20251001_triggers_functions.sql
+
+
+
+
+
+
+
+
+
 -------------------
   Use Cases for oppSpot:
 
