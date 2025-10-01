@@ -1,9 +1,13 @@
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardWrapper } from '@/components/dashboard/dashboard-wrapper'
+import SkeletonLoader from '@/components/ui/skeleton-loader'
 
-// Force dynamic rendering for personalized dashboard
-export const dynamic = 'force-dynamic'
+// Configure ISR (Incremental Static Regeneration) with 60 second revalidation
+// This creates a static shell with client-side data fetching for personalization
+export const revalidate = 60 // Revalidate every 60 seconds
+export const dynamic = 'force-dynamic' // Keep dynamic for auth checks
 
 export default async function DashboardPage({
   searchParams
@@ -12,21 +16,21 @@ export default async function DashboardPage({
 }) {
   const params = await searchParams
   const isDemo = params.demo === 'true'
-  
+
   // Only check authentication if not in demo mode
   if (!isDemo) {
     const supabase = await createClient()
-    
+
     // Try to get session first, then user
     const { data: { session } } = await supabase.auth.getSession()
     console.log('[Dashboard] Session check:', session ? 'Found' : 'Not found')
-    
+
     if (!session) {
       // Double-check with getUser
       const { data: { user }, error } = await supabase.auth.getUser()
       console.log('[Dashboard] User check:', user ? 'Found' : 'Not found')
       console.log('[Dashboard] Auth error:', error?.message)
-      
+
       if (!user) {
         console.log('[Dashboard] No user found, redirecting to login')
         redirect('/login')
@@ -34,5 +38,9 @@ export default async function DashboardPage({
     }
   }
 
-  return <DashboardWrapper />
+  return (
+    <Suspense fallback={<SkeletonLoader variant="dashboard" />}>
+      <DashboardWrapper />
+    </Suspense>
+  )
 }

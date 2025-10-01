@@ -1,0 +1,684 @@
+openapi: 3.0.3
+info:
+  title: oppSpot Command Center Dashboard API
+  version: 2.0.0
+  description: API contracts for redesigned dashboard with AI digest, priority queue, and personalization features
+
+servers:
+  - url: https://oppspot.vercel.app/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Development
+
+paths:
+  /dashboard/preferences:
+    get:
+      summary: Get user dashboard preferences
+      tags: [Dashboard Preferences]
+      security:
+        - supabaseAuth: []
+      responses:
+        '200':
+          description: User preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardPreferences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      summary: Update user dashboard preferences
+      tags: [Dashboard Preferences]
+      security:
+        - supabaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardPreferencesUpdate'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/digest:
+    get:
+      summary: Get today's AI digest
+      tags: [AI Digest]
+      security:
+        - supabaseAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Digest date (defaults to today)
+      responses:
+        '200':
+          description: AI digest retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIDigest'
+        '404':
+          description: No digest found for date
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Generate new AI digest
+      tags: [AI Digest]
+      security:
+        - supabaseAuth: []
+      description: Triggers digest generation (admin/cron only in production)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force_refresh:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Digest generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIDigest'
+        '409':
+          description: Digest already exists for today
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/digest/{id}/read:
+    post:
+      summary: Mark digest as read
+      tags: [AI Digest]
+      security:
+        - supabaseAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Digest marked as read
+        '404':
+          description: Digest not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/priority-queue:
+    get:
+      summary: Get priority queue items
+      tags: [Priority Queue]
+      security:
+        - supabaseAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, dismissed]
+            default: pending
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Queue items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PriorityQueueItem'
+                  total:
+                    type: integer
+                  has_more:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/priority-queue/{id}:
+    patch:
+      summary: Update queue item status
+      tags: [Priority Queue]
+      security:
+        - supabaseAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [in_progress, completed, dismissed]
+      responses:
+        '200':
+          description: Queue item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorityQueueItem'
+        '404':
+          description: Queue item not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      summary: Delete queue item
+      tags: [Priority Queue]
+      security:
+        - supabaseAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Queue item deleted
+        '404':
+          description: Queue item not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/metrics:
+    get:
+      summary: Get dashboard metrics
+      tags: [Metrics]
+      security:
+        - supabaseAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: week
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [absolute, relative]
+            default: relative
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetrics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/spotlight:
+    get:
+      summary: Get feature spotlight items for user
+      tags: [Feature Spotlight]
+      security:
+        - supabaseAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 3
+      responses:
+        '200':
+          description: Spotlight items retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpotlightItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/interactions:
+    post:
+      summary: Track feature interaction
+      tags: [Analytics]
+      security:
+        - supabaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureInteraction'
+      responses:
+        '201':
+          description: Interaction tracked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/analytics/view:
+    post:
+      summary: Track dashboard page view
+      tags: [Analytics]
+      security:
+        - supabaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PageView'
+      responses:
+        '201':
+          description: View tracked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  schemas:
+    DashboardPreferences:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        card_visibility:
+          type: object
+          additionalProperties:
+            type: boolean
+          example:
+            ai_digest: true
+            priority_queue: true
+            impact_metrics: true
+        card_order:
+          type: array
+          items:
+            type: string
+          example: ['ai_digest', 'impact_metrics', 'priority_queue']
+        default_landing_page:
+          type: string
+          example: '/dashboard'
+        sidebar_collapsed:
+          type: boolean
+        metric_format:
+          type: string
+          enum: [absolute, relative]
+        time_period:
+          type: string
+          enum: [day, week, month]
+        theme:
+          type: string
+          enum: [light, dark, system]
+        digest_frequency:
+          type: string
+          enum: [daily, realtime, off]
+        show_empty_state_tutorials:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DashboardPreferencesUpdate:
+      type: object
+      properties:
+        card_visibility:
+          type: object
+          additionalProperties:
+            type: boolean
+        card_order:
+          type: array
+          items:
+            type: string
+        sidebar_collapsed:
+          type: boolean
+        metric_format:
+          type: string
+          enum: [absolute, relative]
+        time_period:
+          type: string
+          enum: [day, week, month]
+        theme:
+          type: string
+          enum: [light, dark, system]
+
+    AIDigest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        generated_at:
+          type: string
+          format: date-time
+        digest_date:
+          type: string
+          format: date
+        priority_score:
+          type: integer
+          minimum: 1
+          maximum: 10
+        digest_data:
+          type: object
+          properties:
+            overnight_discoveries:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    example: 'opportunity'
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  action_url:
+                    type: string
+                  priority:
+                    type: string
+                    enum: [high, medium, low]
+            urgent_alerts:
+              type: array
+              items:
+                type: object
+            completed_work:
+              type: array
+              items:
+                type: object
+            recommendations:
+              type: array
+              items:
+                type: object
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    PriorityQueueItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        item_type:
+          type: string
+          enum: [lead_follow_up, research_review, signal_alert, list_action, recommendation]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, dismissed]
+        priority_level:
+          type: string
+          enum: [critical, high, medium, low]
+        priority_score:
+          type: number
+          format: float
+        urgency_score:
+          type: integer
+          minimum: 1
+          maximum: 100
+        value_score:
+          type: integer
+          minimum: 1
+          maximum: 100
+        fit_score:
+          type: integer
+          minimum: 1
+          maximum: 100
+        title:
+          type: string
+        description:
+          type: string
+        action_label:
+          type: string
+        action_url:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        research_report_id:
+          type: string
+          format: uuid
+          nullable: true
+        list_id:
+          type: string
+          format: uuid
+          nullable: true
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        age_days:
+          type: integer
+
+    DashboardMetrics:
+      type: object
+      properties:
+        time_period:
+          type: string
+          enum: [day, week, month, year]
+        format:
+          type: string
+          enum: [absolute, relative]
+        metrics:
+          type: object
+          properties:
+            time_saved_hours:
+              type: number
+              example: 8.5
+            pipeline_value:
+              type: number
+              example: 45000
+            active_leads:
+              type: integer
+              example: 24
+            research_credits_remaining:
+              type: integer
+              example: 73
+            search_count:
+              type: integer
+              example: 156
+            conversion_rate:
+              type: number
+              example: 24.3
+        trends:
+          type: object
+          properties:
+            time_saved:
+              type: object
+              properties:
+                current:
+                  type: number
+                previous:
+                  type: number
+                change_percent:
+                  type: number
+                direction:
+                  type: string
+                  enum: [up, down, flat]
+            # ... similar for other metrics
+        predictions:
+          type: object
+          properties:
+            next_milestone:
+              type: string
+              example: 'On track to hit 100 leads by Friday'
+            warnings:
+              type: array
+              items:
+                type: string
+
+    SpotlightItem:
+      type: object
+      properties:
+        feature_id:
+          type: string
+        feature_name:
+          type: string
+        description:
+          type: string
+        cta_text:
+          type: string
+        cta_url:
+          type: string
+        icon_name:
+          type: string
+        badge_text:
+          type: string
+          nullable: true
+        badge_color:
+          type: string
+        priority:
+          type: integer
+
+    FeatureInteraction:
+      type: object
+      required:
+        - feature_name
+        - interaction_type
+      properties:
+        feature_name:
+          type: string
+          example: 'research_gpt'
+        interaction_type:
+          type: string
+          enum: [view, click, complete, dismiss, share]
+        context:
+          type: object
+        session_id:
+          type: string
+        page_url:
+          type: string
+        referrer_url:
+          type: string
+
+    PageView:
+      type: object
+      required:
+        - device_type
+      properties:
+        session_id:
+          type: string
+        device_type:
+          type: string
+          enum: [mobile, tablet, desktop]
+        browser:
+          type: string
+        viewport_width:
+          type: integer
+        viewport_height:
+          type: integer
+        time_to_first_byte_ms:
+          type: integer
+        first_contentful_paint_ms:
+          type: integer
+        time_to_interactive_ms:
+          type: integer
+        largest_contentful_paint_ms:
+          type: integer
+        referrer_source:
+          type: string
+        utm_campaign:
+          type: string
+        utm_source:
+          type: string
+        utm_medium:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'Unauthorized'
+              message:
+                type: string
+
+    BadRequest:
+      description: Bad Request - invalid input
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'Bad Request'
+              message:
+                type: string
+              details:
+                type: object
+
+  securitySchemes:
+    supabaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token from auth.session()

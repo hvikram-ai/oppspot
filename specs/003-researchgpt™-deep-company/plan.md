@@ -1,8 +1,8 @@
 
-# Implementation Plan: ResearchGPT™ - Deep Company Intelligence
+# Implementation Plan: [FEATURE]
 
-**Branch**: `003-researchgpt™-deep-company` | **Date**: 2025-10-01 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/home/vik/oppspot/specs/003-researchgpt™-deep-company/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,131 +31,75 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-
-ResearchGPT™ is an AI-powered company research agent that generates comprehensive intelligence reports for UK companies in under 30 seconds—work that would take a human 2 hours. The system analyzes 6 key dimensions: Company Snapshot, Buying Signals, Key Decision Makers, Revenue Signals, Recommended Approach, and Sources. Target users are SDRs and sales reps at the £99/month tier who currently spend 45-60 minutes manually researching companies before outreach.
-
-**Core Value**: Transforms 2-hour manual research into 30-second AI-generated intelligence with verified sources, giving sales teams a competitive advantage by knowing things competitors don't.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: TypeScript 5.x with Next.js 15 (App Router)
-**Primary Dependencies**: Next.js 15, Supabase (PostgreSQL + Auth), OpenRouter AI API, Zod (validation), shadcn/ui
-**Storage**: Supabase PostgreSQL with pgvector extension for embeddings, smart caching layer (fundamentals: 7 days, signals: 6 hours)
-**Testing**: Playwright E2E tests, React Testing Library for components
-**Target Platform**: Vercel deployment (Linux server), responsive web (desktop primary, mobile secondary)
-**Project Type**: Web (Next.js App Router with API routes)
-**Performance Goals**: 95% of research requests complete in <30 seconds, page load <2 seconds, support 5 concurrent requests per user
-**Constraints**: GDPR compliance for personal data, 100 researches/month per user quota, no social network scraping, must respect robots.txt
-**Scale/Scope**: Target £99/month tier users, handle Companies House API rate limits, 10+ external data sources integration
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-### Architectural Patterns Compliance
-
-**✅ PASS: Service Layer Pattern**
-- ResearchGPT will follow existing `/lib/ai/scoring/` service pattern
-- Encapsulate research logic in standalone service class
-- Example: `research-gpt-service.ts` similar to `lead-scoring-service.ts`
-
-**✅ PASS: API Route Pattern**
-- Follow existing `/app/api/*/route.ts` structure
-- RESTful endpoints with proper Next.js conventions
-- Example: `/app/api/research/[companyId]/route.ts`
-
-**✅ PASS: Component Organization**
-- Follow existing `/components/` domain structure
-- New components in `/components/research/` directory
-- Use existing shadcn/ui components (no new UI libraries)
-
-**✅ PASS: Database Pattern**
-- Leverage existing Supabase client patterns
-- Server-side: `createClient` from `@/lib/supabase/server`
-- Client-side: `createClient` from `@/lib/supabase/client`
-- RLS policies for multi-tenant data isolation
-
-**✅ PASS: Testing Strategy**
-- Playwright E2E tests for user flows
-- No unit test requirement (consistent with existing codebase)
-- Contract tests for API endpoints
-
-**⚠️ JUSTIFIED: AI Integration Complexity**
-- OpenRouter API already integrated (`/lib/ai/openrouter.ts`)
-- Multiple data source orchestration required (complexity justified by business value)
-- Caching layer needed for performance (reduces API costs)
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 ```
-specs/003-researchgpt™-deep-company/
-├── spec.md              # Feature specification (completed)
+specs/[###-feature]/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
 ├── quickstart.md        # Phase 1 output (/plan command)
 ├── contracts/           # Phase 1 output (/plan command)
-│   └── research-api.yaml    # OpenAPI spec
 └── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
 ```
 
 ### Source Code (repository root)
 ```
-# Next.js 15 App Router Structure (existing)
-app/
-├── api/
-│   └── research/
-│       ├── [companyId]/route.ts         # Generate research report
-│       ├── [companyId]/status/route.ts  # Check generation status
-│       └── quota/route.ts               # Check user quota
-├── business/[id]/
-│   └── (add Research button to existing page)
-└── (dashboard)/
-    └── research/
-        ├── page.tsx                     # Research history dashboard
-        └── [reportId]/page.tsx          # View saved research report
-
-components/
-├── research/
-│   ├── research-button.tsx              # "Research with AI" button
-│   ├── research-report.tsx              # Main report display
-│   ├── research-progress.tsx            # Real-time progress indicator
-│   ├── research-snapshot.tsx            # Company snapshot section
-│   ├── research-signals.tsx             # Buying signals section
-│   ├── research-decision-makers.tsx     # Decision makers section
-│   ├── research-revenue.tsx             # Revenue signals section
-│   ├── research-approach.tsx            # Recommended approach section
-│   └── research-sources.tsx             # Sources section
-└── ui/                                   # Existing shadcn/ui (reuse)
-
-lib/
-├── research-gpt/
-│   ├── research-gpt-service.ts          # Main orchestration service
-│   ├── data-sources/
-│   │   ├── companies-house-source.ts    # Companies House API
-│   │   ├── news-source.ts               # News API integration
-│   │   ├── jobs-source.ts               # Job board scraping
-│   │   └── website-scraper.ts           # Company website scraping
-│   ├── analyzers/
-│   │   ├── snapshot-analyzer.ts         # Company snapshot analysis
-│   │   ├── signals-analyzer.ts          # Buying signals detection
-│   │   ├── decision-maker-analyzer.ts   # Key person identification
-│   │   └── revenue-analyzer.ts          # Revenue signal analysis
-│   ├── cache/
-│   │   └── smart-cache-manager.ts       # Smart caching (7d/6h)
-│   └── types/
-│       └── research-types.ts            # TypeScript interfaces
-└── ai/
-    └── (reuse existing openrouter.ts)
-
-supabase/migrations/
-└── YYYYMMDD_research_gpt.sql            # Database schema
+# Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
 
 tests/
-└── e2e/
-    └── research-gpt.spec.ts             # Playwright E2E tests
+├── contract/
+├── integration/
+└── unit/
+
+# Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure]
 ```
 
-**Structure Decision**: Option 2 (Web) - Next.js App Router with integrated frontend/API
+**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -215,105 +159,19 @@ tests/
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
-
-The `/tasks` command will generate implementation tasks from Phase 1 artifacts:
-
-1. **From data-model.md** → Database & Type tasks:
-   - Task: Create PostgreSQL migration for 4 new tables
-   - Task: Create TypeScript interfaces for 9 entities
-   - Task: Create Zod validation schemas
-   - Task: Create RLS policies for multi-tenancy
-
-2. **From contracts/research-api.yaml** → API Route tasks:
-   - Task: Implement POST `/api/research/[companyId]` endpoint
-   - Task: Implement GET `/api/research/[companyId]` endpoint
-   - Task: Implement GET `/api/research/[companyId]/status` endpoint
-   - Task: Implement GET `/api/research/quota` endpoint
-   - Task: Create contract tests for each endpoint (Playwright)
-
-3. **From research.md** → Service Layer tasks:
-   - Task: Create ResearchGPTService orchestrator
-   - Task: Create CompaniesHouseDataSource
-   - Task: Create NewsAPIDataSource
-   - Task: Create JobBoardDataSource
-   - Task: Create WebsiteScraperSource
-   - Task: Create SmartCacheManager
-   - Task: Create SnapshotAnalyzer
-   - Task: Create BuyingSignalsAnalyzer
-   - Task: Create DecisionMakerAnalyzer
-   - Task: Create RevenueSignalsAnalyzer
-
-4. **From spec.md user stories** → UI Component tasks:
-   - Task: Create ResearchButton component
-   - Task: Create ResearchProgressIndicator component
-   - Task: Create ResearchReport container component
-   - Task: Create 6 section components (Snapshot, Signals, etc.)
-   - Task: Create QuotaDisplay component
-   - Task: Create ExportPDF functionality
-   - Task: Add Research button to business/[id]/page.tsx
-
-5. **From quickstart.md** → E2E Test tasks:
-   - Task: Write E2E test for happy path (generate research)
-   - Task: Write E2E test for cached report
-   - Task: Write E2E test for force refresh
-   - Task: Write E2E test for quota exceeded
-   - Task: Write E2E test for export PDF
+- Load `.specify/templates/tasks-template.md` as base
+- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Each contract → contract test task [P]
+- Each entity → model creation task [P] 
+- Each user story → integration test task
+- Implementation tasks to make tests pass
 
 **Ordering Strategy**:
+- TDD order: Tests before implementation 
+- Dependency order: Models before services before UI
+- Mark [P] for parallel execution (independent files)
 
-1. **Phase A: Foundation** [Tasks 1-10]
-   - Database migration
-   - TypeScript types
-   - RLS policies
-   - Zod schemas
-   - Mark [P] - Can be done in parallel
-
-2. **Phase B: Data Layer** [Tasks 11-20]
-   - Data source implementations (Companies House, News, Jobs, Website)
-   - Cache manager
-   - Dependency: Needs types from Phase A
-
-3. **Phase C: Service Layer** [Tasks 21-30]
-   - Analyzer implementations
-   - ResearchGPTService orchestrator
-   - Dependency: Needs data sources from Phase B
-
-4. **Phase D: API Routes** [Tasks 31-35]
-   - API endpoint implementations
-   - Contract tests (should fail initially)
-   - Dependency: Needs services from Phase C
-
-5. **Phase E: UI Components** [Tasks 36-45]
-   - Component implementations
-   - Integration with business profile page
-   - Dependency: Needs API routes from Phase D
-
-6. **Phase F: E2E Tests & Polish** [Tasks 46-50]
-   - E2E test implementation
-   - PDF export
-   - Performance optimization
-   - GDPR compliance verification
-
-**Estimated Output**: ~50 numbered, dependency-ordered tasks in tasks.md
-
-**Task Template Example**:
-```markdown
-## Task 1: Create Database Migration [P]
-**Type**: Database
-**Estimated Time**: 30 minutes
-**Dependencies**: None
-**Files Created**:
-- supabase/migrations/YYYYMMDD_research_gpt_schema.sql
-
-**Acceptance Criteria**:
-- Creates research_reports table with all fields from data-model.md
-- Creates research_sections table
-- Creates research_sources table
-- Creates user_research_quotas table
-- Creates all indexes
-- Creates RLS policies
-- Migration applies cleanly with `supabase db push`
-```
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -337,18 +195,18 @@ The `/tasks` command will generate implementation tasks from Phase 1 artifacts:
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
-- [x] Phase 2: Task planning complete (/plan command - describe approach only)
-- [x] Phase 3: Tasks generated (/tasks command)
+- [ ] Phase 0: Research complete (/plan command)
+- [ ] Phase 1: Design complete (/plan command)
+- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS
-- [x] Post-Design Constitution Check: PASS (design follows existing patterns)
-- [x] All NEEDS CLARIFICATION resolved (completed in /clarify phase)
-- [x] Complexity deviations documented (AI integration justified)
+- [ ] Initial Constitution Check: PASS
+- [ ] Post-Design Constitution Check: PASS
+- [ ] All NEEDS CLARIFICATION resolved
+- [ ] Complexity deviations documented
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*

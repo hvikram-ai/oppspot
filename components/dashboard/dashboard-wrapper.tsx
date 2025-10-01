@@ -20,6 +20,10 @@ import { SavedSearches } from '@/components/dashboard/saved-searches'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { BusinessInsights } from '@/components/dashboard/business-insights'
 import { UpcomingTasks } from '@/components/dashboard/upcoming-tasks'
+import { AIDigestCard } from '@/components/dashboard-v2/ai-digest-card'
+import { PriorityQueue } from '@/components/dashboard-v2/priority-queue'
+import { ImpactMetrics } from '@/components/dashboard-v2/impact-metrics'
+import { FeatureSpotlight } from '@/components/dashboard-v2/feature-spotlight'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Sparkles, X } from 'lucide-react'
@@ -140,7 +144,7 @@ export function DashboardWrapper() {
       <EmailVerificationBanner />
       <DashboardHeader user={user} profile={profile} />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8" data-testid="dashboard-wrapper">
         {/* Onboarding Prompt */}
         {showOnboardingPrompt && (
           <Alert className="mb-6 relative">
@@ -169,9 +173,15 @@ export function DashboardWrapper() {
             </AlertDescription>
           </Alert>
         )}
-        {/* Stats Overview */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <StatsOverview />
+
+        {/* NEW: AI Digest (Hero Section) */}
+        <div className="mb-6" data-testid="dashboard-hero">
+          <AIDigestCard />
+        </div>
+
+        {/* NEW: Impact Metrics */}
+        <div className="mb-8">
+          <ImpactMetrics />
         </div>
 
         {/* Quick Actions */}
@@ -181,12 +191,25 @@ export function DashboardWrapper() {
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Recent Activity - Takes 2 columns on large screens */}
+          {/* NEW: Priority Queue - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <PriorityQueue />
+          </div>
+
+          {/* NEW: Feature Spotlight - Takes 1 column */}
+          <div>
+            <FeatureSpotlight />
+          </div>
+        </div>
+
+        {/* Secondary Grid: Original Components */}
+        <div className="grid gap-6 lg:grid-cols-3 mt-8">
+          {/* Recent Activity */}
           <div className="lg:col-span-2">
             <RecentActivity userId={user.id} />
           </div>
-          
-          {/* Saved Searches - Takes 1 column */}
+
+          {/* Saved Searches */}
           <div>
             <SavedSearches userId={user.id} />
           </div>
