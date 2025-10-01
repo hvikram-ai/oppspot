@@ -21,12 +21,16 @@ export class BenchmarkEngine {
   private supabase: Awaited<ReturnType<typeof createClient>> | null = null
 
   constructor() {
-    // Initialize Supabase client
-    this.initializeClient()
+    // Client will be lazily initialized on first use
   }
 
-  private async initializeClient() {
-    this.supabase = await createClient()
+  /**
+   * Ensure Supabase client is initialized (lazy initialization)
+   */
+  private async ensureClient() {
+    if (!this.supabase) {
+      this.supabase = await createClient()
+    }
   }
 
   /**
@@ -36,6 +40,9 @@ export class BenchmarkEngine {
     request: CalculateBenchmarksRequest
   ): Promise<CalculateBenchmarksResponse> {
     try {
+      // Ensure client is initialized
+      await this.ensureClient()
+
       console.log(`[BenchmarkEngine] Calculating benchmarks for company ${request.company_id}`)
 
       // Check cache first unless force refresh
