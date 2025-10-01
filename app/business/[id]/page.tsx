@@ -10,12 +10,14 @@ import { BusinessUpdates } from '@/components/business/business-updates'
 import { SocialPresence } from '@/components/business/social-presence'
 import { RelatedBusinesses } from '@/components/business/related-businesses'
 import { BusinessStakeholders } from '@/components/business/business-stakeholders'
+import { AIScoreCard } from '@/components/ai-scoring/ai-score-card'
 import { BANTScoreCard } from '@/components/bant/bant-score-card'
 import { BenchmarkCard } from '@/components/benchmarking/benchmark-card'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Navbar } from '@/components/layout/navbar'
 import { getMockCompany, getMockRelatedCompanies } from '@/lib/mock-data/companies'
 import { Database } from '@/lib/supabase/database.types'
+import { getCompaniesHouseService } from '@/lib/services/companies-house'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -27,8 +29,9 @@ interface BusinessPageProps {
 
 export async function generateMetadata({ params: paramsPromise }: BusinessPageProps) {
   const params = await paramsPromise
-  // Check if it's a mock company first
-  if (params.id.startsWith('mock-')) {
+
+  // Check if it's a mock/demo company first
+  if (params.id.startsWith('mock-') || params.id.startsWith('demo-')) {
     const mockBusiness = getMockCompany(params.id)
     if (mockBusiness) {
       const location = mockBusiness.address?.city ? `, ${mockBusiness.address.city}` : ''
@@ -45,6 +48,32 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
   }
 
   const supabase = await createClient()
+
+  // Handle API-prefixed IDs (from real-time search results)
+  let businessId = params.id
+  if (params.id.startsWith('api-')) {
+    // Extract company number from api-12345678 format
+    const companyNumber = params.id.replace('api-', '')
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('name, description, address')
+      .eq('company_number', companyNumber)
+      .single()
+
+    if (business) {
+      const location = business.address?.city ? `, ${business.address.city}` : ''
+      return {
+        title: `${business.name}${location} - OppSpot`,
+        description: business.description || `View details for ${business.name} on OppSpot. Find contact information, location, and more.`,
+        openGraph: {
+          title: business.name,
+          description: business.description || `Business profile for ${business.name}`,
+          type: 'website',
+        }
+      }
+    }
+    // If not found, continue with default lookup
+  }
   
   const { data: business } = await supabase
     .from('businesses')
@@ -77,8 +106,8 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
   let business: Business | Record<string, unknown> | null = null
   let relatedBusinesses: (Business | Record<string, unknown>)[] | null = null
 
-  // Check if it's a mock company first
-  if (params.id.startsWith('mock-')) {
+  // Check if it's a mock/demo company first
+  if (params.id.startsWith('mock-') || params.id.startsWith('demo-')) {
     business = getMockCompany(params.id) as Business
     if (!business) {
       notFound()
@@ -88,32 +117,92 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
   } else {
     // Fetch from database for real companies
     const supabase = await createClient()
-    
+
+    // Handle API-prefixed IDs (from real-time search results)
+    let lookupId = params.id
+    let lookupField: 'id' | 'company_number' = 'id'
+
+    if (params.id.startsWith('api-')) {
+      // Extract company number from api-12345678 format
+      lookupId = params.id.replace('api-', '')
+      lookupField = 'company_number'
+    }
+
     // Fetch business details
     const { data: dbBusiness, error } = await supabase
       .from('businesses')
       .select('*')
-      .eq('id', params.id)
+      .eq(lookupField, lookupId)
       .single()
 
     if (error || !dbBusiness) {
-      notFound()
-    }
-    business = dbBusiness
+      // If not in database and it's an API-prefixed ID, try fetching from Companies House
+      if (params.id.startsWith('api-')) {
+        try {
+          const companiesHouse = getCompaniesHouseService()
+          const companyNumber = params.id.replace('api-', '')
+          const companyProfile = await companiesHouse.getCompanyProfile(companyNumber)
 
-    // Fetch related businesses (same category, nearby)
-    const { data: dbRelated } = await supabase
-      .from('businesses')
-      .select('*')
-      .contains('categories', business.categories?.[0] ? [business.categories[0]] : [])
-      .neq('id', params.id)
-      .limit(6)
-    
-    relatedBusinesses = dbRelated
+          // Format Companies House data to match business structure
+          business = {
+            id: params.id,
+            company_number: companyProfile.company_number,
+            name: companyProfile.company_name,
+            company_status: companyProfile.company_status,
+            company_type: companyProfile.type,
+            incorporation_date: companyProfile.date_of_creation,
+            description: null,
+            registered_office_address: companyProfile.registered_office_address,
+            address: companyProfile.registered_office_address ? {
+              formatted: [
+                companyProfile.registered_office_address.address_line_1,
+                companyProfile.registered_office_address.address_line_2,
+                companyProfile.registered_office_address.locality,
+                companyProfile.registered_office_address.postal_code,
+                companyProfile.registered_office_address.country
+              ].filter(Boolean).join(', '),
+              street: companyProfile.registered_office_address.address_line_1,
+              city: companyProfile.registered_office_address.locality,
+              postal_code: companyProfile.registered_office_address.postal_code,
+              country: companyProfile.registered_office_address.country,
+            } : null,
+            sic_codes: companyProfile.sic_codes || [],
+            website: null,
+            phone: null,
+            email: null,
+            metadata: companyProfile,
+            companies_house_data: companyProfile,
+            companies_house_last_updated: new Date().toISOString(),
+          } as Business
+
+          relatedBusinesses = []
+        } catch (apiError) {
+          console.error('Failed to fetch from Companies House:', apiError)
+          notFound()
+        }
+      } else {
+        notFound()
+      }
+    } else {
+      business = dbBusiness
+    }
+
+    // Only fetch related businesses if we got data from database
+    if (dbBusiness && business) {
+      // Fetch related businesses (same category, nearby)
+      const { data: dbRelated } = await supabase
+        .from('businesses')
+        .select('*')
+        .contains('categories', business.categories?.[0] ? [business.categories[0]] : [])
+        .neq('id', params.id)
+        .limit(6)
+
+      relatedBusinesses = dbRelated
+    }
   }
 
-  // Log view event (only for non-mock companies)
-  if (!params.id.startsWith('mock-')) {
+  // Log view event (only for non-mock/demo companies)
+  if (!params.id.startsWith('mock-') && !params.id.startsWith('demo-')) {
     try {
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -188,6 +277,10 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
             <BusinessActions business={business} />
             {!params.id.startsWith('mock-') && (
               <>
+                <AIScoreCard
+                  companyId={business.id}
+                  companyName={business.name}
+                />
                 <BusinessStakeholders
                   businessId={business.id}
                   businessName={business.name}
