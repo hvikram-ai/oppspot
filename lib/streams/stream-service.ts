@@ -59,6 +59,18 @@ export class StreamService {
 
     if (error) throw error
 
+    // Add creator as owner member
+    const { error: memberError } = await supabase
+      .from('stream_members')
+      .insert({
+        stream_id: stream.id,
+        user_id: userId,
+        role: 'owner',
+        invitation_accepted_at: new Date().toISOString()
+      })
+
+    if (memberError) throw memberError
+
     // Log activity
     await this.logActivity(stream.id, userId, 'stream_created', {
       description: `Created stream: ${stream.name}`,
