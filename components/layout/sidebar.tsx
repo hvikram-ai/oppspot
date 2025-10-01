@@ -217,19 +217,20 @@ export function Sidebar() {
             />
           </SidebarSection>
 
-          {/* STREAMS Section - Placeholder for now */}
+          {/* STREAMS Section */}
           <SidebarSection
             title="Streams"
             icon={FolderOpen}
             isCollapsed={isCollapsed}
             defaultOpen={false}
           >
-            <div className={cn(
-              'text-xs text-muted-foreground px-3 py-2 italic',
-              isCollapsed && 'hidden'
-            )}>
-              Coming soon: Project workspaces
-            </div>
+            <SidebarItem
+              href="/streams"
+              icon={FolderOpen}
+              label="All Streams"
+              tooltip="View and manage all your project workspaces"
+              isCollapsed={isCollapsed}
+            />
           </SidebarSection>
         </div>
       </ScrollArea>
