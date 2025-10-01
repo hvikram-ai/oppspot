@@ -13,6 +13,7 @@ interface Profile {
   email?: string
 }
 import { Navbar } from '@/components/layout/navbar'
+import { Sidebar } from '@/components/layout/sidebar'
 import { EmailVerificationBanner } from '@/components/ui/email-verification-banner'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { StatsOverview } from '@/components/dashboard/stats-overview'
@@ -30,6 +31,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
+import { useSidebar } from '@/lib/hooks/use-sidebar'
+import { cn } from '@/lib/utils'
 
 export function DashboardWrapper() {
   const { isDemoMode, demoData } = useDemoMode()
@@ -39,6 +42,7 @@ export function DashboardWrapper() {
   const [showOnboardingPrompt, setShowOnboardingPrompt] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const { isCollapsed } = useSidebar()
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts()
@@ -146,11 +150,21 @@ export function DashboardWrapper() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <Sidebar />
       <EmailVerificationBanner />
       <CommandPalette />
-      <DashboardHeader user={user} profile={profile} />
-      
-      <div className="container mx-auto px-4 py-8" data-testid="dashboard-wrapper">
+
+      {/* Main content with sidebar offset */}
+      <div
+        className={cn(
+          'transition-all duration-200 ease-in-out',
+          'lg:ml-60', // Default expanded width
+          isCollapsed && 'lg:ml-16' // Collapsed width
+        )}
+      >
+        <DashboardHeader user={user} profile={profile} />
+
+        <div className="container mx-auto px-4 py-8" data-testid="dashboard-wrapper">
         {/* Onboarding Prompt */}
         {showOnboardingPrompt && (
           <Alert className="mb-6 relative">
@@ -225,6 +239,7 @@ export function DashboardWrapper() {
         <div className="grid gap-6 lg:grid-cols-2 mt-8">
           <BusinessInsights userId={user.id} />
           <UpcomingTasks userId={user.id} />
+        </div>
         </div>
       </div>
     </div>

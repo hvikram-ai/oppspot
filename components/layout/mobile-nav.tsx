@@ -29,21 +29,27 @@ interface MobileNavItem {
   badge?: string | number;
 }
 
+// Most frequently used features for bottom nav
 const navItems: MobileNavItem[] = [
   { href: '/dashboard', label: 'Home', icon: Home },
   { href: '/search', label: 'Search', icon: Search },
-  { href: '/map', label: 'Map', icon: Map },
-  { href: '/lists', label: 'Lists', icon: Sparkles },
-  { href: '/ai-scoring', label: 'AI', icon: Brain }
+  { href: '/opp-scan', label: 'Opp Scan', icon: Target },
+  { href: '/lists', label: 'Lists', icon: Sparkles }
 ];
 
+// All other items accessible via "More" menu - organized by workflow
 const menuItems: MobileNavItem[] = [
+  // Discover
+  { href: '/map', label: 'Map', icon: Map },
   { href: '/companies', label: 'Companies', icon: Building2 },
   { href: '/updates', label: 'Updates', icon: Newspaper },
+  // Research
+  { href: '/ai-scoring', label: 'AI Scoring', icon: Brain },
+  { href: '/benchmarking', label: 'Benchmarking', icon: BarChart3 },
   { href: '/stakeholders', label: 'Stakeholders', icon: Users },
+  // Outreach
   { href: '/qualification', label: 'Qualification', icon: Target },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/benchmarking', label: 'Benchmarking', icon: BarChart3 }
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 }
 ];
 
 export function MobileBottomNav() {

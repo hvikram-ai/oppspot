@@ -3,12 +3,15 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDashboardStore } from '@/lib/stores/dashboard-store'
+import { useSidebar } from '@/lib/hooks/use-sidebar'
 
 /**
  * Global keyboard shortcuts for the dashboard
  *
  * Shortcuts:
  * - Cmd/Ctrl + K: Open command palette
+ * - Cmd/Ctrl + B: Toggle sidebar
+ * - Cmd/Ctrl + /: Focus search input
  * - G + D: Go to dashboard
  * - G + S: Go to search
  * - N: New search
@@ -19,6 +22,7 @@ import { useDashboardStore } from '@/lib/stores/dashboard-store'
 export function useKeyboardShortcuts() {
   const router = useRouter()
   const { toggleCommandPalette, setCommandPaletteOpen } = useDashboardStore()
+  const { toggleCollapsed } = useSidebar()
 
   useEffect(() => {
     let gPressed = false
@@ -39,6 +43,21 @@ export function useKeyboardShortcuts() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         toggleCommandPalette()
+        return
+      }
+
+      // Cmd/Ctrl + B: Toggle sidebar
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault()
+        toggleCollapsed()
+        return
+      }
+
+      // Cmd/Ctrl + /: Focus search input
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault()
+        const searchInput = document.querySelector('input[placeholder*="search"]') as HTMLInputElement
+        searchInput?.focus()
         return
       }
 
@@ -107,6 +126,8 @@ export function useKeyboardShortcuts() {
           // TODO: Open help modal
           console.log('Help shortcuts:')
           console.log('Cmd/Ctrl + K: Command palette')
+          console.log('Cmd/Ctrl + B: Toggle sidebar')
+          console.log('Cmd/Ctrl + /: Focus search')
           console.log('G + D: Go to dashboard')
           console.log('G + S: Go to search')
           console.log('N: New search')
@@ -122,7 +143,7 @@ export function useKeyboardShortcuts() {
       window.removeEventListener('keydown', handleKeyDown)
       if (gTimeout) clearTimeout(gTimeout)
     }
-  }, [router, toggleCommandPalette, setCommandPaletteOpen])
+  }, [router, toggleCommandPalette, setCommandPaletteOpen, toggleCollapsed])
 }
 
 /**

@@ -3,71 +3,87 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { HelpTooltip } from '@/components/ui/help-tooltip'
-import { 
-  Search, 
-  Map, 
-  FilePlus, 
-  Upload,
-  Users,
-  Settings,
+import { Badge } from '@/components/ui/badge'
+import {
+  History,
+  FolderOpen,
+  TrendingUp,
   Download,
-  BarChart3,
-  Target
+  Clock,
+  Zap
 } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export function QuickActions() {
   const router = useRouter()
-  
+
+  // Cross-workflow shortcuts that span multiple categories
   const actions = [
     {
-      title: 'New Search',
-      description: 'Find businesses',
-      tooltip: 'Search through thousands of UK & Ireland businesses using AI-powered filters, location-based queries, and industry-specific criteria to find your ideal prospects.',
-      icon: Search,
-      onClick: () => router.push('/search'),
-      variant: 'default' as const
-    },
-    {
-      title: 'Opp Scan',
-      description: 'Acquisition intelligence',
-      tooltip: 'Premium feature: Generate comprehensive acquisition target reports with financial analysis, market positioning, strategic fit scoring, and competitive intelligence for M&A opportunities.',
-      icon: Target,
-      onClick: () => router.push('/opp-scan'),
+      title: 'Continue Last Search',
+      description: 'Resume where you left off',
+      tooltip: 'Quickly jump back to your most recent search with all filters and results preserved. Seamlessly continue your discovery workflow.',
+      icon: History,
+      onClick: () => router.push('/search?recent=true'),
       variant: 'default' as const,
-      premium: true
+      badge: 'Discover'
     },
     {
-      title: 'View Map',
-      description: 'Geographic view',
-      tooltip: 'Visualize business locations on an interactive map with clustering, radius search, demographic overlays, and territory planning tools to understand market density.',
-      icon: Map,
-      onClick: () => router.push('/map'),
-      variant: 'secondary' as const
+      title: 'Recent Stream',
+      description: 'Q1 2025 Targets',
+      tooltip: 'Access your most recently active project workspace with all associated searches, lists, and analytics in one place.',
+      icon: FolderOpen,
+      onClick: () => router.push('/streams/recent'),
+      variant: 'default' as const,
+      badge: '12 items',
+      comingSoon: true
     },
     {
-      title: 'Create List',
-      description: 'Organize leads',
-      tooltip: 'Build and organize custom prospect lists with tags, notes, contact information, and automated follow-up tracking to manage your sales pipeline effectively.',
-      icon: FilePlus,
-      onClick: () => router.push('/lists/new'),
-      variant: 'secondary' as const
+      title: 'Top Scored Lead',
+      description: 'AI-ranked opportunity',
+      tooltip: 'View your highest-scoring prospect based on AI analysis. Strategic fit: 94%, Deal probability: High, Recommended timing: Now.',
+      icon: TrendingUp,
+      onClick: () => router.push('/ai-scoring?top=true'),
+      variant: 'default' as const,
+      badge: '94%',
+      highlight: true
+    },
+    {
+      title: 'Quick Export',
+      description: 'Last search results',
+      tooltip: 'Instantly export your most recent search results to CSV, Excel, or PDF for CRM integration and external analysis.',
+      icon: Download,
+      onClick: () => router.push('/export?quick=true'),
+      variant: 'default' as const,
+      badge: 'Outreach'
     }
   ]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
-        <CardDescription>Common tasks and shortcuts</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>Cross-workflow shortcuts to boost productivity</CardDescription>
+          </div>
+          <HelpTooltip
+            content="Smart shortcuts that work across Discover, Research, and Outreach workflows to save you time."
+            side="left"
+          >
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </HelpTooltip>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {actions.map((action) => {
             const Icon = action.icon
             return (
-              <HelpTooltip 
+              <HelpTooltip
                 key={action.title}
                 content={action.tooltip}
                 side="top"
@@ -75,63 +91,42 @@ export function QuickActions() {
               >
                 <Button
                   variant={action.variant}
-                  className={`h-auto flex-col py-4 gap-2 ${
-                    action.premium 
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0' 
+                  className={`h-auto flex-col py-4 gap-2 relative ${
+                    action.highlight
+                      ? 'border-2 border-primary bg-primary/5 hover:bg-primary/10'
+                      : ''
+                  } ${
+                    action.comingSoon
+                      ? 'opacity-60'
                       : ''
                   }`}
                   onClick={action.onClick}
+                  disabled={action.comingSoon}
                 >
-                  <Icon className="h-5 w-5" />
+                  {action.badge && (
+                    <Badge
+                      variant={action.highlight ? 'default' : 'secondary'}
+                      className="absolute top-2 right-2 text-xs px-2 h-5"
+                    >
+                      {action.badge}
+                    </Badge>
+                  )}
+                  <Icon className="h-6 w-6" />
                   <div className="text-center">
-                    <div className="font-semibold">{action.title}</div>
-                    <div className={`text-xs ${action.premium ? 'opacity-90' : 'opacity-80'}`}>
+                    <div className="font-semibold text-sm">{action.title}</div>
+                    <div className="text-xs opacity-80 mt-1">
                       {action.description}
                     </div>
-                    {action.premium && (
-                      <div className="text-xs opacity-75 mt-1">Premium</div>
+                    {action.comingSoon && (
+                      <Badge variant="outline" className="text-xs mt-2">
+                        Coming Soon
+                      </Badge>
                     )}
                   </div>
                 </Button>
               </HelpTooltip>
             )
           })}
-        </div>
-        
-        {/* Secondary Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 pt-4 border-t">
-          <HelpTooltip content="Invite team members, assign roles, and manage user permissions for collaborative prospecting and lead management.">
-            <Link href="/team" className="w-full">
-              <Button variant="ghost" size="sm" className="w-full justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Manage Team
-              </Button>
-            </Link>
-          </HelpTooltip>
-          <HelpTooltip content="View detailed performance metrics, search patterns, conversion rates, and ROI analysis to optimize your prospecting strategy.">
-            <Link href="/analytics" className="w-full">
-              <Button variant="ghost" size="sm" className="w-full justify-start">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
-              </Button>
-            </Link>
-          </HelpTooltip>
-          <HelpTooltip content="Export your prospect data, search results, and reports in various formats (CSV, Excel, PDF) for external analysis and CRM integration.">
-            <Link href="/export" className="w-full">
-              <Button variant="ghost" size="sm" className="w-full justify-start">
-                <Download className="h-4 w-4 mr-2" />
-                Export Data
-              </Button>
-            </Link>
-          </HelpTooltip>
-          <HelpTooltip content="Configure account preferences, notification settings, API integrations, and billing information for your oppSpot workspace.">
-            <Link href="/settings" className="w-full">
-              <Button variant="ghost" size="sm" className="w-full justify-start">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-            </Link>
-          </HelpTooltip>
         </div>
       </CardContent>
     </Card>

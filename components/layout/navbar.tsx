@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,36 +13,27 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { HelpTooltip } from '@/components/ui/help-tooltip'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import {
   Search,
-  Map,
-  BarChart3,
-  Building2,
   Menu,
-  X,
   Sparkles,
   LogOut,
   Settings,
   User as UserIcon,
-  Newspaper,
-  Users,
-  Target,
-  Brain
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { NotificationBell } from '@/components/notifications/notification-bell'
 import { useDemoMode } from '@/lib/demo/demo-context'
+import { useSidebar } from '@/lib/hooks/use-sidebar'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { isDemoMode, disableDemoMode } = useDemoMode()
+  const { toggleMobile } = useSidebar()
 
   useEffect(() => {
     const getUser = async () => {
@@ -69,107 +61,47 @@ export function Navbar() {
     }
   }
 
-  const navItems = [
-    { 
-      href: '/search', 
-      label: 'Search', 
-      icon: Search,
-      tooltip: 'Search and discover UK & Ireland businesses using advanced filters, location-based queries, and AI-powered matching algorithms.'
-    },
-    { 
-      href: '/map', 
-      label: 'Map', 
-      icon: Map,
-      tooltip: 'Visualize business locations on an interactive map with clustering, territory analysis, and demographic insights.'
-    },
-    { 
-      href: '/companies', 
-      label: 'Companies', 
-      icon: Building2,
-      tooltip: 'Search and verify UK company registrations with real-time Companies House data, including directors, filings, and financial information.'
-    },
-    { 
-      href: '/updates', 
-      label: 'Updates', 
-      icon: Newspaper,
-      tooltip: 'Stay informed with the latest business news, market updates, acquisition opportunities, and industry intelligence.'
-    },
-    { 
-      href: '/lists', 
-      label: 'Lists', 
-      icon: Sparkles,
-      tooltip: 'Create, manage, and organize custom prospect lists with tags, notes, and follow-up tracking for your sales pipeline.'
-    },
-    {
-      href: '/ai-scoring',
-      label: 'AI Scoring',
-      icon: Brain,
-      tooltip: 'AI-powered predictive lead scoring with deal probability, optimal timing recommendations, and actionable insights.'
-    },
-    {
-      href: '/analytics',
-      label: 'Analytics',
-      icon: BarChart3,
-      tooltip: 'Access performance metrics, conversion analytics, ROI insights, and detailed reports to optimize your prospecting strategy.'
-    },
-    {
-      href: '/benchmarking',
-      label: 'Benchmarking',
-      icon: BarChart3,
-      tooltip: 'Compare company performance against industry standards and peer companies with AI-powered insights and recommendations.'
-    },
-    {
-      href: '/stakeholders',
-      label: 'Stakeholders',
-      icon: Users,
-      tooltip: 'Track key relationships, identify champions, manage detractors, and measure influence to optimize stakeholder engagement.'
-    },
-    {
-      href: '/qualification',
-      label: 'Qualification',
-      icon: Target,
-      tooltip: 'Manage lead qualification workflows with BANT and MEDDIC frameworks, automated routing, and intelligent recycling.'
-    },
-  ]
-
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center space-x-2">
-            <div className="relative">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
-            </div>
-            <span className="font-bold text-xl">oppSpot</span>
-          </Link>
+        <div className="flex h-14 items-center justify-between gap-4">
+          {/* Left Section: Mobile Menu + Logo */}
+          <div className="flex items-center gap-2">
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden h-8 w-8"
+                onClick={toggleMobile}
+                aria-label="Toggle menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
-            {user && navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <HelpTooltip 
-                  key={item.href} 
-                  content={item.tooltip}
-                  side="bottom"
-                  delayDuration={300}
-                >
-                  <Link href={item.href}>
-                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </Button>
-                  </Link>
-                </HelpTooltip>
-              )
-            })}
+            <Link href={user ? '/dashboard' : '/'} className="flex items-center space-x-2">
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-bold text-lg hidden sm:inline">oppSpot</span>
+            </Link>
           </div>
 
-          {/* Right Section */}
-          <div className="flex items-center space-x-4">
+          {/* Center: Global Search (Desktop) */}
+          {user && (
+            <div className="hidden md:flex flex-1 max-w-md">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Quick search businesses..."
+                  className="pl-10 h-9"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Right Section: Notifications + User Menu */}
+          <div className="flex items-center gap-2">
             {user ? (
               <>
                 <NotificationBell />
@@ -211,19 +143,9 @@ export function Navbar() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                {/* Mobile Menu Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="md:hidden"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                </Button>
               </>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Link href="/login">
                   <Button variant="ghost" size="sm">Sign In</Button>
                 </Link>
@@ -236,47 +158,6 @@ export function Navbar() {
             )}
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {user && mobileMenuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden overflow-hidden"
-            >
-              <div className="py-4 space-y-1">
-                {navItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <HelpTooltip 
-                      key={item.href}
-                      content={item.tooltip}
-                      side="right"
-                      delayDuration={300}
-                    >
-                      <Link
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block"
-                      >
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start"
-                        >
-                          <Icon className="mr-2 h-4 w-4" />
-                          {item.label}
-                        </Button>
-                      </Link>
-                    </HelpTooltip>
-                  )
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </nav>
   )
