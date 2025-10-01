@@ -4,6 +4,7 @@ An AI-powered business discovery platform for finding and analyzing UK & Ireland
 
 ## 🚀 Features
 
+### Core Features
 - **AI-Powered Search**: Natural language search to find businesses
 - **Interactive Maps**: Geographic visualization of business data
 - **Smart Insights**: AI-generated business analysis and recommendations
@@ -11,14 +12,27 @@ An AI-powered business discovery platform for finding and analyzing UK & Ireland
 - **Data Export**: Export business data in various formats
 - **GDPR Compliant**: Secure and privacy-focused
 
+### 🆕 Command Center Dashboard (v2)
+- **AI Daily Digest**: Personalized morning briefing with overnight discoveries
+- **Priority Queue**: Intelligent task prioritization with urgency indicators
+- **Impact Metrics**: Real-time KPIs with trend analysis and sparklines
+- **Feature Spotlight**: Guided feature discovery carousel
+- **Command Palette** (⌘K): Fast keyboard-driven navigation
+- **Responsive Design**: Mobile-first, tablet-optimized layouts
+- **Accessibility**: WCAG 2.1 AA compliant, keyboard navigation, screen reader support
+- **PWA Support**: Installable, offline-capable, app shortcuts
+
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
+- **Frontend**: Next.js 15 (App Router), React 18, TypeScript 5.x
+- **UI**: Tailwind CSS 4.x, shadcn/ui, Radix UI
+- **Backend**: Supabase (PostgreSQL, Auth, Realtime, Edge Functions)
+- **State Management**: Zustand, SWR
 - **AI**: OpenRouter API for LLM capabilities
-- **Maps**: Google Maps API / Mapbox
+- **Maps**: Leaflet with clustering
+- **Performance**: Web Vitals tracking, lazy loading, ISR
 - **Hosting**: Vercel
-- **Analytics**: Vercel Analytics, PostHog
+- **Testing**: Playwright E2E
 
 ## 📋 Prerequisites
 
@@ -99,6 +113,18 @@ oppspot/
 └── supabase/           # Database schema
 ```
 
+## ⌨️ Keyboard Shortcuts
+
+The dashboard supports powerful keyboard shortcuts for faster navigation:
+
+- **⌘/Ctrl + K**: Open command palette
+- **G + D**: Go to dashboard
+- **G + S**: Go to search
+- **N**: New search
+- **R**: Generate research report
+- **?**: Show keyboard shortcuts help
+- **Esc**: Close dialogs/modals
+
 ## 🔑 Key Commands
 
 ```bash
@@ -107,12 +133,20 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 
+# Testing
+npm run test:e2e     # Run Playwright E2E tests
+npm run test:e2e:ui  # Run tests in interactive UI mode
+
 # Linting & Formatting
 npm run lint         # Run ESLint
 npm run lint:fix     # Fix ESLint issues
 
 # Type checking
 npm run type-check   # Run TypeScript compiler check
+
+# Database
+npm run seed         # Seed dashboard demo data
+npx tsx scripts/seed-dashboard-data.ts
 ```
 
 ## 🤝 Contributing
