@@ -8,18 +8,18 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Search, 
-  Building2, 
-  Download, 
-  TrendingUp
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import {
+  Search,
+  Building2,
+  Download,
+  TrendingUp,
+  Database,
+  TestTube
 } from 'lucide-react'
 import { toast } from 'sonner'
-
-interface User {
-  id: string
-  email: string
-}
 
 interface Address {
   formatted?: string
@@ -48,9 +48,9 @@ interface Company {
   sic_codes?: string[]
   registered_office_address?: RegisteredOfficeAddress
   address?: Address
-  companies_house_last_updated?: string
+  companies_house_last_updated?: string | null
   companies_house_data?: Record<string, unknown>
-  cache_expires_at?: string
+  cache_expires_at?: string | null
   source?: string
   cache_age?: number
   enrichment_status?: string
@@ -72,6 +72,7 @@ export default function CompaniesPage() {
   const [error, setError] = useState('')
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null)
   const [enrichmentStatus, setEnrichmentStatus] = useState<Record<string, string>>({})
+  const [useRealData, setUseRealData] = useState(true)
 
   // Function to fetch enriched company data
   const fetchEnrichedData = async (companyNumber: string) => {
@@ -94,10 +95,6 @@ export default function CompaniesPage() {
           if (enrichResponse.ok) {
             const enrichedCompany = await enrichResponse.json()
             if (enrichedCompany.company) {
-              setEnrichedData(prev => ({
-                ...prev,
-                [companyNumber]: enrichedCompany.company
-              }))
               setEnrichmentStatus(prev => ({
                 ...prev,
                 [companyNumber]: 'completed'
@@ -161,15 +158,11 @@ export default function CompaniesPage() {
     setError('')
 
     try {
-      // Only use demo mode if explicitly set in URL, not based on user state
-      const urlParams = new URLSearchParams(window.location.search)
-      const isDemo = urlParams.get('demo') === 'true'
-
       const response = await fetch('/api/companies/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ query: searchQuery, limit: 10, demo: isDemo })
+        body: JSON.stringify({ query: searchQuery, limit: 10, demo: !useRealData })
       })
 
       if (!response.ok) {
@@ -225,7 +218,7 @@ export default function CompaniesPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ query: searchQuery, limit: 10, demo: true })
+            body: JSON.stringify({ query: searchQuery, limit: 10, demo: !useRealData })
           })
           if (demoResponse.ok) {
             const demoData = await demoResponse.json()
@@ -282,14 +275,34 @@ export default function CompaniesPage() {
           </p>
         </div>
         
-        {/* Stats Alert */}
-        {searchStats && (
+        {/* Data Source Indicator */}
+        {searchResults.length > 0 && (
           <Alert className="mb-6">
-            <TrendingUp className="h-4 w-4" />
+            {useRealData ? (
+              <Database className="h-4 w-4 text-green-600" />
+            ) : (
+              <TestTube className="h-4 w-4 text-orange-600" />
+            )}
             <AlertDescription>
-              <strong>Search Performance:</strong> {searchStats.cache || 0} results from cache, 
-              {searchStats.api || 0} from Companies House API, 
-              {searchStats.created || 0} newly added to database
+              {useRealData ? (
+                <>
+                  <strong className="text-green-600">Live Data:</strong> Showing real Companies House results
+                  {searchStats && (
+                    <span className="ml-2 text-muted-foreground">
+                      ({searchStats.cache || 0} cached, {searchStats.api || 0} from API, {searchStats.created || 0} new)
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <strong className="text-orange-600">Demo Mode:</strong> Showing sample companies for testing
+                  {searchStats?.mock && (
+                    <span className="ml-2 text-muted-foreground">
+                      ({searchStats.mock} demo results)
+                    </span>
+                  )}
+                </>
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -303,7 +316,7 @@ export default function CompaniesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-4">
             <Input
               placeholder="e.g., Google UK or 03977902"
               value={searchQuery}
@@ -316,6 +329,38 @@ export default function CompaniesPage() {
               {loading ? 'Searching...' : 'Search'}
             </Button>
           </div>
+
+          {/* Data Source Toggle */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              {useRealData ? (
+                <Database className="w-5 h-5 text-green-600" />
+              ) : (
+                <TestTube className="w-5 h-5 text-orange-600" />
+              )}
+              <div>
+                <Label htmlFor="data-source-toggle" className="text-sm font-medium cursor-pointer">
+                  Use Real Companies House Data
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {useRealData
+                    ? 'Live data from Companies House API'
+                    : 'Demo mode with sample companies'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={useRealData ? "default" : "secondary"}>
+                {useRealData ? 'Live' : 'Demo'}
+              </Badge>
+              <Switch
+                id="data-source-toggle"
+                checked={useRealData}
+                onCheckedChange={setUseRealData}
+              />
+            </div>
+          </div>
+
           {error && (
             <p className="text-red-600 text-sm mt-2">{error}</p>
           )}
@@ -341,7 +386,7 @@ export default function CompaniesPage() {
                   key={company.id}
                   company={company}
                   onRefresh={handleRefresh}
-                  onClick={setSelectedCompany}
+                  onClick={(c) => setSelectedCompany(c)}
                   showScore={true}
                 />
               ))}
@@ -410,28 +455,42 @@ export default function CompaniesPage() {
                     <div className="mt-4 pt-4 border-t">
                       <h4 className="font-semibold mb-2">Additional Information</h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        {selectedCompany.companies_house_data.accounts && (
+                        {typeof selectedCompany.companies_house_data === 'object' &&
+                         selectedCompany.companies_house_data !== null &&
+                         'accounts' in selectedCompany.companies_house_data &&
+                         typeof selectedCompany.companies_house_data.accounts === 'object' &&
+                         selectedCompany.companies_house_data.accounts !== null && (
                           <>
                             <div>
                               <p className="font-medium">Next Accounts Due</p>
-                              <p>{selectedCompany.companies_house_data.accounts.next_due || 'N/A'}</p>
+                              <p>{('next_due' in selectedCompany.companies_house_data.accounts) ? String(selectedCompany.companies_house_data.accounts.next_due) : 'N/A'}</p>
                             </div>
                             <div>
                               <p className="font-medium">Last Accounts</p>
-                              <p>{selectedCompany.companies_house_data.accounts.last_accounts?.made_up_to || 'N/A'}</p>
+                              <p>{('last_accounts' in selectedCompany.companies_house_data.accounts &&
+                                   typeof selectedCompany.companies_house_data.accounts.last_accounts === 'object' &&
+                                   selectedCompany.companies_house_data.accounts.last_accounts !== null &&
+                                   'made_up_to' in selectedCompany.companies_house_data.accounts.last_accounts)
+                                   ? String(selectedCompany.companies_house_data.accounts.last_accounts.made_up_to) : 'N/A'}</p>
                             </div>
                           </>
                         )}
-                        {selectedCompany.companies_house_data.confirmation_statement && (
+                        {typeof selectedCompany.companies_house_data === 'object' &&
+                         selectedCompany.companies_house_data !== null &&
+                         'confirmation_statement' in selectedCompany.companies_house_data &&
+                         typeof selectedCompany.companies_house_data.confirmation_statement === 'object' &&
+                         selectedCompany.companies_house_data.confirmation_statement !== null && (
                           <div>
                             <p className="font-medium">Next Statement Due</p>
-                            <p>{selectedCompany.companies_house_data.confirmation_statement.next_due || 'N/A'}</p>
+                            <p>{('next_due' in selectedCompany.companies_house_data.confirmation_statement) ? String(selectedCompany.companies_house_data.confirmation_statement.next_due) : 'N/A'}</p>
                           </div>
                         )}
-                        {selectedCompany.companies_house_data.jurisdiction && (
+                        {typeof selectedCompany.companies_house_data === 'object' &&
+                         selectedCompany.companies_house_data !== null &&
+                         'jurisdiction' in selectedCompany.companies_house_data && (
                           <div>
                             <p className="font-medium">Jurisdiction</p>
-                            <p>{selectedCompany.companies_house_data.jurisdiction}</p>
+                            <p>{String(selectedCompany.companies_house_data.jurisdiction)}</p>
                           </div>
                         )}
                       </div>
