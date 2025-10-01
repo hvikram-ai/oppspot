@@ -114,7 +114,7 @@ export interface PeerSelectionCriteria {
   custom_filters?: Array<{
     field: string
     operator: 'eq' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'contains'
-    value: any
+    value: unknown
   }>
 }
 
@@ -305,7 +305,7 @@ export interface MarketPosition {
   brand_strength_score?: number
 
   // Analysis
-  positioning_analysis?: any
+  positioning_analysis?: Record<string, unknown>
   competitive_advantages?: string[]
   competitive_threats?: string[]
   strategic_gaps?: string[]

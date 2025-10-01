@@ -388,7 +388,7 @@ export class LeadScoringService {
 
   // Private helper methods
 
-  private async resolveCompany(identifier: any) {
+  private async resolveCompany(identifier: string | Record<string, unknown>) {
     const supabase = await createClient()
 
     if (typeof identifier === 'string') {

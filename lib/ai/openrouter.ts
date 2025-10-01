@@ -466,6 +466,9 @@ export class OpenRouterClient implements LLMProvider, LLMService {
   }
 }
 
+// Export class alias for backward compatibility
+export { OpenRouterClient as OpenRouterService };
+
 // Create singleton instance
 let aiClient: OpenRouterClient | null = null
 

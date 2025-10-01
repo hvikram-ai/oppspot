@@ -115,7 +115,7 @@ export class BenchmarkingService {
   /**
    * Get peer companies for comparison
    */
-  async getPeerComparisons(companyId: string, limit = 10): Promise<any[]> {
+  async getPeerComparisons(companyId: string, limit = 10): Promise<Array<Record<string, unknown>>> {
     const supabase = await createClient()
 
     try {

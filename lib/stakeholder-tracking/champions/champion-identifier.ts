@@ -116,7 +116,20 @@ export class ChampionIdentifier {
   /**
    * Calculate champion score based on multiple factors
    */
-  async calculateChampionScore(stakeholder: any): Promise<number> {
+  async calculateChampionScore(stakeholder: {
+    role_type?: string;
+    influence_level?: number;
+    engagement_score?: number;
+    id?: string;
+    decision_authority?: boolean;
+    budget_authority?: boolean;
+    stakeholder_engagement?: Array<{
+      outcome?: string;
+      sentiment_score?: number;
+      engagement_type?: string;
+      engagement_date?: string;
+    }>;
+  }): Promise<number> {
     let score = 0;
     const weights = {
       role: 0.15,
@@ -172,8 +185,8 @@ export class ChampionIdentifier {
     const engagements = stakeholder.stakeholder_engagement || [];
     if (engagements.length > 0) {
       const avgSentiment = engagements
-        .filter((e: any) => e.sentiment_score !== null)
-        .reduce((sum: number, e: any) => sum + (e.sentiment_score + 100) / 2, 0) /
+        .filter((e: { sentiment_score?: number | null }) => e.sentiment_score !== null && e.sentiment_score !== undefined)
+        .reduce((sum: number, e: { sentiment_score?: number }) => sum + ((e.sentiment_score || 0) + 100) / 2, 0) /
         engagements.length;
       score += (avgSentiment || 50) * weights.sentiment;
     }

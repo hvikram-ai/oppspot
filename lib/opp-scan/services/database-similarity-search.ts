@@ -21,10 +21,10 @@ interface BusinessRecord {
   name: string
   description: string | null
   categories: string[]
-  address: any
+  address: Record<string, unknown>
   website: string | null
   rating: number | null
-  metadata: any
+  metadata: Record<string, unknown>
   latitude: number | null
   longitude: number | null
   created_at: string
@@ -32,7 +32,7 @@ interface BusinessRecord {
 }
 
 export class DatabaseSimilaritySearch {
-  private supabase: any
+  private supabase: ReturnType<typeof createClient> | null
 
   constructor() {
     // Don't initialize in constructor to avoid cookies error
@@ -364,7 +364,7 @@ export class DatabaseSimilaritySearch {
   /**
    * Extract country from address object
    */
-  private extractCountryFromAddress(address: any): string {
+  private extractCountryFromAddress(address: Record<string, unknown> | string | null): string {
     if (!address) return 'Unknown'
     if (typeof address === 'string') {
       // Try to extract country from string

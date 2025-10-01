@@ -18,7 +18,7 @@ import type {
 } from '../types/benchmarking'
 
 export class BenchmarkEngine {
-  private supabase: any
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null
 
   constructor() {
     // Initialize Supabase client
@@ -345,7 +345,7 @@ export class BenchmarkEngine {
     industryBenchmarks: IndustryBenchmark[],
     peerMetrics: CompanyMetrics[]
   ): MetricComparison | null {
-    const companyValue = (company as any)[metricName]
+    const companyValue = (company as Record<string, unknown>)[metricName]
     if (companyValue === undefined || companyValue === null) return null
 
     // Get benchmark value (prefer industry median, then peer average)
@@ -356,7 +356,7 @@ export class BenchmarkEngine {
       benchmarkValue = industryBenchmark.median_value
     } else if (peerMetrics.length > 0) {
       const peerValues = peerMetrics
-        .map(p => (p as any)[metricName])
+        .map(p => (p as Record<string, unknown>)[metricName])
         .filter(v => v !== undefined && v !== null)
       benchmarkValue = peerValues.reduce((a, b) => a + b, 0) / peerValues.length
     } else {

@@ -5,7 +5,7 @@ import { cleanPdfStyles } from '../styles/clean-pdf-styles'
 interface SimilarityMatch {
   id: string
   company_name: string
-  company_data: any
+  company_data: Record<string, unknown>
   overall_score: number
   confidence: number
   rank: number
@@ -27,7 +27,7 @@ interface AnalysisData {
   analysis: {
     id: string
     targetCompany: string
-    targetCompanyData: any
+    targetCompanyData: Record<string, unknown>
     configuration: {
       weights: {
         financial: number

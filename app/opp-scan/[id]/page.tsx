@@ -577,7 +577,7 @@ function ScanDetailPageContent() {
                 <Activity className="h-4 w-4" />
                 <AlertTitle>Scan In Progress</AlertTitle>
                 <AlertDescription>
-                  Your scan is currently running. You can check back later or we'll notify you when it's complete.
+                  Your scan is currently running. You can check back later or we&apos;ll notify you when it&apos;s complete.
                 </AlertDescription>
               </Alert>
             )}

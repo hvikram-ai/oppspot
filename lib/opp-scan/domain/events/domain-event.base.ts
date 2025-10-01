@@ -5,7 +5,7 @@
 
 import { DomainEvent as IDomainEvent } from '../../core/interfaces'
 
-export abstract class DomainEvent<TPayload = any> implements IDomainEvent<TPayload> {
+export abstract class DomainEvent<TPayload = unknown> implements IDomainEvent<TPayload> {
   public readonly id: string
   public readonly timestamp: Date
   public readonly correlationId?: string
@@ -73,7 +73,7 @@ export abstract class DomainEvent<TPayload = any> implements IDomainEvent<TPaylo
 /**
  * Integration Event for cross-service communication
  */
-export abstract class IntegrationEvent<TPayload = any> extends DomainEvent<TPayload> {
+export abstract class IntegrationEvent<TPayload = unknown> extends DomainEvent<TPayload> {
   constructor(
     type: string,
     payload: TPayload,
@@ -99,7 +99,7 @@ export interface IEventBus {
   clear(): void
 }
 
-export type EventHandler<T = any> = (event: DomainEvent<T>) => Promise<void> | void
+export type EventHandler<T = unknown> = (event: DomainEvent<T>) => Promise<void> | void
 
 /**
  * In-memory event bus implementation for development/testing

@@ -13,18 +13,18 @@ export interface ModelConfig {
   provider: 'openrouter' | 'huggingface' | 'custom' | 'tensorflow'
   endpoint?: string
   apiKey?: string
-  parameters?: Record<string, any>
-  metadata?: Record<string, any>
+  parameters?: Record<string, unknown>
+  metadata?: Record<string, unknown>
 }
 
 export interface ModelPrediction {
   model_id: string
-  input: any
-  output: any
+  input: unknown
+  output: unknown
   confidence?: number
   latency_ms: number
   timestamp: Date
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface ModelMetrics {

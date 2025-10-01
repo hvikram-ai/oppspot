@@ -7,7 +7,7 @@ import path from 'path'
 interface SimilarityMatch {
   id: string
   company_name: string
-  company_data: any
+  company_data: Record<string, unknown>
   overall_score: number
   confidence: number
   rank: number

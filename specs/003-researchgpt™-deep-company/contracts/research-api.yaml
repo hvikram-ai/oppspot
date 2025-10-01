@@ -1,0 +1,657 @@
+openapi: 3.0.3
+info:
+  title: ResearchGPT API
+  description: AI-powered company intelligence research API for oppSpot
+  version: 1.0.0
+  contact:
+    name: oppSpot API Team
+
+servers:
+  - url: https://oppspot.vercel.app/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Local development
+
+tags:
+  - name: Research
+    description: Company research operations
+  - name: Quota
+    description: User quota management
+
+paths:
+  /research/{companyId}:
+    post:
+      summary: Generate research report
+      description: |
+        Generates a comprehensive AI research report for a UK company.
+        Returns immediately with report ID. Use GET endpoint to check status.
+
+        **Performance**: Target <30 seconds for 95% of requests (FR-039)
+        **Quota**: Consumes 1 research credit from user's monthly quota (FR-041)
+      tags:
+        - Research
+      operationId: generateResearch
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          description: UUID of company from businesses table OR company_number
+          schema:
+            type: string
+          examples:
+            uuid:
+              value: "550e8400-e29b-41d4-a716-446655440000"
+            company_number:
+              value: "12345678"
+        - name: force_refresh
+          in: query
+          description: Bypass cache and fetch fresh data (FR-042a)
+          required: false
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        description: Optional configuration for research generation
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                focus_areas:
+                  type: array
+                  description: Prioritize specific sections
+                  items:
+                    type: string
+                    enum:
+                      - buying_signals
+                      - decision_makers
+                      - revenue_signals
+                user_context:
+                  type: string
+                  description: User's product/service for better recommendations
+                  maxLength: 500
+      responses:
+        '202':
+          description: Research generation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchInitiatedResponse'
+        '400':
+          description: Invalid company ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaExceededResponse'
+        '404':
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded (5 concurrent requests)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Get research report
+      description: |
+        Retrieves an existing research report by company ID.
+        Returns cached report if available and not expired.
+      tags:
+        - Research
+      operationId: getResearch
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Research report retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchReportResponse'
+        '202':
+          description: Research still generating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchStatusResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /research/{companyId}/status:
+    get:
+      summary: Check research generation status
+      description: Poll this endpoint while report is generating
+      tags:
+        - Research
+      operationId: getResearchStatus
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchStatusResponse'
+
+  /research/quota:
+    get:
+      summary: Get user's research quota
+      description: Returns current month's quota usage (FR-041a)
+      tags:
+        - Quota
+      operationId: getQuota
+      responses:
+        '200':
+          description: Quota information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaResponse'
+
+  /research/history:
+    get:
+      summary: Get user's research history
+      description: Returns paginated list of user's past research reports
+      tags:
+        - Research
+      operationId: getResearchHistory
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Research history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResearchReportSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+components:
+  schemas:
+    ResearchInitiatedResponse:
+      type: object
+      required:
+        - report_id
+        - status
+        - estimated_completion_seconds
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this research report
+        status:
+          type: string
+          enum: [pending, generating]
+        estimated_completion_seconds:
+          type: integer
+          example: 25
+          description: Estimated time to completion (target <30s)
+        poll_url:
+          type: string
+          format: uri
+          description: URL to poll for status updates
+
+    ResearchStatusResponse:
+      type: object
+      required:
+        - report_id
+        - status
+        - progress
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, generating, complete, partial, failed]
+        progress:
+          type: object
+          properties:
+            current_step:
+              type: string
+              example: "Analyzing buying signals..."
+            percent_complete:
+              type: integer
+              minimum: 0
+              maximum: 100
+            sections_complete:
+              type: integer
+              minimum: 0
+              maximum: 6
+        elapsed_time_ms:
+          type: integer
+          description: Time since generation started
+
+    ResearchReportResponse:
+      type: object
+      required:
+        - report_id
+        - company
+        - status
+        - sections
+        - metadata
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        company:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            company_number:
+              type: string
+        status:
+          type: string
+          enum: [complete, partial, failed]
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Overall report quality score
+        sections:
+          type: object
+          properties:
+            snapshot:
+              $ref: '#/components/schemas/CompanySnapshot'
+            buying_signals:
+              $ref: '#/components/schemas/BuyingSignalsSection'
+            decision_makers:
+              $ref: '#/components/schemas/DecisionMakersSection'
+            revenue_signals:
+              $ref: '#/components/schemas/RevenueSignalsSection'
+            recommended_approach:
+              $ref: '#/components/schemas/RecommendedApproachSection'
+            sources:
+              $ref: '#/components/schemas/SourcesSection'
+        metadata:
+          type: object
+          properties:
+            generated_at:
+              type: string
+              format: date-time
+            cached_until:
+              type: string
+              format: date-time
+            generation_time_ms:
+              type: integer
+            cache_age:
+              type: string
+              example: "2 hours ago"
+            can_refresh:
+              type: boolean
+
+    CompanySnapshot:
+      type: object
+      properties:
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        founded_year:
+          type: integer
+        company_type:
+          type: string
+        company_status:
+          type: string
+        employee_count:
+          type: integer
+        employee_growth_yoy:
+          type: number
+        employee_growth_trend:
+          type: string
+          enum: [growing, stable, declining]
+        revenue_estimate:
+          type: object
+          properties:
+            amount:
+              type: number
+              nullable: true
+            currency:
+              type: string
+            confidence:
+              type: string
+              enum: [high, medium, low]
+        tech_stack:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              technology:
+                type: string
+              detected_at:
+                type: string
+        funding_rounds:
+          type: array
+          items:
+            type: object
+            properties:
+              round_type:
+                type: string
+              amount:
+                type: number
+              currency:
+                type: string
+              announced_date:
+                type: string
+                format: date
+        industry:
+          type: string
+        headquarters:
+          type: object
+
+    BuyingSignalsSection:
+      type: object
+      properties:
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        signals:
+          type: array
+          items:
+            type: object
+            properties:
+              signal_type:
+                type: string
+                enum: [hiring, expansion, leadership, tech_change, social_sentiment]
+              priority:
+                type: string
+                enum: [high, medium, low]
+              detected_date:
+                type: string
+                format: date-time
+              description:
+                type: string
+              source_url:
+                type: string
+                format: uri
+              details:
+                type: object
+                description: Type-specific details (hiring/expansion/etc)
+
+    DecisionMakersSection:
+      type: object
+      properties:
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        decision_makers:
+          type: array
+          maxItems: 5
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              job_title:
+                type: string
+              department:
+                type: string
+              seniority_level:
+                type: string
+                enum: [C-level, VP, Director, Manager, IC]
+              linkedin_url:
+                type: string
+                format: uri
+                nullable: true
+              background_summary:
+                type: string
+              decision_influence:
+                type: string
+                enum: [champion, influencer, blocker, neutral, unknown]
+              business_email:
+                type: string
+                format: email
+                nullable: true
+                description: Only shown if from official source (GDPR compliant)
+              contact_source:
+                type: string
+                description: Where contact info was found
+
+    RevenueSignalsSection:
+      type: object
+      properties:
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        signals:
+          type: array
+          items:
+            type: object
+            properties:
+              metric_type:
+                type: string
+                enum: [customer_growth, revenue, profitability, market_share, competitive_position]
+              value:
+                oneOf:
+                  - type: number
+                  - type: string
+              unit:
+                type: string
+              time_period:
+                type: string
+              source:
+                type: string
+              confidence_level:
+                type: string
+                enum: [high, medium, low]
+
+    RecommendedApproachSection:
+      type: object
+      properties:
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        recommended_contact_name:
+          type: string
+        contact_rationale:
+          type: string
+        approach_summary:
+          type: string
+          description: 2-3 paragraph AI-generated strategy
+        key_talking_points:
+          type: array
+          items:
+            type: string
+        timing_suggestion:
+          type: object
+          properties:
+            urgency:
+              type: string
+              enum: [immediate, within_week, within_month, monitor]
+            rationale:
+              type: string
+        conversation_starters:
+          type: array
+          items:
+            type: object
+            properties:
+              opener:
+                type: string
+              signal_reference:
+                type: string
+              value_proposition:
+                type: string
+
+    SourcesSection:
+      type: object
+      properties:
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        total_sources:
+          type: integer
+          minimum: 10
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              title:
+                type: string
+              source_type:
+                type: string
+                enum:
+                  - companies_house
+                  - press_release
+                  - news_article
+                  - company_website
+                  - job_posting
+                  - financial_filing
+              published_date:
+                type: string
+                format: date
+              reliability_score:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+
+    QuotaResponse:
+      type: object
+      required:
+        - user_id
+        - period_start
+        - period_end
+        - researches_used
+        - researches_limit
+        - researches_remaining
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        researches_used:
+          type: integer
+        researches_limit:
+          type: integer
+        researches_remaining:
+          type: integer
+        tier:
+          type: string
+          enum: [free, standard, premium]
+
+    QuotaExceededResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Monthly research quota exceeded"
+        quota:
+          $ref: '#/components/schemas/QuotaResponse'
+        upgrade_url:
+          type: string
+          format: uri
+
+    ResearchReportSummary:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        company_id:
+          type: string
+        status:
+          type: string
+        confidence_score:
+          type: number
+        generated_at:
+          type: string
+          format: date-time
+        sections_complete:
+          type: integer
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token from auth.getSession()
+
+security:
+  - BearerAuth: []

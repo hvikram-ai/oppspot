@@ -13,7 +13,7 @@ export interface TimelineEvent {
   type?: 'default' | 'success' | 'warning' | 'danger' | 'info'
   icon?: LucideIcon
   badges?: string[]
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface TimelineCardProps {

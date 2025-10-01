@@ -18,7 +18,7 @@ export interface EngagementScore {
 }
 
 export class EngagementTracker {
-  async calculateScore(company: any): Promise<EngagementScore> {
+  async calculateScore(company: Record<string, unknown>): Promise<EngagementScore> {
     console.log(`[EngagementTracker] Calculating score for ${company.name}`)
 
     const supabase = await createClient()

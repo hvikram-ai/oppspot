@@ -39,7 +39,12 @@ export interface BANTQualification {
       engaged: boolean
     }>
     buying_committee_size?: number
-    stakeholder_map?: Record<string, any>
+    stakeholder_map?: Record<string, {
+      name: string
+      role: string
+      influence: number
+      status: string
+    }>
     engagement_level?: {
       executive: number
       manager: number
@@ -154,7 +159,11 @@ export interface MEDDICQualification {
       preference_level: number
       reason: string
     }>
-    evaluation_matrix?: Record<string, any>
+    evaluation_matrix?: Record<string, {
+      weight: number
+      score: number
+      notes?: string
+    }>
   }
 
   // Decision Process Details
@@ -260,7 +269,11 @@ export interface LeadRoutingRule {
     timezone_aware?: boolean
     holiday_handling?: 'queue' | 'next_available' | 'escalate'
     capacity_planning?: boolean
-    skill_matching?: Record<string, any>
+    skill_matching?: Record<string, {
+      required: boolean
+      level: number
+      weight: number
+    }>
   }
 
   created_by?: string
@@ -286,7 +299,7 @@ export interface LeadAssignment {
   completed_at?: string
 
   // Metadata
-  routing_metadata?: Record<string, any>
+  routing_metadata?: Record<string, string | number | boolean>
   created_at?: string
   updated_at?: string
 }
@@ -327,7 +340,7 @@ export interface ChecklistItem {
   // Validation
   is_required: boolean
   validation_type: 'manual' | 'automatic' | 'hybrid'
-  validation_data?: Record<string, any>
+  validation_data?: Record<string, string | number | boolean>
 
   // Scoring
   weight: number
@@ -337,7 +350,7 @@ export interface ChecklistItem {
   dependencies?: {
     prerequisite_items?: string[]
     unlocks_items?: string[]
-    conditional_display?: Record<string, any>
+    conditional_display?: Record<string, string | boolean>
   }
 
   created_at?: string
@@ -418,7 +431,7 @@ export interface AdvancedAlertConfig {
   // Compound conditions
   compound_conditions?: {
     operator: 'AND' | 'OR'
-    conditions: Array<Record<string, any>>
+    conditions: Array<Record<string, string | number | boolean>>
   }
 
   // Actions
@@ -428,7 +441,7 @@ export interface AdvancedAlertConfig {
       recipients: string[]
       template?: string
     }>
-    assign_task?: Record<string, any>
+    assign_task?: Record<string, string | number | boolean>
     update_stage?: string
     add_to_campaign?: string
     trigger_workflow?: string
@@ -460,10 +473,10 @@ export interface AlertHistory {
 
   // Trigger info
   trigger_type: string
-  trigger_value: Record<string, any>
+  trigger_value: Record<string, string | number | boolean>
 
   // Actions
-  actions_taken: Record<string, any>
+  actions_taken: Record<string, string | number | boolean | string[]>
 
   // Status
   status: 'triggered' | 'acknowledged' | 'resolved' | 'escalated'

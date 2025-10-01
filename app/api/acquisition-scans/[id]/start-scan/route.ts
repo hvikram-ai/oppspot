@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { OppScanEngine } from '@/lib/opp-scan/scanning-engine'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/lib/supabase/database.types'
+import { Database } from '@/types/database'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -22,7 +22,8 @@ export async function POST(
       )
     }
 
-    const scanId = params.id
+  const awaitedParams = await params;
+    const scanId = awaitedParams.id
 
     // Get the scan configuration
     const { data: scan, error: scanError } = await supabase

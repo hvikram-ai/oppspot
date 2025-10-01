@@ -126,7 +126,7 @@ export interface Database {
           accounts: Json | null
           charges: Json | null
           companies_house_data: Json | null
-          companies_house_last_updated: string | null
+          companies_house_last_updated: string | undefined
           data_sources: Json | null
           cache_expires_at: string | null
         }
@@ -286,6 +286,281 @@ export interface Database {
           event_type?: string
           metadata?: Json
           created_at?: string
+        }
+      }
+      acquisition_scans: {
+        Row: {
+          id: string
+          user_id: string | null
+          org_id: string | null
+          name: string
+          description: string | null
+          status: 'configuring' | 'scanning' | 'analyzing' | 'completed' | 'failed' | 'paused'
+          config: Json
+          selected_industries: Json | null
+          market_maturity: string[] | null
+          selected_regions: Json | null
+          regulatory_requirements: Json | null
+          cross_border_considerations: Json | null
+          required_capabilities: Json | null
+          strategic_objectives: Json | null
+          synergy_requirements: Json | null
+          data_sources: string[] | null
+          scan_depth: 'basic' | 'detailed' | 'comprehensive'
+          progress_percentage: number
+          current_step: string
+          targets_identified: number
+          targets_analyzed: number
+          created_at: string
+          updated_at: string
+          started_at: string | null
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          org_id?: string | null
+          name: string
+          description?: string | null
+          status?: 'configuring' | 'scanning' | 'analyzing' | 'completed' | 'failed' | 'paused'
+          config?: Json
+          selected_industries?: Json | null
+          market_maturity?: string[] | null
+          selected_regions?: Json | null
+          regulatory_requirements?: Json | null
+          cross_border_considerations?: Json | null
+          required_capabilities?: Json | null
+          strategic_objectives?: Json | null
+          synergy_requirements?: Json | null
+          data_sources?: string[] | null
+          scan_depth?: 'basic' | 'detailed' | 'comprehensive'
+          progress_percentage?: number
+          current_step?: string
+          targets_identified?: number
+          targets_analyzed?: number
+          created_at?: string
+          updated_at?: string
+          started_at?: string | null
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          org_id?: string | null
+          name?: string
+          description?: string | null
+          status?: 'configuring' | 'scanning' | 'analyzing' | 'completed' | 'failed' | 'paused'
+          config?: Json
+          selected_industries?: Json | null
+          market_maturity?: string[] | null
+          selected_regions?: Json | null
+          regulatory_requirements?: Json | null
+          cross_border_considerations?: Json | null
+          required_capabilities?: Json | null
+          strategic_objectives?: Json | null
+          synergy_requirements?: Json | null
+          data_sources?: string[] | null
+          scan_depth?: 'basic' | 'detailed' | 'comprehensive'
+          progress_percentage?: number
+          current_step?: string
+          targets_identified?: number
+          targets_analyzed?: number
+          created_at?: string
+          updated_at?: string
+          started_at?: string | null
+          completed_at?: string | null
+        }
+      }
+      scan_audit_log: {
+        Row: {
+          id: string
+          scan_id: string | null
+          target_company_id: string | null
+          user_id: string | null
+          action_type: string
+          action_description: string | null
+          before_state: Json | null
+          after_state: Json | null
+          ip_address: string | null
+          user_agent: string | null
+          session_id: string | null
+          data_accessed: Json | null
+          legal_basis: string | null
+          retention_period: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          scan_id?: string | null
+          target_company_id?: string | null
+          user_id?: string | null
+          action_type: string
+          action_description?: string | null
+          before_state?: Json | null
+          after_state?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          session_id?: string | null
+          data_accessed?: Json | null
+          legal_basis?: string | null
+          retention_period?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          scan_id?: string | null
+          target_company_id?: string | null
+          user_id?: string | null
+          action_type?: string
+          action_description?: string | null
+          before_state?: Json | null
+          after_state?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          session_id?: string | null
+          data_accessed?: Json | null
+          legal_basis?: string | null
+          retention_period?: number | null
+          created_at?: string
+        }
+      }
+      market_intelligence: {
+        Row: {
+          id: string
+          scan_id: string | null
+          industry_sector: string
+          geographic_scope: Json | null
+          market_size_gbp: number | null
+          market_growth_rate: number | null
+          market_maturity: 'emerging' | 'growth' | 'mature' | 'declining' | null
+          total_competitors: number | null
+          market_concentration: 'fragmented' | 'moderate' | 'concentrated' | 'monopolistic' | null
+          top_competitors: Json | null
+          barriers_to_entry: 'low' | 'moderate' | 'high' | 'very_high' | null
+          key_trends: Json | null
+          growth_drivers: Json | null
+          challenges: Json | null
+          ma_activity_level: 'low' | 'moderate' | 'high' | 'very_high' | null
+          recent_transactions: Json | null
+          average_valuation_multiples: Json | null
+          regulatory_environment: 'favorable' | 'stable' | 'changing' | 'restrictive' | null
+          upcoming_regulations: Json | null
+          data_sources: Json | null
+          analysis_date: string | null
+          confidence_level: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          scan_id?: string | null
+          industry_sector: string
+          geographic_scope?: Json | null
+          market_size_gbp?: number | null
+          market_growth_rate?: number | null
+          market_maturity?: 'emerging' | 'growth' | 'mature' | 'declining' | null
+          total_competitors?: number | null
+          market_concentration?: 'fragmented' | 'moderate' | 'concentrated' | 'monopolistic' | null
+          top_competitors?: Json | null
+          barriers_to_entry?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          key_trends?: Json | null
+          growth_drivers?: Json | null
+          challenges?: Json | null
+          ma_activity_level?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          recent_transactions?: Json | null
+          average_valuation_multiples?: Json | null
+          regulatory_environment?: 'favorable' | 'stable' | 'changing' | 'restrictive' | null
+          upcoming_regulations?: Json | null
+          data_sources?: Json | null
+          analysis_date?: string | null
+          confidence_level?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          scan_id?: string | null
+          industry_sector?: string
+          geographic_scope?: Json | null
+          market_size_gbp?: number | null
+          market_growth_rate?: number | null
+          market_maturity?: 'emerging' | 'growth' | 'mature' | 'declining' | null
+          total_competitors?: number | null
+          market_concentration?: 'fragmented' | 'moderate' | 'concentrated' | 'monopolistic' | null
+          top_competitors?: Json | null
+          barriers_to_entry?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          key_trends?: Json | null
+          growth_drivers?: Json | null
+          challenges?: Json | null
+          ma_activity_level?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          recent_transactions?: Json | null
+          average_valuation_multiples?: Json | null
+          regulatory_environment?: 'favorable' | 'stable' | 'changing' | 'restrictive' | null
+          upcoming_regulations?: Json | null
+          data_sources?: Json | null
+          analysis_date?: string | null
+          confidence_level?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      scan_reports: {
+        Row: {
+          id: string
+          scan_id: string | null
+          user_id: string | null
+          report_type: 'executive_summary' | 'detailed_analysis' | 'target_comparison' | 'market_overview' | 'due_diligence_summary' | 'valuation_analysis' | 'risk_assessment' | 'compliance_report'
+          report_title: string
+          report_description: string | null
+          report_content: Json | null
+          report_format: 'pdf' | 'excel' | 'powerpoint' | 'json' | 'csv'
+          template_used: string | null
+          file_path: string | null
+          file_size: number | null
+          download_count: number
+          generation_status: string
+          is_confidential: boolean
+          access_level: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          scan_id?: string | null
+          user_id?: string | null
+          report_type: 'executive_summary' | 'detailed_analysis' | 'target_comparison' | 'market_overview' | 'due_diligence_summary' | 'valuation_analysis' | 'risk_assessment' | 'compliance_report'
+          report_title: string
+          report_description?: string | null
+          report_content?: Json | null
+          report_format?: 'pdf' | 'excel' | 'powerpoint' | 'json' | 'csv'
+          template_used?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          download_count?: number
+          generation_status?: string
+          is_confidential?: boolean
+          access_level?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          scan_id?: string | null
+          user_id?: string | null
+          report_type?: 'executive_summary' | 'detailed_analysis' | 'target_comparison' | 'market_overview' | 'due_diligence_summary' | 'valuation_analysis' | 'risk_assessment' | 'compliance_report'
+          report_title?: string
+          report_description?: string | null
+          report_content?: Json | null
+          report_format?: 'pdf' | 'excel' | 'powerpoint' | 'json' | 'csv'
+          template_used?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          download_count?: number
+          generation_status?: string
+          is_confidential?: boolean
+          access_level?: string
+          created_at?: string
+          updated_at?: string
         }
       }
     }

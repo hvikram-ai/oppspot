@@ -153,7 +153,7 @@ function determinePageType(url: string): string {
   return 'other'
 }
 
-async function updateCompanySignalSummary(supabase: any, companyId: string) {
+async function updateCompanySignalSummary(supabase: Awaited<ReturnType<typeof createClient>>, companyId: string) {
   try {
     // Get recent signals
     const { data: signals } = await supabase

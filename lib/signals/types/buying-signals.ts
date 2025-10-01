@@ -58,7 +58,7 @@ export interface BuyingSignal {
   signal_strength?: SignalStrength;
 
   // Core signal data
-  signal_data: any; // Will be specific to each signal type
+  signal_data: Record<string, unknown>; // Will be specific to each signal type
   confidence_score: number; // 0-100
   buying_probability: number; // 0-100
 
@@ -558,7 +558,7 @@ export interface SignalAction {
   // Response tracking
   response_received?: boolean;
   response_type?: string;
-  response_data?: any;
+  response_data?: Record<string, unknown>;
 
   // Outcome
   outcome?: ActionOutcome;
@@ -594,10 +594,18 @@ export interface SignalAlertConfig {
   minimum_buying_probability?: number;
 
   // Company filters
-  company_filters?: any;
+  company_filters?: Record<string, string | number | boolean>;
   industry_filters?: string[];
-  size_filters?: any;
-  location_filters?: any;
+  size_filters?: {
+    min?: number;
+    max?: number;
+    ranges?: string[];
+  };
+  location_filters?: {
+    countries?: string[];
+    regions?: string[];
+    cities?: string[];
+  };
 
   // Alert delivery
   alert_channels: string[];
@@ -608,7 +616,11 @@ export interface SignalAlertConfig {
   // Timing
   real_time?: boolean;
   batch_frequency?: BatchFrequency;
-  quiet_hours?: any;
+  quiet_hours?: {
+    start: string;
+    end: string;
+    timezone?: string;
+  };
 
   created_at?: Date | string;
   updated_at?: Date | string;

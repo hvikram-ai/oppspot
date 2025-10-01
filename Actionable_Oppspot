@@ -1,0 +1,60 @@
+🔴 Critical Issues (Blocking)
+
+  1. TypeScript Errors (60+ errors)
+
+  - Next.js 15 route params not async: Routes like
+  /api/companies/by-number-temp/enrich/route.ts expecting sync params but
+  Next.js 15 requires Promise<params>
+  - Database type mismatches: Two conflicting database type definitions
+  (types/database.ts vs lib/supabase/database.types.ts)
+  - Missing properties: Properties like acquisition_scans, scan_audit_log,
+  market_intelligence, scan_reports don't exist in database types
+  - Type conflicts: Companies page has incompatible types between different
+  Company interfaces
+
+  2. Build Breaking Issues
+
+  - Companies page (app/(dashboard)/companies/page.tsx:97): setEnrichedData
+  not defined
+  - Qualification page: Type mismatches in activity logs
+  - Admin pages: Missing role property checks
+
+  🟡 Medium Priority
+
+  3. ESLint Warnings (30+ warnings)
+
+  - @typescript-eslint/no-explicit-any: 11 occurrences - untyped any usage
+  - react-hooks/exhaustive-deps: Missing dependencies in useEffect hooks
+  - Unused variables/imports: Cluttering codebase
+
+  4. Architecture Issues
+
+  - Hardcoded credentials in client code (lib/supabase/client.ts:6-7) -
+  security risk
+  - Duplicate database type definitions causing conflicts
+  - Inconsistent error handling across API routes
+
+  🟢 Low Priority (Code Quality)
+
+  - Unused eslint-disable directives
+  - Dead code (unused imports)
+  - React unescaped entities (already disabled in ESLint)
+
+  📋 Recommended Action Plan
+
+  Immediate (to restore builds):
+  1. Fix async params in Next.js 15 routes
+  2. Consolidate database types (single source of truth)
+  3. Fix undefined setEnrichedData in companies page
+  4. Add missing database tables to schema or remove references
+
+  Short-term:
+  5. Replace all any types with proper interfaces
+  6. Fix useEffect dependency arrays
+  7. Remove unused imports/variables
+
+  Long-term:
+  8. Move credentials to environment variables (security)
+  9. Add comprehensive error boundaries
+  10. Implement proper TypeScript strict mode throughout
+

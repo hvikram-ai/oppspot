@@ -8,10 +8,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { 
-  Search, 
-  Building2, 
-  TrendingUp, 
+import {
+  Search,
+  Building2,
+  TrendingUp,
   Factory,
   Laptop,
   Heart,
@@ -21,7 +21,8 @@ import {
   ShoppingBag,
   Plane,
   Zap,
-  X
+  X,
+  LucideIcon
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -30,7 +31,7 @@ interface IndustryCategory {
   name: string
   description: string
   sic_code?: string
-  icon: any
+  icon: LucideIcon
   consolidation_opportunity: string
   typical_business_size: string
   subcategories?: IndustrySubcategory[]
@@ -43,9 +44,19 @@ interface IndustrySubcategory {
   sic_code?: string
 }
 
+interface OppScanConfig {
+  selectedIndustries?: Array<{
+    id: string;
+    name: string;
+    [key: string]: unknown;
+  }>;
+  marketMaturity?: string[];
+  [key: string]: unknown;
+}
+
 interface IndustrySelectionProps {
-  config: any
-  onChange: (field: string, value: any) => void
+  config: OppScanConfig
+  onChange: (field: string, value: unknown) => void
 }
 
 export function IndustrySelectionStep({ config, onChange }: IndustrySelectionProps) {
@@ -347,7 +358,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
         <div className="space-y-2">
           <Label>Selected Industries ({config.selectedIndustries.length})</Label>
           <div className="flex flex-wrap gap-2">
-            {config.selectedIndustries.map((item: any, index: number) => (
+            {config.selectedIndustries?.map((item: { id: string; name: string }, index: number) => (
               <Badge
                 key={index}
                 variant="secondary"

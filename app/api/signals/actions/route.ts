@@ -178,7 +178,15 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updates: any = {
+    const updates: {
+      updated_at: string;
+      action_status?: string;
+      outcome?: string;
+      outcome_notes?: string;
+      completed_at?: string;
+      response_data?: unknown;
+      response_received?: boolean;
+    } = {
       updated_at: new Date().toISOString()
     };
 
@@ -221,7 +229,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 // Helper function to execute different action types
-async function executeAction(actionType: string, signal: any, userId: string) {
+async function executeAction(actionType: string, signal: Record<string, unknown>, userId: string) {
   const supabase = await createClient();
 
   switch (actionType) {

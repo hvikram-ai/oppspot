@@ -188,7 +188,7 @@ export class InfluenceScorer {
   /**
    * Calculate hierarchical influence based on position and authority
    */
-  private async calculateHierarchicalInfluence(stakeholder: any): Promise<number> {
+  private async calculateHierarchicalInfluence(stakeholder: Stakeholder): Promise<number> {
     let score = 0;
 
     // Title-based scoring
@@ -226,7 +226,7 @@ export class InfluenceScorer {
   /**
    * Calculate social influence based on relationships and network
    */
-  private async calculateSocialInfluence(stakeholder: any): Promise<number> {
+  private async calculateSocialInfluence(stakeholder: Stakeholder): Promise<number> {
     const relationships = stakeholder.stakeholder_relationships || [];
     const engagements = stakeholder.stakeholder_engagement || [];
 
@@ -243,16 +243,16 @@ export class InfluenceScorer {
     }
 
     // Connection quality (based on relationship types)
-    const strongRelationships = relationships.filter((r: any) =>
+    const strongRelationships = relationships.filter((r: StakeholderRelationship) =>
       r.strength >= 7 || ['mentor', 'sponsor', 'ally'].includes(r.relationship_type)
     );
     score += Math.min(20, strongRelationships.length * 5);
 
     // Engagement frequency and reach
     const uniqueParticipants = new Set();
-    engagements.forEach((e: any) => {
+    engagements.forEach((e: { participants?: Array<{ id: string }> }) => {
       if (e.participants) {
-        e.participants.forEach((p: any) => uniqueParticipants.add(p.id));
+        e.participants.forEach((p: { id: string }) => uniqueParticipants.add(p.id));
       }
     });
     score += Math.min(20, uniqueParticipants.size * 2);
@@ -270,7 +270,7 @@ export class InfluenceScorer {
   /**
    * Calculate technical influence based on expertise and domain knowledge
    */
-  private async calculateTechnicalInfluence(stakeholder: any): Promise<number> {
+  private async calculateTechnicalInfluence(stakeholder: Stakeholder): Promise<number> {
     let score = 30; // Base score
 
     const title = (stakeholder.title || '').toLowerCase();
@@ -313,7 +313,7 @@ export class InfluenceScorer {
   /**
    * Calculate political influence based on organizational dynamics
    */
-  private async calculatePoliticalInfluence(stakeholder: any): Promise<number> {
+  private async calculatePoliticalInfluence(stakeholder: Stakeholder): Promise<number> {
     let score = 20; // Base score
 
     // Role-based political influence
@@ -331,7 +331,7 @@ export class InfluenceScorer {
 
     // Relationship strength as political capital
     const relationships = stakeholder.stakeholder_relationships || [];
-    const strongAlliances = relationships.filter((r: any) =>
+    const strongAlliances = relationships.filter((r: StakeholderRelationship) =>
       ['ally', 'sponsor', 'mentor'].includes(r.relationship_type) && r.strength >= 7
     );
     score += Math.min(20, strongAlliances.length * 10);
@@ -369,7 +369,7 @@ export class InfluenceScorer {
   /**
    * Calculate network metrics
    */
-  private async calculateNetworkMetrics(stakeholder: any): Promise<{
+  private async calculateNetworkMetrics(stakeholder: Stakeholder): Promise<{
     centrality: number;
     connectionCount: number;
     reach: string;
@@ -380,7 +380,7 @@ export class InfluenceScorer {
     // Calculate network centrality (simplified)
     let centrality = 0;
     if (connectionCount > 0) {
-      const avgStrength = relationships.reduce((sum: number, r: any) =>
+      const avgStrength = relationships.reduce((sum: number, r: StakeholderRelationship) =>
         sum + (r.strength || 0), 0) / connectionCount;
       centrality = (connectionCount / 50) * (avgStrength / 10);
       centrality = Math.min(1, centrality);
@@ -410,7 +410,7 @@ export class InfluenceScorer {
   /**
    * Analyze behavioral indicators
    */
-  private analyzeBehavioralIndicators(stakeholder: any): {
+  private analyzeBehavioralIndicators(stakeholder: Stakeholder): {
     opinionLeader: boolean;
     earlyAdopter: boolean;
     changeAgent: boolean;
@@ -428,7 +428,7 @@ export class InfluenceScorer {
     const earlyAdopter =
       stakeholder.champion_status === 'active' ||
       stakeholder.champion_status === 'developing' ||
-      (engagements.filter((e: any) => e.outcome === 'positive').length > 3);
+      (engagements.filter((e: { outcome?: string }) => e.outcome === 'positive').length > 3);
 
     // Change agent: combination of influence and positive action
     const changeAgent =
@@ -446,9 +446,9 @@ export class InfluenceScorer {
   /**
    * Calculate confidence score for the influence calculation
    */
-  private calculateConfidenceScore(stakeholder: any): number {
+  private calculateConfidenceScore(stakeholder: Stakeholder): number {
     let dataPoints = 0;
-    let maxPoints = 10;
+    const maxPoints = 10;
 
     // Check data completeness
     if (stakeholder.title) dataPoints++;
@@ -496,7 +496,7 @@ export class InfluenceScorer {
 
       // Create influence map
       const influenceMap: Record<string, number> = {};
-      connections.forEach((conn: any) => {
+      connections.forEach((conn: StakeholderRelationship & { related_stakeholder?: Stakeholder }) => {
         if (conn.related_stakeholder) {
           const influence = (conn.related_stakeholder.influence_level || 0) * 10;
           const strength = conn.strength || 5;
@@ -559,9 +559,9 @@ export class InfluenceScorer {
       }
 
       // Group by department as a simple clustering approach
-      const clusters = new Map<string, any[]>();
+      const clusters = new Map<string, Stakeholder[]>();
 
-      stakeholders.forEach((stakeholder: any) => {
+      stakeholders.forEach((stakeholder: Stakeholder) => {
         const dept = stakeholder.department || 'Unknown';
         if (!clusters.has(dept)) {
           clusters.set(dept, []);

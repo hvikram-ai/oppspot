@@ -29,7 +29,8 @@ import {
   User as UserIcon,
   Newspaper,
   Users,
-  Target
+  Target,
+  Brain
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NotificationBell } from '@/components/notifications/notification-bell'
@@ -98,6 +99,12 @@ export function Navbar() {
       label: 'Lists', 
       icon: Sparkles,
       tooltip: 'Create, manage, and organize custom prospect lists with tags, notes, and follow-up tracking for your sales pipeline.'
+    },
+    {
+      href: '/ai-scoring',
+      label: 'AI Scoring',
+      icon: Brain,
+      tooltip: 'AI-powered predictive lead scoring with deal probability, optimal timing recommendations, and actionable insights.'
     },
     {
       href: '/analytics',

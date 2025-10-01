@@ -45,7 +45,7 @@ export default function NotificationsPage() {
                   <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
                   <div className="flex-1">
                     <p className="font-medium">API Limit Warning</p>
-                    <p className="text-sm text-muted-foreground">You've used 80% of your monthly API quota</p>
+                    <p className="text-sm text-muted-foreground">You&apos;ve used 80% of your monthly API quota</p>
                     <p className="text-xs text-muted-foreground mt-1">3 days ago</p>
                   </div>
                 </div>

@@ -12,7 +12,7 @@ export interface ResilienceOptions {
   timeout?: number
   name?: string
   onError?: (error: Error, context: ResilienceContext) => void | Promise<void>
-  onSuccess?: (result: any, context: ResilienceContext) => void | Promise<void>
+  onSuccess?: (result: unknown, context: ResilienceContext) => void | Promise<void>
 }
 
 export interface ResilienceContext {
@@ -218,7 +218,12 @@ export class ResilienceError extends Error {
 
 export interface ResilienceMetrics {
   name: string
-  circuitBreakerMetrics?: any
+  circuitBreakerMetrics?: {
+    state: string;
+    failureCount: number;
+    successCount: number;
+    lastFailureTime?: number;
+  }
   hasRetryPolicy: boolean
   timeoutMs: number
 }

@@ -442,7 +442,7 @@ export interface IEventBus {
   unsubscribe<T>(eventType: string, handler: EventHandler<T>): void
 }
 
-export interface DomainEvent<T = any> {
+export interface DomainEvent<T = unknown> {
   readonly id: string
   readonly type: string
   readonly payload: T
@@ -452,7 +452,7 @@ export interface DomainEvent<T = any> {
   readonly metadata: Record<string, unknown>
 }
 
-export type EventHandler<T = any> = (event: DomainEvent<T>) => Promise<void> | void
+export type EventHandler<T = unknown> = (event: DomainEvent<T>) => Promise<void> | void
 
 export interface CancellationToken {
   readonly isCancelled: boolean

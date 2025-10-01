@@ -118,7 +118,15 @@ export class DetractorManager {
   /**
    * Calculate detractor risk score
    */
-  async calculateDetractorRiskScore(stakeholder: any): Promise<number> {
+  async calculateDetractorRiskScore(stakeholder: {
+    role_type?: string;
+    influence_level?: number;
+    sentiment_score?: number;
+    engagement_score?: number;
+    relationship_strength?: number;
+    stakeholder_engagement?: Array<{ sentiment_score?: number | null; outcome?: string }>;
+    id?: string;
+  }): Promise<number> {
     let riskScore = 0;
     const weights = {
       role: 0.15,
@@ -150,7 +158,7 @@ export class DetractorManager {
     const engagements = stakeholder.stakeholder_engagement || [];
     if (engagements.length > 0) {
       const negativeSentiments = engagements.filter(
-        (e: any) => e.sentiment_score !== null && e.sentiment_score < -20
+        (e: { sentiment_score?: number | null }) => e.sentiment_score !== null && e.sentiment_score !== undefined && e.sentiment_score < -20
       );
       const negativeRatio = negativeSentiments.length / engagements.length;
       riskScore += (negativeRatio * 100) * weights.sentiment;
@@ -158,7 +166,7 @@ export class DetractorManager {
       // Recent negative outcomes
       const recentNegative = engagements
         .slice(0, 5)
-        .filter((e: any) => e.outcome === 'negative').length;
+        .filter((e: { outcome?: string }) => e.outcome === 'negative').length;
       riskScore += (recentNegative * 20) * weights.engagement;
     } else {
       // No engagement is also a risk
@@ -577,7 +585,7 @@ export class DetractorManager {
 
       // Check engagement history
       const positiveEngagements = engagements.filter(
-        (e: any) => e.outcome === 'positive'
+        (e: { outcome?: string }) => e.outcome === 'positive'
       ).length;
       const totalEngagements = engagements.length;
 
@@ -595,7 +603,7 @@ export class DetractorManager {
       // Check for recent improvements
       const recentEngagements = engagements.slice(0, 3);
       const recentPositive = recentEngagements.filter(
-        (e: any) => e.sentiment_score > 0
+        (e: { sentiment_score?: number }) => e.sentiment_score && e.sentiment_score > 0
       ).length;
 
       if (recentPositive >= 2) {

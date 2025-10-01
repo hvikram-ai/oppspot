@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import leadRoutingEngine from '@/lib/qualification/routing/lead-routing-engine';
+import { leadRoutingEngine } from '@/lib/qualification/routing/lead-routing-engine';
 import { RouteLeadRequest } from '@/lib/qualification/types/qualification';
 
 export async function POST(request: NextRequest) {
@@ -139,7 +139,13 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update assignment
-    const updateData: any = {
+    const updateData: {
+      status: string;
+      updated_at: string;
+      accepted_at?: string;
+      completed_at?: string;
+      reassigned_at?: string;
+    } = {
       status,
       updated_at: new Date().toISOString()
     };

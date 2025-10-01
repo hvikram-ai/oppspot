@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/lib/supabase/database.types'
+import { Database } from '@/types/database'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
@@ -10,7 +10,7 @@ type Region = { id: string; name: string; country: string }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -23,7 +23,7 @@ export async function POST(
       )
     }
 
-    const scanId = params.id
+    const { id: scanId } = await params
     const { action } = await request.json() // 'start', 'pause', 'resume', 'stop'
 
     // Get the existing scan

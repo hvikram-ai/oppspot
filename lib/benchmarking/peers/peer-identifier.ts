@@ -37,7 +37,7 @@ interface CompanyFeatures {
 }
 
 export class PeerIdentifier {
-  private supabase: any
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null
 
   constructor() {
     this.initializeClient()
@@ -376,7 +376,7 @@ export class PeerIdentifier {
     targetEmployees?: number,
     candidateEmployees?: number
   ): number {
-    let scores = []
+    const scores = []
 
     // Revenue similarity
     if (targetRevenue && candidateRevenue) {
@@ -463,8 +463,8 @@ export class PeerIdentifier {
     ]
 
     for (const metric of metricsToCompare) {
-      const targetValue = (targetMetrics as any)[metric]
-      const candidateValue = (candidateMetrics as any)[metric]
+      const targetValue = (targetMetrics as Record<string, unknown>)[metric]
+      const candidateValue = (candidateMetrics as Record<string, unknown>)[metric]
 
       if (targetValue !== undefined && candidateValue !== undefined && targetValue !== 0) {
         const ratio = Math.min(Math.abs(targetValue), Math.abs(candidateValue)) /

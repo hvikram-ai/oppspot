@@ -32,7 +32,7 @@ interface SettingSection {
 }
 
 export default function SettingsPage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [completionPercentage, setCompletionPercentage] = useState(0)
 
@@ -64,7 +64,7 @@ export default function SettingsPage() {
 
   const calculateCompletion = (profile: any) => {
     let completed = 0
-    let total = 8
+    const total = 8
     
     if (profile?.full_name) completed++
     if (profile?.avatar_url) completed++

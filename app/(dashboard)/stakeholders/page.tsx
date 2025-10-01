@@ -5,13 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/navbar';
 import { StakeholderDashboard } from '@/components/stakeholders/stakeholder-dashboard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Info, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 function StakeholdersContent() {
   const searchParams = useSearchParams();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const companyId = searchParams.get('company_id');

@@ -12,8 +12,8 @@ export interface SystemEvent {
   type: string
   source: string
   timestamp: Date
-  data: any
-  metadata?: Record<string, any>
+  data: unknown
+  metadata?: Record<string, unknown>
   userId?: string
   orgId?: string
 }
@@ -31,7 +31,7 @@ export interface EventSubscription {
   id: string
   eventType: string
   handlerId: string
-  filters?: Record<string, any>
+  filters?: Record<string, unknown>
   active: boolean
 }
 
@@ -385,8 +385,8 @@ export class EventBus {
     console.log('[Analytics]', event.type, event.data)
 
     // Could integrate with Mixpanel, Amplitude, etc.
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', event.type, {
+    if (typeof window !== 'undefined' && (window as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as { gtag: (...args: unknown[]) => void }).gtag('event', event.type, {
         event_category: 'engagement',
         event_label: event.source,
         value: event.data

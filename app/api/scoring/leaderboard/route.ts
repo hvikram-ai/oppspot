@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+
+interface LeadScore {
+  overall_score: number;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,7 +91,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function calculateLeaderboardStats(supabase: any) {
+async function calculateLeaderboardStats(supabase: SupabaseClient) {
   try {
     // Get score distribution
     const { data: allScores } = await supabase
@@ -102,7 +107,7 @@ async function calculateLeaderboardStats(supabase: any) {
       }
     }
 
-    const scores = allScores.map((s: any) => s.overall_score).sort((a: number, b: number) => a - b)
+    const scores = (allScores as LeadScore[]).map(s => s.overall_score).sort((a: number, b: number) => a - b)
     const total = scores.length
     const average = scores.reduce((sum: number, score: number) => sum + score, 0) / total
     const median = total % 2 === 0

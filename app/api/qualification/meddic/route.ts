@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import meddicFramework from '@/lib/qualification/frameworks/meddic-framework';
+import { meddicFramework } from '@/lib/qualification/frameworks/meddic-framework';
 import { CalculateMEDDICRequest } from '@/lib/qualification/types/qualification';
 
 export async function POST(request: NextRequest) {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate MEDDIC qualification
-    const qualification = await meddicFramework.calculateMEDDICScore(body);
+    const qualification = await meddicFramework.calculateMEDDIC(body);
 
     if (!qualification) {
       return NextResponse.json(

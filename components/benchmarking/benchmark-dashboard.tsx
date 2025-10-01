@@ -31,7 +31,7 @@ export function BenchmarkDashboard({ companyId, companyName }: BenchmarkDashboar
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [comparison, setComparison] = useState<BenchmarkComparison | null>(null)
-  const [peers, setPeers] = useState<any[]>([])
+  const [peers, setPeers] = useState<Array<Record<string, unknown>>>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {

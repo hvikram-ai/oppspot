@@ -2,13 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   eslint: {
-    // Temporarily ignore ESLint errors during builds to unblock deployment
-    // while technical debt is being addressed
+    // Temporarily disabled during builds due to extensive technical debt
+    // ESLint is still run separately via `npm run lint`
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Temporarily ignore TypeScript errors during builds to unblock deployment
-    // while technical debt is being addressed
+    // Temporarily disabled during builds - extensive technical debt cleanup needed
+    // TypeScript checking still available via `tsc --noEmit`
     ignoreBuildErrors: true,
   },
   // Re-enabled static optimization with Suspense boundaries now in place

@@ -43,7 +43,7 @@ export class OllamaScoringService {
    * Perform comprehensive AI-powered scoring
    */
   async analyzeCompany(
-    company: any,
+    company: Record<string, unknown>,
     options: {
       depth?: 'quick' | 'detailed'
       useCache?: boolean
@@ -145,7 +145,7 @@ export class OllamaScoringService {
   /**
    * Analyze financial health using AI
    */
-  private async analyzeFinancialHealth(company: any, model: string): Promise<AIScore> {
+  private async analyzeFinancialHealth(company: Record<string, unknown>, model: string): Promise<AIScore> {
     const prompt = this.buildFinancialAnalysisPrompt(company)
 
     const response = await this.ollama.complete(prompt.userPrompt, {
@@ -161,7 +161,7 @@ export class OllamaScoringService {
   /**
    * Analyze technology fit using AI
    */
-  private async analyzeTechnologyFit(company: any, model: string): Promise<AIScore> {
+  private async analyzeTechnologyFit(company: Record<string, unknown>, model: string): Promise<AIScore> {
     const prompt = this.buildTechnologyAnalysisPrompt(company)
 
     const response = await this.ollama.complete(prompt.userPrompt, {
@@ -177,7 +177,7 @@ export class OllamaScoringService {
   /**
    * Analyze industry alignment using AI
    */
-  private async analyzeIndustryAlignment(company: any, model: string): Promise<AIScore> {
+  private async analyzeIndustryAlignment(company: Record<string, unknown>, model: string): Promise<AIScore> {
     const prompt = this.buildIndustryAnalysisPrompt(company)
 
     const response = await this.ollama.complete(prompt.userPrompt, {
@@ -193,7 +193,7 @@ export class OllamaScoringService {
   /**
    * Analyze growth potential using AI
    */
-  private async analyzeGrowthPotential(company: any, model: string): Promise<AIScore> {
+  private async analyzeGrowthPotential(company: Record<string, unknown>, model: string): Promise<AIScore> {
     const prompt = this.buildGrowthAnalysisPrompt(company)
 
     const response = await this.ollama.complete(prompt.userPrompt, {
@@ -209,7 +209,7 @@ export class OllamaScoringService {
   /**
    * Analyze engagement signals using AI
    */
-  private async analyzeEngagementSignals(company: any, model: string): Promise<AIScore> {
+  private async analyzeEngagementSignals(company: Record<string, unknown>, model: string): Promise<AIScore> {
     // Fetch engagement data
     const supabase = await createClient()
     const { data: engagementEvents } = await supabase

@@ -38,12 +38,18 @@ interface DataSource {
   typical_cost_per_search: string
   enterprise_features: string[]
   compliance_level: 'basic' | 'standard' | 'enterprise'
-  icon: any
+  icon: React.ComponentType<{ className?: string }>
+}
+
+interface ScanConfig {
+  dataSources?: string[];
+  scanDepth?: string;
+  [key: string]: unknown;
 }
 
 interface ScanConfigurationProps {
-  config: any
-  onChange: (field: string, value: any) => void
+  config: ScanConfig
+  onChange: (field: string, value: unknown) => void
 }
 
 export function ScanConfigurationStep({ config, onChange }: ScanConfigurationProps) {

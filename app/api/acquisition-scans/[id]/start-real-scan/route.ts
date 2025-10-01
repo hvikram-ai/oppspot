@@ -3,14 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 import CostManagementService from '@/lib/opp-scan/cost-management'
 import DataSourceFactory from '@/lib/opp-scan/data-sources/data-source-factory'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/lib/supabase/database.types'
+import { Database } from '@/types/database'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -23,7 +23,8 @@ export async function POST(
       )
     }
 
-    const scanId = params.id
+  const awaitedParams = await params;
+    const scanId = awaitedParams.id
 
     // Get the scan configuration
     const { data: scan, error: scanError } = await supabase

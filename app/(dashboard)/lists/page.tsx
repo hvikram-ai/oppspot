@@ -113,12 +113,12 @@ export default function SavedBusinessesPage() {
 
       if (error) throw error
 
-      const formattedData = data?.map(item => ({
+      const formattedData = data?.filter(item => item.businesses).map(item => ({
         ...item,
-        business: item.businesses
+        business: item.businesses!
       })) || []
 
-      setSavedBusinesses(formattedData as unknown as SavedBusiness[])
+      setSavedBusinesses(formattedData as SavedBusiness[])
     } catch (error) {
       console.error('Error fetching saved businesses:', error)
       toast.error('Failed to load saved businesses')

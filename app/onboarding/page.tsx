@@ -133,7 +133,7 @@ export default function OnboardingPage() {
 
       // Update profile with onboarding data
       const { error: profileError } = await (supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         .from('profiles') as unknown)
         .update({
           preferences: {
@@ -151,12 +151,12 @@ export default function OnboardingPage() {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         .single() as unknown
 
       if (profile?.org_id) {
         await (supabase
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           .from('organizations') as unknown)
           .update({
             settings: {

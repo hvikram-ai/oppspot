@@ -44,9 +44,22 @@ interface StrategicObjective {
   examples: string[]
 }
 
+interface Capability {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+interface ServicesConfig {
+  requiredCapabilities?: Capability[];
+  strategicObjectives?: Record<string, unknown>;
+  synergyRequirements?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 interface ServicesSelectionProps {
-  config: any
-  onChange: (field: string, value: any) => void
+  config: ServicesConfig
+  onChange: (field: string, value: unknown) => void
 }
 
 export function ServicesSelectionStep({ config, onChange }: ServicesSelectionProps) {
@@ -307,7 +320,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
 
   const handleCapabilityToggle = (capability: Capability) => {
     const selected = config.requiredCapabilities || []
-    const existingIndex = selected.findIndex((c: any) => c.id === capability.id)
+    const existingIndex = selected.findIndex((c: Capability) => c.id === capability.id)
 
     let newSelection
     if (existingIndex >= 0) {
@@ -352,7 +365,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
   }
 
   const isCapabilitySelected = (capability: Capability) => {
-    return config.requiredCapabilities?.some((c: any) => c.id === capability.id) || false
+    return config.requiredCapabilities?.some((c: Capability) => c.id === capability.id) || false
   }
 
   const isObjectiveSelected = (objective: StrategicObjective) => {
@@ -480,7 +493,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
             <div className="space-y-2">
               <Label>Selected Capabilities ({config.requiredCapabilities.length})</Label>
               <div className="flex flex-wrap gap-2">
-                {config.requiredCapabilities.map((capability: any, index: number) => (
+                {config.requiredCapabilities?.map((capability: Capability, index: number) => (
                   <Badge
                     key={index}
                     variant="secondary"

@@ -11,7 +11,7 @@ import { ScanStage, CostBreakdown, ScanError } from '../../core/interfaces'
 // ==========================================
 
 export class ScanCreatedEvent extends DomainEvent<ScanCreatedEventPayload> {
-  constructor(scan: { id: string; configuration: any }, correlationId?: string) {
+  constructor(scan: { id: string; configuration: Record<string, unknown> }, correlationId?: string) {
     super(
       'scan.created',
       {
@@ -611,7 +611,7 @@ export interface ScanFailedIntegrationEventPayload {
 // ==========================================
 
 export class ScanEventFactory {
-  static scanCreated(scan: { id: string; configuration: any }, correlationId?: string): ScanCreatedEvent {
+  static scanCreated(scan: { id: string; configuration: Record<string, unknown> }, correlationId?: string): ScanCreatedEvent {
     return new ScanCreatedEvent(scan, correlationId)
   }
 

@@ -147,9 +147,25 @@ export class BANTScorer {
   /**
    * Calculate Budget score
    */
-  private async calculateBudgetScore(company: any, fundingSignals: any[]): Promise<any> {
+  private async calculateBudgetScore(
+    company: Record<string, unknown>,
+    fundingSignals: Array<{ announcement_date: string; amount?: number; round_type?: string }>
+  ): Promise<{
+    score: number;
+    budget_confirmed: boolean;
+    funding_available: boolean;
+    recent_funding?: { amount?: number; date: string; round_type?: string };
+    estimated_budget?: number;
+    budget_range?: string;
+  }> {
     let score = 30 // Base score
-    const details: any = {
+    const details: {
+      budget_confirmed: boolean;
+      funding_available: boolean;
+      recent_funding?: { amount?: number; date: string; round_type?: string };
+      estimated_budget?: number;
+      budget_range?: string;
+    } = {
       budget_confirmed: false,
       funding_available: false
     }
@@ -206,16 +222,32 @@ export class BANTScorer {
 
     return {
       score: Math.min(100, score),
-      details
+      ...details
     }
   }
 
   /**
    * Calculate Authority score
    */
-  private async calculateAuthorityScore(stakeholders: any[], engagementEvents: any[]): Promise<any> {
+  private async calculateAuthorityScore(
+    stakeholders: Array<{ role_type?: string; decision_authority?: boolean; engagement_score?: number; champion_score?: number }>,
+    engagementEvents: Array<Record<string, unknown>>
+  ): Promise<{
+    score: number;
+    decision_makers_identified: boolean;
+    decision_maker_count: number;
+    champion_identified: boolean;
+    stakeholder_engagement_level: number;
+    buying_committee_mapped: boolean;
+  }> {
     let score = 20 // Base score
-    const details: any = {
+    const details: {
+      decision_makers_identified: boolean;
+      decision_maker_count: number;
+      champion_identified: boolean;
+      stakeholder_engagement_level: number;
+      buying_committee_mapped: boolean;
+    } = {
       decision_makers_identified: false,
       decision_maker_count: 0,
       champion_identified: false,
@@ -273,16 +305,33 @@ export class BANTScorer {
 
     return {
       score: Math.min(100, score),
-      details
+      ...details
     }
   }
 
   /**
    * Calculate Need score
    */
-  private async calculateNeedScore(company: any, engagementEvents: any[], leadScore: any): Promise<any> {
+  private async calculateNeedScore(
+    company: Record<string, unknown>,
+    engagementEvents: Array<{ event_type?: string; event_data?: Record<string, unknown> }>,
+    leadScore: Record<string, unknown>
+  ): Promise<{
+    score: number;
+    pain_points_identified: string[];
+    urgency_level: 'critical' | 'high' | 'medium' | 'low';
+    use_case_fit: number;
+    problem_acknowledgment: boolean;
+    solution_awareness: boolean;
+  }> {
     let score = 25 // Base score
-    const details: any = {
+    const details: {
+      pain_points_identified: string[];
+      urgency_level: 'critical' | 'high' | 'medium' | 'low';
+      use_case_fit: number;
+      problem_acknowledgment: boolean;
+      solution_awareness: boolean;
+    } = {
       pain_points_identified: [],
       urgency_level: 'low',
       use_case_fit: 50,
@@ -343,18 +392,33 @@ export class BANTScorer {
 
     return {
       score: Math.min(100, score),
-      details
+      ...details
     }
   }
 
   /**
    * Calculate Timeline score
    */
-  private async calculateTimelineScore(engagementEvents: any[], company: any): Promise<any> {
+  private async calculateTimelineScore(
+    engagementEvents: Array<{ created_at: string; event_type?: string }>,
+    company: Record<string, unknown>
+  ): Promise<{
+    score: number;
+    decision_timeline?: string;
+    implementation_timeline?: string;
+    urgency_indicators: string[];
+    fiscal_year_timing?: string;
+    buying_cycle_stage: string;
+  }> {
     let score = 20 // Base score
-    const details: any = {
-      buying_stage: 'awareness',
-      timeline_confirmed: false,
+    const details: {
+      decision_timeline?: string;
+      implementation_timeline?: string;
+      urgency_indicators: string[];
+      fiscal_year_timing?: string;
+      buying_cycle_stage: string;
+    } = {
+      buying_cycle_stage: 'awareness',
       urgency_indicators: []
     }
 
@@ -408,7 +472,7 @@ export class BANTScorer {
 
     return {
       score: Math.min(100, score),
-      details
+      ...details
     }
   }
 

@@ -14,7 +14,8 @@ import {
   Search,
   Users,
   Sparkles,
-  Info
+  Info,
+  TrendingUp
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -103,7 +104,7 @@ function BenchmarkingContent() {
         .limit(10)
 
       setSearchResults(data || [])
-    } catch (error) {
+    } catch {
       toast.error('Failed to search companies')
     } finally {
       setLoading(false)

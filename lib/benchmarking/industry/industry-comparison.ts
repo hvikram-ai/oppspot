@@ -44,7 +44,7 @@ interface IndustryComparison {
 }
 
 export class IndustryComparisonEngine {
-  private supabase: any
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null
 
   // UK SIC Section codes and names
   private readonly sicSections: Record<string, string> = {
@@ -178,7 +178,7 @@ export class IndustryComparisonEngine {
   /**
    * Get company data
    */
-  private async getCompanyData(companyId: string): Promise<any> {
+  private async getCompanyData(companyId: string): Promise<Record<string, unknown>> {
     const { data } = await this.supabase
       .from('businesses')
       .select('*')

@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer'
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface HTMLToPDFOptions {
   analysisId: string
@@ -18,7 +19,7 @@ export interface HTMLToPDFOptions {
 }
 
 export class HTMLToPDFGenerator {
-  private supabase: any
+  private supabase: SupabaseClient | null
 
   constructor() {
     this.supabase = null
@@ -34,7 +35,7 @@ export class HTMLToPDFGenerator {
   async generatePDFFromHTML(options: HTMLToPDFOptions): Promise<{
     buffer: Buffer
     filename: string
-    exportRecord: any
+    exportRecord: { id: string; created_at?: string; status?: string }
   }> {
     const {
       analysisId,

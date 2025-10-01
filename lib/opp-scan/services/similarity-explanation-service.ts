@@ -31,7 +31,7 @@ interface ExplanationPromptContext {
 interface MnAInsightsContext {
   targetCompany: CompanyEntity
   matches: SimilarCompanyMatch[]
-  analysisConfiguration: any
+  analysisConfiguration: Record<string, unknown>
 }
 
 interface ExplanationMetrics {
@@ -552,7 +552,7 @@ Frame recommendations in terms of:
       .filter(line => line.length > 10)
   }
 
-  private categorizeOpportunity(text: string): any {
+  private categorizeOpportunity(text: string): string {
     const lowerText = text.toLowerCase()
     if (lowerText.includes('synergy') || lowerText.includes('efficiency')) return 'synergy'
     if (lowerText.includes('market') || lowerText.includes('expansion')) return 'expansion'
@@ -561,7 +561,7 @@ Frame recommendations in terms of:
     return 'market'
   }
 
-  private categorizeRisk(text: string): any {
+  private categorizeRisk(text: string): string {
     const lowerText = text.toLowerCase()
     if (lowerText.includes('financial') || lowerText.includes('debt')) return 'financial'
     if (lowerText.includes('operational') || lowerText.includes('integration')) return 'operational'
@@ -596,7 +596,7 @@ Frame recommendations in terms of:
     return 'long'
   }
 
-  private assessRiskSeverity(text: string): any {
+  private assessRiskSeverity(text: string): 'critical' | 'major' | 'moderate' | 'minor' {
     const lowerText = text.toLowerCase()
     if (lowerText.includes('critical') || lowerText.includes('severe')) return 'critical'
     if (lowerText.includes('major') || lowerText.includes('significant')) return 'major'
@@ -604,7 +604,7 @@ Frame recommendations in terms of:
     return 'minor'
   }
 
-  private assessRiskProbability(text: string): any {
+  private assessRiskProbability(text: string): 'certain' | 'likely' | 'possible' | 'unlikely' {
     const lowerText = text.toLowerCase()
     if (lowerText.includes('certain') || lowerText.includes('definite')) return 'certain'
     if (lowerText.includes('likely') || lowerText.includes('probable')) return 'likely'

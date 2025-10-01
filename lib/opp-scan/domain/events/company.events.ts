@@ -84,8 +84,8 @@ export interface CompanyUpdatedEventPayload {
 
 export interface CompanyUpdateChanges {
   fieldName: string
-  oldValue: any
-  newValue: any
+  oldValue: unknown
+  newValue: unknown
   changeReason?: string
 }
 

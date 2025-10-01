@@ -37,7 +37,7 @@ export interface DataSourceResult {
 }
 
 export class DataSourceFactory {
-  private sources: Map<string, any> = new Map()
+  private sources: Map<string, unknown> = new Map()
   private configs: Map<string, DataSource> = new Map()
 
   constructor() {

@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Optimize recycling rules
-export async function PUT(request: NextRequest) {
+export async function PUT(_request: NextRequest) {
   try {
     const supabase = await createClient();
 

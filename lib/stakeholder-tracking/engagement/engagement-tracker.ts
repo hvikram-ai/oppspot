@@ -95,7 +95,7 @@ export class EngagementTracker {
    */
   private async updateStakeholderEngagementMetrics(
     stakeholder_id: string,
-    engagement: any
+    engagement: { outcome?: string; sentiment_score?: number; engagement_date?: string }
   ): Promise<void> {
     try {
       const supabase = await this.getSupabase();
@@ -212,7 +212,13 @@ export class EngagementTracker {
    */
   private async generateNextActions(
     stakeholder_id: string,
-    engagement: any
+    engagement: {
+      follow_up_required?: boolean;
+      follow_up_notes?: string;
+      follow_up_date?: string;
+      outcome?: string;
+      sentiment_score?: number;
+    }
   ): Promise<ActionItem[]> {
     const actions: ActionItem[] = [];
 
@@ -280,7 +286,11 @@ export class EngagementTracker {
    */
   private async checkEngagementAlerts(
     stakeholder_id: string,
-    engagement: any
+    engagement: {
+      outcome?: string;
+      sentiment_score?: number;
+      engagement_date?: string;
+    }
   ): Promise<void> {
     try {
       const supabase = await this.getSupabase();
@@ -457,7 +467,11 @@ export class EngagementTracker {
   /**
    * Check for role change in a stakeholder
    */
-  private async checkForRoleChange(stakeholder: any): Promise<Partial<RoleChange> | null> {
+  private async checkForRoleChange(stakeholder: {
+    id: string;
+    job_title?: string;
+    company_id?: string;
+  }): Promise<Partial<RoleChange> | null> {
     // This is a simplified check - in production, you'd integrate with
     // LinkedIn API, company directories, or other data sources
 
@@ -553,7 +567,7 @@ export class EngagementTracker {
    */
   private assessContinuityRisk(
     changeType: RoleChange['change_type'],
-    stakeholder: any
+    stakeholder: { role_type?: string; influence_level?: number; champion_status?: string }
   ): RoleChange['continuity_risk'] {
     if (changeType === 'departure') {
       if (stakeholder.champion_status === 'active' || stakeholder.champion_status === 'super') {

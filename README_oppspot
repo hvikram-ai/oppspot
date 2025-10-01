@@ -1,4 +1,150 @@
+-------------------
+  Use Cases for oppSpot:
+
+  1. Similar company discovery: "Find companies like Stripe"
+  2. Semantic stakeholder search: "Find CTOs interested in AI/ML"
+  3. Deal matching: "Which deals match this success story?"
+  4. Content recommendations: "Relevant case studies for this prospect"
+-----------------
+
+QUICK_START.md 
+MODERNIZATION_PLAN.md
+
+COMPETITIVE_ANALYSIS.md
+
+
+
+
 demo@oppspot.com
 
 Demo123456!
 
+
+----------  Technical Debt Cleanup Plan
+
+     Phase 1: Fix Critical Import/Export Issues (Blocking builds)
+
+     1. Fix bant-framework.ts - change default import to named import in route
+     2. Fix meddic-framework.ts - same approach
+     3. Fix checklist-engine.ts - same approach  
+     4. Fix lead-routing-engine.ts - same approach
+     5. Fix missing OpenRouterService export in @/lib/ai/openrouter
+
+     Phase 2: Replace any Types (9 errors)
+
+     6. Fix app/(dashboard)/ai-scoring/page.tsx:149
+     7. Fix app/api/webhooks/qualification/route.ts (3 instances)
+     8. Search and fix remaining any types across codebase
+
+     Phase 3: Fix React Hook Dependencies (10+ warnings)
+
+     9. Add missing dependencies to useEffect hooks or wrap in useCallback
+
+     Phase 4: Clean Up Unused Variables (15+ warnings)
+
+     10. Remove unused imports and variables
+
+     Phase 5: Fix JSX Issues (Low priority)
+
+     11. Replace unescaped quotes with HTML entities
+
+     Estimated Time: 30-45 minutes for Phases 1-2, 15-30 minutes for Phases 3-5
+------------------------------------------
+
+
+
+oppSpot Modernization Strategy                                                          │ │
+│ │                                                                                         │ │
+│ │ Phase 1: Real-Time Infrastructure (Foundation) 🏗                                       │ │
+│ │                                                                                         │ │
+│ │ 1. Implement Supabase Realtime Subscriptions                                            │ │
+│ │   - Live deal updates, notifications, collaborative presence                            │ │
+│ │   - Replace in-memory event bus with persistent event store                             │ │
+│ │   - Add WebSocket connections for multiplayer features                                  │ │
+│ │ 2. Stream Processing Architecture                                                       │ │
+│ │   - Add Redis/Upstash for event streaming & caching                                     │ │
+│ │   - Implement worker pool architecture (BullMQ/Inngest)                                 │ │
+│ │   - Move from batch to stream processing for lead scoring                               │ │
+│ │ 3. Enhanced Database Layer                                                              │ │
+│ │   - Add pgvector to Supabase for AI embeddings                                          │ │
+│ │   - Implement TimescaleDB extension for time-series metrics                             │ │
+│ │   - Add Redis for caching, sessions, rate limiting                                      │ │
+│ │                                                                                         │ │
+│ │ Phase 2: Modern AI Capabilities 🤖                                                      │ │
+│ │                                                                                         │ │
+│ │ 1. RAG Implementation                                                                   │ │
+│ │   - Add vector database (Pinecone/Supabase pgvector)                                    │ │
+│ │   - Implement semantic search for deals, companies, stakeholders                        │ │
+│ │   - Company profile embeddings for similarity matching                                  │ │
+│ │ 2. AI Agent Orchestration                                                               │ │
+│ │   - Integrate LangChain/Vercel AI SDK                                                   │ │
+│ │   - Build autonomous agents for research, qualification, outreach                       │ │
+│ │   - Implement streaming AI responses (not blocking calls)                               │ │
+│ │ 3. Advanced Scoring Models                                                              │ │
+│ │   - Add predictive lead scoring with ML pipelines                                       │ │
+│ │   - Real-time intent prediction from behavior streams                                   │ │
+│ │   - Automated ICP (Ideal Customer Profile) learning                                     │ │
+│ │                                                                                         │ │
+│ │ Phase 3: Next-Gen UX 🎨                                                                 │ │
+│ │                                                                                         │ │
+│ │ 1. Real-Time Collaboration                                                              │ │
+│ │   - Multiplayer cursors & presence (Liveblocks/PartyKit)                                │ │
+│ │   - Live co-editing of deal notes, stakeholder profiles                                 │ │
+│ │   - Activity feeds with live updates (no polling)                                       │ │
+│ │ 2. Performance & Interactivity                                                          │ │
+│ │   - Virtualized tables for 100k+ records (TanStack Virtual)                             │ │
+│ │   - Optimistic UI updates with rollback                                                 │ │
+│ │   - Command palette (⌘K) with fuzzy search (Cmdk)                                       │ │
+│ │   - Keyboard shortcuts throughout                                                       │ │
+│ │ 3. Advanced Visualizations                                                              │ │
+│ │   - Deal flow Kanban with drag-drop (dnd-kit)                                           │ │
+│ │   - Network graphs for stakeholder relationships (Vis.js/D3)                            │ │
+│ │   - Real-time metric dashboards (streaming charts)                                      │ │
+│ │                                                                                         │ │
+│ │ Phase 4: Workflow Automation 🔄                                                         │ │
+│ │                                                                                         │ │
+│ │ 1. Durable Workflows                                                                    │ │
+│ │   - Migrate to Temporal.io or Inngest                                                   │ │
+│ │   - Build visual workflow builder                                                       │ │
+│ │   - Multi-step nurture campaigns with branching logic                                   │ │
+│ │ 2. Smart Notifications                                                                  │ │
+│ │   - Notification preferences & smart batching                                           │ │
+│ │   - Web Push API + FCM for mobile                                                       │ │
+│ │   - Slack/Teams integrations                                                            │ │
+│ │ 3. Integrations & Sync                                                                  │ │
+│ │   - Bi-directional CRM sync (Salesforce, HubSpot)                                       │ │
+│ │   - Calendar integration (auto-schedule demos)                                          │ │
+│ │   - Email tracking & engagement scoring                                                 │ │
+│ │                                                                                         │ │
+│ │ Phase 5: Enterprise Features 🏢                                                         │ │
+│ │                                                                                         │ │
+│ │ 1. Team Collaboration                                                                   │ │
+│ │   - Deal ownership & territory management                                               │ │
+│ │   - Activity scoring & leaderboards                                                     │ │
+│ │   - Team workspaces with role-based views                                               │ │
+│ │ 2. Advanced Analytics                                                                   │ │
+│ │   - Predictive pipeline analytics                                                       │ │
+│ │   - Win/loss analysis with AI insights                                                  │ │
+│ │   - Custom reporting & dashboards                                                       │ │
+│ │ 3. API & Extensibility                                                                  │ │
+│ │   - GraphQL API for complex queries                                                     │ │
+│ │   - Webhook delivery with retry                                                         │ │
+│ │   - SDK for custom integrations                                                         │ │
+│ │                                                                                         │ │
+│ │ Quick Wins (Start Here) 🚀                                                              │ │
+│ │                                                                                         │ │
+│ │ 1. Add Supabase Realtime for live notifications                                         │ │
+│ │ 2. Implement ⌘K command palette                                                         │ │
+│ │ 3. Replace DataTable with TanStack Table + Virtual                                      │ │
+│ │ 4. Add streaming AI responses (Vercel AI SDK)                                           │ │
+│ │ 5. Build activity feed with real-time updates                                           │ │
+│ │                                                                                         │ │
+│ │ Tech Stack Upgrades                                                                     │ │
+│ │                                                                                         │ │
+│ │ - State: Zustand → Zustand + Jotai (atoms for local state)                              │ │
+│ │ - Data Fetching: TanStack Query → + tRPC for type-safety                                │ │
+│ │ - Workers: Add BullMQ/Inngest for background jobs                                       │ │
+│ │ - Real-time: Add Supabase Realtime, PartyKit for multiplayer                            │ │
+│ │ - AI: Add Vercel AI SDK + LangChain for agents                                          │ │
+│ │ - Search: Add Algolia/Meilisearch for instant search                                    │ │
+│ │                                                                  

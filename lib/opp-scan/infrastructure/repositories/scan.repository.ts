@@ -8,7 +8,7 @@ import { IScanRepository, ScanStatus, ScanStage } from '../../core/interfaces'
 
 export class ScanRepository implements IScanRepository {
   constructor(
-    private readonly db: any // Database connection - would be typed properly in real implementation
+    private readonly db: { query: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }
   ) {}
 
   async findById(id: string): Promise<ScanEntity | null> {

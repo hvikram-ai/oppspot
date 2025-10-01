@@ -252,6 +252,63 @@ export const mockCompanies = {
     verified_at: '2024-01-15T00:00:00Z',
     companies_house_last_updated: new Date().toISOString(),
     cache_expires_at: new Date(Date.now() + 86400000).toISOString()
+  },
+  // Demo companies from search results
+  'demo-1': {
+    id: 'demo-1',
+    name: 'TechVentures UK',
+    company_status: 'active',
+    company_type: 'ltd',
+    description: 'Leading technology consultancy specializing in AI and machine learning solutions for enterprise clients.',
+    address: {
+      formatted: '123 Tech Street, London, EC2A 4BX',
+      street: '123 Tech Street',
+      city: 'London',
+      postal_code: 'EC2A 4BX',
+      country: 'United Kingdom',
+      lat: 51.5074,
+      lng: -0.1278
+    },
+    phone: '+44 20 7123 4567',
+    email: 'info@techventures.co.uk',
+    website: 'https://techventures.co.uk',
+    categories: ['Technology', 'AI & Machine Learning', 'Consulting'],
+    metadata: {
+      employees: '50-100',
+      founded: '2018',
+      revenue: '£5M-10M',
+      source: 'demo'
+    },
+    slug: 'techventures-uk',
+    verified_at: '2024-01-15T00:00:00Z'
+  },
+  'demo-2': {
+    id: 'demo-2',
+    name: 'GreenTech Solutions',
+    company_status: 'active',
+    company_type: 'ltd',
+    description: 'Sustainable technology solutions for businesses looking to reduce their carbon footprint.',
+    address: {
+      formatted: '45 Eco Park, Manchester, M1 2NE',
+      street: '45 Eco Park',
+      city: 'Manchester',
+      postal_code: 'M1 2NE',
+      country: 'United Kingdom',
+      lat: 53.4808,
+      lng: -2.2426
+    },
+    phone: '+44 161 234 5678',
+    email: 'contact@greentech.co.uk',
+    website: 'https://greentech-solutions.co.uk',
+    categories: ['Technology', 'Sustainability', 'Environmental Services'],
+    metadata: {
+      employees: '25-50',
+      founded: '2020',
+      revenue: '£2M-5M',
+      source: 'demo'
+    },
+    slug: 'greentech-solutions',
+    verified_at: '2024-01-15T00:00:00Z'
   }
 }
 

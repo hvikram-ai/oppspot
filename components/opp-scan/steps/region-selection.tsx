@@ -47,9 +47,16 @@ interface RegulatoryRequirement {
   timeline: string
 }
 
+interface RegionConfig {
+  selectedRegions?: Array<Record<string, unknown>>;
+  regulatoryRequirements?: Record<string, unknown>;
+  crossBorderConsiderations?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 interface RegionSelectionProps {
-  config: any
-  onChange: (field: string, value: any) => void
+  config: RegionConfig
+  onChange: (field: string, value: unknown) => void
 }
 
 export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) {
@@ -439,7 +446,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
             <div className="space-y-2">
               <Label>Selected Regions ({config.selectedRegions.length})</Label>
               <div className="flex flex-wrap gap-2">
-                {config.selectedRegions.map((region: any, index: number) => (
+                {config.selectedRegions?.map((region: Record<string, unknown>, index: number) => (
                   <Badge
                     key={index}
                     variant="secondary"
@@ -640,7 +647,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.values(config.regulatoryRequirements || {}).map((req: any, index) => (
+                  {Object.values(config.regulatoryRequirements || {}).map((req: Record<string, unknown>, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
                       <span className="font-medium">{req.name}</span>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">

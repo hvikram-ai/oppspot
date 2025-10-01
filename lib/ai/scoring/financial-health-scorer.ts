@@ -40,7 +40,7 @@ export class FinancialHealthScorer {
   /**
    * Calculate financial health score for a company
    */
-  async calculateScore(company: any): Promise<FinancialScore> {
+  async calculateScore(company: Record<string, unknown>): Promise<FinancialScore> {
     console.log(`[FinancialScorer] Calculating score for ${company.name}`)
 
     // Fetch financial data
@@ -155,7 +155,7 @@ export class FinancialHealthScorer {
   /**
    * Fetch financial metrics from various sources
    */
-  private async fetchFinancialMetrics(company: any): Promise<FinancialMetrics> {
+  private async fetchFinancialMetrics(company: Record<string, unknown>): Promise<FinancialMetrics> {
     const supabase = await createClient()
 
     // First, try to get from our financial_metrics table
@@ -184,7 +184,7 @@ export class FinancialHealthScorer {
   /**
    * Map stored metrics to our interface
    */
-  private mapStoredMetrics(data: any): FinancialMetrics {
+  private mapStoredMetrics(data: Record<string, unknown>): FinancialMetrics {
     return {
       revenue: data.revenue,
       revenue_growth_rate: data.revenue_growth_rate,
@@ -207,7 +207,7 @@ export class FinancialHealthScorer {
   /**
    * Extract financial data from Companies House response
    */
-  private extractFromCompaniesHouse(data: any): FinancialMetrics {
+  private extractFromCompaniesHouse(data: Record<string, unknown>): FinancialMetrics {
     const metrics: FinancialMetrics = {}
 
     // Check for accounts data
@@ -350,7 +350,7 @@ export class FinancialHealthScorer {
   /**
    * Score Companies House filing compliance
    */
-  private async scoreFilingCompliance(company: any): Promise<number> {
+  private async scoreFilingCompliance(company: Record<string, unknown>): Promise<number> {
     let score = 100
 
     // Check if Companies House data exists

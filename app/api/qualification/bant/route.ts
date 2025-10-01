@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import bantFramework from '@/lib/qualification/frameworks/bant-framework';
+import { bantFramework } from '@/lib/qualification/frameworks/bant-framework';
 import { CalculateBANTRequest } from '@/lib/qualification/types/qualification';
 
 export async function POST(request: NextRequest) {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate BANT qualification
-    const qualification = await bantFramework.calculateBANTScore(body);
+    const qualification = await bantFramework.calculateBANT(body);
 
     if (!qualification) {
       return NextResponse.json(

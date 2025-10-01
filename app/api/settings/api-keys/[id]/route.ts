@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 // DELETE /api/settings/api-keys/[id] - Delete specific API key
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -14,7 +14,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const keyId = params.id
+    const keyId = awaitedParams.id
 
     if (!keyId) {
       return NextResponse.json({ error: 'API key ID required' }, { status: 400 })

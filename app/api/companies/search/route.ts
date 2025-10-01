@@ -10,15 +10,6 @@ function getAgeInHours(dateString: string | null): number | null {
   return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
 }
 
-// Helper function to generate URL-safe slug
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .substring(0, 100)
-}
-
 // Mock data for demo mode
 interface MockCompany {
   id: string

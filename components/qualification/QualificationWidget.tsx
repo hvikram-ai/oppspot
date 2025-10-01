@@ -61,9 +61,13 @@ export function QualificationWidget({ compact = false }: QualificationWidgetProp
         }
 
         // Get most recent qualifications
+        interface QualificationBase {
+          created_at: string;
+          [key: string]: unknown;
+        }
         const allQualifications = [
-          ...(data.bantQualifications || []).map((q: any) => ({ ...q, framework: 'BANT' })),
-          ...(data.meddicQualifications || []).map((q: any) => ({ ...q, framework: 'MEDDIC' }))
+          ...(data.bantQualifications || []).map((q: QualificationBase) => ({ ...q, framework: 'BANT' })),
+          ...(data.meddicQualifications || []).map((q: QualificationBase) => ({ ...q, framework: 'MEDDIC' }))
         ]
 
         setRecentQualifications(

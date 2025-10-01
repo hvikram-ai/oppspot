@@ -25,7 +25,7 @@ export class IndustryAlignmentScorer {
     'professional': ['69', '70', '71', '72', '73', '74'], // Professional services
   }
 
-  async calculateScore(company: any): Promise<IndustryScore> {
+  async calculateScore(company: Record<string, unknown>): Promise<IndustryScore> {
     console.log(`[IndustryScorer] Calculating score for ${company.name}`)
 
     const factors = []

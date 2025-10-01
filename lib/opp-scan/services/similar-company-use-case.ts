@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { WebSearchService } from './web-search-service'
 import { SimilarityScoringService } from './similarity-scoring-service'
 import { SimilarityExplanationService } from './similarity-explanation-service'
@@ -56,7 +57,7 @@ interface AnalysisResult {
 }
 
 export class SimilarCompanyUseCase {
-  private supabase: any
+  private supabase: SupabaseClient | null
   private webSearchService: WebSearchService
   private scoringService: SimilarityScoringService
   private explanationService: SimilarityExplanationService
@@ -167,9 +168,9 @@ export class SimilarCompanyUseCase {
             warnings.push('Used relaxed search criteria to find potential matches.')
           }
         }
-      } catch (searchError: any) {
+      } catch (searchError: unknown) {
         console.error('[SimilarCompanyUseCase] Search service failed:', searchError)
-        errors.push(`Search service error: ${searchError.message}`)
+        errors.push(`Search service error: ${searchError instanceof Error ? searchError.message : 'Unknown error'}`)
         warnings.push('Search service encountered an error. Using limited results.')
         
         // Continue with empty results rather than failing entirely
@@ -640,7 +641,7 @@ export class SimilarCompanyUseCase {
   }
 
   private async storeAnalysisResults(
-    analysisRecord: any,
+    analysisRecord: { id: string; created_at?: string },
     targetCompany: CompanyEntity,
     matches: SimilarCompanyMatch[],
     configuration: SimilarityConfiguration,
@@ -838,7 +839,7 @@ export class SimilarCompanyUseCase {
 
   private determineMarketPosition(
     company: CompanyEntity,
-    scores: any
+    scores: { overall?: number; [key: string]: unknown }
   ): 'leader' | 'challenger' | 'follower' | 'niche' {
     const overallScore = scores.overall || 0
     
@@ -892,7 +893,7 @@ export class SimilarCompanyUseCase {
     return 0.2 // 20% cache hit rate
   }
 
-  private mapDatabaseToBenchmark(dbRecord: any): MnABenchmarkEntity {
+  private mapDatabaseToBenchmark(dbRecord: Record<string, unknown>): MnABenchmarkEntity {
     // Map database record to MnABenchmarkEntity
     return {
       id: dbRecord.id,
@@ -916,7 +917,7 @@ export class SimilarCompanyUseCase {
     } as MnABenchmarkEntity
   }
 
-  private mapDatabaseToSimilarityEntity(dbRecord: any): SimilarityEntity {
+  private mapDatabaseToSimilarityEntity(dbRecord: Record<string, unknown>): SimilarityEntity {
     return {
       id: dbRecord.id,
       targetCompany: dbRecord.target_company_data,

@@ -11,7 +11,7 @@ export class CacheService implements ICacheService {
   private readonly maxMemoryItems = 1000
   
   constructor(
-    private readonly redisClient?: any // Redis client - would be typed properly in real implementation
+    private readonly redisClient?: { get: (key: string) => Promise<string | null>; set: (key: string, value: string, ex: number) => Promise<void>; del: (key: string) => Promise<void> }
   ) {
     // Clean up expired items from memory cache periodically
     setInterval(() => this.cleanupMemoryCache(), 300000) // Every 5 minutes
@@ -322,7 +322,7 @@ export class CacheService implements ICacheService {
 }
 
 interface CacheItem {
-  value: any
+  value: unknown
   expiresAt: number
   tags?: string[]
 }

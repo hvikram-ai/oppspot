@@ -8,7 +8,7 @@ import { ICompanyRepository, SearchCriteria } from '../../core/interfaces'
 
 export class CompanyRepository implements ICompanyRepository {
   constructor(
-    private readonly db: any // Database connection - would be typed properly in real implementation
+    private readonly db: { query: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }
   ) {}
 
   async findById(id: string): Promise<CompanyEntity | null> {

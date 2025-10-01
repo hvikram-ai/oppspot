@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { BenchmarkingService } from '@/lib/benchmarking/benchmark-service'
 
 export async function GET(request: NextRequest) {
   try {

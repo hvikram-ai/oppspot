@@ -10,7 +10,7 @@ export interface DataSource {
   id: string
   type: 'database' | 'api' | 'webhook' | 'file' | 'stream'
   name: string
-  config: Record<string, any>
+  config: Record<string, unknown>
   status: 'active' | 'inactive' | 'error'
   lastSync?: Date
 }
@@ -18,7 +18,7 @@ export interface DataSource {
 export interface DataQuery {
   source: string
   entity: string
-  filters?: Record<string, any>
+  filters?: Record<string, unknown>
   fields?: string[]
   limit?: number
   offset?: number
@@ -30,7 +30,7 @@ export interface DataTransformation {
   id: string
   name: string
   type: 'map' | 'filter' | 'aggregate' | 'join' | 'enrich'
-  config: Record<string, any>
+  config: Record<string, unknown>
 }
 
 export interface DataPipeline {
@@ -46,7 +46,7 @@ export interface DataPipeline {
 export class UnifiedDataLayer {
   private dataSources: Map<string, DataSource> = new Map()
   private pipelines: Map<string, DataPipeline> = new Map()
-  private cache: Map<string, { data: any; timestamp: number }> = new Map()
+  private cache: Map<string, { data: unknown; timestamp: number }> = new Map()
   private cacheTimeout = 5 * 60 * 1000 // 5 minutes
 
   constructor() {
@@ -150,7 +150,7 @@ export class UnifiedDataLayer {
   /**
    * Query data from a source
    */
-  async query(query: DataQuery): Promise<any> {
+  async query(query: DataQuery): Promise<unknown> {
     const source = this.dataSources.get(query.source)
     if (!source) {
       throw new Error(`Data source ${query.source} not found`)
@@ -163,7 +163,7 @@ export class UnifiedDataLayer {
       return cached
     }
 
-    let result: any
+    let result: unknown
 
     switch (source.type) {
       case 'database':

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/lib/supabase/database.types'
+import { Database } from '@/types/database'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -21,7 +21,8 @@ export async function GET(
       )
     }
 
-    const scanId = params.id
+  const awaitedParams = await params;
+    const scanId = awaitedParams.id
     const { searchParams } = new URL(request.url)
     const reportType = searchParams.get('type')
 
@@ -83,7 +84,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -96,7 +97,8 @@ export async function POST(
       )
     }
 
-    const scanId = params.id
+  const awaitedParams = await params;
+    const scanId = awaitedParams.id
     const body = await request.json()
 
     // Check scan access

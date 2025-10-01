@@ -427,19 +427,26 @@ export default function QualificationDashboard() {
         <CardContent>
           {dashboardData?.recent_activities?.length ? (
             <div className="space-y-2">
-              {dashboardData.recent_activities.slice(0, 5).map((activity: any, idx: number) => (
+              {dashboardData.recent_activities.slice(0, 5).map((activity: {
+                lead_name?: string;
+                action?: string;
+                timestamp?: string;
+                activity_type?: string;
+                lead?: { company?: { name?: string } };
+                created_at?: string;
+              }, idx: number) => (
                 <div key={idx} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <AlertCircle className="h-4 w-4 text-blue-500" />
                     <div>
-                      <p className="font-medium text-sm">{activity.activity_type}</p>
+                      <p className="font-medium text-sm">{activity.activity_type || activity.action || 'Activity'}</p>
                       <p className="text-xs text-muted-foreground">
-                        {activity.lead?.company?.name || 'Unknown Company'}
+                        {activity.lead?.company?.name || activity.lead_name || 'Unknown Company'}
                       </p>
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(activity.created_at).toLocaleDateString()}
+                    {new Date(activity.created_at || activity.timestamp || '').toLocaleDateString()}
                   </span>
                 </div>
               ))}

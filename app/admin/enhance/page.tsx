@@ -106,7 +106,7 @@ export default function EnhanceBusinessesPage() {
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin' && profile?.role !== 'owner') {
+    if (profile && 'role' in profile && profile.role !== 'admin' && profile.role !== 'owner') {
       toast.error('Admin access required')
       router.push('/dashboard')
     }

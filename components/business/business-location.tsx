@@ -49,7 +49,7 @@ interface BusinessLocationProps {
 }
 
 export function BusinessLocation({ business }: BusinessLocationProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const [L, setL] = useState<unknown>(null)
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export function BusinessLocation({ business }: BusinessLocationProps) {
       setL(leaflet.default)
       
       // Fix Leaflet icon issue
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       delete (leaflet.default.Icon.Default.prototype as unknown)._getIconUrl
       leaflet.default.Icon.Default.mergeOptions({
         iconRetinaUrl: '/leaflet/marker-icon-2x.png',

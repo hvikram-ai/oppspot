@@ -18,7 +18,7 @@ export interface GrowthScore {
 }
 
 export class GrowthIndicatorScorer {
-  async calculateScore(company: any): Promise<GrowthScore> {
+  async calculateScore(company: Record<string, unknown>): Promise<GrowthScore> {
     console.log(`[GrowthScorer] Calculating score for ${company.name}`)
 
     const factors = []

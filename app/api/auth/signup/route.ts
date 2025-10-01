@@ -116,7 +116,7 @@ export async function POST(request: Request) {
             role,
             signup_source: 'web',
           },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         } as unknown)
     } catch (eventError) {
       // Events table might not exist yet, that's okay

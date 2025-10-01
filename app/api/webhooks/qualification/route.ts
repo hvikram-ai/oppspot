@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
 
-// Webhook event types
-export enum QualificationWebhookEvent {
+// Webhook event types (enum not exported due to Next.js route constraints)
+enum QualificationWebhookEvent {
   LEAD_QUALIFIED = 'lead.qualified',
   LEAD_DISQUALIFIED = 'lead.disqualified',
   LEAD_ASSIGNED = 'lead.assigned',
@@ -19,7 +19,7 @@ export enum QualificationWebhookEvent {
 interface WebhookPayload {
   event: QualificationWebhookEvent
   timestamp: string
-  data: any
+  data: Record<string, unknown>
   metadata?: {
     organization_id?: string
     user_id?: string
@@ -183,7 +183,7 @@ export async function PUT(request: NextRequest) {
 
     // Test webhook with a ping event
     const testResult = await sendWebhook(url, secret, {
-      event: 'webhook.test' as any,
+      event: 'webhook.test' as QualificationWebhookEvent,
       timestamp: new Date().toISOString(),
       data: {
         message: 'Webhook successfully configured',
@@ -254,7 +254,7 @@ export async function DELETE(request: NextRequest) {
 /**
  * Process incoming webhook event
  */
-async function processWebhookEvent(payload: WebhookPayload): Promise<any> {
+async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
   const supabase = await createClient()
 
   switch (payload.event) {
@@ -390,7 +390,7 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<any> {
 /**
  * Send webhook to external endpoint
  */
-export async function sendWebhook(
+async function sendWebhook(
   url: string,
   secret: string,
   payload: WebhookPayload
@@ -428,10 +428,12 @@ export async function sendWebhook(
 
 /**
  * Trigger webhook for qualification events
+ * NOTE: This should be moved to a separate utility file
+ * For now, keeping it here but not exported
  */
-export async function triggerQualificationWebhook(
+async function _triggerQualificationWebhook(
   event: QualificationWebhookEvent,
-  data: any
+  data: Record<string, unknown>
 ): Promise<void> {
   try {
     const supabase = await createClient()

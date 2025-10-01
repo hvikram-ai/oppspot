@@ -12,15 +12,15 @@ function generateSlug(name: string): string {
 }
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { company_number: string } }
+  request: NextRequest
 ) {
   try {
     const supabase = await createClient()
     const companiesHouse = getCompaniesHouseService()
 
-    // Get company number from params
-    const companyNumber = params.company_number?.toUpperCase()
+    // Get company number from request body
+    const body = await request.json()
+    const companyNumber = body.company_number?.toUpperCase()
 
     if (!companyNumber) {
       return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(
     console.log(`Enriching company: ${companyNumber}`)
 
     // Check if company already exists in database
-    const { data: existing, error: checkError } = await supabase
+    const { data: existing } = await supabase
       .from('businesses')
       .select('id, company_number, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
@@ -174,12 +174,14 @@ export async function POST(
 
 // GET endpoint to check enrichment status
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { company_number: string } }
+  request: NextRequest
 ) {
   try {
     const supabase = await createClient()
-    const companyNumber = params.company_number?.toUpperCase()
+
+    // Get company number from query params
+    const { searchParams } = new URL(request.url)
+    const companyNumber = searchParams.get('company_number')?.toUpperCase()
 
     if (!companyNumber) {
       return NextResponse.json(

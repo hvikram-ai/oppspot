@@ -19,7 +19,7 @@ export class RateLimitingService implements IRateLimitingService {
   }
 
   constructor(
-    private readonly redisClient?: any // Redis client for distributed rate limiting
+    private readonly redisClient?: { get: (key: string) => Promise<string | null>; set: (key: string, value: string) => Promise<void>; incr: (key: string) => Promise<number>; expire: (key: string, seconds: number) => Promise<void> }
   ) {
     this.initializeDefaultConfigs()
     

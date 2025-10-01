@@ -16,7 +16,7 @@ export interface TechnologyScore {
 }
 
 export class TechnologyFitScorer {
-  async calculateScore(company: any): Promise<TechnologyScore> {
+  async calculateScore(company: Record<string, unknown>): Promise<TechnologyScore> {
     console.log(`[TechnologyScorer] Calculating score for ${company.name}`)
 
     const factors = []

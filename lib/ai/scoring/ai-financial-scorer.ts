@@ -14,7 +14,7 @@ export class AIFinancialScorer {
   /**
    * Calculate financial score with AI intelligence
    */
-  async calculateScore(company: any): Promise<FinancialScore> {
+  async calculateScore(company: Record<string, unknown>): Promise<FinancialScore> {
     console.log(`[AIFinancialScorer] Analyzing ${company.name}`)
 
     // Check if AI is available
@@ -42,7 +42,7 @@ export class AIFinancialScorer {
   /**
    * Gather comprehensive financial context for AI analysis
    */
-  private async gatherFinancialContext(company: any): Promise<string> {
+  private async gatherFinancialContext(company: Record<string, unknown>): Promise<string> {
     const supabase = await createClient()
 
     // Fetch stored financial metrics
@@ -141,7 +141,7 @@ export class AIFinancialScorer {
   /**
    * Perform AI analysis using Ollama
    */
-  private async performAIAnalysis(context: string): Promise<any> {
+  private async performAIAnalysis(context: string): Promise<Record<string, unknown>> {
     const prompt = `
     You are an expert financial analyst specializing in UK company assessment.
     Analyze the following company's financial health and provide a comprehensive risk assessment.
@@ -218,7 +218,7 @@ export class AIFinancialScorer {
   /**
    * Structure AI response into FinancialScore format
    */
-  private structureAIResponse(aiAnalysis: any, company: any): FinancialScore {
+  private structureAIResponse(aiAnalysis: Record<string, unknown>, company: Record<string, unknown>): FinancialScore {
     const factors = []
 
     // Add financial stability factor
@@ -324,7 +324,7 @@ export class AIFinancialScorer {
   /**
    * Fallback to rule-based scoring
    */
-  private async calculateRuleBasedScore(company: any): Promise<FinancialScore> {
+  private async calculateRuleBasedScore(company: Record<string, unknown>): Promise<FinancialScore> {
     // This is the original rule-based logic from financial-health-scorer.ts
     // Simplified version for fallback
     const factors = []
