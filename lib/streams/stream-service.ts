@@ -107,7 +107,7 @@ export class StreamService {
     }
 
     if (filters?.search) {
-      query = query.textSearch('search_vector', filters.search)
+      query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
     }
 
     if (filters?.created_by) {
@@ -558,7 +558,7 @@ export class StreamService {
     }
 
     if (filters?.search) {
-      query = query.textSearch('search_vector', filters.search)
+      query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
     }
 
     query = query.order('position', { ascending: true })

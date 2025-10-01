@@ -48,12 +48,7 @@ CREATE TABLE IF NOT EXISTS streams (
 
   -- Timestamps
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-  -- Full-text search
-  search_vector tsvector GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, ''))
-  ) STORED
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================
@@ -152,12 +147,7 @@ CREATE TABLE IF NOT EXISTS stream_items (
   -- Timestamps
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  completed_at TIMESTAMPTZ,
-
-  -- Full-text search
-  search_vector tsvector GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, ''))
-  ) STORED
+  completed_at TIMESTAMPTZ
 );
 
 -- ============================================
@@ -301,7 +291,8 @@ CREATE TABLE IF NOT EXISTS stream_notifications (
 
 -- Streams
 CREATE INDEX IF NOT EXISTS idx_streams_org_status ON streams(org_id, status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_streams_search ON streams USING gin(search_vector);
+CREATE INDEX IF NOT EXISTS idx_streams_name ON streams USING gin(to_tsvector('english', name));
+CREATE INDEX IF NOT EXISTS idx_streams_description ON streams USING gin(to_tsvector('english', coalesce(description, '')));
 CREATE INDEX IF NOT EXISTS idx_streams_type ON streams(stream_type, status);
 CREATE INDEX IF NOT EXISTS idx_streams_created_by ON streams(created_by);
 
@@ -314,7 +305,8 @@ CREATE INDEX IF NOT EXISTS idx_stream_members_last_accessed ON stream_members(la
 CREATE INDEX IF NOT EXISTS idx_stream_items_stream ON stream_items(stream_id, status, position);
 CREATE INDEX IF NOT EXISTS idx_stream_items_business ON stream_items(business_id) WHERE business_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_stream_items_assigned ON stream_items(assigned_to) WHERE assigned_to IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_stream_items_search ON stream_items USING gin(search_vector);
+CREATE INDEX IF NOT EXISTS idx_stream_items_title ON stream_items USING gin(to_tsvector('english', title));
+CREATE INDEX IF NOT EXISTS idx_stream_items_description ON stream_items USING gin(to_tsvector('english', coalesce(description, '')));
 CREATE INDEX IF NOT EXISTS idx_stream_items_tags ON stream_items USING gin(tags);
 CREATE INDEX IF NOT EXISTS idx_stream_items_stage ON stream_items(stream_id, stage_id);
 CREATE INDEX IF NOT EXISTS idx_stream_items_due_date ON stream_items(due_date) WHERE due_date IS NOT NULL;
