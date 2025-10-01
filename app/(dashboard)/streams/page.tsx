@@ -114,7 +114,10 @@ export default function StreamsPage() {
                 Organize your deals, research, and collaboration in dedicated workspaces
               </p>
             </div>
-            <Button onClick={() => setIsWizardOpen(true)} size="lg">
+            <Button onClick={() => {
+              console.log('Button clicked, opening wizard')
+              setIsWizardOpen(true)
+            }} size="lg">
               <Plus className="h-4 w-4 mr-2" />
               New Stream
             </Button>
@@ -207,6 +210,7 @@ export default function StreamsPage() {
       </div>
 
       {/* Stream Wizard */}
+      {console.log('Rendering wizard with open:', isWizardOpen, 'orgId:', orgId)}
       <StreamWizard
         open={isWizardOpen}
         onOpenChange={setIsWizardOpen}

@@ -143,6 +143,8 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
 
   if (!open) return null
 
+  console.log('StreamWizard rendering, open:', open)
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
       <motion.div
