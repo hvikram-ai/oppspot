@@ -2,11 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  // Skip middleware for static assets only
+  // Skip middleware for static assets and public files
   const pathname = request.nextUrl.pathname
   if (
     pathname.startsWith('/_next') ||
-    pathname.includes('.') // Static files
+    pathname.startsWith('/icons/') ||
+    pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
+    pathname === '/favicon.ico' ||
+    pathname.includes('.') // Static files (catch-all)
   ) {
     return NextResponse.next()
   }
