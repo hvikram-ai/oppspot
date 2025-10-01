@@ -22,7 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Compass,
-  Microscope,
+  FileSearch,
   Send,
   Zap
 } from 'lucide-react'
@@ -110,7 +110,7 @@ export function Sidebar() {
             title="Discover"
             icon={Compass}
             isCollapsed={isCollapsed}
-            defaultOpen={true}
+            defaultOpen={false}
           >
             <SidebarItem
               href="/search"
@@ -140,15 +140,6 @@ export function Sidebar() {
               tooltip="Latest business news, market updates, and acquisition opportunities"
               isCollapsed={isCollapsed}
             />
-          </SidebarSection>
-
-          {/* RESEARCH Section */}
-          <SidebarSection
-            title="Research"
-            icon={Microscope}
-            isCollapsed={isCollapsed}
-            defaultOpen={true}
-          >
             <SidebarItem
               href="/opp-scan"
               icon={Target}
@@ -157,6 +148,15 @@ export function Sidebar() {
               isCollapsed={isCollapsed}
               isPremium
             />
+          </SidebarSection>
+
+          {/* DILIGENCE Section */}
+          <SidebarSection
+            title="Diligence"
+            icon={FileSearch}
+            isCollapsed={isCollapsed}
+            defaultOpen={false}
+          >
             <SidebarItem
               href="/ai-scoring"
               icon={Brain}
@@ -185,7 +185,7 @@ export function Sidebar() {
             title="Outreach"
             icon={Send}
             isCollapsed={isCollapsed}
-            defaultOpen={true}
+            defaultOpen={false}
           >
             <SidebarItem
               href="/lists"
