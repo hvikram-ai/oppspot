@@ -5,7 +5,7 @@ import { Plus, Grid3x3, List, Search, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StreamCard } from '@/components/streams/stream-card'
-import { CreateStreamDialog } from '@/components/streams/create-stream-dialog'
+import { StreamWizard } from '@/components/streams/stream-wizard'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Stream, CreateStreamRequest, StreamFilters } from '@/types/streams'
 import { createClient } from '@/lib/supabase/client'
@@ -18,7 +18,7 @@ export default function StreamsPage() {
 
   const [streams, setStreams] = useState<Stream[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isWizardOpen, setIsWizardOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'completed'>('active')
@@ -114,7 +114,7 @@ export default function StreamsPage() {
                 Organize your deals, research, and collaboration in dedicated workspaces
               </p>
             </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
+            <Button onClick={() => setIsWizardOpen(true)} size="lg">
               <Plus className="h-4 w-4 mr-2" />
               New Stream
             </Button>
@@ -181,7 +181,7 @@ export default function StreamsPage() {
                 : 'Create your first stream to get started'}
             </p>
             {!searchQuery && statusFilter === 'all' && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button onClick={() => setIsWizardOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Stream
               </Button>
@@ -206,11 +206,11 @@ export default function StreamsPage() {
         )}
       </div>
 
-      {/* Create Dialog */}
-      <CreateStreamDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSubmit={handleCreateStream}
+      {/* Stream Wizard */}
+      <StreamWizard
+        open={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
+        onComplete={handleCreateStream}
         orgId={orgId}
       />
     </div>
