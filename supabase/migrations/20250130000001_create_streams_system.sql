@@ -324,7 +324,7 @@ CREATE INDEX IF NOT EXISTS idx_stream_comments_author ON stream_comments(author_
 
 -- Stream Presence
 CREATE INDEX IF NOT EXISTS idx_stream_presence_stream_user ON stream_presence(stream_id, user_id, last_seen_at);
-CREATE INDEX IF NOT EXISTS idx_stream_presence_stale ON stream_presence(last_seen_at) WHERE last_seen_at < NOW() - INTERVAL '5 minutes';
+CREATE INDEX IF NOT EXISTS idx_stream_presence_stale ON stream_presence(last_seen_at);
 
 -- Stream Notifications
 CREATE INDEX IF NOT EXISTS idx_stream_notifications_user_unread ON stream_notifications(user_id, is_read, created_at DESC);
