@@ -54,7 +54,7 @@ export default function StreamsPage() {
             .from('organizations')
             .insert({
               name: 'My Organization',
-              created_by: user.id
+              slug: `org-${user.id.substring(0, 8)}`
             })
             .select()
             .single()
