@@ -46,10 +46,7 @@ export default function TeamPlayPage() {
     // Refresh every 10 seconds
     const interval = setInterval(loadData, 10000)
 
-    return (
-
-
-      <ProtectedLayout>) => {
+    return () => {
       clearInterval(interval)
       PresenceTracker.stop()
     }
@@ -147,7 +144,6 @@ export default function TeamPlayPage() {
                     return (
 
 
-                      <ProtectedLayout>
                       <div key={activity.id} className="flex gap-4 pb-4 border-b last:border-0">
                         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                           <Icon className="h-5 w-5 text-muted-foreground" />

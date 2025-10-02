@@ -248,9 +248,6 @@ export default function SettingsPage() {
             const Icon = section.icon
             
             return (
-
-            
-              <ProtectedLayout>
               <Link key={section.href} href={section.href}>
                 <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
                   <CardContent className="p-4">

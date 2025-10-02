@@ -124,32 +124,32 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-
       <ProtectedLayout>
-      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+        <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </ProtectedLayout>
     )
   }
 
   if (error || !profile) {
     return (
-
       <ProtectedLayout>
-      <div className="container mx-auto p-6">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Error Loading Profile
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">{error || 'Unable to load profile'}</p>
-            <Button onClick={loadProfile}>Try Again</Button>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="container mx-auto p-6">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Error Loading Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">{error || 'Unable to load profile'}</p>
+              <Button onClick={loadProfile}>Try Again</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedLayout>
     )
   }
 

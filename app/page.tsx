@@ -170,8 +170,6 @@ export default function LandingPage() {
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
-
-              <ProtectedLayout>
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}

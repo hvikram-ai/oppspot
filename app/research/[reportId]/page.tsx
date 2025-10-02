@@ -57,14 +57,14 @@ export default async function ReportPage({
   // If still generating, show progress
   if (report.status === 'generating' || report.status === 'pending') {
     return (
-
       <ProtectedLayout>
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">{report.company_name}</h1>
-          <ResearchProgress reportId={report.id} />
+        <div className="container mx-auto py-8 px-4">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-6">{report.company_name}</h1>
+            <ResearchProgress reportId={report.id} />
+          </div>
         </div>
-      </div>
+      </ProtectedLayout>
     );
   }
 

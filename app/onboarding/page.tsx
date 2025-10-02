@@ -191,7 +191,6 @@ export default function OnboardingPage() {
               const Icon = step.icon
               return (
 
-                <ProtectedLayout>
                 <div
                   key={step.id}
                   className={`flex items-center ${
@@ -297,7 +296,6 @@ export default function OnboardingPage() {
                       const isSelected = formData.goals.includes(goal.id)
                       return (
 
-                        <ProtectedLayout>
                         <div
                           key={goal.id}
                           onClick={() => toggleGoal(goal.id)}
