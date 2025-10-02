@@ -6,13 +6,33 @@
 
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
+import * as dotenv from 'dotenv'
+import * as path from 'path'
+
+// Load environment variables from .env.local
+dotenv.config({ path: path.join(__dirname, '../.env.local') })
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const openaiKey = process.env.OPENAI_API_KEY!
+const apiKey = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY!
+
+if (!apiKey) {
+  console.error('❌ OPENAI_API_KEY or OPENROUTER_API_KEY required')
+  process.exit(1)
+}
+
+// Configure OpenAI client (supports OpenRouter too)
+const config: any = { apiKey }
+if (process.env.OPENROUTER_API_KEY && !process.env.OPENAI_API_KEY) {
+  config.baseURL = 'https://openrouter.ai/api/v1'
+  config.defaultHeaders = {
+    'HTTP-Referer': 'https://oppspot.ai',
+    'X-Title': 'oppSpot'
+  }
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey)
-const openai = new OpenAI({ apiKey: openaiKey })
+const openai = new OpenAI(config)
 
 async function generateEmbeddings(limit?: number) {
   console.log('🚀 Starting embedding generation...\n')

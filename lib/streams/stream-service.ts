@@ -3,7 +3,7 @@
  * Core business logic for stream operations
  */
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type {
   Stream,
   StreamMember,
@@ -66,9 +66,10 @@ export class StreamService {
 
     console.log('[StreamService] Stream created:', stream.id)
 
-    // Add creator as owner member
+    // Add creator as owner member using admin client to bypass RLS
     console.log('[StreamService] Adding owner member:', { streamId: stream.id, userId })
-    const { error: memberError } = await supabase
+    const adminClient = await createAdminClient()
+    const { error: memberError } = await adminClient
       .from('stream_members')
       .insert({
         stream_id: stream.id,

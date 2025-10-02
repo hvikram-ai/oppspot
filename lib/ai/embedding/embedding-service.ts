@@ -51,12 +51,23 @@ export class EmbeddingService {
 
   private getOpenAI(): OpenAI {
     if (!this.openai) {
-      if (!process.env.OPENAI_API_KEY) {
-        throw new Error('OPENAI_API_KEY environment variable is not set')
+      // Support both OpenAI and OpenRouter
+      const apiKey = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY
+      if (!apiKey) {
+        throw new Error('OPENAI_API_KEY or OPENROUTER_API_KEY environment variable is required')
       }
-      this.openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-      })
+
+      // If using OpenRouter, configure base URL
+      const config: any = { apiKey }
+      if (process.env.OPENROUTER_API_KEY && !process.env.OPENAI_API_KEY) {
+        config.baseURL = 'https://openrouter.ai/api/v1'
+        config.defaultHeaders = {
+          'HTTP-Referer': 'https://oppspot.ai',
+          'X-Title': 'oppSpot'
+        }
+      }
+
+      this.openai = new OpenAI(config)
     }
     return this.openai
   }
