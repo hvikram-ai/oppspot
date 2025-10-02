@@ -111,7 +111,7 @@ export default function StakeholdersPage() {
             </div>
           </div>
         </div>
-      </ProtectedLayout>
+      </div>
     }>
       <StakeholdersContent />
     </Suspense>
