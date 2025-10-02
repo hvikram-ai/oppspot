@@ -158,6 +158,14 @@ export function Sidebar() {
             defaultOpen={false}
           >
             <SidebarItem
+              href="/signals"
+              icon={Activity}
+              label="DealSignals"
+              tooltip="Real-time buying signals and intent monitoring dashboard"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
               href="/research"
               icon={Zap}
               label="ResearchGPT"
