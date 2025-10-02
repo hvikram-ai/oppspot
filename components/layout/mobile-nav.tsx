@@ -16,11 +16,13 @@ import {
   Users,
   Target,
   Newspaper,
-  BarChart3
+  BarChart3,
+  Mic
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { VoiceCommandModal } from '@/components/voice/voice-command-modal';
 
 interface MobileNavItem {
   href: string;
@@ -198,6 +200,7 @@ export function MobileBottomNav() {
 export function MobileFAB() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
   // Don't show on certain pages
   if (
@@ -252,6 +255,18 @@ export function MobileFAB() {
                 AI Score
               </Button>
             </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsOpen(false);
+                setIsVoiceModalOpen(true);
+              }}
+            >
+              <Mic className="h-4 w-4 mr-2" />
+              Voice Command
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -268,6 +283,9 @@ export function MobileFAB() {
           {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
         </motion.div>
       </Button>
+
+      {/* Voice Command Modal */}
+      <VoiceCommandModal open={isVoiceModalOpen} onOpenChange={setIsVoiceModalOpen} />
     </div>
   );
 }

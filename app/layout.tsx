@@ -8,6 +8,7 @@ import { DemoBanner } from "@/components/demo/demo-banner";
 import { ChatWidget } from "@/components/ai-chat/chat-widget";
 import { ServiceWorkerRegistration, InstallPrompt } from "@/components/pwa/service-worker-registration";
 import { MobileBottomNav, MobileFAB } from "@/components/layout/mobile-nav";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -89,18 +90,20 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className={`${inter.className} antialiased`}>
-        <DemoModeProvider>
-          <NotificationProvider>
-            <ServiceWorkerRegistration />
-            <InstallPrompt />
-            <DemoBanner />
-            {children}
-            <MobileBottomNav />
-            <MobileFAB />
-            <ChatWidget position="bottom-right" />
-          </NotificationProvider>
-        </DemoModeProvider>
-        <Toaster position="bottom-right" richColors />
+        <ThemeProvider defaultTheme="system" storageKey="oppspot-ui-theme">
+          <DemoModeProvider>
+            <NotificationProvider>
+              <ServiceWorkerRegistration />
+              <InstallPrompt />
+              <DemoBanner />
+              {children}
+              <MobileBottomNav />
+              <MobileFAB />
+              <ChatWidget position="bottom-right" />
+            </NotificationProvider>
+          </DemoModeProvider>
+          <Toaster position="bottom-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );
