@@ -53,14 +53,14 @@ export function AIDigestCard() {
   })
 
   const markAsRead = async () => {
-    if (digest && !digest.read_at) {
+    if (digest && digest.id && !digest.read_at) {
       await fetch(`/api/dashboard/digest/${digest.id}/read`, { method: 'POST' })
       mutate()
     }
   }
 
   useEffect(() => {
-    if (digest && !digest.read_at) {
+    if (digest && digest.id && !digest.read_at) {
       // Mark as read after 3 seconds of viewing
       const timer = setTimeout(markAsRead, 3000)
       return () => clearTimeout(timer)
