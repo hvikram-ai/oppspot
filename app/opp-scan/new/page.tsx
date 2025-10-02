@@ -331,7 +331,7 @@ function NewOppScanPageContent() {
             <p className="mt-4 text-muted-foreground">Loading...</p>
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 

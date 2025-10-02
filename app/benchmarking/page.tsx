@@ -325,7 +325,7 @@ function BenchmarkingContent() {
           </>
         )}
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 

@@ -154,7 +154,7 @@ function ScanResultsPageContent() {
             <Skeleton className="h-96" />
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 

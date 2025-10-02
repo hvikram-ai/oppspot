@@ -198,7 +198,7 @@ export default function AIScoringPage() {
         </div>
       </div>
     </ProtectedLayout>
-    );
+  );
   }
 
   if (!user) {
