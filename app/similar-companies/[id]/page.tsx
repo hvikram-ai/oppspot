@@ -1119,7 +1119,7 @@ function SimilarCompanyDetailContent() {
             <p className="mt-4 text-muted-foreground">Loading analysis details...</p>
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 
@@ -1141,7 +1141,7 @@ function SimilarCompanyDetailContent() {
             </Link>
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 
@@ -1913,7 +1913,7 @@ function SimilarCompanyDetailContent() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 

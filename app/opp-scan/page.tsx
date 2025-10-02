@@ -395,7 +395,7 @@ function OppScanPageContent() {
           </div>
         )}
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 

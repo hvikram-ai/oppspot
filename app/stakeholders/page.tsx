@@ -45,7 +45,7 @@ function StakeholdersContent() {
             </div>
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     );
   }
 
@@ -60,7 +60,7 @@ function StakeholdersContent() {
             </AlertDescription>
           </Alert>
         </div>
-      </div>
+      </ProtectedLayout>
     );
   }
 
@@ -92,7 +92,7 @@ function StakeholdersContent() {
         {/* Dashboard */}
         <StakeholderDashboard companyId={companyId || undefined} />
       </div>
-    </div>
+    </ProtectedLayout>
   );
 }
 

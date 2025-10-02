@@ -211,7 +211,7 @@ export default function AIScoringPage() {
             </AlertDescription>
           </Alert>
         </div>
-      </div>
+      </ProtectedLayout>
     );
   }
 

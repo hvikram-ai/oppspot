@@ -348,7 +348,7 @@ function SimilarCompaniesPageContent() {
             <p className="mt-4 text-muted-foreground">Loading Similar Companies...</p>
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 
@@ -769,7 +769,7 @@ function SimilarCompaniesPageContent() {
           </div>
         )}
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 
