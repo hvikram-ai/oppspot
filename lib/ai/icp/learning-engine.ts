@@ -7,7 +7,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import { getLLMFactory } from '@/lib/ai/llm-factory'
+import { getLLMProvider } from '@/lib/ai/llm-factory'
 
 export interface ICPCriteria {
   industries?: string[]
@@ -219,8 +219,7 @@ export class ICPLearningEngine {
     wonDeals: DealOutcome[],
     lostDeals: DealOutcome[]
   ): Promise<ICPCriteria> {
-    const llmFactory = getLLMFactory()
-    const llm = llmFactory.createLLM('smart')
+    const llm = getLLMProvider()
 
     const prompt = `Analyze these deal patterns and generate an Ideal Customer Profile (ICP).
 

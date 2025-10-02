@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Navbar } from '@/components/layout/navbar'
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { TimelineCard } from '@/components/dashboard/timeline-card'

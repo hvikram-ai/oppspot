@@ -78,12 +78,11 @@ export class IndustryComparisonEngine {
     'M': ['revenue_per_employee', 'profit_margin', 'customer_growth_yoy', 'employee_growth_yoy'] // Professional services
   }
 
-  constructor() {
-    this.initializeClient()
-  }
-
-  private async initializeClient() {
-    this.supabase = await createClient()
+  private async ensureClient() {
+    if (!this.supabase) {
+      this.supabase = await createClient()
+    }
+    return this.supabase
   }
 
   /**
@@ -99,6 +98,8 @@ export class IndustryComparisonEngine {
     }
   ): Promise<IndustryComparison> {
     try {
+      await this.ensureClient()
+
       // Get company data and metrics
       const company = await this.getCompanyData(companyId)
       const companyMetrics = await this.getCompanyMetrics(companyId)
@@ -145,6 +146,8 @@ export class IndustryComparisonEngine {
    */
   async analyzeIndustry(industryCode: string): Promise<IndustryAnalysis> {
     try {
+      await this.ensureClient()
+
       // Get industry statistics
       const stats = await this.getIndustryStatistics(industryCode)
 
