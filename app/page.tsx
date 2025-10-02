@@ -5,8 +5,8 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Navbar } from '@/components/layout/navbar'
-import { 
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import {
   Search, 
   Map, 
   Building2, 
