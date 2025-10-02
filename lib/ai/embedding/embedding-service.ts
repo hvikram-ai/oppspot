@@ -43,16 +43,22 @@ export interface SimilarCompany {
 }
 
 export class EmbeddingService {
-  private openai: OpenAI
+  private openai: OpenAI | null = null
 
   constructor() {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
+    // Lazy initialization - don't throw during module load/build time
+  }
 
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    })
+  private getOpenAI(): OpenAI {
+    if (!this.openai) {
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY environment variable is not set')
+      }
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      })
+    }
+    return this.openai
   }
 
   /**
@@ -66,7 +72,7 @@ export class EmbeddingService {
     const companyText = this.buildCompanyText(companyData)
 
     try {
-      const response = await this.openai.embeddings.create({
+      const response = await this.getOpenAI().embeddings.create({
         model,
         input: companyText,
         encoding_format: 'float'
@@ -100,7 +106,7 @@ export class EmbeddingService {
       const batchTexts = batch.map(c => this.buildCompanyText(c))
 
       try {
-        const response = await this.openai.embeddings.create({
+        const response = await this.getOpenAI().embeddings.create({
           model,
           input: batchTexts,
           encoding_format: 'float'

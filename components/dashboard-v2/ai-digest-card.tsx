@@ -43,7 +43,17 @@ interface AIDigest {
   read_at: string | null
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  // Handle 404 gracefully (no digest available for today)
+  if (res.status === 404) {
+    return null
+  }
+  if (!res.ok) {
+    throw new Error('Failed to fetch digest')
+  }
+  return res.json()
+}
 
 export function AIDigestCard() {
   const [isExpanded, setIsExpanded] = useState(false)
