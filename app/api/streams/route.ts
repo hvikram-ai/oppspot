@@ -60,9 +60,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('POST /api/streams - Request received')
   try {
     const supabase = await createClient()
+    console.log('POST /api/streams - Supabase client created')
     const { data: { user } } = await supabase.auth.getUser()
+    console.log('POST /api/streams - User:', user?.id)
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -109,13 +112,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('Creating stream with:', { userId: user.id, orgId: profile.org_id, body })
     const stream = await StreamService.createStream(user.id, profile.org_id, body)
 
     return NextResponse.json(stream, { status: 201 })
   } catch (error) {
     console.error('Error creating stream:', error)
+    console.error('Error details:', error instanceof Error ? error.message : String(error))
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Failed to create stream' },
+      { error: 'Failed to create stream', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

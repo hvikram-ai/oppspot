@@ -27,19 +27,30 @@ export default function StreamsPage() {
   // Get user's org_id
   useEffect(() => {
     async function getOrgId() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        console.log('Auth user:', user?.id, 'Error:', authError)
+
+        if (!user) {
+          console.error('No user found')
+          return
+        }
+
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('org_id')
           .eq('id', user.id)
           .single()
 
+        console.log('Profile:', profile, 'Error:', profileError)
+
         if (profile?.org_id) {
+          console.log('Setting org_id from profile:', profile.org_id)
           setOrgId(profile.org_id)
         } else {
+          console.log('No org_id, creating organization...')
           // If user doesn't have org_id, create one
-          const { data: newOrg } = await supabase
+          const { data: newOrg, error: orgError } = await supabase
             .from('organizations')
             .insert({
               name: 'My Organization',
@@ -48,16 +59,25 @@ export default function StreamsPage() {
             .select()
             .single()
 
+          console.log('New org:', newOrg, 'Error:', orgError)
+
           if (newOrg) {
             // Update profile with new org_id
-            await supabase
+            const { error: updateError } = await supabase
               .from('profiles')
               .update({ org_id: newOrg.id })
               .eq('id', user.id)
 
+            console.log('Profile update error:', updateError)
+
             setOrgId(newOrg.id)
+            console.log('Set org_id to:', newOrg.id)
+          } else {
+            console.error('Failed to create organization:', orgError)
           }
         }
+      } catch (error) {
+        console.error('Error in getOrgId:', error)
       }
     }
     getOrgId()

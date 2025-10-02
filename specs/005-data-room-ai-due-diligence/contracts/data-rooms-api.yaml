@@ -1,0 +1,414 @@
+openapi: 3.0.3
+info:
+  title: Data Rooms API
+  description: API for managing secure data rooms for due diligence
+  version: 1.0.0
+  contact:
+    name: oppSpot API Team
+
+servers:
+  - url: https://oppspot.vercel.app/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Local development
+
+paths:
+  /data-room:
+    get:
+      summary: List all data rooms
+      description: Retrieve all data rooms the authenticated user owns or has access to
+      operationId: listDataRooms
+      tags:
+        - Data Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by data room status
+          schema:
+            type: string
+            enum: [active, archived, deleted]
+        - name: deal_type
+          in: query
+          description: Filter by deal type
+          schema:
+            type: string
+            enum: [acquisition, investment, partnership, merger, sale, due_diligence, other]
+        - name: search
+          in: query
+          description: Search by data room name
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, updated_at, name]
+            default: created_at
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data_rooms:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DataRoom'
+                  total:
+                    type: integer
+                    example: 5
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new data room
+      description: Create a new data room for organizing due diligence documents
+      operationId: createDataRoom
+      tags:
+        - Data Rooms
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "Acme Corp Acquisition"
+                description:
+                  type: string
+                  maxLength: 1000
+                  example: "Due diligence for Acme Corp acquisition deal"
+                company_id:
+                  type: string
+                  format: uuid
+                  description: Optional link to company in businesses table
+                deal_type:
+                  type: string
+                  enum: [acquisition, investment, partnership, merger, sale, due_diligence, other]
+                  default: due_diligence
+                metadata:
+                  type: object
+                  properties:
+                    deal_value:
+                      type: number
+                      example: 50000000
+                    currency:
+                      type: string
+                      example: "GBP"
+                    target_close_date:
+                      type: string
+                      format: date
+                    retention_days:
+                      type: integer
+                      minimum: 30
+                      maximum: 365
+                      default: 90
+                    tags:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '201':
+          description: Data room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /data-room/{id}:
+    get:
+      summary: Get data room by ID
+      description: Retrieve a specific data room with all details
+      operationId: getDataRoom
+      tags:
+        - Data Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Data room ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRoom'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update data room
+      description: Update data room details (owner only)
+      operationId: updateDataRoom
+      tags:
+        - Data Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Data room ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  maxLength: 1000
+                deal_type:
+                  type: string
+                  enum: [acquisition, investment, partnership, merger, sale, due_diligence, other]
+                status:
+                  type: string
+                  enum: [active, archived, deleted]
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Data room updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete data room
+      description: Soft delete a data room (owner only)
+      operationId: deleteDataRoom
+      tags:
+        - Data Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Data room ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data room deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Data room deleted successfully"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    DataRoom:
+      type: object
+      required:
+        - id
+        - user_id
+        - name
+        - deal_type
+        - status
+        - storage_used_bytes
+        - document_count
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        user_id:
+          type: string
+          format: uuid
+          description: Owner user ID
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Linked company ID (optional)
+        name:
+          type: string
+          example: "Acme Corp Acquisition"
+        description:
+          type: string
+          nullable: true
+          example: "Due diligence for Acme Corp acquisition deal"
+        deal_type:
+          type: string
+          enum: [acquisition, investment, partnership, merger, sale, due_diligence, other]
+          example: acquisition
+        status:
+          type: string
+          enum: [active, archived, deleted]
+          example: active
+        storage_used_bytes:
+          type: integer
+          format: int64
+          example: 524288000
+          description: Total storage used in bytes (500MB in this example)
+        document_count:
+          type: integer
+          example: 47
+          description: Number of documents in data room
+        metadata:
+          type: object
+          nullable: true
+          properties:
+            deal_value:
+              type: number
+            currency:
+              type: string
+            target_close_date:
+              type: string
+              format: date
+            retention_days:
+              type: integer
+            tags:
+              type: array
+              items:
+                type: string
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-10-01T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-10-01T15:45:00Z"
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Soft delete timestamp
+
+  responses:
+    BadRequest:
+      description: Bad request (validation error)
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Validation error: name is required"
+    Unauthorized:
+      description: Unauthorized (not authenticated)
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Unauthorized: please log in"
+    Forbidden:
+      description: Forbidden (not authorized to access this resource)
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Forbidden: you don't have permission to access this data room"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Data room not found"
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Internal server error"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase auth token (from supabase.auth.session().access_token)
