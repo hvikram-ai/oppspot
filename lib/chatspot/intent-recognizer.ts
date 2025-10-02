@@ -16,27 +16,19 @@ export class IntentRecognizer {
    * Recognize intent from user message using AI
    */
   static async recognizeIntent(message: string, conversationHistory?: string[]): Promise<Intent> {
-    const apiKey = process.env.OPENROUTER_API_KEY
-
-    if (!apiKey) {
-      return this.fallbackIntent(message)
-    }
-
     try {
       // Build context from conversation history
       const context = conversationHistory?.join('\n') || ''
 
-      // Call AI to recognize intent
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Use local Ollama for intent recognition
+      const ollamaUrl = process.env.OLLAMA_API_URL || 'http://localhost:11434'
+      const response = await fetch(`${ollamaUrl}/api/chat`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://oppspot.ai',
-          'X-Title': 'oppSpot ChatSpot'
         },
         body: JSON.stringify({
-          model: 'anthropic/claude-3.5-sonnet',
+          model: 'mistral:7b',
           messages: [
             {
               role: 'system',
@@ -44,22 +36,28 @@ export class IntentRecognizer {
             },
             {
               role: 'user',
-              content: `${context ? `Previous context:\n${context}\n\n` : ''}User query: "${message}"`
+              content: `${context ? `Previous context:\n${context}\n\n` : ''}User query: "${message}"\n\nRespond with ONLY valid JSON, no markdown formatting.`
             }
           ],
-          response_format: { type: 'json_object' },
-          temperature: 0.1,
-          max_tokens: 1000
+          stream: false,
+          format: 'json',
+          options: {
+            temperature: 0.1,
+            num_predict: 1000
+          }
         })
       })
 
       if (!response.ok) {
-        console.error('[IntentRecognizer] API error:', response.statusText)
+        console.error('[IntentRecognizer] Ollama error:', response.status, response.statusText)
         return this.fallbackIntent(message)
       }
 
       const data = await response.json()
-      const intentData = JSON.parse(data.choices[0].message.content)
+      const content = data.message?.content || '{}'
+
+      // Parse JSON response
+      const intentData = JSON.parse(content)
 
       return this.validateIntent(intentData)
     } catch (error) {

@@ -85,29 +85,22 @@ export class ChatService {
    * Generate natural language response based on intent
    */
   private static async generateResponse(intent: Intent, context: ChatContext): Promise<string> {
-    const apiKey = process.env.OPENROUTER_API_KEY
-
-    if (!apiKey) {
-      return this.fallbackResponse(intent)
-    }
-
     try {
       const prompt = this.buildResponsePrompt(intent, context)
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Use local Ollama for response generation
+      const ollamaUrl = process.env.OLLAMA_API_URL || 'http://localhost:11434'
+      const response = await fetch(`${ollamaUrl}/api/chat`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://oppspot.ai',
-          'X-Title': 'oppSpot ChatSpot'
         },
         body: JSON.stringify({
-          model: 'anthropic/claude-3.5-sonnet',
+          model: 'mistral:7b',
           messages: [
             {
               role: 'system',
-              content: `You are ChatSpot, oppSpot's conversational AI assistant.
+              content: `You are ChatSpot, oppSpot's conversational AI assistant for B2B intelligence.
 Be helpful, concise, and action-oriented.
 When presenting results, use bullet points and clear formatting.
 Always suggest relevant next actions.
@@ -118,17 +111,21 @@ Keep responses under 200 words unless detailed explanation needed.`
               content: prompt
             }
           ],
-          temperature: 0.7,
-          max_tokens: 500
+          stream: false,
+          options: {
+            temperature: 0.7,
+            num_predict: 500
+          }
         })
       })
 
       if (!response.ok) {
+        console.error('[ChatService] Ollama response not ok:', response.status, response.statusText)
         return this.fallbackResponse(intent)
       }
 
       const data = await response.json()
-      return data.choices[0].message.content
+      return data.message?.content || this.fallbackResponse(intent)
     } catch (error) {
       console.error('[ChatService] Response generation error:', error)
       return this.fallbackResponse(intent)
