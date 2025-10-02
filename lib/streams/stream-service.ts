@@ -92,6 +92,24 @@ export class StreamService {
   ): Promise<StreamListResponse> {
     const supabase = await createClient()
 
+    // First get stream IDs for this user
+    const { data: memberData } = await supabase
+      .from('stream_members')
+      .select('stream_id')
+      .eq('user_id', userId)
+
+    const streamIds = memberData?.map(m => m.stream_id) || []
+
+    // If user has no streams, return empty
+    if (streamIds.length === 0) {
+      return {
+        streams: [],
+        total: 0,
+        page,
+        limit
+      }
+    }
+
     let query = supabase
       .from('streams')
       .select(`
@@ -99,11 +117,7 @@ export class StreamService {
         creator:profiles!streams_created_by_fkey(id, full_name, avatar_url),
         members:stream_members(count)
       `, { count: 'exact' })
-      .in('id', supabase
-        .from('stream_members')
-        .select('stream_id')
-        .eq('user_id', userId)
-      )
+      .in('id', streamIds)
       .order('updated_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1)
 
