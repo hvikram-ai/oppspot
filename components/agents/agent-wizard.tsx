@@ -168,11 +168,41 @@ export function AgentWizard({ open, onOpenChange, onComplete }: AgentWizardProps
 
     setIsSubmitting(true)
     try {
+      // Build configuration based on agent type
+      let configuration = data.configuration
+
+      // OpportunityBot needs default criteria
+      if (data.agent_type === 'opportunity_bot' && Object.keys(configuration).length === 0) {
+        configuration = {
+          criteria: {
+            industries: [], // Empty = all industries
+            location: [], // Empty = all locations
+            employeeRange: { min: 1, max: 10000 },
+            revenueRange: { min: 0, max: 1000000000 }
+          },
+          minScore: 70,
+          maxOpportunities: 50,
+          notifications: {
+            email: true,
+            threshold: 85
+          }
+        }
+      }
+
+      // Scout Agent needs default signal types
+      if (data.agent_type === 'scout_agent' && Object.keys(configuration).length === 0) {
+        configuration = {
+          signals: ['job_posting', 'funding_round', 'executive_change', 'companies_house_filing', 'news_mention'],
+          threshold: 70,
+          maxCompanies: 100
+        }
+      }
+
       const requestData = {
         agent_type: data.agent_type,
         name: data.name,
         description: data.description,
-        configuration: data.configuration,
+        configuration: configuration,
         is_active: data.is_active,
         schedule_cron: data.scheduleEnabled ? data.schedule_cron : null
       }
