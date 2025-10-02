@@ -23,6 +23,7 @@ import {
   Lightbulb
 } from 'lucide-react'
 import type { GraphData, KnowledgeInsight } from '@/lib/knowledge-graph/types'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 export default function KnowledgeGraphPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -84,6 +85,9 @@ export default function KnowledgeGraphPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       {/* Header */}
       <div className="mb-8">
@@ -335,5 +339,7 @@ export default function KnowledgeGraphPage() {
         </TabsContent>
       </Tabs>
     </div>
+  </ProtectedLayout>
+
   )
 }

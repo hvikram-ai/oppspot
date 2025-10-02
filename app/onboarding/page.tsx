@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { 
+import { ProtectedLayout } from '@/components/layout/protected-layout'
   Building2, 
   Users, 
   Target, 
@@ -178,6 +179,9 @@ export default function OnboardingPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         {/* Progress Bar */}
@@ -186,6 +190,8 @@ export default function OnboardingPage() {
             {steps.map((step, index) => {
               const Icon = step.icon
               return (
+
+                <ProtectedLayout>
                 <div
                   key={step.id}
                   className={`flex items-center ${
@@ -290,6 +296,8 @@ export default function OnboardingPage() {
                       const Icon = goal.icon
                       const isSelected = formData.goals.includes(goal.id)
                       return (
+
+                        <ProtectedLayout>
                         <div
                           key={goal.id}
                           onClick={() => toggleGoal(goal.id)}
@@ -410,5 +418,7 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  </ProtectedLayout>
+
   )
 }

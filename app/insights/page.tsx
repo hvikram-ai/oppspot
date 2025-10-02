@@ -3,9 +3,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TrendingUp, Target, Lightbulb, BarChart3 } from 'lucide-react'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 export default function InsightsPage() {
   return (
+
+    <ProtectedLayout>
     <div className="container mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Insights</h1>
@@ -75,5 +78,7 @@ export default function InsightsPage() {
         </CardContent>
       </Card>
     </div>
+  </ProtectedLayout>
+
   )
 }

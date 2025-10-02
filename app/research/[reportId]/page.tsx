@@ -10,6 +10,7 @@ import { redirect, notFound } from 'next/navigation';
 import { ResearchReport } from '@/components/research/research-report';
 import { ResearchProgress } from '@/components/research/research-progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 async function getReport(reportId: string, userId: string) {
   const response = await fetch(
@@ -56,6 +57,8 @@ export default async function ReportPage({
   // If still generating, show progress
   if (report.status === 'generating' || report.status === 'pending') {
     return (
+
+      <ProtectedLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-6">{report.company_name}</h1>
@@ -97,6 +100,9 @@ export default async function ReportPage({
   };
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <ResearchReport report={reportData} />

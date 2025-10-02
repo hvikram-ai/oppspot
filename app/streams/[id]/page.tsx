@@ -11,6 +11,7 @@ import { StreamBoard } from '@/components/streams/stream-board'
 import { StreamMembersPanel } from '@/components/streams/stream-members-panel'
 import { StreamActivityFeed } from '@/components/streams/stream-activity-feed'
 import { AddItemDialog } from '@/components/streams/add-item-dialog'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 interface StreamDetailPageProps {
   params: Promise<{ id: string }>
@@ -116,6 +117,8 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
 
   if (isLoading) {
     return (
+
+      <ProtectedLayout>
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
@@ -124,6 +127,8 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
 
   if (!stream) {
     return (
+
+      <ProtectedLayout>
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h3 className="text-lg font-semibold mb-2">Stream not found</h3>
@@ -139,6 +144,9 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur sticky top-14 z-30">
@@ -241,5 +249,7 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
         stream={stream}
       />
     </div>
+  </ProtectedLayout>
+
   )
 }

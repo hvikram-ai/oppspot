@@ -31,6 +31,7 @@ import type { DataRoom } from '@/lib/data-room/types'
 import { UploadZone } from '@/components/data-room/upload-zone'
 import { DocumentList } from '@/components/data-room/document-list'
 import { ActivityFeed } from '@/components/data-room/activity-feed'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 interface DataRoomWithDetails extends DataRoom {
   owner_name: string
@@ -117,6 +118,8 @@ export default function DataRoomDetailPage() {
 
   if (loading) {
     return (
+
+      <ProtectedLayout>
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
@@ -131,6 +134,9 @@ export default function DataRoomDetailPage() {
   const canEdit = isOwner || dataRoom.my_permission === 'editor'
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
@@ -322,5 +328,7 @@ export default function DataRoomDetailPage() {
         </TabsContent>
       </Tabs>
     </div>
+  </ProtectedLayout>
+
   )
 }

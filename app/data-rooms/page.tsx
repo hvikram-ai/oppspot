@@ -25,6 +25,7 @@ import {
   Briefcase
 } from 'lucide-react'
 import type { DataRoom } from '@/lib/data-room/types'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 interface DataRoomWithStats extends DataRoom {
   owner_name: string
@@ -83,6 +84,9 @@ export default function DataRoomsPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -287,5 +291,7 @@ export default function DataRoomsPage() {
         </div>
       )}
     </div>
+  </ProtectedLayout>
+
   )
 }

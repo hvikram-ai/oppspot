@@ -9,11 +9,15 @@ import { useState } from 'react'
 import { ChatInterface } from '@/components/chatspot/chat-interface'
 import { Card } from '@/components/ui/card'
 import { Sparkles, MessageSquare, Zap } from 'lucide-react'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 export default function ChatSpotPage() {
   const [conversationId, setConversationId] = useState<string>()
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto py-8 px-4 max-w-7xl h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="mb-6">
@@ -73,5 +77,7 @@ export default function ChatSpotPage() {
         </Card>
       </div>
     </div>
+  </ProtectedLayout>
+
   )
 }

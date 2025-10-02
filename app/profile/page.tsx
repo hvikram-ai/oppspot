@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Loader2, User, Mail, Building2, Phone, Globe, Save, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 interface Profile {
   id: string
@@ -123,6 +124,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
+
+      <ProtectedLayout>
       <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
@@ -131,6 +134,8 @@ export default function ProfilePage() {
 
   if (error || !profile) {
     return (
+
+      <ProtectedLayout>
       <div className="container mx-auto p-6">
         <Card className="border-destructive">
           <CardHeader>
@@ -149,6 +154,9 @@ export default function ProfilePage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -321,5 +329,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
     </div>
+  </ProtectedLayout>
+
   )
 }

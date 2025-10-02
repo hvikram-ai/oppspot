@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { 
+import { ProtectedLayout } from '@/components/layout/protected-layout'
   TrendingUp, 
   Users, 
   Globe, 
@@ -198,6 +199,9 @@ function UpdatesPageContent() {
   ]
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Header */}
       <div className="mb-8">
@@ -380,11 +384,15 @@ function UpdatesPageContent() {
         )}
       </div>
     </div>
+  </ProtectedLayout>
+
   )
 }
 
 export default function UpdatesPage() {
   return (
+
+    <ProtectedLayout>
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 py-8">
@@ -397,5 +405,7 @@ export default function UpdatesPage() {
     }>
       <UpdatesPageContent />
     </Suspense>
+  </ProtectedLayout>
+
   )
 }

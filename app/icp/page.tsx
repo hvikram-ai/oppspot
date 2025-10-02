@@ -24,6 +24,7 @@ import {
   BarChart3
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 interface ICPProfile {
   id: string
@@ -110,6 +111,8 @@ export default function ICPPage() {
 
   if (loading) {
     return (
+
+      <ProtectedLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -119,6 +122,9 @@ export default function ICPPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -354,5 +360,7 @@ export default function ICPPage() {
         </Card>
       )}
     </div>
+  </ProtectedLayout>
+
   )
 }

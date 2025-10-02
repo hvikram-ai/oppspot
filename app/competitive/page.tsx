@@ -19,6 +19,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { 
+import { ProtectedLayout } from '@/components/layout/protected-layout'
   BarChart3, 
   TrendingUp, 
   Users, 
@@ -228,6 +229,9 @@ export default function CompetitiveAnalysisPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
       <div className="mb-8">
@@ -595,5 +599,7 @@ export default function CompetitiveAnalysisPage() {
         </TabsContent>
       </Tabs>
     </div>
+  </ProtectedLayout>
+
   )
 }

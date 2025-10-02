@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ActivityTracker, PresenceTracker } from '@/lib/teamplay/activity-tracker'
 import { Users, Activity, Clock, Eye, Save, Bot, Zap } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 const ACTIVITY_ICONS: Record<string, any> = {
   company_viewed: Eye,
@@ -45,7 +46,10 @@ export default function TeamPlayPage() {
     // Refresh every 10 seconds
     const interval = setInterval(loadData, 10000)
 
-    return () => {
+    return (
+
+
+      <ProtectedLayout>) => {
       clearInterval(interval)
       PresenceTracker.stop()
     }
@@ -63,6 +67,9 @@ export default function TeamPlayPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       {/* Header */}
       <div className="mb-8">
@@ -138,6 +145,9 @@ export default function TeamPlayPage() {
                     const label = ACTIVITY_LABELS[activity.activity_type] || activity.activity_type
 
                     return (
+
+
+                      <ProtectedLayout>
                       <div key={activity.id} className="flex gap-4 pb-4 border-b last:border-0">
                         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                           <Icon className="h-5 w-5 text-muted-foreground" />
@@ -171,5 +181,7 @@ export default function TeamPlayPage() {
         </div>
       </div>
     </div>
+  </ProtectedLayout>
+
   )
 }

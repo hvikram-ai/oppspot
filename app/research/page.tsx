@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Clock, TrendingUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 async function getResearchHistory(userId: string) {
   const supabase = await createClient();
@@ -43,6 +44,9 @@ export default async function ResearchPage() {
   const reports = await getResearchHistory(user.id);
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}

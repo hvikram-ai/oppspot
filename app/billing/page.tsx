@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -64,33 +65,38 @@ export default function BillingPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <ProtectedLayout>
+        <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </ProtectedLayout>
     )
   }
 
   if (error || !billingInfo) {
     return (
-      <div className="container mx-auto p-6">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Error Loading Billing Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">{error || 'Unable to load billing information'}</p>
-            <Button onClick={loadBillingInfo}>Try Again</Button>
-          </CardContent>
-        </Card>
-      </div>
+      <ProtectedLayout>
+        <div className="container mx-auto p-6">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Error Loading Billing Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">{error || 'Unable to load billing information'}</p>
+              <Button onClick={loadBillingInfo}>Try Again</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedLayout>
     )
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <ProtectedLayout>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -236,5 +242,6 @@ export default function BillingPage() {
         </CardContent>
       </Card>
     </div>
+    </ProtectedLayout>
   )
 }

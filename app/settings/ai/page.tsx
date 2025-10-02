@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
 import {
+import { ProtectedLayout } from '@/components/layout/protected-layout'
   Brain,
   Plus,
   Trash2,
@@ -355,6 +356,8 @@ export default function AISettingsPage() {
 
   if (loading) {
     return (
+
+      <ProtectedLayout>
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
@@ -362,6 +365,9 @@ export default function AISettingsPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="space-y-6">
       {/* Header Alert */}
       <Alert>
@@ -538,6 +544,8 @@ export default function AISettingsPage() {
                   {apiKeys.map(key => {
                     const provider = aiProviders.find(p => p.id === key.provider)
                     return (
+
+                      <ProtectedLayout>
                       <div key={key.id} className="border rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -731,5 +739,7 @@ export default function AISettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  </ProtectedLayout>
+
   )
 }

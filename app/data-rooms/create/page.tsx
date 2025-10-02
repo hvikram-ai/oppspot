@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft, Loader2, FolderPlus } from 'lucide-react'
 import type { DealType, CreateDataRoomRequest } from '@/lib/data-room/types'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 export default function CreateDataRoomPage() {
   const router = useRouter()
@@ -113,6 +114,9 @@ export default function CreateDataRoomPage() {
   ]
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container mx-auto p-6 max-w-3xl">
       {/* Back Button */}
       <Link href="/data-rooms">
@@ -253,5 +257,7 @@ export default function CreateDataRoomPage() {
         </CardContent>
       </Card>
     </div>
+  </ProtectedLayout>
+
   )
 }

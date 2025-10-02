@@ -11,6 +11,7 @@ import { Stream, CreateStreamRequest, StreamFilters } from '@/types/streams'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 
 export default function StreamsPage() {
   const router = useRouter()
@@ -152,6 +153,9 @@ export default function StreamsPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur sticky top-14 z-30">
@@ -267,5 +271,7 @@ export default function StreamsPage() {
         orgId={orgId}
       />
     </div>
+  </ProtectedLayout>
+
   )
 }

@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import {
+import { ProtectedLayout } from '@/components/layout/protected-layout'
   User,
   Brain,
   Shield,
@@ -148,6 +149,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
+
+      <ProtectedLayout>
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
@@ -155,6 +158,9 @@ export default function SettingsPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="space-y-6">
       {/* Overview Card */}
       <Card>
@@ -242,6 +248,9 @@ export default function SettingsPage() {
             const Icon = section.icon
             
             return (
+
+            
+              <ProtectedLayout>
               <Link key={section.href} href={section.href}>
                 <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
                   <CardContent className="p-4">
@@ -297,5 +306,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+  </ProtectedLayout>
+
   )
 }

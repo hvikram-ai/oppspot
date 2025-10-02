@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { 
+import { ProtectedLayout } from '@/components/layout/protected-layout'
   Bell, 
   Mail, 
   MessageSquare, 
@@ -115,6 +116,8 @@ export default function NotificationSettingsPage() {
 
   if (loading) {
     return (
+
+      <ProtectedLayout>
       <div className="container max-w-4xl mx-auto py-8">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -124,6 +127,9 @@ export default function NotificationSettingsPage() {
   }
 
   return (
+
+
+    <ProtectedLayout>
     <div className="container max-w-4xl mx-auto py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Notification Settings</h1>
@@ -303,5 +309,7 @@ export default function NotificationSettingsPage() {
         </div>
       </div>
     </div>
+  </ProtectedLayout>
+
   )
 }

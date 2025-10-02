@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Navbar } from '@/components/layout/navbar'
 import { 
+import { ProtectedLayout } from '@/components/layout/protected-layout'
   Search, 
   Map, 
   Building2, 
@@ -63,6 +64,8 @@ const stats = [
 
 export default function LandingPage() {
   return (
+
+    <ProtectedLayout>
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <Navbar />
       
@@ -167,6 +170,8 @@ export default function LandingPage() {
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
+
+              <ProtectedLayout>
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
@@ -259,5 +264,7 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+  </ProtectedLayout>
+
   )
 }
