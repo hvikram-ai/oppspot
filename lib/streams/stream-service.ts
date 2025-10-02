@@ -34,6 +34,8 @@ export class StreamService {
   ): Promise<Stream> {
     const supabase = await createClient()
 
+    console.log('[StreamService] Creating stream with:', { userId, orgId, streamName: data.name })
+
     const { data: stream, error } = await supabase
       .from('streams')
       .insert({
@@ -57,9 +59,15 @@ export class StreamService {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('[StreamService] Error creating stream:', error)
+      throw new Error(`Failed to create stream: ${error.message} (Code: ${error.code})`)
+    }
+
+    console.log('[StreamService] Stream created:', stream.id)
 
     // Add creator as owner member
+    console.log('[StreamService] Adding owner member:', { streamId: stream.id, userId })
     const { error: memberError } = await supabase
       .from('stream_members')
       .insert({
@@ -69,7 +77,12 @@ export class StreamService {
         invitation_accepted_at: new Date().toISOString()
       })
 
-    if (memberError) throw memberError
+    if (memberError) {
+      console.error('[StreamService] Error adding stream member:', memberError)
+      throw new Error(`Failed to add stream member: ${memberError.message} (Code: ${memberError.code})`)
+    }
+
+    console.log('[StreamService] Member added successfully')
 
     // Log activity
     await this.logActivity(stream.id, userId, 'stream_created', {
