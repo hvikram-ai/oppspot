@@ -335,3 +335,103 @@ npm run dev
 3. Set up Inngest Cloud (production)
 4. Monitor scheduled jobs
 
+
+
+## Admin UI for AI Agents ✅
+
+### Pages Created
+
+#### 1. Agents Dashboard (`/admin/agents`)
+**File**: `app/(dashboard)/admin/agents/page.tsx`
+
+**Features**:
+- ✅ List all agents (active, inactive, all)
+- ✅ Agent stats (total, active, scheduled, executions)
+- ✅ Run agents on-demand (async/sync)
+- ✅ Toggle active/inactive status
+- ✅ Delete agents
+- ✅ Visual indicators (icons, badges, status)
+- ✅ Last run / next run timestamps
+
+#### 2. Create Agent (`/admin/agents/create`)
+**File**: `app/(dashboard)/admin/agents/create/page.tsx`
+
+**Features**:
+- ✅ Agent type selection (OpportunityBot, Scout, ResearchGPT)
+- ✅ Basic info (name, description)
+- ✅ Schedule configuration (cron expression)
+- ✅ Active/inactive toggle
+- ✅ OpportunityBot config (ICP criteria, scoring)
+- ✅ Scout Agent config (signals to monitor)
+- ✅ Form validation
+- ✅ Creates agent via API
+
+#### 3. Buying Signals Feed (`/admin/signals`)
+**File**: `app/(dashboard)/admin/signals/page.tsx`
+
+**Features**:
+- ✅ Real-time signal feed
+- ✅ Signal stats (active, acted upon, avg confidence)
+- ✅ Filter by status (active, acted upon, all)
+- ✅ Signal details (type, strength, confidence, data)
+- ✅ Act upon / mark false positive
+- ✅ Visual indicators (icons, colors by strength)
+
+### Navigation
+
+Access these pages:
+- `/admin/agents` - Main agents dashboard
+- `/admin/agents/create` - Create new agent
+- `/admin/signals` - Buying signals feed
+- `/admin/embeddings` - Embeddings (from Week 1)
+
+### Screenshots
+
+**Agents Dashboard**:
+- Agent cards with type icons
+- Run/pause/delete controls
+- Schedule and execution info
+- Tabbed view (active/inactive/all)
+
+**Create Agent**:
+- Type selector with descriptions
+- Configuration forms (different per type)
+- Cron schedule picker
+- Live validation
+
+**Signals Feed**:
+- Signal strength indicators
+- Confidence scores
+- Action buttons
+- Status badges
+
+### Usage
+
+1. **Create an agent**:
+   - Visit `/admin/agents`
+   - Click "Create Agent"
+   - Choose type and configure
+   - Click "Create Agent"
+
+2. **Run manually**:
+   - Click "Run Now" on agent card
+   - Job queued with Inngest
+   - Check Inngest dashboard for progress
+
+3. **Monitor signals**:
+   - Visit `/admin/signals`
+   - View detected signals
+   - Act upon or mark false positive
+
+### Next Steps
+
+1. Add API endpoints for:
+   - `PATCH /api/agents/[id]` - Update agent
+   - `DELETE /api/agents/[id]` - Delete agent
+   - `GET /api/signals` - List signals
+   - `PATCH /api/signals/[id]` - Update signal status
+
+2. Connect to real data
+3. Add execution history view
+4. Add notifications UI
+

@@ -32,11 +32,12 @@ export class StreamService {
     orgId: string,
     data: CreateStreamRequest
   ): Promise<Stream> {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS for stream creation
+    const adminClient = await createAdminClient()
 
     console.log('[StreamService] Creating stream with:', { userId, orgId, streamName: data.name })
 
-    const { data: stream, error } = await supabase
+    const { data: stream, error } = await adminClient
       .from('streams')
       .insert({
         org_id: orgId,
@@ -66,9 +67,8 @@ export class StreamService {
 
     console.log('[StreamService] Stream created:', stream.id)
 
-    // Add creator as owner member using admin client to bypass RLS
+    // Add creator as owner member using same admin client to bypass RLS
     console.log('[StreamService] Adding owner member:', { streamId: stream.id, userId })
-    const adminClient = await createAdminClient()
     const { error: memberError } = await adminClient
       .from('stream_members')
       .insert({
