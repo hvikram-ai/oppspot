@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/input'
 
 export default function SearchesPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-2 mb-8">
@@ -117,6 +116,6 @@ export default function SearchesPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }

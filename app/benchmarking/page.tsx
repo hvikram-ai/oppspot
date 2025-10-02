@@ -119,8 +119,7 @@ function BenchmarkingContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <Alert>
             <Info className="h-4 w-4" />
@@ -134,8 +133,7 @@ function BenchmarkingContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}

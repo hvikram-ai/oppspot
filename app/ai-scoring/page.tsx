@@ -185,8 +185,7 @@ export default function AIScoringPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-muted rounded w-1/3"></div>
@@ -203,8 +202,7 @@ export default function AIScoringPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <Alert>
             <Info className="h-4 w-4" />
@@ -218,8 +216,7 @@ export default function AIScoringPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
@@ -499,6 +496,6 @@ export default function AIScoringPage() {
           )}
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   );
 }

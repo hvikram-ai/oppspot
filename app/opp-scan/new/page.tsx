@@ -324,8 +324,7 @@ function NewOppScanPageContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -337,8 +336,7 @@ function NewOppScanPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
       
       {/* Header */}
       <div className="border-b bg-card">
@@ -521,7 +519,7 @@ export default function NewOppScanPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      </ProtectedLayout>
     }>
       <NewOppScanPageContent />
     </Suspense>

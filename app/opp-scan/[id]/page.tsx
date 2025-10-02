@@ -268,8 +268,7 @@ function ScanDetailPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6">
             <Skeleton className="h-12 w-1/3" />
@@ -287,8 +286,7 @@ function ScanDetailPageContent() {
 
   if (!scanData) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <Alert>
             <AlertTriangle className="h-4 w-4" />
@@ -303,8 +301,7 @@ function ScanDetailPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
       
       {/* Header */}
       <div className="border-b bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
@@ -796,7 +793,7 @@ export default function ScanDetailPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      </ProtectedLayout>
     }>
       <ScanDetailPageContent />
     </Suspense>

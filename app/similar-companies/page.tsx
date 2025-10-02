@@ -341,8 +341,7 @@ function SimilarCompaniesPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -354,8 +353,7 @@ function SimilarCompaniesPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
       
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 text-white">

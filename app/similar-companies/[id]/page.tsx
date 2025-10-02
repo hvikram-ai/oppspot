@@ -1112,8 +1112,7 @@ function SimilarCompanyDetailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -1126,8 +1125,7 @@ function SimilarCompanyDetailContent() {
 
   if (!analysis) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
@@ -1148,8 +1146,7 @@ function SimilarCompanyDetailContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
       
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">

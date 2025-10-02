@@ -206,8 +206,7 @@ export default function SignalsPage() {
 
   if (loading && signals.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <ProtectedLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-muted-foreground">Loading buying signals...</div>
@@ -218,8 +217,7 @@ export default function SignalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <ProtectedLayout>
       <div className="container mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -488,6 +486,6 @@ export default function SignalsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
