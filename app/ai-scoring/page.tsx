@@ -197,6 +197,7 @@ export default function AIScoringPage() {
           </div>
         </div>
       </div>
+    </ProtectedLayout>
     );
   }
 

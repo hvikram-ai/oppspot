@@ -128,7 +128,7 @@ function BenchmarkingContent() {
             </AlertDescription>
           </Alert>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 
