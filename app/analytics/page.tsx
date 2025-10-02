@@ -1,6 +1,6 @@
 'use client'
 
-import { Navbar } from '@/components/layout/navbar'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart3, TrendingUp, Activity, PieChart, Users, Target } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'

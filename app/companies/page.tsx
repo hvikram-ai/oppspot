@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Navbar } from '@/components/layout/navbar'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { CompanyCard } from '@/components/companies/company-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -261,8 +261,7 @@ export default function CompaniesPage() {
   }
 
   return (
-    <>
-      <Navbar />
+    <ProtectedLayout>
       <div className="container mx-auto py-8 px-4 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
@@ -530,6 +529,6 @@ export default function CompaniesPage() {
         </div>
       )}
       </div>
-    </>
+    </ProtectedLayout>
   )
 }

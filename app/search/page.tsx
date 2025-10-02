@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 // Force dynamic rendering for search functionality
 export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Navbar } from '@/components/layout/navbar'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { SearchBar } from '@/components/search/search-bar'
 import { SearchFilters } from '@/components/search/search-filters'
 import { SearchResults } from '@/components/search/search-results'
@@ -181,9 +181,7 @@ function SearchPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
+    <ProtectedLayout>
       {/* Search Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
@@ -264,7 +262,7 @@ function SearchPageContent() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 

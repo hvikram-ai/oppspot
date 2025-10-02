@@ -1,6 +1,6 @@
 'use client'
 
-import { Navbar } from '@/components/layout/navbar'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Download, FileSpreadsheet, FileText, FileJson, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'

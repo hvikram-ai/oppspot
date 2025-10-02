@@ -1,6 +1,6 @@
 'use client'
 
-import { Navbar } from '@/components/layout/navbar'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Bell, Settings, CheckCircle, Info, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'

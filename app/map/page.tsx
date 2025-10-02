@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Navbar } from '@/components/layout/navbar'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { MapView } from '@/components/map/map-view'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
@@ -136,11 +136,10 @@ export default function MapPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <Navbar />
-      
-      {/* Map Header */}
-      <div className="border-b bg-card z-10">
+    <ProtectedLayout>
+      <div className="h-screen flex flex-col">
+        {/* Map Header */}
+        <div className="border-b bg-card z-10">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4">
             <Button
@@ -231,6 +230,7 @@ export default function MapPage() {
           />
         </div>
       </div>
-    </div>
+      </div>
+    </ProtectedLayout>
   )
 }

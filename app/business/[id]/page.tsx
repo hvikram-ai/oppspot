@@ -13,7 +13,7 @@ import { BusinessStakeholders } from '@/components/business/business-stakeholder
 import { BANTScoreCard } from '@/components/bant/bant-score-card'
 import { BenchmarkCard } from '@/components/benchmarking/benchmark-card'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
-import { Navbar } from '@/components/layout/navbar'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { getMockCompany, getMockRelatedCompanies } from '@/lib/mock-data/companies'
 import { Database } from '@/lib/supabase/database.types'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
@@ -222,9 +222,7 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
+    <ProtectedLayout>
       <div className="container max-w-7xl mx-auto px-4 py-6">
         <Breadcrumbs
           items={[
@@ -293,6 +291,6 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }

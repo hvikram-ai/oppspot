@@ -12,9 +12,7 @@ interface Profile {
   org_id?: string | null
   email?: string
 }
-import { Navbar } from '@/components/layout/navbar'
-import { Sidebar } from '@/components/layout/sidebar'
-import { EmailVerificationBanner } from '@/components/ui/email-verification-banner'
+import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { StatsOverview } from '@/components/dashboard/stats-overview'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
@@ -26,13 +24,10 @@ import { AIDigestCard } from '@/components/dashboard-v2/ai-digest-card'
 import { PriorityQueue } from '@/components/dashboard-v2/priority-queue'
 import { ImpactMetrics } from '@/components/dashboard-v2/impact-metrics'
 import { FeatureSpotlight } from '@/components/dashboard-v2/feature-spotlight'
-import { CommandPalette } from '@/components/navigation/command-palette'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
-import { useSidebar } from '@/lib/hooks/use-sidebar'
-import { cn } from '@/lib/utils'
 
 export function DashboardWrapper() {
   const { isDemoMode, demoData } = useDemoMode()
@@ -42,7 +37,6 @@ export function DashboardWrapper() {
   const [showOnboardingPrompt, setShowOnboardingPrompt] = useState(false)
   const router = useRouter()
   const supabase = createClient()
-  const { isCollapsed } = useSidebar()
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts()
@@ -148,23 +142,10 @@ export function DashboardWrapper() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Sidebar />
-      <EmailVerificationBanner />
-      <CommandPalette />
+    <ProtectedLayout>
+      <DashboardHeader user={user} profile={profile} />
 
-      {/* Main content with sidebar offset */}
-      <div
-        className={cn(
-          'transition-all duration-200 ease-in-out',
-          'lg:ml-60', // Default expanded width
-          isCollapsed && 'lg:ml-16' // Collapsed width
-        )}
-      >
-        <DashboardHeader user={user} profile={profile} />
-
-        <div className="container mx-auto px-4 py-8" data-testid="dashboard-wrapper">
+      <div className="container mx-auto px-4 py-8" data-testid="dashboard-wrapper">
         {/* Onboarding Prompt */}
         {showOnboardingPrompt && (
           <Alert className="mb-6 relative">
@@ -240,8 +221,7 @@ export function DashboardWrapper() {
           <BusinessInsights userId={user.id} />
           <UpcomingTasks userId={user.id} />
         </div>
-        </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
