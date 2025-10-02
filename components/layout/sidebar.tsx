@@ -24,7 +24,8 @@ import {
   Compass,
   FileSearch,
   Send,
-  Zap
+  Zap,
+  Activity
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
