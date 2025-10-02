@@ -28,8 +28,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
-import {
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import {
   Brain,
   Plus,
   Trash2,

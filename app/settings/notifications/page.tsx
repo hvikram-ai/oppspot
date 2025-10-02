@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { 
 import { ProtectedLayout } from '@/components/layout/protected-layout'
-  Bell, 
-  Mail, 
-  MessageSquare, 
-  TrendingUp, 
-  Calendar, 
+import {
+  Bell,
+  Mail,
+  MessageSquare,
+  TrendingUp,
+  Calendar,
   Shield,
   Loader2,
   Save

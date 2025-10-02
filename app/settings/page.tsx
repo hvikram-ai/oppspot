@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import {
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import {
   User,
   Brain,
   Shield,
