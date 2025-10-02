@@ -205,6 +205,23 @@ export function Sidebar() {
             />
           </SidebarSection>
 
+          {/* COLLABORATION Section */}
+          <SidebarSection
+            title="Collaboration"
+            icon={Users}
+            isCollapsed={isCollapsed}
+            defaultOpen={false}
+          >
+            <SidebarItem
+              href="/teamplay"
+              icon={Users}
+              label="TeamPlay"
+              tooltip="Real-time team collaboration and activity tracking"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+          </SidebarSection>
+
           {/* OUTREACH Section */}
           <SidebarSection
             title="Outreach"
