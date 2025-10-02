@@ -76,6 +76,20 @@ export async function POST(
     } else if (agent.agent_type === 'opportunity_bot') {
       const opportunityBot = await createOpportunityBot(agentId)
       result = await opportunityBot.run(input)
+    } else if (agent.agent_type === 'research_gpt') {
+      // ResearchGPT is on-demand per company
+      result = {
+        success: true,
+        output: { message: 'ResearchGPT is an on-demand agent. Use it from the research page.' },
+        metrics: { durationMs: 0, itemsProcessed: 0, apiCalls: 0, tokensUsed: 0, cost: 0 }
+      }
+    } else if (agent.agent_type === 'scoring_agent') {
+      // Scoring agent would re-score companies
+      result = {
+        success: true,
+        output: { message: 'Scoring agent execution coming soon!' },
+        metrics: { durationMs: 0, itemsProcessed: 0, apiCalls: 0, tokensUsed: 0, cost: 0 }
+      }
     } else {
       return NextResponse.json(
         { error: `Agent type "${agent.agent_type}" not yet implemented` },

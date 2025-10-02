@@ -66,7 +66,8 @@ const AGENT_TYPES = [
     description: '24/7 autonomous deal finder that scans for companies matching your ICP',
     icon: TrendingUp,
     color: 'from-green-500 to-emerald-600',
-    features: ['ICP-based filtering', 'Buying signal detection', 'Auto-scoring', 'Email notifications']
+    features: ['ICP-based filtering', 'Buying signal detection', 'Auto-scoring', 'Email notifications'],
+    schedulable: true
   },
   {
     id: 'scout_agent',
@@ -74,23 +75,26 @@ const AGENT_TYPES = [
     description: 'Monitors buying signals like funding, hiring, and expansion activities',
     icon: Search,
     color: 'from-blue-500 to-cyan-600',
-    features: ['Signal detection', 'News monitoring', 'Job posting tracking', 'Funding alerts']
+    features: ['Signal detection', 'News monitoring', 'Job posting tracking', 'Funding alerts'],
+    schedulable: true
   },
   {
     id: 'research_gpt',
     name: 'ResearchGPT™',
-    description: 'Deep company intelligence and research automation',
+    description: 'On-demand deep company intelligence (use from Research page)',
     icon: Brain,
     color: 'from-purple-500 to-pink-600',
-    features: ['Company research', 'Tech stack analysis', 'Competitor insights', 'Contact finder']
+    features: ['Company research', 'Tech stack analysis', 'Competitor insights', 'Contact finder'],
+    schedulable: false
   },
   {
     id: 'scoring_agent',
     name: 'Scoring Agent',
-    description: 'Continuous lead scoring and prioritization',
+    description: 'Continuous lead scoring and prioritization (coming soon)',
     icon: Activity,
     color: 'from-orange-500 to-red-600',
-    features: ['Lead scoring', 'Priority ranking', 'Deal probability', 'Timing prediction']
+    features: ['Lead scoring', 'Priority ranking', 'Deal probability', 'Timing prediction'],
+    schedulable: false
   }
 ]
 

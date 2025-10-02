@@ -48,6 +48,22 @@ export const executeAgentFunction = inngest.createFunction(
       } else if (agent.agent_type === 'opportunity_bot') {
         const opportunityBot = await createOpportunityBot(agentId)
         return await opportunityBot.run(input)
+      } else if (agent.agent_type === 'research_gpt') {
+        // ResearchGPT runs on-demand per company, not as background agent
+        console.log('[Inngest] ResearchGPT is an on-demand agent, not suitable for scheduled runs')
+        return {
+          success: true,
+          output: { message: 'ResearchGPT is an on-demand agent. Use it from the research page.' },
+          metrics: { durationMs: 0, itemsProcessed: 0, apiCalls: 0, tokensUsed: 0, cost: 0 }
+        }
+      } else if (agent.agent_type === 'scoring_agent') {
+        // Scoring agent would re-score all companies
+        console.log('[Inngest] Scoring agent execution not yet fully implemented')
+        return {
+          success: true,
+          output: { message: 'Scoring agent execution coming soon!' },
+          metrics: { durationMs: 0, itemsProcessed: 0, apiCalls: 0, tokensUsed: 0, cost: 0 }
+        }
       } else {
         throw new Error(`Unknown agent type: ${agent.agent_type}`)
       }
