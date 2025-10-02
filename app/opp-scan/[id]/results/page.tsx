@@ -170,7 +170,7 @@ function ScanResultsPageContent() {
             </AlertDescription>
           </Alert>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 

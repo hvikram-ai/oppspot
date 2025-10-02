@@ -212,7 +212,7 @@ export default function SignalsPage() {
             <div className="text-muted-foreground">Loading buying signals...</div>
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 

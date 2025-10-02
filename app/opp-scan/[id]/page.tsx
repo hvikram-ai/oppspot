@@ -296,7 +296,7 @@ function ScanDetailPageContent() {
             </AlertDescription>
           </Alert>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 

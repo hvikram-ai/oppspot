@@ -147,7 +147,7 @@ function OppScanPageContent() {
             <p className="mt-4 text-muted-foreground">Loading Opp Scan...</p>
           </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 
