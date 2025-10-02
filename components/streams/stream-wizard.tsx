@@ -141,20 +141,20 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
     }
   }, [onOpenChange])
 
-  if (!open) return null
-
   console.log('StreamWizard rendering, open:', open)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className={cn(
-          'bg-background rounded-xl shadow-2xl w-full max-w-5xl h-[calc(100vh-8rem)] flex flex-col border'
-        )}
-      >
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={cn(
+              'bg-background rounded-xl shadow-2xl w-full max-w-5xl h-[calc(100vh-8rem)] flex flex-col border'
+            )}
+          >
         {/* Header */}
         <div className="border-b bg-gradient-to-r from-primary/5 to-purple-500/5 px-6 py-4">
           <div className="flex items-center justify-between mb-4">
@@ -236,6 +236,8 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
         </div>
       </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   )
 }
 

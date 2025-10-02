@@ -37,6 +37,26 @@ export default function StreamsPage() {
 
         if (profile?.org_id) {
           setOrgId(profile.org_id)
+        } else {
+          // If user doesn't have org_id, create one
+          const { data: newOrg } = await supabase
+            .from('organizations')
+            .insert({
+              name: 'My Organization',
+              created_by: user.id
+            })
+            .select()
+            .single()
+
+          if (newOrg) {
+            // Update profile with new org_id
+            await supabase
+              .from('profiles')
+              .update({ org_id: newOrg.id })
+              .eq('id', user.id)
+
+            setOrgId(newOrg.id)
+          }
         }
       }
     }

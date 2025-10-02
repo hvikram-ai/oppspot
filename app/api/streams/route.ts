@@ -19,14 +19,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single()
 
+    // If user doesn't have org_id, return empty streams
     if (!profile?.org_id) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      return NextResponse.json({
+        streams: [],
+        total: 0,
+        page: 1,
+        limit: 20
+      })
     }
 
     // Parse query parameters
@@ -63,14 +69,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single()
 
+    // If user doesn't have org_id, create one
     if (!profile?.org_id) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      const { data: newOrg } = await supabase
+        .from('organizations')
+        .insert({
+          name: 'My Organization',
+          created_by: user.id
+        })
+        .select()
+        .single()
+
+      if (newOrg) {
+        // Update profile with new org_id
+        await supabase
+          .from('profiles')
+          .update({ org_id: newOrg.id })
+          .eq('id', user.id)
+
+        profile = { org_id: newOrg.id }
+      } else {
+        return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
+      }
     }
 
     const body: CreateStreamRequest = await request.json()
