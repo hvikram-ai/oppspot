@@ -174,6 +174,14 @@ export function Sidebar() {
               isPremium
             />
             <SidebarItem
+              href="/icp"
+              icon={Brain}
+              label="ICP Learning"
+              tooltip="Auto-refining Ideal Customer Profile that learns from won/lost deals"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
               href="/ai-scoring"
               icon={Brain}
               label="AI Scoring"
