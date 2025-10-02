@@ -34,7 +34,6 @@ import { SidebarSection } from './sidebar-section'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { ThemeToggle } from '@/components/theme-toggle'
 import Link from 'next/link'
 
 export function Sidebar() {
@@ -340,17 +339,6 @@ export function Sidebar() {
           tooltip="Manage subscription and billing information"
           isCollapsed={isCollapsed}
         />
-
-        {/* Theme Toggle */}
-        <div className={cn(
-          "flex items-center gap-2 rounded-md transition-colors",
-          isCollapsed ? "justify-center p-2" : "px-3 py-2"
-        )}>
-          {!isCollapsed && (
-            <span className="text-sm font-medium text-muted-foreground">Theme</span>
-          )}
-          <ThemeToggle />
-        </div>
       </div>
 
       {/* Collapse button at bottom for collapsed state */}

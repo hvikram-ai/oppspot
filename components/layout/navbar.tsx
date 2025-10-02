@@ -25,6 +25,7 @@ import {
   User as UserIcon,
 } from 'lucide-react'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
 
@@ -100,10 +101,11 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Right Section: Notifications + User Menu */}
+          {/* Right Section: Theme Toggle + Notifications + User Menu */}
           <div className="flex items-center gap-2">
             {user ? (
               <>
+                <ThemeToggle />
                 <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
