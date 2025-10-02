@@ -9,77 +9,105 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ENUMS
 -- ============================================================================
 
-CREATE TYPE deal_type AS ENUM (
-  'acquisition',
-  'investment',
-  'partnership',
-  'merger',
-  'sale',
-  'due_diligence',
-  'other'
-);
+DO $$ BEGIN
+  CREATE TYPE deal_type AS ENUM (
+    'acquisition',
+    'investment',
+    'partnership',
+    'merger',
+    'sale',
+    'due_diligence',
+    'other'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE data_room_status AS ENUM (
-  'active',
-  'archived',
-  'deleted'
-);
+DO $$ BEGIN
+  CREATE TYPE data_room_status AS ENUM (
+    'active',
+    'archived',
+    'deleted'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE document_type AS ENUM (
-  'financial',
-  'contract',
-  'due_diligence',
-  'legal',
-  'hr',
-  'other'
-);
+DO $$ BEGIN
+  CREATE TYPE document_type AS ENUM (
+    'financial',
+    'contract',
+    'due_diligence',
+    'legal',
+    'hr',
+    'other'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE processing_status AS ENUM (
-  'pending',
-  'processing',
-  'complete',
-  'failed'
-);
+DO $$ BEGIN
+  CREATE TYPE processing_status AS ENUM (
+    'pending',
+    'processing',
+    'complete',
+    'failed'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE permission_level AS ENUM (
-  'owner',
-  'editor',
-  'viewer',
-  'commenter'
-);
+DO $$ BEGIN
+  CREATE TYPE permission_level AS ENUM (
+    'owner',
+    'editor',
+    'viewer',
+    'commenter'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE activity_action AS ENUM (
-  'upload',
-  'view',
-  'download',
-  'edit',
-  'delete',
-  'share',
-  'revoke',
-  'generate_report',
-  'create_room',
-  'archive_room',
-  'delete_room'
-);
+DO $$ BEGIN
+  CREATE TYPE activity_action AS ENUM (
+    'upload',
+    'view',
+    'download',
+    'edit',
+    'delete',
+    'share',
+    'revoke',
+    'generate_report',
+    'create_room',
+    'archive_room',
+    'delete_room'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE annotation_type AS ENUM (
-  'highlight',
-  'comment',
-  'sticky_note'
-);
+DO $$ BEGIN
+  CREATE TYPE annotation_type AS ENUM (
+    'highlight',
+    'comment',
+    'sticky_note'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE analysis_type AS ENUM (
-  'classification',
-  'financial',
-  'contract',
-  'risk'
-);
+DO $$ BEGIN
+  CREATE TYPE analysis_type AS ENUM (
+    'classification',
+    'financial',
+    'contract',
+    'risk'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE confidence_level AS ENUM (
-  'high',
-  'medium',
-  'low'
-);
+-- confidence_level already exists from previous migrations, skip creation
 
 -- ============================================================================
 -- TABLES
