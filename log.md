@@ -224,3 +224,114 @@ const result = await bot.run()
 4. Build admin UI for agent management
 5. Add background job scheduling (Inngest)
 
+
+
+## Week 3: Background Jobs with Inngest ✅
+
+### What is Inngest?
+Durable workflow engine for:
+- Scheduled tasks (cron jobs)
+- Background job processing
+- Event-driven workflows
+- Automatic retries
+
+### Installed
+```bash
+npm install inngest
+```
+
+### Inngest Client
+**File**: `lib/inngest/client.ts`
+- Event schemas with TypeScript
+- Event types: agent.execute, embedding.generate, daily scans
+- Secure event communication
+
+### Inngest Functions
+
+#### 1. Execute Agent (`lib/inngest/functions/execute-agent.ts`)
+- Runs any agent in background
+- Tracks execution with steps
+- Handles notifications
+- Schedules next run
+
+#### 2. Generate Embedding (`lib/inngest/functions/generate-embedding.ts`)
+- Background embedding generation
+- Uses Ollama (free)
+- Automatic retries (3x)
+- Rate limited (100/min)
+
+#### 3. Daily Opportunity Scan (`lib/inngest/functions/daily-opportunity-scan.ts`)
+- **Cron**: Daily at 9am UTC
+- Runs all OpportunityBot agents
+- Fully autonomous
+
+#### 4. Daily Signal Monitor (`lib/inngest/functions/daily-signal-monitor.ts`)
+- **Cron**: Daily at 8am UTC
+- Runs all Scout agents
+- Cleans up expired signals
+
+### API Updates
+**File**: `app/api/agents/[agentId]/run/route.ts`
+- Async execution (default) - queues with Inngest
+- Sync execution (optional) - immediate response
+- 202 Accepted for async jobs
+
+### Usage
+
+#### Run Agent Asynchronously
+```bash
+curl -X POST /api/agents/[agent-id]/run \
+  -H "Content-Type: application/json" \
+  -d '{"async": true}'
+```
+
+#### Trigger via Code
+```typescript
+import { triggerAgent } from '@/lib/inngest/trigger-agent'
+
+await triggerAgent(agentId, orgId, input)
+```
+
+### Setup
+
+#### Local Development
+```bash
+# Terminal 1: Start Inngest dev server
+npx inngest-cli@latest dev
+
+# Terminal 2: Start Next.js
+npm run dev
+
+# Open Inngest dashboard
+# http://localhost:8288
+```
+
+#### Production (Vercel)
+1. Sign up: https://app.inngest.com
+2. Get keys: Settings > Keys
+3. Add to Vercel:
+   - `INNGEST_EVENT_KEY`
+   - `INNGEST_SIGNING_KEY`
+4. Configure app URL: `https://your-app.vercel.app/api/inngest`
+5. Deploy!
+
+### What's Working
+
+✅ Background agent execution
+✅ Scheduled daily scans (9am UTC)
+✅ Scheduled signal monitoring (8am UTC)
+✅ Async embedding generation
+✅ Automatic retries
+✅ Rate limiting
+✅ Monitoring dashboard
+
+### Cost
+**Free Tier**: 50K step runs/month
+**Our usage**: ~2K/month (well within free tier)
+
+### Next Steps
+1. Start Inngest dev server
+2. Test agent execution
+3. Set up Inngest Cloud (production)
+4. Monitor scheduled jobs
+

@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createScoutAgent } from '@/lib/ai/agents/scout-agent'
 import { createOpportunityBot } from '@/lib/ai/agents/opportunity-bot'
+import { triggerAgent } from '@/lib/inngest/trigger-agent'
 
 export async function POST(
   request: NextRequest,
@@ -49,10 +50,24 @@ export async function POST(
     // Parse input
     const body = await request.json().catch(() => ({}))
     const input = body.input || {}
+    const runAsync = body.async !== false // Default to async
 
-    console.log(`[Agent API] Running agent ${agentId} (${agent.agent_type})`)
+    console.log(`[Agent API] Running agent ${agentId} (${agent.agent_type}) - async: ${runAsync}`)
 
-    // Create and run agent based on type
+    // Option 1: Run in background with Inngest (recommended for long-running tasks)
+    if (runAsync) {
+      await triggerAgent(agentId, agent.org_id, input)
+
+      return NextResponse.json({
+        success: true,
+        message: 'Agent execution queued',
+        agentId,
+        agentType: agent.agent_type,
+        async: true
+      }, { status: 202 }) // 202 Accepted
+    }
+
+    // Option 2: Run synchronously (for immediate results)
     let result
 
     if (agent.agent_type === 'scout_agent') {
@@ -72,7 +87,8 @@ export async function POST(
       success: result.success,
       output: result.output,
       metrics: result.metrics,
-      error: result.error
+      error: result.error,
+      async: false
     })
   } catch (error: any) {
     console.error('[Agent Run API] Error:', error)
