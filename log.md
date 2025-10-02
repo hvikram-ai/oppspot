@@ -149,3 +149,78 @@ npx tsx scripts/generate-embeddings-ollama.ts 100 mxbai-embed-large
 ```bash
 curl 'https://your-app.vercel.app/api/search/semantic?q=technology+companies'
 ```
+
+
+## Week 2: AI Agents Infrastructure ✅
+
+### Database Schema
+- **ai_agents**: Agent configuration and scheduling
+- **agent_executions**: Execution history with metrics
+- **buying_signals**: Detected signals for companies
+- **agent_tasks**: Task queue for async execution
+
+### Agents Implemented
+
+#### 1. BaseAgent (Abstract Class)
+**File**: `lib/ai/agents/base-agent.ts`
+- Lifecycle management (run, schedule, logging)
+- Event emission
+- Buying signal creation
+- Metrics tracking
+
+#### 2. Scout Agent
+**File**: `lib/ai/agents/scout-agent.ts`
+**Purpose**: Monitor companies for buying signals 24/7
+
+**Detects**:
+- Job postings (hiring signals)
+- Companies House filings
+- News mentions
+- Funding rounds
+- Executive changes
+
+**Usage**:
+```typescript
+const scout = await createScoutAgent(agentId)
+const result = await scout.run()
+```
+
+#### 3. OpportunityBot
+**File**: `lib/ai/agents/opportunity-bot.ts`
+**Purpose**: Autonomous deal finder
+
+**Features**:
+- Finds companies matching ICP criteria
+- Scores opportunities (fit + signals + activity)
+- Ranks by priority
+- Sends notifications for hot leads
+
+**Usage**:
+```typescript
+const bot = await createOpportunityBot(agentId)
+const result = await bot.run()
+```
+
+### API Routes
+
+- `GET  /api/agents` - List all agents
+- `POST /api/agents` - Create new agent
+- `POST /api/agents/[id]/run` - Execute agent on-demand
+
+### What's Working
+
+✅ Agent configuration and storage
+✅ Execution tracking with metrics
+✅ Buying signal detection
+✅ Scout Agent (monitors for signals)
+✅ OpportunityBot (finds qualified leads)
+✅ API for managing agents
+
+### Next Steps
+
+1. Apply agent migration to production
+2. Create agents via API
+3. Test agent execution
+4. Build admin UI for agent management
+5. Add background job scheduling (Inngest)
+
