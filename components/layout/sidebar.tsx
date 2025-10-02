@@ -158,6 +158,14 @@ export function Sidebar() {
             defaultOpen={false}
           >
             <SidebarItem
+              href="/research"
+              icon={Zap}
+              label="ResearchGPT"
+              tooltip="30-second deep company intelligence with AI-powered insights"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
               href="/ai-scoring"
               icon={Brain}
               label="AI Scoring"
@@ -237,6 +245,14 @@ export function Sidebar() {
 
       {/* Settings - Pinned Bottom */}
       <div className="p-3 border-t bg-background/50 backdrop-blur space-y-1">
+        <SidebarItem
+          href="/admin/agents"
+          icon={Zap}
+          label="AI Agents"
+          tooltip="Manage autonomous AI agents (OpportunityBot, Scout Agent)"
+          isCollapsed={isCollapsed}
+          isPremium
+        />
         <SidebarItem
           href="/profile"
           icon={User}
