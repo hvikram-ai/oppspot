@@ -168,6 +168,14 @@ export function Sidebar() {
             defaultOpen={false}
           >
             <SidebarItem
+              href="/data-rooms"
+              icon={FolderOpen}
+              label="Data Rooms"
+              tooltip="AI-powered due diligence workspaces with document analysis"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
               href="/signals"
               icon={Activity}
               label="DealSignals"
