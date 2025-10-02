@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { CreateStreamRequest, StreamFilters } from '@/types/streams'
 
@@ -80,7 +80,9 @@ export async function POST(request: NextRequest) {
 
     // If user doesn't have org_id, create one
     if (!profile?.org_id) {
-      const { data: newOrg } = await supabase
+      // Use admin client to bypass RLS for organization creation
+      const adminClient = createAdminClient()
+      const { data: newOrg, error: orgError } = await adminClient
         .from('organizations')
         .insert({
           name: 'My Organization',
@@ -89,17 +91,23 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
 
-      if (newOrg) {
-        // Update profile with new org_id
-        await supabase
-          .from('profiles')
-          .update({ org_id: newOrg.id })
-          .eq('id', user.id)
-
-        profile = { org_id: newOrg.id }
-      } else {
-        return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
+      if (orgError || !newOrg) {
+        console.error('Error creating organization:', orgError)
+        return NextResponse.json({ error: 'Failed to create organization', details: orgError?.message }, { status: 500 })
       }
+
+      // Update profile with new org_id
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ org_id: newOrg.id })
+        .eq('id', user.id)
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError)
+        return NextResponse.json({ error: 'Failed to update profile with organization' }, { status: 500 })
+      }
+
+      profile = { org_id: newOrg.id }
     }
 
     const body: CreateStreamRequest = await request.json()
