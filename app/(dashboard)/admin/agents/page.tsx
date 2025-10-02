@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AgentWizard } from '@/components/agents/agent-wizard'
+import { toast } from 'sonner'
 import {
   Play,
   Pause,
@@ -75,6 +77,7 @@ export default function AgentsAdminPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [runningAgentId, setRunningAgentId] = useState<string | null>(null)
+  const [isWizardOpen, setIsWizardOpen] = useState(false)
 
   useEffect(() => {
     loadAgents()
@@ -166,6 +169,28 @@ export default function AgentsAdminPage() {
     }
   }
 
+  const handleCreateAgent = async (data: any) => {
+    try {
+      const response = await fetch('/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success(`Agent "${data.name}" created successfully!`)
+        loadAgents()
+      } else {
+        throw new Error(result.error || 'Failed to create agent')
+      }
+    } catch (error) {
+      console.error('Failed to create agent:', error)
+      throw error
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -187,11 +212,18 @@ export default function AgentsAdminPage() {
             Manage autonomous AI agents for deal finding and signal monitoring
           </p>
         </div>
-        <Button onClick={() => window.location.href = '/admin/agents/create'}>
+        <Button onClick={() => setIsWizardOpen(true)} className="bg-gradient-to-r from-purple-600 to-pink-600">
           <Plus className="w-4 h-4 mr-2" />
           Create Agent
         </Button>
       </div>
+
+      {/* Agent Creation Wizard */}
+      <AgentWizard
+        open={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
+        onComplete={handleCreateAgent}
+      />
 
       {/* Error Alert */}
       {error && (
