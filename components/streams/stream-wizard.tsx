@@ -115,7 +115,6 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
     setIsSubmitting(true)
     try {
       const requestData: CreateStreamRequest = {
-        org_id: orgId,
         name: data.name,
         description: data.description,
         emoji: data.emoji,
@@ -124,12 +123,14 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
         stages: data.stages,
       }
 
+      console.log('[StreamWizard] Submitting stream:', requestData)
       await onComplete(requestData)
       reset()
       clearDraft()
       onOpenChange(false)
     } catch (error) {
-      console.error('Failed to create stream:', error)
+      console.error('[StreamWizard] Failed to create stream:', error)
+      alert(`Failed to create stream: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
     }

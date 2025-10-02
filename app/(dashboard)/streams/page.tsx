@@ -110,18 +110,26 @@ export default function StreamsPage() {
 
   const handleCreateStream = async (data: CreateStreamRequest) => {
     try {
+      console.log('[StreamsPage] Creating stream with data:', data)
       const response = await fetch('/api/streams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
 
-      if (!response.ok) throw new Error('Failed to create stream')
+      console.log('[StreamsPage] Response status:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('[StreamsPage] Error response:', errorData)
+        throw new Error(errorData.error || errorData.details || 'Failed to create stream')
+      }
 
       const newStream = await response.json()
+      console.log('[StreamsPage] Stream created:', newStream)
       setStreams([newStream, ...streams])
     } catch (error) {
-      console.error('Error creating stream:', error)
+      console.error('[StreamsPage] Error creating stream:', error)
       throw error
     }
   }
