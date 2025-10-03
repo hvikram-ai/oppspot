@@ -47,6 +47,7 @@ import {
 } from 'lucide-react'
 import { AgentConfigDialog } from './agent-config-dialog'
 import { WorkflowVisualizer } from './workflow-visualizer'
+import { TaskRunnerStatus } from './task-runner-status'
 import { formatDistanceToNow } from 'date-fns'
 
 const AGENT_ICONS: Record<string, typeof Brain> = {
@@ -176,11 +177,18 @@ export function AgentList({
         body: JSON.stringify({})
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        alert('Workflow execution started! Agents will run in sequence.')
+        alert(`✅ Workflow execution started!\n\nAgents will run in sequence based on dependencies.\nCheck the Agents tab for progress updates.`)
+        // Refresh agent list to show updated statuses
+        onAgentUpdated?.()
+      } else {
+        alert(`❌ Failed to execute workflow:\n\n${data.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error executing workflow:', error)
+      alert(`❌ Failed to execute workflow:\n\n${error instanceof Error ? error.message : 'Network error'}`)
     } finally {
       setIsExecutingWorkflow(false)
     }
@@ -254,12 +262,15 @@ export function AgentList({
           </TabsList>
 
           <TabsContent value="workflow" className="mt-4">
-            <WorkflowVisualizer
-              streamId={streamId}
-              assignments={assignments}
-              onExecuteWorkflow={handleExecuteWorkflow}
-              isExecuting={isExecutingWorkflow}
-            />
+            <div className="space-y-4">
+              <TaskRunnerStatus />
+              <WorkflowVisualizer
+                streamId={streamId}
+                assignments={assignments}
+                onExecuteWorkflow={handleExecuteWorkflow}
+                isExecuting={isExecutingWorkflow}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="list" className="mt-4">

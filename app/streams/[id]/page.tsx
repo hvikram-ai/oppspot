@@ -287,11 +287,19 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                   })
+
+                  const data = await response.json()
+
                   if (response.ok) {
-                    alert('Agent execution queued successfully!')
+                    alert(`✅ Agent execution queued successfully!\n\nExecution ID: ${data.execution?.id}\nThe agent will start processing shortly.`)
+                    // Refresh to show updated execution status
+                    fetchStreamDetail()
+                  } else {
+                    alert(`❌ Failed to execute agent:\n\n${data.error || 'Unknown error'}\n\n${data.missing_dependencies ? `Missing dependencies: ${data.missing_dependencies.join(', ')}` : ''}`)
                   }
                 } catch (error) {
                   console.error('Error executing agent:', error)
+                  alert(`❌ Failed to execute agent:\n\n${error instanceof Error ? error.message : 'Network error'}`)
                 }
               }}
             />

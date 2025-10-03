@@ -65,18 +65,29 @@ export abstract class BaseAgent {
    */
   async run(input: Record<string, any> = {}): Promise<AgentExecutionResult> {
     const supabase = await createClient()
-    const executionId = crypto.randomUUID()
+    // Use existing execution_id if provided, otherwise create new one
+    const executionId = input.execution_id || crypto.randomUUID()
     const startTime = new Date()
 
-    // Create execution record
-    await supabase.from('agent_executions').insert({
-      id: executionId,
-      agent_id: this.config.id,
-      org_id: this.config.orgId,
-      status: 'running',
-      started_at: startTime.toISOString(),
-      input_data: input
-    })
+    // If execution_id was provided, update existing record; otherwise create new
+    if (input.execution_id) {
+      // Update existing execution to 'running'
+      await supabase.from('agent_executions').update({
+        status: 'running',
+        started_at: startTime.toISOString(),
+        input_data: input
+      }).eq('id', executionId)
+    } else {
+      // Create new execution record
+      await supabase.from('agent_executions').insert({
+        id: executionId,
+        agent_id: this.config.id,
+        org_id: this.config.orgId,
+        status: 'running',
+        started_at: startTime.toISOString(),
+        input_data: input
+      })
+    }
 
     // Emit start event
     this.emitEvent('agent.execution.started', {
