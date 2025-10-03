@@ -356,11 +356,11 @@ export default function AISettingsPage() {
 
   if (loading) {
     return (
-
       <ProtectedLayout>
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </ProtectedLayout>
     )
   }
 

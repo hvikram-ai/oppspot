@@ -19,11 +19,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { 
 import { ProtectedLayout } from '@/components/layout/protected-layout'
-  TrendingUp, 
-  Users, 
-  Globe, 
+import {
+  TrendingUp,
+  Users,
+  Globe,
   Search,
   Filter,
   RefreshCw,

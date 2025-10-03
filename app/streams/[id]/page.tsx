@@ -117,29 +117,29 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
 
   if (isLoading) {
     return (
-
       <ProtectedLayout>
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </ProtectedLayout>
     )
   }
 
   if (!stream) {
     return (
-
       <ProtectedLayout>
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Stream not found</h3>
-          <Link href="/streams">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Streams
-            </Button>
-          </Link>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">Stream not found</h3>
+            <Link href="/streams">
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Streams
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </ProtectedLayout>
     )
   }
 
