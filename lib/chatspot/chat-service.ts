@@ -70,7 +70,7 @@ export class ChatService {
       })
 
       return {
-        message: userMessage,
+        message: assistantMessage,
         intent,
         results,
         suggested_actions: intent.suggested_actions
