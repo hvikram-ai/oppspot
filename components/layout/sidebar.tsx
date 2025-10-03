@@ -59,32 +59,15 @@ export function Sidebar() {
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20">
-      {/* Header with Logo */}
-      <div className="p-4 flex items-center justify-between border-b bg-background/95 backdrop-blur">
-        {!isCollapsed ? (
-          <Link href="/dashboard" className="flex items-center gap-2 group">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-sm">oppSpot</span>
-              <span className="text-[10px] text-muted-foreground">Workflow Hub</span>
-            </div>
-          </Link>
-        ) : (
-          <Link href="/dashboard" className="mx-auto">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
-          </Link>
-        )}
-
+      {/* Header with Collapse Button Only */}
+      <div className="p-4 flex items-center justify-end border-b bg-background/95 backdrop-blur">
         {!isCollapsed && (
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleCollapsed}
             className="h-7 w-7 hover:bg-muted"
+            title="Collapse sidebar"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
