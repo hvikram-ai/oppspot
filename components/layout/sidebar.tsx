@@ -25,7 +25,9 @@ import {
   FileSearch,
   Send,
   Zap,
-  Activity
+  Activity,
+  TrendingUp,
+  Bookmark
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
@@ -174,6 +176,14 @@ export function Sidebar() {
               isPremium
             />
             <SidebarItem
+              href="/timetravel"
+              icon={TrendingUp}
+              label="TimeTravel™"
+              tooltip="Predict buying intent 30-90 days before active search"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
               href="/icp"
               icon={Brain}
               label="ICP Learning"
@@ -238,9 +248,16 @@ export function Sidebar() {
           >
             <SidebarItem
               href="/lists"
-              icon={Sparkles}
+              icon={FolderOpen}
               label="Lists"
-              tooltip="Create and organize custom prospect lists with tags and notes"
+              tooltip="Organize prospects into custom lists for targeted outreach"
+              isCollapsed={isCollapsed}
+            />
+            <SidebarItem
+              href="/saved"
+              icon={Bookmark}
+              label="Saved Businesses"
+              tooltip="View and manage all your saved businesses"
               isCollapsed={isCollapsed}
             />
             <SidebarItem
