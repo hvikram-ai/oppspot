@@ -89,38 +89,61 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the stream
+    const insertData = {
+      org_id: profile.org_id,
+      name,
+      description: description || null,
+      emoji: emoji || '🎯',
+      color: color || '#6366f1',
+      stream_type: stream_type || 'project',
+      goal_template_id: goal_template_id || null,
+      goal_criteria: finalCriteria,
+      target_metrics: finalMetrics,
+      success_criteria: finalSuccessCriteria,
+      current_progress: {
+        completed: 0,
+        total: finalMetrics.companies_to_find || 0,
+        percentage: 0
+      },
+      goal_deadline: goal_deadline || null,
+      goal_status: 'not_started',
+      created_by: user.id,
+      status: 'active'
+    }
+
+    console.log('[Goal Stream] Creating with data:', {
+      ...insertData,
+      user_id: user.id,
+      org_id: profile.org_id
+    })
+
     const { data: stream, error: streamError } = await supabase
       .from('streams')
-      .insert({
-        org_id: profile.org_id,
-        name,
-        description: description || null,
-        emoji: emoji || '🎯',
-        color: color || '#6366f1',
-        stream_type: stream_type || 'project',
-        goal_template_id: goal_template_id || null,
-        goal_criteria: finalCriteria,
-        target_metrics: finalMetrics,
-        success_criteria: finalSuccessCriteria,
-        current_progress: {
-          completed: 0,
-          total: finalMetrics.companies_to_find || 0,
-          percentage: 0
-        },
-        goal_deadline: goal_deadline || null,
-        goal_status: 'not_started',
-        created_by: user.id,
-        status: 'active'
-      })
+      .insert(insertData)
       .select()
       .single()
 
     if (streamError) {
       console.error('Error creating stream:', streamError)
       return NextResponse.json(
-        { error: 'Failed to create stream' },
+        { error: 'Failed to create stream', details: streamError.message, code: streamError.code },
         { status: 500 }
       )
+    }
+
+    // Add creator as owner member (required for stream to show in list)
+    const { error: memberError } = await supabase
+      .from('stream_members')
+      .insert({
+        stream_id: stream.id,
+        user_id: user.id,
+        role: 'owner',
+        invitation_accepted_at: new Date().toISOString()
+      })
+
+    if (memberError) {
+      console.error('Error adding stream member:', memberError)
+      // Non-fatal - stream was created, just log the error
     }
 
     // Create initial activity

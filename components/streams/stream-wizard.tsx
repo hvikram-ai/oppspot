@@ -178,7 +178,8 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
         })
 
         if (!response.ok) {
-          throw new Error('Failed to create goal-oriented stream')
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to create goal-oriented stream')
         }
 
         const result = await response.json()
