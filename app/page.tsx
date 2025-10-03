@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ProtectedLayout } from '@/components/layout/protected-layout'
+import { PublicLayout } from '@/components/layout/public-layout'
 import {
   Search, 
   Map, 
@@ -63,8 +63,7 @@ const stats = [
 
 export default function LandingPage() {
   return (
-    <ProtectedLayout>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <PublicLayout>
         {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 md:py-32">
         <motion.div
@@ -257,7 +256,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-      </div>
-    </ProtectedLayout>
+    </PublicLayout>
   )
 }
