@@ -22,6 +22,7 @@ import {
   Download
 } from 'lucide-react'
 import type { ChatResult } from '@/lib/chatspot/types'
+import { CreateListDialog } from './create-list-dialog'
 
 interface ResultDisplayProps {
   result: ChatResult
@@ -48,6 +49,7 @@ export function ResultDisplay({ result, onAction }: ResultDisplayProps) {
  */
 function CompanyResults({ result, onAction }: ResultDisplayProps) {
   const [expanded, setExpanded] = useState(false)
+  const [showCreateListDialog, setShowCreateListDialog] = useState(false)
   const companies = Array.isArray(result.data) ? result.data : []
   const displayLimit = expanded ? companies.length : Math.min(5, companies.length)
   const hasMore = companies.length > 5
@@ -154,7 +156,7 @@ function CompanyResults({ result, onAction }: ResultDisplayProps) {
             size="sm"
             variant="outline"
             className="text-xs"
-            onClick={() => onAction?.('add_all_to_list', companies)}
+            onClick={() => setShowCreateListDialog(true)}
           >
             <Plus className="h-3 w-3 mr-1" />
             Add All to List
@@ -170,6 +172,17 @@ function CompanyResults({ result, onAction }: ResultDisplayProps) {
           </Button>
         </div>
       )}
+
+      {/* Create List Dialog */}
+      <CreateListDialog
+        open={showCreateListDialog}
+        onOpenChange={setShowCreateListDialog}
+        companies={companies}
+        onListCreated={(listId, listName) => {
+          console.log(`Created list: ${listName} (${listId})`)
+          onAction?.('list_created', { listId, listName, companies })
+        }}
+      />
     </div>
   )
 }
