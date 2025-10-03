@@ -86,6 +86,21 @@ export function ChatInterface({ conversationId, onConversationCreated }: ChatInt
     } catch (error) {
       console.error('Send message error:', error)
 
+      // Check health status to provide better error message
+      let errorMessage = 'Sorry, I encountered an error processing your message. Please try again.'
+
+      try {
+        const healthResponse = await fetch('/api/chatspot/health')
+        if (healthResponse.ok) {
+          const health = await healthResponse.json()
+          if (health.status !== 'healthy' && health.errors) {
+            errorMessage = `ChatSpot is not fully configured:\n\n${health.errors.join('\n')}\n\nPlease contact support or check the setup guide.`
+          }
+        }
+      } catch {
+        // Ignore health check errors
+      }
+
       // Add error message
       setMessages(prev => [
         ...prev,
@@ -93,7 +108,7 @@ export function ChatInterface({ conversationId, onConversationCreated }: ChatInt
           id: `error-${Date.now()}`,
           conversation_id: conversationId || '',
           role: 'assistant',
-          content: 'Sorry, I encountered an error processing your message. Please try again.',
+          content: errorMessage,
           error: error instanceof Error ? error.message : 'Unknown error',
           created_at: new Date().toISOString()
         }
