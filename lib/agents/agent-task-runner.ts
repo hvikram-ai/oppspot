@@ -219,18 +219,30 @@ export class AgentTaskRunner {
     agent: any,
     task: AgentTask
   ): Promise<AgentExecutionResult> {
-    const { stream_id, execution_id, goal_context } = task.payload
+    const {
+      stream_id,
+      execution_id,
+      goal_context,
+      dependency_context,
+      shared_data
+    } = task.payload
 
     console.log(`[AgentTaskRunner] Executing ${agent.agent_type} for stream ${stream_id}`)
+
+    if (dependency_context && Object.keys(dependency_context).length > 0) {
+      console.log(`[AgentTaskRunner] Using dependency context from: ${Object.keys(dependency_context).join(', ')}`)
+    }
 
     // Get the appropriate agent implementation
     const agentInstance = await this.getAgentInstance(agent)
 
-    // Run the agent with stream context
+    // Run the agent with stream context AND dependency context
     const result = await agentInstance.run({
       stream_id,
       execution_id,
       goal_context,
+      dependency_context: dependency_context || {},
+      shared_data: shared_data || {},
       ...task.payload
     })
 

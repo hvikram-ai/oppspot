@@ -30,7 +30,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
-import { Brain, Sparkles, Target, Zap, Info, Plus, Save } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Brain, Sparkles, Target, Zap, Info, Plus, Save, GitBranch, ArrowRight } from 'lucide-react'
 import { OpportunityBotConfig } from './config-forms/opportunity-bot-config'
 import { EnrichmentAgentConfig } from './config-forms/enrichment-agent-config'
 import { ScoringAgentConfig } from './config-forms/scoring-agent-config'
@@ -67,6 +68,7 @@ interface AgentConfigDialogProps {
   onOpenChange: (open: boolean) => void
   streamId?: string
   existingAgent?: any
+  existingAgents?: any[] // All agents in the stream
   onSave?: (agentConfig: any) => void
 }
 
@@ -75,6 +77,7 @@ export function AgentConfigDialog({
   onOpenChange,
   streamId,
   existingAgent,
+  existingAgents = [],
   onSave
 }: AgentConfigDialogProps) {
   const [selectedType, setSelectedType] = useState<string>(existingAgent?.agent_type || 'opportunity_bot')
@@ -87,6 +90,9 @@ export function AgentConfigDialog({
   const [isActive, setIsActive] = useState(existingAgent?.is_active ?? true)
   const [autoExecute, setAutoExecute] = useState(existingAgent?.auto_execute ?? false)
   const [executionOrder, setExecutionOrder] = useState(existingAgent?.execution_order || 1)
+  const [dependsOnAgentIds, setDependsOnAgentIds] = useState<string[]>(
+    existingAgent?.depends_on_agent_ids || []
+  )
 
   // Agent-specific configuration
   const [configuration, setConfiguration] = useState<Record<string, any>>(
@@ -102,6 +108,7 @@ export function AgentConfigDialog({
       setIsActive(existingAgent.is_active ?? true)
       setAutoExecute(existingAgent.auto_execute ?? false)
       setExecutionOrder(existingAgent.execution_order || 1)
+      setDependsOnAgentIds(existingAgent.depends_on_agent_ids || [])
       setConfiguration(existingAgent.configuration || {})
     }
   }, [existingAgent])
@@ -117,6 +124,7 @@ export function AgentConfigDialog({
         is_active: isActive,
         auto_execute: autoExecute,
         execution_order: executionOrder,
+        depends_on_agent_ids: dependsOnAgentIds,
         configuration,
         stream_id: streamId
       }
@@ -142,6 +150,7 @@ export function AgentConfigDialog({
     setIsActive(true)
     setAutoExecute(false)
     setExecutionOrder(1)
+    setDependsOnAgentIds([])
     setConfiguration({})
   }
 
@@ -332,6 +341,80 @@ export function AgentConfigDialog({
                   </p>
                 </div>
 
+                {/* Dependencies Selector */}
+                {existingAgents.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <GitBranch className="h-4 w-4" />
+                        Agent Dependencies
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        This agent will wait for selected agents to complete before executing
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {existingAgents.filter(a => a.id !== existingAgent?.id).length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No other agents available</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {existingAgents
+                            .filter(a => a.id !== existingAgent?.id)
+                            .map((agent) => (
+                              <div
+                                key={agent.id}
+                                className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                              >
+                                <Checkbox
+                                  id={`dep-${agent.id}`}
+                                  checked={dependsOnAgentIds.includes(agent.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setDependsOnAgentIds([...dependsOnAgentIds, agent.id])
+                                    } else {
+                                      setDependsOnAgentIds(dependsOnAgentIds.filter(id => id !== agent.id))
+                                    }
+                                  }}
+                                />
+                                <div className="flex-1">
+                                  <Label
+                                    htmlFor={`dep-${agent.id}`}
+                                    className="font-medium cursor-pointer"
+                                  >
+                                    {agent.name}
+                                  </Label>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {agent.agent_type} • Order: {agent.execution_order}
+                                  </p>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  {agent.execution_order}
+                                </Badge>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+
+                      {dependsOnAgentIds.length > 0 && (
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-start gap-2">
+                            <ArrowRight className="h-4 w-4 text-blue-600 mt-0.5" />
+                            <div className="flex-1 text-xs">
+                              <p className="font-medium text-blue-900 dark:text-blue-100">Execution Flow:</p>
+                              <p className="text-blue-700 dark:text-blue-300 mt-1">
+                                {existingAgents
+                                  .filter(a => dependsOnAgentIds.includes(a.id))
+                                  .map(a => a.name)
+                                  .join(' → ')} → <strong>{agentName || 'This Agent'}</strong>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
                   <CardHeader>
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -340,11 +423,11 @@ export function AgentConfigDialog({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="text-xs space-y-2">
-                    <p>Create multi-agent workflows by setting execution order:</p>
+                    <p>Create multi-agent workflows by selecting dependencies:</p>
                     <ol className="list-decimal list-inside space-y-1 ml-2">
-                      <li>OpportunityBot (Order: 1) - Discovers companies</li>
-                      <li>Enrichment Agent (Order: 2) - Enriches discovered companies</li>
-                      <li>Scoring Agent (Order: 3) - Scores and prioritizes</li>
+                      <li>OpportunityBot discovers companies (no dependencies)</li>
+                      <li>Enrichment Agent enriches them (depends on OpportunityBot)</li>
+                      <li>Scoring Agent scores results (depends on Enrichment Agent)</li>
                     </ol>
                   </CardContent>
                 </Card>
