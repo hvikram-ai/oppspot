@@ -10,7 +10,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Send, Sparkles, Loader2, Building2, FileText, List, Download } from 'lucide-react'
+import { Send, Sparkles, Loader2 } from 'lucide-react'
+import { ResultDisplay } from './result-display'
 import type { ChatMessage, SuggestedAction } from '@/lib/chatspot/types'
 
 interface ChatInterfaceProps {
@@ -130,6 +131,12 @@ export function ChatInterface({ conversationId, onConversationCreated }: ChatInt
     // TODO: Implement action execution
   }
 
+  const handleResultAction = async (action: string, data: any) => {
+    console.log('Result action:', action, data)
+    // TODO: Implement result actions (add to list, export, etc.)
+    // For now, just log the action
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
@@ -207,21 +214,10 @@ export function ChatInterface({ conversationId, onConversationCreated }: ChatInt
 
                 {/* Results */}
                 {message.results && message.results.length > 0 && (
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 space-y-3">
                     {message.results.map((result, idx) => (
-                      <div key={idx} className="border-t pt-2">
-                        <div className="flex items-center gap-2 text-sm font-medium mb-1">
-                          {result.type === 'companies' && <Building2 className="h-4 w-4" />}
-                          {result.type === 'research' && <FileText className="h-4 w-4" />}
-                          {result.type === 'list' && <List className="h-4 w-4" />}
-                          {result.type === 'export' && <Download className="h-4 w-4" />}
-                          {result.preview}
-                        </div>
-                        {result.count !== undefined && (
-                          <div className="text-xs text-muted-foreground">
-                            {result.count} results
-                          </div>
-                        )}
+                      <div key={idx} className="border-t pt-3">
+                        <ResultDisplay result={result} onAction={handleResultAction} />
                       </div>
                     ))}
                   </div>
