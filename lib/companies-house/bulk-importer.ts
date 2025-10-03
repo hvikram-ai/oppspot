@@ -39,10 +39,10 @@ export interface CompaniesHouseRecord {
   'Mortgages.NumMortOutstanding'?: string
   'Mortgages.NumMortPartSatisfied'?: string
   'Mortgages.NumMortSatisfied'?: string
-  SICCode.SicText_1?: string
-  SICCode.SicText_2?: string
-  SICCode.SicText_3?: string
-  SICCode.SicText_4?: string
+  'SICCode.SicText_1'?: string
+  'SICCode.SicText_2'?: string
+  'SICCode.SicText_3'?: string
+  'SICCode.SicText_4'?: string
   'LimitedPartnerships.NumGenPartners'?: string
   'LimitedPartnerships.NumLimPartners'?: string
   URI: string
