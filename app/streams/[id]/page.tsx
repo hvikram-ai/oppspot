@@ -5,13 +5,16 @@ import { useRouter } from 'next/navigation'
 import { Stream, StreamItem, StreamMember } from '@/types/streams'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Plus, Users, Settings, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Users, Settings, Loader2, BarChart3, Brain } from 'lucide-react'
 import Link from 'next/link'
 import { StreamBoard } from '@/components/streams/stream-board'
 import { StreamMembersPanel } from '@/components/streams/stream-members-panel'
 import { StreamActivityFeed } from '@/components/streams/stream-activity-feed'
 import { AddItemDialog } from '@/components/streams/add-item-dialog'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import { StreamDashboard } from '@/components/streams/stream-dashboard'
+import { MilestoneToast } from '@/components/streams/milestone-toast'
+import { AgentList } from '@/components/agents/agent-list'
 
 interface StreamDetailPageProps {
   params: Promise<{ id: string }>
@@ -24,6 +27,7 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
   const [stream, setStream] = useState<Stream | null>(null)
   const [items, setItems] = useState<StreamItem[]>([])
   const [members, setMembers] = useState<StreamMember[]>([])
+  const [agents, setAgents] = useState<any[]>([])
   const [activities, setActivities] = useState<Array<{
     id: string
     activity_type: string
@@ -34,7 +38,7 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
   }>>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('board')
+  const [activeTab, setActiveTab] = useState('dashboard')
 
   useEffect(() => {
     fetchStreamDetail()
@@ -57,6 +61,13 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
       setItems(data.items || [])
       setMembers(data.members || [])
       setActivities(data.recent_activity || [])
+
+      // Fetch stream agents
+      const agentsResponse = await fetch(`/api/streams/${streamId}/agents`)
+      if (agentsResponse.ok) {
+        const agentsData = await agentsResponse.json()
+        setAgents(agentsData.assignments || [])
+      }
     } catch (error) {
       console.error('Error fetching stream:', error)
     } finally {
@@ -148,6 +159,8 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
 
     <ProtectedLayout>
     <div className="min-h-screen bg-background">
+      {/* Milestone Notifications */}
+      <MilestoneToast streamId={streamId} />
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur sticky top-14 z-30">
         <div className="container mx-auto px-4 py-4">
@@ -184,9 +197,17 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
+              <TabsTrigger value="dashboard">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Dashboard
+              </TabsTrigger>
               <TabsTrigger value="board">Board</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="agents">
+                <Brain className="h-4 w-4 mr-2" />
+                Agents ({agents.length})
+              </TabsTrigger>
               <TabsTrigger value="members">
                 <Users className="h-4 w-4 mr-2" />
                 Members ({members.length})
@@ -199,6 +220,10 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab}>
+          <TabsContent value="dashboard" className="mt-0">
+            <StreamDashboard streamId={streamId} />
+          </TabsContent>
+
           <TabsContent value="board" className="mt-0">
             <StreamBoard
               stream={stream}
@@ -233,6 +258,43 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
 
           <TabsContent value="activity" className="mt-0">
             <StreamActivityFeed activities={activities} />
+          </TabsContent>
+
+          <TabsContent value="agents" className="mt-0">
+            <AgentList
+              streamId={streamId}
+              agents={agents.map((a: any) => ({
+                id: a.agent_id,
+                agent_type: a.agent?.agent_type,
+                name: a.agent?.name,
+                description: a.agent?.description,
+                is_active: a.is_active,
+                auto_execute: a.auto_execute,
+                execution_order: a.execution_order,
+                configuration: a.execution_config || {},
+                total_executions: a.total_executions,
+                successful_executions: a.successful_executions,
+                last_executed_at: a.last_executed_at,
+                avg_execution_time_ms: a.avg_execution_time_ms
+              }))}
+              onAgentAdded={() => fetchStreamDetail()}
+              onAgentUpdated={() => fetchStreamDetail()}
+              onAgentDeleted={() => fetchStreamDetail()}
+              onExecuteAgent={async (agentId) => {
+                try {
+                  const response = await fetch(`/api/streams/${streamId}/agents/${agentId}/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                  })
+                  if (response.ok) {
+                    alert('Agent execution queued successfully!')
+                  }
+                } catch (error) {
+                  console.error('Error executing agent:', error)
+                }
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="members" className="mt-0">

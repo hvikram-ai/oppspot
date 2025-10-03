@@ -5,7 +5,7 @@
  * Displays pre-built goal templates for quick stream creation
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,9 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GoalTemplate, GoalCategory } from '@/types/streams'
-import { Check, Search, TrendingUp, Star } from 'lucide-react'
+import { TemplateDetailDialog } from './template-detail-dialog'
+import { ExtendedGoalTemplate } from '@/lib/templates/template-library'
+import { Check, Search, TrendingUp, Star, Info, Sparkles, Award, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface GoalTemplateSelectorProps {
@@ -63,6 +65,29 @@ export function GoalTemplateSelector({
 }: GoalTemplateSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<GoalCategory | 'all'>('all')
+  const [previewTemplate, setPreviewTemplate] = useState<ExtendedGoalTemplate | null>(null)
+  const [recommendations, setRecommendations] = useState<Array<{ template: GoalTemplate; reasons: string[] }>>([])
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false)
+
+  // Fetch recommendations on mount
+  useEffect(() => {
+    fetchRecommendations()
+  }, [])
+
+  const fetchRecommendations = async () => {
+    try {
+      setLoadingRecommendations(true)
+      const response = await fetch('/api/goal-templates/recommend?limit=3')
+      if (response.ok) {
+        const data = await response.json()
+        setRecommendations(data.recommendations || [])
+      }
+    } catch (error) {
+      console.error('Error fetching recommendations:', error)
+    } finally {
+      setLoadingRecommendations(false)
+    }
+  }
 
   // Filter templates
   const filteredTemplates = templates.filter(template => {
@@ -92,6 +117,33 @@ export function GoalTemplateSelector({
           Select a pre-built template to get started quickly, or create a custom goal from scratch
         </p>
       </div>
+
+      {/* Recommendations Section */}
+      {!loadingRecommendations && recommendations.length > 0 && (
+        <div className="p-4 rounded-lg border bg-gradient-to-r from-purple-50 to-blue-50">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-5 w-5 text-purple-600" />
+            <h4 className="font-semibold text-purple-900">Recommended For You</h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {recommendations.slice(0, 3).map(({ template, reasons }) => (
+              <button
+                key={template.id}
+                onClick={() => handleSelectTemplate(template)}
+                className="p-3 rounded-lg border-2 border-purple-200 bg-white hover:border-purple-400 hover:shadow-md transition-all text-left"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">{template.icon}</span>
+                  <span className="font-medium text-sm">{template.name}</span>
+                </div>
+                {reasons.length > 0 && (
+                  <p className="text-xs text-purple-700 line-clamp-2">{reasons[0]}</p>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -216,6 +268,20 @@ export function GoalTemplateSelector({
                       ))}
                     </div>
                   )}
+
+                  {/* Preview Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPreviewTemplate(template as ExtendedGoalTemplate)
+                    }}
+                  >
+                    <Info className="h-3 w-3 mr-1" />
+                    View Details
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -239,6 +305,16 @@ export function GoalTemplateSelector({
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Template Detail Dialog */}
+      <TemplateDetailDialog
+        template={previewTemplate}
+        open={!!previewTemplate}
+        onOpenChange={(open) => !open && setPreviewTemplate(null)}
+        onUseTemplate={(template) => {
+          handleSelectTemplate(template as GoalTemplate)
+        }}
+      />
     </div>
   )
 }

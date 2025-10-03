@@ -115,12 +115,15 @@ export async function POST(
     const {
       agent_id,
       agent_type,
+      name,
+      description,
       assignment_role,
       execution_order,
       is_active,
       auto_execute,
       execution_frequency,
       execution_config,
+      configuration,
       depends_on_agent_ids
     } = body
 
@@ -136,9 +139,10 @@ export async function POST(
     // If agent_type provided but no agent_id, create the agent
     if (!agent_id && agent_type) {
       const agentNames: Record<string, string> = {
-        opportunity_bot: 'OpportunityBot™',
+        opportunity_bot: 'OpportunityBot',
+        enrichment_agent: 'Enrichment Agent',
         scout_agent: 'Scout Agent',
-        research_gpt: 'ResearchGPT™',
+        research_gpt: 'ResearchGPT',
         scoring_agent: 'Scoring Agent'
       }
 
@@ -148,9 +152,9 @@ export async function POST(
           org_id: profile?.org_id,
           stream_id: streamId,
           agent_type,
-          name: agentNames[agent_type] || agent_type,
-          description: `Agent for stream`,
-          configuration: execution_config || {},
+          name: name || agentNames[agent_type] || agent_type,
+          description: description || `Agent for stream`,
+          configuration: configuration || execution_config || {},
           is_active: is_active !== undefined ? is_active : true,
           created_by: user.id
         })
