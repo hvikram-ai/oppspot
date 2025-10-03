@@ -178,7 +178,7 @@ export default function CompaniesHouseImportPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Database Size</CardDescription>
-            </CardContent>
+            </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{estimatedDBSize}</div>
               <p className="text-xs text-muted-foreground mt-1">of 500MB free tier</p>
@@ -188,7 +188,7 @@ export default function CompaniesHouseImportPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Status</CardDescription>
-            </CardContent>
+            </CardHeader>
             <CardContent>
               {progress && getStatusBadge(progress.status)}
             </CardContent>
@@ -197,7 +197,7 @@ export default function CompaniesHouseImportPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Last Import</CardDescription>
-            </CardContent>
+            </CardHeader>
             <CardContent>
               <div className="text-sm">{progress?.completedAt ? new Date(progress.completedAt).toLocaleString() : 'Never'}</div>
             </CardContent>
