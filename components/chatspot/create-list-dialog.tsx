@@ -56,6 +56,10 @@ export function CreateListDialog({
         return
       }
 
+      console.log('🚀 CreateListDialog - Starting list creation')
+      console.log('📋 List details:', { name: listName, description, companyCount: companies.length })
+      console.log('🏢 Companies received:', companies)
+
       // Create the list
       const { data: list, error: listError } = await supabase
         .from('business_lists')
@@ -71,6 +75,13 @@ export function CreateListDialog({
 
       // If companies are provided, add them to the list
       if (companies.length > 0 && list) {
+        console.log('💾 Adding companies to list:', {
+          listId: list.id,
+          listName: list.name,
+          companyCount: companies.length,
+          companies: companies.map(c => ({ id: c.id, name: c.name || c.company_name }))
+        })
+
         const savedBusinesses = companies.map(company => ({
           user_id: user.id,
           business_id: company.id,
@@ -78,17 +89,21 @@ export function CreateListDialog({
           tags: [],
         }))
 
-        const { error: saveError } = await supabase
+        console.log('📝 Prepared records for upsert:', savedBusinesses)
+
+        const { error: saveError, data: savedData } = await supabase
           .from('saved_businesses')
           .upsert(savedBusinesses, {
             onConflict: 'user_id,business_id',
             ignoreDuplicates: false
           })
+          .select()
 
         if (saveError) {
-          console.error('Error adding companies to list:', saveError)
+          console.error('❌ Error adding companies to list:', saveError)
           toast.error('List created but failed to add some companies')
         } else {
+          console.log('✅ Successfully saved businesses:', savedData)
           toast.success(`Created list "${listName}" with ${companies.length} companies`)
         }
       } else {

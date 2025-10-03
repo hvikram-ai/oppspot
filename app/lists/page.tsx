@@ -199,6 +199,9 @@ export default function ListsPage() {
 
     try {
       const supabase = createClient()
+
+      console.log('🔍 Fetching businesses for list:', list.id, list.name)
+
       const { data, error } = await supabase
         .from('saved_businesses')
         .select(`
@@ -224,17 +227,36 @@ export default function ListsPage() {
         .eq('list_id', list.id)
         .order('saved_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Supabase query error:', error)
+        throw error
+      }
+
+      console.log('📦 Raw data from Supabase:', data)
+      console.log('📊 Total records:', data?.length || 0)
+
+      // Check for null businesses (foreign key failed)
+      const nullBusinesses = data?.filter(item => !item.businesses) || []
+      if (nullBusinesses.length > 0) {
+        console.warn('⚠️ Found records with null businesses:', nullBusinesses)
+        console.warn('Business IDs that failed to load:', nullBusinesses.map(b => b.business_id))
+        toast.error(`${nullBusinesses.length} businesses couldn't be loaded (may not exist in database)`)
+      }
 
       const formattedData = data?.filter(item => item.businesses).map(item => ({
         ...item,
         business: item.businesses!
       })) || []
 
+      console.log('✅ Successfully formatted businesses:', formattedData.length)
       setListBusinesses(formattedData as SavedBusiness[])
     } catch (error) {
-      console.error('Error fetching list businesses:', error)
-      toast.error('Failed to load businesses')
+      console.error('❌ Error fetching list businesses:', error)
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        error
+      })
+      toast.error(`Failed to load businesses: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoadingBusinesses(false)
     }
