@@ -31,7 +31,7 @@ export function ScoringAgentConfig({ configuration, onChange }: ScoringAgentConf
   const signalsWeight = configuration.signals_weight || 1.0
 
   const autoReorder = configuration.auto_reorder ?? true
-  const rescore Interval = configuration.rescore_interval || 24
+  const rescoreInterval = configuration.rescore_interval || 24
 
   const totalWeight = criteriaWeight + dataCompletenessWeight + enrichmentWeight + signalsWeight
 
@@ -174,7 +174,7 @@ export function ScoringAgentConfig({ configuration, onChange }: ScoringAgentConf
               </div>
               <div className="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-950/20">
                 <span className="text-sm font-medium">Low</span>
-                <Badge variant="secondary">< 3.0</Badge>
+                <Badge variant="secondary">&lt; 3.0</Badge>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
