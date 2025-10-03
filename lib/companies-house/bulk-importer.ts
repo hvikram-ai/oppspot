@@ -10,7 +10,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import Papa from 'papaparse'
+import * as Papa from 'papaparse'
 
 export interface CompaniesHouseRecord {
   CompanyName: string
