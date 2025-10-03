@@ -49,14 +49,31 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
     try {
       const response = await fetch(`/api/streams/${streamId}`)
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+
         if (response.status === 404) {
+          alert('❌ Stream not found\n\nThis stream may have been deleted or you may not have access to it.')
           router.push('/streams')
           return
         }
-        throw new Error('Failed to fetch stream')
+
+        if (response.status === 403) {
+          alert(`❌ Access Denied\n\nYou do not have permission to view this stream.\n\nReason: ${errorData.error || 'Not a member'}`)
+          router.push('/streams')
+          return
+        }
+
+        throw new Error(errorData.error || 'Failed to fetch stream')
       }
 
       const data = await response.json()
+
+      if (!data.stream) {
+        alert('❌ Stream data not found\n\nThe stream exists but has no data. This may be a database issue.')
+        router.push('/streams')
+        return
+      }
+
       setStream(data.stream)
       setItems(data.items || [])
       setMembers(data.members || [])
@@ -70,6 +87,8 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
       }
     } catch (error) {
       console.error('Error fetching stream:', error)
+      alert(`❌ Error loading stream\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease try again or contact support if the issue persists.`)
+      router.push('/streams')
     } finally {
       setIsLoading(false)
     }
