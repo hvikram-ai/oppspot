@@ -1,6 +1,7 @@
-import { StreamType, WorkflowStage } from './streams'
+import { StreamType, WorkflowStage, GoalCriteria, TargetMetrics, SuccessCriteria } from './streams'
+import { AssignedAgentConfig } from '@/components/streams/agent-assignment-panel'
 
-export type StreamWizardStep = 'basics' | 'workflow' | 'team' | 'integration' | 'review'
+export type StreamWizardStep = 'basics' | 'goal_template' | 'goal_criteria' | 'agents' | 'workflow' | 'team' | 'integration' | 'review'
 
 export interface StreamMemberInvite {
   email: string
@@ -16,22 +17,36 @@ export interface StreamWizardData {
   color: string
   stream_type: StreamType
 
-  // Step 2: Workflow
+  // Step 2: Goal Template (NEW)
+  isGoalOriented: boolean
+  goal_template_id: string | null
+  goal_deadline: string | null
+
+  // Step 3: Goal Criteria (NEW)
+  goal_criteria: GoalCriteria
+  target_metrics: TargetMetrics
+  success_criteria: SuccessCriteria
+
+  // Step 4: Agent Assignment (NEW)
+  assign_agents: boolean
+  assigned_agents: AssignedAgentConfig[]
+
+  // Step 5: Workflow
   workflowTemplate: 'deal_pipeline' | 'project_stages' | 'research_phases' | 'custom'
   stages: WorkflowStage[]
 
-  // Step 3: Team
+  // Step 6: Team
   members: StreamMemberInvite[]
   privacy: 'private' | 'team' | 'organization'
   defaultRole: 'viewer' | 'editor'
 
-  // Step 4: Integration
+  // Step 7: Integration
   autoImportCompanies: boolean
   enableNotifications: boolean
   notificationChannels: ('email' | 'in_app' | 'slack')[]
   aiProcessing: boolean
 
-  // Step 5: Review
+  // Step 8: Review
   termsAccepted: boolean
   broadcastMessage?: string
 }

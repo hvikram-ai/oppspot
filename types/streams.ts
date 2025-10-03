@@ -11,6 +11,16 @@ export type StreamType = 'project' | 'deal' | 'campaign' | 'research' | 'territo
 
 export type StreamStatus = 'active' | 'archived' | 'completed'
 
+export type GoalStatus = 'not_started' | 'in_progress' | 'on_track' | 'at_risk' | 'completed' | 'failed' | 'paused'
+
+export type GoalCategory = 'acquisition' | 'expansion' | 'partnership' | 'research' | 'monitoring' | 'custom'
+
+export type AgentAssignmentRole = 'primary' | 'enrichment' | 'scoring' | 'monitoring' | 'notification'
+
+export type InsightType = 'progress_update' | 'quality_assessment' | 'recommendation' | 'risk_alert' | 'milestone_achieved' | 'optimization_suggestion'
+
+export type InsightSeverity = 'info' | 'success' | 'warning' | 'critical'
+
 export type StreamMemberRole = 'owner' | 'editor' | 'viewer' | 'guest'
 
 export type StreamItemType =
@@ -111,6 +121,15 @@ export interface Stream {
   status: StreamStatus
   archived_at: string | null
 
+  // Goal Fields (NEW)
+  goal_template_id: string | null
+  goal_criteria: GoalCriteria
+  target_metrics: TargetMetrics
+  success_criteria: SuccessCriteria
+  current_progress: ProgressMetrics
+  goal_deadline: string | null
+  goal_status: GoalStatus
+
   // Ownership
   created_by: string
   updated_by: string | null
@@ -128,6 +147,8 @@ export interface Stream {
     full_name?: string
     avatar_url?: string
   }
+  assigned_agents?: StreamAgentAssignment[]
+  insights?: StreamInsight[]
 }
 
 export interface StreamMember {
@@ -491,4 +512,214 @@ export interface StreamAnalytics {
   active_members: number
   avg_completion_time_days: number | null
   overdue_tasks: number
+}
+
+// ============================================
+// GOAL-ORIENTED TYPES (NEW)
+// ============================================
+
+export interface GoalCriteria {
+  industry?: string[]
+  revenue?: { min?: number; max?: number }
+  location?: string[]
+  growth_rate?: { min?: number; max?: number }
+  employee_count?: { min?: number; max?: number }
+  funding_stage?: string[]
+  tech_stack?: string[]
+  signals?: string[]
+  [key: string]: unknown
+}
+
+export interface TargetMetrics {
+  companies_to_find?: number
+  min_quality_score?: number
+  required_signals?: string[]
+  top_targets?: number
+  meetings_to_schedule?: number
+  [key: string]: unknown
+}
+
+export interface SuccessCriteria {
+  min_qualified?: number
+  min_researched?: number
+  min_contacted?: number
+  partnerships_initiated?: number
+  agreements_signed?: number
+  [key: string]: unknown
+}
+
+export interface ProgressMetrics {
+  completed: number
+  total: number
+  percentage: number
+  last_updated?: string
+  items_by_stage?: Record<string, number>
+  quality_score?: number
+  signals_detected?: number
+}
+
+export interface SuggestedAgent {
+  agent_type: string
+  role: AgentAssignmentRole
+  order: number
+  config?: Record<string, unknown>
+}
+
+export interface GoalTemplate {
+  id: string
+  name: string
+  description: string
+  category: GoalCategory
+  icon: string
+
+  // Template configuration
+  default_criteria: GoalCriteria
+  default_metrics: TargetMetrics
+  default_success_criteria: SuccessCriteria
+  suggested_agents: SuggestedAgent[]
+
+  // Template metadata
+  use_count: number
+  avg_success_rate: number | null
+  avg_completion_days: number | null
+
+  // Visibility
+  is_public: boolean
+  created_by: string | null
+
+  // Timestamps
+  created_at: string
+  updated_at: string
+}
+
+export interface StreamAgentAssignment {
+  id: string
+  stream_id: string
+  agent_id: string
+
+  // Assignment details
+  assignment_role: AgentAssignmentRole
+  execution_order: number
+
+  // Execution settings
+  is_active: boolean
+  auto_execute: boolean
+  execution_frequency: string | null
+  execution_config: Record<string, unknown>
+
+  // Dependencies
+  depends_on_agent_ids: string[]
+  trigger_conditions: Record<string, unknown>
+
+  // Metrics
+  total_executions: number
+  successful_executions: number
+  last_executed_at: string | null
+  avg_execution_time_ms: number | null
+
+  // Timestamps
+  created_at: string
+  updated_at: string
+
+  // Relations (joined data)
+  agent?: {
+    id: string
+    name: string
+    agent_type: string
+    is_active: boolean
+  }
+}
+
+export interface StreamInsight {
+  id: string
+  stream_id: string
+
+  // Insight details
+  insight_type: InsightType
+  title: string
+  description: string
+
+  // Insight data
+  severity: InsightSeverity
+  data: Record<string, unknown>
+
+  // Source
+  generated_by: string
+  agent_execution_id: string | null
+
+  // Status
+  is_read: boolean
+  is_actionable: boolean
+  action_taken: boolean
+  action_taken_at: string | null
+
+  // Timestamps
+  created_at: string
+
+  // Relations (joined data)
+  agent?: {
+    id: string
+    name: string
+    agent_type: string
+  }
+}
+
+// ============================================
+// GOAL-ORIENTED REQUEST/RESPONSE TYPES
+// ============================================
+
+export interface CreateGoalStreamRequest extends CreateStreamRequest {
+  goal_template_id?: string
+  goal_criteria?: GoalCriteria
+  target_metrics?: TargetMetrics
+  success_criteria?: SuccessCriteria
+  goal_deadline?: string
+  assign_agents?: boolean // Auto-assign agents from template
+}
+
+export interface AssignAgentToStreamRequest {
+  agent_id: string
+  assignment_role?: AgentAssignmentRole
+  execution_order?: number
+  is_active?: boolean
+  auto_execute?: boolean
+  execution_frequency?: string
+  execution_config?: Record<string, unknown>
+  depends_on_agent_ids?: string[]
+}
+
+export interface ExecuteStreamAgentRequest {
+  agent_id: string
+  execution_config?: Record<string, unknown>
+  force_execute?: boolean // Ignore dependencies
+}
+
+export interface StreamProgressResponse {
+  stream: Stream
+  progress: ProgressMetrics
+  goal_status: GoalStatus
+  insights: StreamInsight[]
+  recent_agent_executions: AgentExecutionSummary[]
+  quality_metrics: {
+    avg_quality_score: number
+    high_quality_count: number
+    signals_detected: number
+  }
+}
+
+export interface AgentExecutionSummary {
+  id: string
+  agent_id: string
+  agent_name: string
+  agent_type: string
+  status: string
+  started_at: string
+  completed_at: string | null
+  duration_ms: number | null
+  results_summary: {
+    items_created?: number
+    items_updated?: number
+    items_qualified?: number
+    avg_score?: number
+  }
 }

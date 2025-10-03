@@ -213,11 +213,11 @@ export default function AISettingsPage() {
 
   const checkOllamaStatus = async () => {
     try {
-      const response = await fetch(`${ollamaUrl}/api/tags`)
+      const response = await fetch(`/api/ollama/status?url=${encodeURIComponent(ollamaUrl)}`)
       if (response.ok) {
         const data = await response.json()
-        setOllamaStatus('online')
-        setAvailableModels(data.models?.map((m: any) => m.name) || [])
+        setOllamaStatus(data.status)
+        setAvailableModels(data.models || [])
       } else {
         setOllamaStatus('offline')
       }
@@ -337,10 +337,10 @@ export default function AISettingsPage() {
   const downloadOllamaModel = async (modelName: string) => {
     toast.info(`Downloading ${modelName}...`)
     try {
-      const response = await fetch(`${ollamaUrl}/api/pull`, {
+      const response = await fetch('/api/ollama/pull', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: modelName })
+        body: JSON.stringify({ modelName, ollamaUrl })
       })
 
       if (response.ok) {

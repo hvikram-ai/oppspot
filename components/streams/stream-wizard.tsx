@@ -18,6 +18,24 @@ const WIZARD_STEPS: readonly Step[] = [
     icon: Target,
   },
   {
+    id: 'goal_template',
+    title: 'Goal Setup',
+    description: 'Template & timeline',
+    icon: Rocket,
+  },
+  {
+    id: 'goal_criteria',
+    title: 'Define Goal',
+    description: 'Criteria & targets',
+    icon: Target,
+  },
+  {
+    id: 'agents',
+    title: 'AI Agents',
+    description: 'Assign automation',
+    icon: ChevronRight,
+  },
+  {
     id: 'workflow',
     title: 'Workflow',
     description: 'Configure stages',
@@ -59,15 +77,28 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
     emoji: '📁',
     color: '#6366f1',
     stream_type: 'project',
+    // Goal-oriented fields
+    isGoalOriented: false,
+    goal_template_id: null,
+    goal_deadline: null,
+    goal_criteria: {},
+    target_metrics: {},
+    success_criteria: {},
+    assign_agents: false,
+    assigned_agents: [],
+    // Workflow
     workflowTemplate: 'project_stages',
     stages: WORKFLOW_TEMPLATES.project_stages.stages,
+    // Team
     members: [],
     privacy: 'team',
     defaultRole: 'viewer',
+    // Integration
     autoImportCompanies: false,
     enableNotifications: true,
     notificationChannels: ['email', 'in_app'],
     aiProcessing: true,
+    // Review
     termsAccepted: false,
   }
 
@@ -88,11 +119,22 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
     storageKey: 'stream-wizard-draft',
   })
 
+  // Determine which steps to show based on isGoalOriented
+  const activeSteps = data.isGoalOriented
+    ? WIZARD_STEPS // All steps
+    : WIZARD_STEPS.filter(s => !['goal_template', 'goal_criteria', 'agents'].includes(s.id)) // Skip goal-oriented steps
+
   // Validation for each step
   const isStepValid = useCallback((step: StreamWizardStep) => {
     switch (step) {
       case 'basics':
         return data.name.trim().length > 0 && data.stream_type.length > 0
+      case 'goal_template':
+        return true // Optional - user can skip template
+      case 'goal_criteria':
+        return true // Optional - can be empty for simple streams
+      case 'agents':
+        return true // Optional - agents can be added later
       case 'workflow':
         return data.stages.length > 0
       case 'team':
@@ -114,17 +156,48 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
 
     setIsSubmitting(true)
     try {
-      const requestData: CreateStreamRequest = {
-        name: data.name,
-        description: data.description,
-        emoji: data.emoji,
-        color: data.color,
-        stream_type: data.stream_type,
-        stages: data.stages,
+      if (data.isGoalOriented) {
+        // Use goal-oriented API endpoint
+        const response = await fetch('/api/streams/goal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            description: data.description,
+            emoji: data.emoji,
+            color: data.color,
+            stream_type: data.stream_type,
+            goal_template_id: data.goal_template_id,
+            goal_criteria: data.goal_criteria,
+            target_metrics: data.target_metrics,
+            success_criteria: data.success_criteria,
+            goal_deadline: data.goal_deadline,
+            assign_agents: data.assign_agents,
+            assigned_agents: data.assigned_agents
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to create goal-oriented stream')
+        }
+
+        const result = await response.json()
+        console.log('[StreamWizard] Goal stream created:', result)
+      } else {
+        // Use standard stream creation
+        const requestData: CreateStreamRequest = {
+          name: data.name,
+          description: data.description,
+          emoji: data.emoji,
+          color: data.color,
+          stream_type: data.stream_type,
+          stages: data.stages,
+        }
+
+        console.log('[StreamWizard] Submitting stream:', requestData)
+        await onComplete(requestData)
       }
 
-      console.log('[StreamWizard] Submitting stream:', requestData)
-      await onComplete(requestData)
       reset()
       clearDraft()
       onOpenChange(false)
@@ -172,7 +245,7 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
             </Button>
           </div>
 
-          <StepIndicator steps={WIZARD_STEPS} currentStep={currentStep} />
+          <StepIndicator steps={activeSteps} currentStep={currentStep} />
         </div>
 
         {/* Step content */}
@@ -244,6 +317,9 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
 
 // Import step components
 import { BasicsStep } from './wizard-steps/basics-step'
+import { GoalTemplateStep } from './wizard-steps/goal-template-step'
+import { GoalCriteriaStep } from './wizard-steps/goal-criteria-step'
+import { AgentsStep } from './wizard-steps/agents-step'
 import { WorkflowStep } from './wizard-steps/workflow-step'
 import { TeamStep } from './wizard-steps/team-step'
 import { IntegrationStep } from './wizard-steps/integration-step'
@@ -262,6 +338,12 @@ function StepContent({
   switch (step) {
     case 'basics':
       return <BasicsStep data={data} onUpdate={onUpdate} />
+    case 'goal_template':
+      return <GoalTemplateStep data={data} onUpdate={onUpdate} />
+    case 'goal_criteria':
+      return <GoalCriteriaStep data={data} onUpdate={onUpdate} />
+    case 'agents':
+      return <AgentsStep data={data} onUpdate={onUpdate} />
     case 'workflow':
       return <WorkflowStep data={data} onUpdate={onUpdate} />
     case 'team':
