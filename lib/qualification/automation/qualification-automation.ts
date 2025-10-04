@@ -1,8 +1,125 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { QualificationService } from '../services/qualification-service'
 import { QualificationNotificationService } from '../notifications/qualification-notifications'
 import { triggerQualificationWebhook, QualificationWebhookEvent } from '@/app/api/webhooks/qualification/route'
 import type { BANTQualification, MEDDICQualification } from '@/types/qualification'
+
+// Context type for automation execution
+export interface AutomationContext {
+  leadId?: string
+  companyId?: string
+  userId?: string
+  qualificationData?: BANTQualification | MEDDICQualification
+  triggeredBy?: string
+  [key: string]: unknown
+}
+
+// Action configuration types
+export interface QualifyActionConfig {
+  leadId?: string
+  companyId?: string
+  framework?: string
+  data?: Record<string, unknown>
+}
+
+export interface RouteActionConfig {
+  leadId?: string
+  assignTo: string
+  priority?: 'low' | 'medium' | 'high' | 'urgent'
+  sla?: number
+}
+
+export interface NotifyActionConfig {
+  type?: string
+  recipient?: string
+  message: string
+}
+
+export interface UpdateFieldActionConfig {
+  table: string
+  field: string
+  value: unknown
+  recordId?: string
+}
+
+export interface CreateTaskActionConfig {
+  title: string
+  description?: string
+  assignTo: string
+  dueDate?: string
+  priority?: 'low' | 'medium' | 'high'
+}
+
+export interface SendEmailActionConfig {
+  to: string
+  subject: string
+  body: string
+  template?: string
+}
+
+export interface TriggerWebhookActionConfig {
+  event: QualificationWebhookEvent
+  data?: Record<string, unknown>
+}
+
+export interface AddToCampaignActionConfig {
+  campaignId: string
+  leadId?: string
+}
+
+export interface UpdateStageActionConfig {
+  stage: string
+  leadId?: string
+}
+
+export interface CreateChecklistActionConfig {
+  framework?: string
+  leadId?: string
+  templateId?: string
+}
+
+export interface RecycleLeadActionConfig {
+  leadId?: string
+  reason: string
+  nurtureCampaign?: string
+}
+
+export interface EscalateActionConfig {
+  escalateTo: string
+  reason: string
+  priority?: 'low' | 'medium' | 'high'
+}
+
+// Action configuration union type
+export type ActionConfig =
+  | QualifyActionConfig
+  | RouteActionConfig
+  | NotifyActionConfig
+  | UpdateFieldActionConfig
+  | CreateTaskActionConfig
+  | SendEmailActionConfig
+  | TriggerWebhookActionConfig
+  | AddToCampaignActionConfig
+  | UpdateStageActionConfig
+  | CreateChecklistActionConfig
+  | RecycleLeadActionConfig
+  | EscalateActionConfig
+
+// Analytics return type
+export interface AutomationAnalytics {
+  period: '24h' | '7d' | '30d'
+  totalExecutions: number
+  successfulExecutions: number
+  failedExecutions: number
+  successRate: number
+  mostActiveRules: Array<{
+    ruleId: string
+    count: number
+    rule?: AutomationRule
+  }>
+  averageExecutionsPerDay: number
+}
 
 export interface AutomationRule {
   id: string
@@ -13,7 +130,7 @@ export interface AutomationRule {
   conditions: AutomationCondition[]
   actions: AutomationAction[]
   schedule?: AutomationSchedule
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface AutomationTrigger {
@@ -30,7 +147,7 @@ export interface AutomationTrigger {
 export interface AutomationCondition {
   field: string
   operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'in' | 'not_in'
-  value: any
+  value: unknown
   logic?: 'AND' | 'OR'
 }
 
@@ -38,7 +155,7 @@ export interface AutomationAction {
   type: 'qualify' | 'route' | 'notify' | 'update_field' | 'create_task' |
         'send_email' | 'trigger_webhook' | 'add_to_campaign' | 'update_stage' |
         'create_checklist' | 'recycle_lead' | 'escalate'
-  config: Record<string, any>
+  config: ActionConfig
   delay?: number // delay in minutes before executing
 }
 
@@ -51,11 +168,11 @@ export interface AutomationSchedule {
 }
 
 export class QualificationAutomation {
-  private supabase: any
+  private supabase: SupabaseClient | null = null
   private qualificationService: QualificationService
   private notificationService: QualificationNotificationService
   private activeRules: Map<string, AutomationRule> = new Map()
-  private runningJobs: Map<string, any> = new Map()
+  private runningJobs: Map<string, NodeJS.Timeout> = new Map()
 
   constructor() {
     this.qualificationService = new QualificationService()
@@ -139,7 +256,7 @@ export class QualificationAutomation {
   /**
    * Execute automation rule
    */
-  async executeRule(ruleId: string, context: any = {}): Promise<boolean> {
+  async executeRule(ruleId: string, context: AutomationContext = {}): Promise<boolean> {
     try {
       const rule = this.activeRules.get(ruleId)
       if (!rule || !rule.enabled) {
@@ -175,7 +292,7 @@ export class QualificationAutomation {
   /**
    * Check if conditions are met
    */
-  private async checkConditions(conditions: AutomationCondition[], context: any): Promise<boolean> {
+  private async checkConditions(conditions: AutomationCondition[], context: AutomationContext): Promise<boolean> {
     if (!conditions || conditions.length === 0) return true
 
     let result = true
@@ -204,7 +321,7 @@ export class QualificationAutomation {
   /**
    * Evaluate a single condition
    */
-  private evaluateCondition(fieldValue: any, operator: string, value: any): boolean {
+  private evaluateCondition(fieldValue: unknown, operator: string, value: unknown): boolean {
     switch (operator) {
       case 'equals':
         return fieldValue === value
@@ -228,55 +345,55 @@ export class QualificationAutomation {
   /**
    * Execute an automation action
    */
-  private async executeAction(action: AutomationAction, context: any): Promise<void> {
+  private async executeAction(action: AutomationAction, context: AutomationContext): Promise<void> {
     try {
       switch (action.type) {
         case 'qualify':
-          await this.executeQualifyAction(action.config, context)
+          await this.executeQualifyAction(action.config as QualifyActionConfig, context)
           break
 
         case 'route':
-          await this.executeRouteAction(action.config, context)
+          await this.executeRouteAction(action.config as RouteActionConfig, context)
           break
 
         case 'notify':
-          await this.executeNotifyAction(action.config, context)
+          await this.executeNotifyAction(action.config as NotifyActionConfig, context)
           break
 
         case 'update_field':
-          await this.executeUpdateFieldAction(action.config, context)
+          await this.executeUpdateFieldAction(action.config as UpdateFieldActionConfig, context)
           break
 
         case 'create_task':
-          await this.executeCreateTaskAction(action.config, context)
+          await this.executeCreateTaskAction(action.config as CreateTaskActionConfig, context)
           break
 
         case 'send_email':
-          await this.executeSendEmailAction(action.config, context)
+          await this.executeSendEmailAction(action.config as SendEmailActionConfig, context)
           break
 
         case 'trigger_webhook':
-          await this.executeTriggerWebhookAction(action.config, context)
+          await this.executeTriggerWebhookAction(action.config as TriggerWebhookActionConfig, context)
           break
 
         case 'add_to_campaign':
-          await this.executeAddToCampaignAction(action.config, context)
+          await this.executeAddToCampaignAction(action.config as AddToCampaignActionConfig, context)
           break
 
         case 'update_stage':
-          await this.executeUpdateStageAction(action.config, context)
+          await this.executeUpdateStageAction(action.config as UpdateStageActionConfig, context)
           break
 
         case 'create_checklist':
-          await this.executeCreateChecklistAction(action.config, context)
+          await this.executeCreateChecklistAction(action.config as CreateChecklistActionConfig, context)
           break
 
         case 'recycle_lead':
-          await this.executeRecycleLeadAction(action.config, context)
+          await this.executeRecycleLeadAction(action.config as RecycleLeadActionConfig, context)
           break
 
         case 'escalate':
-          await this.executeEscalateAction(action.config, context)
+          await this.executeEscalateAction(action.config as EscalateActionConfig, context)
           break
 
         default:
@@ -290,7 +407,7 @@ export class QualificationAutomation {
   /**
    * Execute qualify action
    */
-  private async executeQualifyAction(config: any, context: any): Promise<void> {
+  private async executeQualifyAction(config: QualifyActionConfig, context: AutomationContext): Promise<void> {
     const { leadId, companyId, framework, data } = config
 
     await this.qualificationService.qualifyLead(
@@ -304,7 +421,7 @@ export class QualificationAutomation {
   /**
    * Execute route action
    */
-  private async executeRouteAction(config: any, context: any): Promise<void> {
+  private async executeRouteAction(config: RouteActionConfig, context: AutomationContext): Promise<void> {
     const supabase = await this.getSupabase()
     const { leadId, assignTo, priority, sla } = config
 
@@ -321,7 +438,7 @@ export class QualificationAutomation {
   /**
    * Execute notify action
    */
-  private async executeNotifyAction(config: any, context: any): Promise<void> {
+  private async executeNotifyAction(config: NotifyActionConfig, context: AutomationContext): Promise<void> {
     const { type, recipient, message } = config
 
     await this.notificationService.sendNotification({
@@ -338,7 +455,7 @@ export class QualificationAutomation {
   /**
    * Execute update field action
    */
-  private async executeUpdateFieldAction(config: any, context: any): Promise<void> {
+  private async executeUpdateFieldAction(config: UpdateFieldActionConfig, context: AutomationContext): Promise<void> {
     const supabase = await this.getSupabase()
     const { table, field, value, recordId } = config
 
@@ -351,7 +468,7 @@ export class QualificationAutomation {
   /**
    * Execute create task action
    */
-  private async executeCreateTaskAction(config: any, context: any): Promise<void> {
+  private async executeCreateTaskAction(config: CreateTaskActionConfig, context: AutomationContext): Promise<void> {
     const supabase = await this.getSupabase()
     const { title, description, assignTo, dueDate, priority } = config
 
@@ -370,7 +487,7 @@ export class QualificationAutomation {
   /**
    * Execute send email action
    */
-  private async executeSendEmailAction(config: any, context: any): Promise<void> {
+  private async executeSendEmailAction(config: SendEmailActionConfig, context: AutomationContext): Promise<void> {
     // Integration with email service
     console.log('Sending email:', config)
   }
@@ -378,7 +495,7 @@ export class QualificationAutomation {
   /**
    * Execute trigger webhook action
    */
-  private async executeTriggerWebhookAction(config: any, context: any): Promise<void> {
+  private async executeTriggerWebhookAction(config: TriggerWebhookActionConfig, context: AutomationContext): Promise<void> {
     const { event, data } = config
 
     await triggerQualificationWebhook(
@@ -390,7 +507,7 @@ export class QualificationAutomation {
   /**
    * Execute add to campaign action
    */
-  private async executeAddToCampaignAction(config: any, context: any): Promise<void> {
+  private async executeAddToCampaignAction(config: AddToCampaignActionConfig, context: AutomationContext): Promise<void> {
     const supabase = await this.getSupabase()
     const { campaignId, leadId } = config
 
@@ -405,7 +522,7 @@ export class QualificationAutomation {
   /**
    * Execute update stage action
    */
-  private async executeUpdateStageAction(config: any, context: any): Promise<void> {
+  private async executeUpdateStageAction(config: UpdateStageActionConfig, context: AutomationContext): Promise<void> {
     const supabase = await this.getSupabase()
     const { stage, leadId } = config
 
@@ -418,7 +535,7 @@ export class QualificationAutomation {
   /**
    * Execute create checklist action
    */
-  private async executeCreateChecklistAction(config: any, context: any): Promise<void> {
+  private async executeCreateChecklistAction(config: CreateChecklistActionConfig, context: AutomationContext): Promise<void> {
     const supabase = await this.getSupabase()
     const { framework, leadId, templateId } = config
 
@@ -434,7 +551,7 @@ export class QualificationAutomation {
   /**
    * Execute recycle lead action
    */
-  private async executeRecycleLeadAction(config: any, context: any): Promise<void> {
+  private async executeRecycleLeadAction(config: RecycleLeadActionConfig, context: AutomationContext): Promise<void> {
     const supabase = await this.getSupabase()
     const { leadId, reason, nurtureCampaign } = config
 
@@ -450,7 +567,7 @@ export class QualificationAutomation {
   /**
    * Execute escalate action
    */
-  private async executeEscalateAction(config: any, context: any): Promise<void> {
+  private async executeEscalateAction(config: EscalateActionConfig, context: AutomationContext): Promise<void> {
     const { escalateTo, reason, priority } = config
 
     // Send escalation notification
@@ -469,7 +586,7 @@ export class QualificationAutomation {
   /**
    * Get field value from context
    */
-  private getFieldValue(context: any, field: string): any {
+  private getFieldValue(context: AutomationContext, field: string): unknown {
     const parts = field.split('.')
     let value = context
 
@@ -544,9 +661,9 @@ export class QualificationAutomation {
    */
   private async logExecution(
     ruleId: string,
-    context: any,
+    context: AutomationContext,
     success: boolean,
-    error?: any
+    error?: Error
   ): Promise<void> {
     try {
       const supabase = await this.getSupabase()
@@ -567,7 +684,7 @@ export class QualificationAutomation {
   /**
    * Get automation analytics
    */
-  async getAutomationAnalytics(period: '24h' | '7d' | '30d' = '7d'): Promise<any> {
+  async getAutomationAnalytics(period: '24h' | '7d' | '30d' = '7d'): Promise<AutomationAnalytics | null> {
     try {
       const supabase = await this.getSupabase()
 
@@ -624,7 +741,7 @@ export class QualificationAutomation {
   /**
    * Get recommended automation rules
    */
-  async getRecommendedRules(context: any): Promise<AutomationRule[]> {
+  async getRecommendedRules(context: AutomationContext): Promise<AutomationRule[]> {
     const recommendations: Partial<AutomationRule>[] = []
 
     // Low qualification score automation

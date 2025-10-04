@@ -30,7 +30,7 @@ export async function GET(
     const status = await orchestrator.getWorkflowStatus(streamId)
 
     return NextResponse.json(status)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Workflow Status] Error:', error)
     return NextResponse.json(
       { error: error.message },

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       match_score: score,
       match_level: score >= 80 ? 'high' : score >= 60 ? 'medium' : 'low'
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ICP Match API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to calculate match score', message: error.message },

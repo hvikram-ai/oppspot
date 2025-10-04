@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { AdvancedAlertConfig, AlertHistory } from '@/types/qualification'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export class ThresholdAlertSystem {
-  private supabase: any
+  private supabase: SupabaseClient
 
   constructor() {
     // Initialize in methods to handle async
@@ -111,7 +112,7 @@ export class ThresholdAlertSystem {
   async triggerAlert(
     alertConfigId: string,
     leadId: string,
-    triggerValue: any
+    triggerValue: unknown
   ): Promise<AlertHistory | null> {
     try {
       const supabase = await this.getSupabase()
@@ -140,7 +141,7 @@ export class ThresholdAlertSystem {
 
       // Execute configured actions
       const actions = config.actions
-      const actionResults: any = {}
+      const actionResults: Record<string, unknown> = {}
 
       // Send notifications
       if (actions.notify && actions.notify.length > 0) {
@@ -264,8 +265,8 @@ export class ThresholdAlertSystem {
       }
 
       // Check if all recent values meet the threshold
-      return data.every((record: any) => {
-        const value = record.trigger_value?.value || 0
+      return data.every((record: AlertHistory) => {
+        const value = (record.trigger_value as { value?: number })?.value || 0
         return value >= threshold
       })
     } catch (error) {
@@ -278,11 +279,11 @@ export class ThresholdAlertSystem {
    * Send notification based on configuration
    */
   private async sendNotification(
-    notification: any,
+    notification: { recipients: string[]; channel?: string },
     leadId: string,
     alertName: string,
-    triggerValue: any
-  ): Promise<any> {
+    triggerValue: unknown
+  ): Promise<{ success: boolean; error?: unknown }> {
     try {
       const supabase = await this.getSupabase()
 
@@ -325,7 +326,7 @@ export class ThresholdAlertSystem {
   /**
    * Update lead stage
    */
-  private async updateLeadStage(leadId: string, newStage: string): Promise<any> {
+  private async updateLeadStage(leadId: string, newStage: string): Promise<{ success: boolean; previous_stage?: string; new_stage?: string; error?: unknown }> {
     try {
       const supabase = await this.getSupabase()
 
@@ -349,7 +350,7 @@ export class ThresholdAlertSystem {
   /**
    * Add lead to campaign
    */
-  private async addToCampaign(leadId: string, campaignId: string): Promise<any> {
+  private async addToCampaign(leadId: string, campaignId: string): Promise<{ success: boolean; campaign_id?: string; message?: string }> {
     // TODO: Implement campaign integration
     return { success: true, campaign_id: campaignId, message: 'Campaign integration pending' }
   }
@@ -357,7 +358,7 @@ export class ThresholdAlertSystem {
   /**
    * Trigger workflow
    */
-  private async triggerWorkflow(leadId: string, workflowId: string): Promise<any> {
+  private async triggerWorkflow(leadId: string, workflowId: string): Promise<{ success: boolean; workflow_id?: string; message?: string }> {
     // TODO: Implement workflow integration
     return { success: true, workflow_id: workflowId, message: 'Workflow integration pending' }
   }
@@ -365,7 +366,7 @@ export class ThresholdAlertSystem {
   /**
    * Call webhook
    */
-  private async callWebhook(webhookConfig: any, payload: any): Promise<any> {
+  private async callWebhook(webhookConfig: { url: string; method?: string; headers?: Record<string, string> }, payload: Record<string, unknown>): Promise<{ success: boolean; response?: unknown; error?: unknown }> {
     try {
       const response = await fetch(webhookConfig.url, {
         method: webhookConfig.method || 'POST',

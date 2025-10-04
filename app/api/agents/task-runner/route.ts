@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       recent_tasks: recentTasks || []
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Task Runner API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to get task runner status', message: error.message },
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Task Runner API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to control task runner', message: error.message },

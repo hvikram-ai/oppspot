@@ -27,7 +27,7 @@ export async function PATCH(
     const item = await StreamService.updateItem(itemId, user.id, body)
 
     return NextResponse.json(item)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating item:', error)
 
     if (error.message === 'Insufficient permissions') {
@@ -64,7 +64,7 @@ export async function DELETE(
     await StreamService.deleteItem(itemId, user.id)
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting item:', error)
 
     if (error.message === 'Insufficient permissions') {

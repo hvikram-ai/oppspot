@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { BANTQualification, MEDDICQualification } from '@/types/qualification'
 
 /**
@@ -22,7 +23,7 @@ export interface CRMSyncResult {
   recordId?: string
   errors?: string[]
   syncedAt?: string
-  details?: any
+  details?: Record<string, unknown>
 }
 
 export interface CRMLead {
@@ -40,12 +41,12 @@ export interface CRMLead {
   revenue?: number
   score?: number
   status?: string
-  customFields?: Record<string, any>
+  customFields?: Record<string, unknown>
 }
 
 export class CRMIntegration {
   private config: CRMConfig
-  private supabase: any
+  private supabase: SupabaseClient
 
   constructor(config: CRMConfig) {
     this.config = config
@@ -163,7 +164,7 @@ export class CRMIntegration {
 
     // Apply custom field mapping if provided
     if (this.config.customFieldMapping) {
-      const mappedFields: Record<string, any> = {}
+      const mappedFields: Record<string, unknown> = {}
       Object.entries(baseData.customFields).forEach(([key, value]) => {
         const mappedKey = this.config.customFieldMapping![key] || key
         mappedFields[mappedKey] = value
@@ -450,10 +451,10 @@ export class CRMIntegration {
   /**
    * Map custom fields to Salesforce format
    */
-  private mapToSalesforceFields(customFields?: Record<string, any>): Record<string, any> {
+  private mapToSalesforceFields(customFields?: Record<string, unknown>): Record<string, unknown> {
     if (!customFields) return {}
 
-    const mapped: Record<string, any> = {}
+    const mapped: Record<string, unknown> = {}
     Object.entries(customFields).forEach(([key, value]) => {
       // Salesforce custom fields typically end with __c
       const sfKey = key.endsWith('__c') ? key : `${key}__c`
@@ -465,10 +466,10 @@ export class CRMIntegration {
   /**
    * Map custom fields to HubSpot properties
    */
-  private mapToHubSpotProperties(customFields?: Record<string, any>): Record<string, any> {
+  private mapToHubSpotProperties(customFields?: Record<string, unknown>): Record<string, unknown> {
     if (!customFields) return {}
 
-    const mapped: Record<string, any> = {}
+    const mapped: Record<string, unknown> = {}
     Object.entries(customFields).forEach(([key, value]) => {
       // HubSpot properties use lowercase with underscores
       const hsKey = key.toLowerCase().replace(/-/g, '_')
@@ -480,7 +481,7 @@ export class CRMIntegration {
   /**
    * Map custom fields to Pipedrive format
    */
-  private mapToPipedriveFields(customFields?: Record<string, any>): Record<string, any> {
+  private mapToPipedriveFields(customFields?: Record<string, unknown>): Record<string, unknown> {
     if (!customFields) return {}
 
     // Pipedrive uses custom field IDs, this is a simplified mapping
@@ -490,10 +491,10 @@ export class CRMIntegration {
   /**
    * Map custom fields to Zoho format
    */
-  private mapToZohoFields(customFields?: Record<string, any>): Record<string, any> {
+  private mapToZohoFields(customFields?: Record<string, unknown>): Record<string, unknown> {
     if (!customFields) return {}
 
-    const mapped: Record<string, any> = {}
+    const mapped: Record<string, unknown> = {}
     Object.entries(customFields).forEach(([key, value]) => {
       // Zoho uses Title_Case for field names
       const zohoKey = key.split('_')

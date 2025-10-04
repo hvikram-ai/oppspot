@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's org_id
-    let { data: profile } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
 
     const filters: StreamFilters = {
-      stream_type: searchParams.get('type') as any || undefined,
-      status: searchParams.get('status') as any || undefined,
+      stream_type: (searchParams.get('type') as StreamFilters['stream_type']) || undefined,
+      status: (searchParams.get('status') as StreamFilters['status']) || undefined,
       search: searchParams.get('search') || undefined,
       created_by: searchParams.get('created_by') || undefined
     }

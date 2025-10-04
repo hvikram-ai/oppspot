@@ -1,6 +1,51 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { OpenRouter } from '@/lib/ai/openrouter'
 import type { BANTQualification, MEDDICQualification } from '@/types/qualification'
+
+// Company data interface
+export interface CompanyData {
+  id: string
+  name: string
+  employee_count?: string
+  industry?: string
+  revenue?: string
+  growth_rate?: 'high' | 'medium' | 'low'
+  [key: string]: unknown
+}
+
+// Qualification comparison data
+export interface QualificationComparison {
+  lead_id: string
+  framework: string
+  overall_score: number
+  created_at: string
+  [key: string]: unknown
+}
+
+// Deal size factors
+export interface DealSizeFactors {
+  riskFactors: string[]
+  successFactors: string[]
+}
+
+// Qualification scores
+export interface QualificationScores {
+  overall: number
+  components: Record<string, number>
+}
+
+// Qualification comparison result
+export interface ComparisonResult {
+  comparisons: Array<{
+    leadId: string
+    bant: BANTQualification | null
+    meddic: MEDDICQualification | null
+    prediction: QualificationPrediction | null
+  }>
+  topLead?: string
+  insights: string[]
+}
 
 export interface QualificationInsight {
   type: 'strength' | 'weakness' | 'opportunity' | 'risk' | 'recommendation'
@@ -10,7 +55,7 @@ export interface QualificationInsight {
   impact: 'high' | 'medium' | 'low'
   confidence: number // 0-100
   suggestedActions: string[]
-  relatedMetrics: Record<string, any>
+  relatedMetrics: Record<string, unknown>
 }
 
 export interface QualificationPrediction {
@@ -24,7 +69,7 @@ export interface QualificationPrediction {
 }
 
 export class QualificationInsightsEngine {
-  private supabase: any
+  private supabase: SupabaseClient | null = null
   private ai: OpenRouter
 
   constructor() {
@@ -99,7 +144,7 @@ export class QualificationInsightsEngine {
   /**
    * Analyze BANT qualification
    */
-  private analyzeBANT(qualification: BANTQualification, company: any): QualificationInsight[] {
+  private analyzeBANT(qualification: BANTQualification, company: CompanyData | null): QualificationInsight[] {
     const insights: QualificationInsight[] = []
 
     // Budget Analysis
@@ -212,7 +257,7 @@ export class QualificationInsightsEngine {
   /**
    * Analyze MEDDIC qualification
    */
-  private analyzeMEDDIC(qualification: MEDDICQualification, company: any): QualificationInsight[] {
+  private analyzeMEDDIC(qualification: MEDDICQualification, company: CompanyData | null): QualificationInsight[] {
     const insights: QualificationInsight[] = []
 
     // Economic Buyer Analysis
@@ -310,8 +355,8 @@ export class QualificationInsightsEngine {
    * Get AI-powered recommendations
    */
   private async getAIRecommendations(
-    qualification: any,
-    company: any,
+    qualification: BANTQualification | MEDDICQualification,
+    company: CompanyData | null,
     framework: string
   ): Promise<QualificationInsight[]> {
     try {
@@ -450,7 +495,7 @@ export class QualificationInsightsEngine {
   /**
    * Calculate engagement boost for probability
    */
-  private calculateEngagementBoost(events: any[]): number {
+  private calculateEngagementBoost(events: Array<Record<string, unknown>>): number {
     if (events.length === 0) return 0
 
     let boost = 0
@@ -477,8 +522,8 @@ export class QualificationInsightsEngine {
    * Calculate expected close date
    */
   private calculateExpectedCloseDate(
-    bant: any,
-    meddic: any,
+    bant: BANTQualification | null,
+    meddic: MEDDICQualification | null,
     probability: number
   ): string {
     const baseDate = new Date()
@@ -509,7 +554,7 @@ export class QualificationInsightsEngine {
   /**
    * Estimate deal size
    */
-  private estimateDealSize(company: any, bant: any, meddic: any): number {
+  private estimateDealSize(company: CompanyData | null, bant: BANTQualification | null, meddic: MEDDICQualification | null): number {
     let baseSize = 50000 // Default deal size
 
     // Adjust based on company size
@@ -546,10 +591,7 @@ export class QualificationInsightsEngine {
   /**
    * Identify risk and success factors
    */
-  private identifyFactors(bant: any, meddic: any): {
-    riskFactors: string[]
-    successFactors: string[]
-  } {
+  private identifyFactors(bant: BANTQualification | null, meddic: MEDDICQualification | null): DealSizeFactors {
     const riskFactors: string[] = []
     const successFactors: string[] = []
 
@@ -590,8 +632,8 @@ export class QualificationInsightsEngine {
    * Determine next best action
    */
   private async determineNextBestAction(
-    bant: any,
-    meddic: any,
+    bant: BANTQualification | null,
+    meddic: MEDDICQualification | null,
     probability: number
   ): Promise<string> {
     // Priority-based action determination
@@ -657,7 +699,7 @@ export class QualificationInsightsEngine {
   /**
    * Extract scores based on framework
    */
-  private extractScores(qualification: any, framework: string): any {
+  private extractScores(qualification: BANTQualification | MEDDICQualification, framework: string): QualificationScores {
     if (framework === 'BANT') {
       return {
         budget: qualification.budget_score,
@@ -699,7 +741,7 @@ export class QualificationInsightsEngine {
   /**
    * Generate qualification comparison
    */
-  async compareQualifications(leadIds: string[]): Promise<any> {
+  async compareQualifications(leadIds: string[]): Promise<ComparisonResult | null> {
     try {
       const supabase = await this.getSupabase()
       const comparisons = []
@@ -748,7 +790,7 @@ export class QualificationInsightsEngine {
   /**
    * Generate comparative insights
    */
-  private generateComparativeInsights(comparisons: any[]): string[] {
+  private generateComparativeInsights(comparisons: QualificationComparison[]): string[] {
     const insights: string[] = []
 
     if (comparisons.length < 2) return insights

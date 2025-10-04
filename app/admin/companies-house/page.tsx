@@ -24,10 +24,26 @@ import {
   AlertTriangle
 } from 'lucide-react'
 
+interface ImportProgress {
+  status: 'idle' | 'downloading' | 'processing' | 'completed' | 'failed'
+  current?: number
+  total?: number
+  startedAt?: string
+  completedAt?: string
+  error?: string
+}
+
+interface ImportStats {
+  totalRecords?: number
+  imported?: number
+  skipped?: number
+  failed?: number
+}
+
 export default function CompaniesHouseImportPage() {
-  const [progress, setProgress] = useState<any>(null)
+  const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [isStarting, setIsStarting] = useState(false)
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<ImportStats | null>(null)
 
   useEffect(() => {
     fetchProgress()
@@ -116,7 +132,7 @@ export default function CompaniesHouseImportPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, any> = {
+    const variants: Record<string, React.ReactElement> = {
       idle: <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Idle</Badge>,
       downloading: <Badge variant="default"><Download className="h-3 w-3 mr-1 animate-bounce" />Downloading</Badge>,
       processing: <Badge variant="default"><Database className="h-3 w-3 mr-1 animate-pulse" />Processing</Badge>,
@@ -153,7 +169,7 @@ export default function CompaniesHouseImportPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-yellow-800 dark:text-yellow-200">
-            <p className="mb-2">To stay within Supabase's 500MB free tier limit, this importer applies smart filters:</p>
+            <p className="mb-2">To stay within Supabase&apos;s 500MB free tier limit, this importer applies smart filters:</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Only <strong>active</strong> companies</li>
               <li>Tech & Professional Services industries only (62 SIC code prefixes)</li>

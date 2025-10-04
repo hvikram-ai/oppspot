@@ -30,7 +30,7 @@ export async function GET(
     const validation = await orchestrator.validateWorkflow(streamId)
 
     return NextResponse.json(validation)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Workflow Validate] Error:', error)
     return NextResponse.json(
       { error: error.message },

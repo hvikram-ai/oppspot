@@ -71,6 +71,8 @@ export default function EnhanceBusinessesPage() {
     tokens_used?: number
     api_calls?: number
     cost?: number
+    credits_remaining?: number
+    credits_used?: number
   }
   
   const [aiUsage, setAiUsage] = useState<AIUsageStats | null>(null)
@@ -104,9 +106,9 @@ export default function EnhanceBusinessesPage() {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { role: string } | null }
 
-    if (profile && 'role' in profile && profile.role !== 'admin' && profile.role !== 'owner') {
+    if (profile && profile.role !== 'admin' && profile.role !== 'owner') {
       toast.error('Admin access required')
       router.push('/dashboard')
     }
@@ -160,9 +162,9 @@ export default function EnhanceBusinessesPage() {
 
       if (response.ok) {
         toast.success('Business enhanced successfully')
-        
+
         // Show what was generated
-        Object.entries(data.enhancements).forEach(([key, value]: [string, Enhancement]) => {
+        Object.entries(data.enhancements as Record<string, Enhancement>).forEach(([key, value]) => {
           if (!value.error) {
             toast.info(`Generated ${key}`)
           }

@@ -22,10 +22,16 @@ import {
   Search,
   TrendingUp,
   Clock,
-  CheckCircle2,
-  XCircle,
   Activity
 } from 'lucide-react'
+
+interface AgentMetrics {
+  durationMs?: number
+  itemsProcessed?: number
+  apiCalls?: number
+  tokensUsed?: number
+  cost?: number
+}
 
 interface Agent {
   id: string
@@ -36,7 +42,7 @@ interface Agent {
   schedule_cron: string | null
   last_run_at: string | null
   next_run_at: string | null
-  configuration: Record<string, any>
+  configuration: Record<string, unknown>
   created_at: string
 }
 
@@ -47,13 +53,13 @@ interface AgentExecution {
   started_at: string | null
   completed_at: string | null
   duration_ms: number | null
-  output_data: any
+  output_data: unknown
   error_message: string | null
-  metrics: any
+  metrics: AgentMetrics | null
   created_at: string
 }
 
-const agentTypeIcons: Record<string, any> = {
+const agentTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   opportunity_bot: TrendingUp,
   scout_agent: Search,
   research_gpt: Bot,
@@ -73,7 +79,7 @@ const agentTypeLabels: Record<string, string> = {
 
 export default function AgentsAdminPage() {
   const [agents, setAgents] = useState<Agent[]>([])
-  const [executions, setExecutions] = useState<AgentExecution[]>([])
+  const [executions] = useState<AgentExecution[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [runningAgentId, setRunningAgentId] = useState<string | null>(null)
@@ -92,9 +98,9 @@ export default function AgentsAdminPage() {
       if (data.success) {
         setAgents(data.agents || [])
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load agents:', err)
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'Failed to load agents')
     } finally {
       setIsLoading(false)
     }
@@ -106,7 +112,7 @@ export default function AgentsAdminPage() {
       // const response = await fetch('/api/agents/executions')
       // const data = await response.json()
       // setExecutions(data.executions || [])
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load executions:', err)
     }
   }
@@ -130,8 +136,8 @@ export default function AgentsAdminPage() {
       } else {
         throw new Error(data.error || 'Failed to run agent')
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to run agent')
     } finally {
       setRunningAgentId(null)
     }
@@ -148,8 +154,8 @@ export default function AgentsAdminPage() {
       if (response.ok) {
         loadAgents()
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to toggle agent')
     }
   }
 
@@ -164,12 +170,18 @@ export default function AgentsAdminPage() {
       if (response.ok) {
         loadAgents()
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete agent')
     }
   }
 
-  const handleCreateAgent = async (data: any) => {
+  const handleCreateAgent = async (data: {
+    name: string;
+    agent_type: string;
+    description: string;
+    configuration: Record<string, unknown>;
+    schedule_cron?: string
+  }) => {
     try {
       const response = await fetch('/api/agents', {
         method: 'POST',

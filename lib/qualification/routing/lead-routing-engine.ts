@@ -6,6 +6,19 @@ import type {
   RouteLeadRequest
 } from '../types/qualification';
 
+interface LeadData {
+  id?: string;
+  total_score?: number;
+  qualification_stage?: string;
+  engagement_level?: string;
+  businesses?: {
+    industry?: string;
+    region?: string;
+    city?: string;
+    revenue?: number;
+  };
+}
+
 interface TeamMember {
   id: string;
   name: string;
@@ -86,7 +99,7 @@ export class LeadRoutingEngine {
   /**
    * Get applicable routing rules for the organization
    */
-  private async getApplicableRules(lead: any, company_id: string): Promise<LeadRoutingRule[]> {
+  private async getApplicableRules(lead: LeadData, company_id: string): Promise<LeadRoutingRule[]> {
     const supabase = await this.getSupabase();
 
     // Get organization ID
@@ -110,7 +123,7 @@ export class LeadRoutingEngine {
   /**
    * Evaluate if a rule's conditions match the lead
    */
-  private evaluateRuleConditions(rule: LeadRoutingRule, lead: any): boolean {
+  private evaluateRuleConditions(rule: LeadRoutingRule, lead: LeadData): boolean {
     const conditions = rule.conditions;
 
     // Score range check
@@ -160,7 +173,7 @@ export class LeadRoutingEngine {
   /**
    * Apply the specified routing algorithm
    */
-  private async applyRoutingAlgorithm(rule: LeadRoutingRule, lead: any): Promise<RoutingDecision | null> {
+  private async applyRoutingAlgorithm(rule: LeadRoutingRule, lead: LeadData): Promise<RoutingDecision | null> {
     const teamMembers = await this.getTeamMembers(rule);
 
     if (!teamMembers || teamMembers.length === 0) {
@@ -288,7 +301,7 @@ export class LeadRoutingEngine {
   /**
    * Skill-based assignment
    */
-  private async skillBasedAssignment(teamMembers: TeamMember[], lead: any): Promise<TeamMember> {
+  private async skillBasedAssignment(teamMembers: TeamMember[], lead: LeadData): Promise<TeamMember> {
     // Determine required skills based on lead characteristics
     const requiredSkills: string[] = [];
 
@@ -328,7 +341,7 @@ export class LeadRoutingEngine {
   /**
    * Territory-based assignment
    */
-  private async territoryBasedAssignment(teamMembers: TeamMember[], lead: any): Promise<TeamMember> {
+  private async territoryBasedAssignment(teamMembers: TeamMember[], lead: LeadData): Promise<TeamMember> {
     const territory = lead.businesses?.region || lead.businesses?.city;
 
     if (!territory) {
@@ -447,7 +460,7 @@ export class LeadRoutingEngine {
   /**
    * Get historical success rate for a team member
    */
-  private async getHistoricalSuccessRate(memberId: string, lead: any): Promise<number> {
+  private async getHistoricalSuccessRate(memberId: string, lead: LeadData): Promise<number> {
     const supabase = await this.getSupabase();
 
     // Get similar leads assigned to this member
@@ -632,7 +645,7 @@ export class LeadRoutingEngine {
   /**
    * Fallback routing when no rules match
    */
-  private async fallbackRouting(lead: any): Promise<RoutingDecision> {
+  private async fallbackRouting(lead: LeadData): Promise<RoutingDecision> {
     const supabase = await this.getSupabase();
 
     // Get any available sales rep
@@ -743,7 +756,7 @@ export class LeadRoutingEngine {
   /**
    * Map rule from database format
    */
-  private mapRuleFromDatabase(data: any): LeadRoutingRule {
+  private mapRuleFromDatabase(data: Record<string, unknown>): LeadRoutingRule {
     return {
       id: data.id,
       org_id: data.org_id,

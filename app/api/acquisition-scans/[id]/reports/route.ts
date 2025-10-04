@@ -31,9 +31,9 @@ export async function GET(
       .from('acquisition_scans')
       .select('user_id, org_id')
       .eq('id', scanId)
-      .single()
+      .single() as { data: { user_id: string; org_id: string | null } | null; error: unknown }
 
-    if (scanError) {
+    if (scanError || !scan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
@@ -106,9 +106,9 @@ export async function POST(
       .from('acquisition_scans')
       .select('user_id, org_id, name, status')
       .eq('id', scanId)
-      .single()
+      .single() as { data: { user_id: string; org_id: string | null; name: string; status: string } | null; error: unknown }
 
-    if (scanError) {
+    if (scanError || !scan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }

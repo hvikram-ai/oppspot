@@ -1,5 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+interface SavedBusiness {
+  business_id: string
+  created_at: string
+  updated_at: string
+}
+
+interface ResearchReport {
+  id: string
+  company_name: string
+  status: string
+}
+
+interface DigestData {
+  overnight_discoveries: Array<{
+    type: string
+    title: string
+    description: string
+    action_url: string
+    priority: string
+  }>
+  urgent_alerts: Array<{
+    type: string
+    title: string
+    company_ids: string[]
+    days_since_contact: number
+  }>
+  completed_work: Array<{
+    type: string
+    title: string
+    report_ids: string[]
+  }>
+  recommendations: Array<{
+    type: string
+    title: string
+    reason: string
+  }>
+}
 
 /**
  * GET /api/dashboard/digest
@@ -148,7 +187,7 @@ export async function POST(request: NextRequest) {
 /**
  * Generate digest data by analyzing user activity
  */
-async function generateDigestData(supabase: any, userId: string) {
+async function generateDigestData(supabase: SupabaseClient, userId: string): Promise<DigestData> {
   // Fetch overnight discoveries (searches, matches)
   const { data: recentSearches } = await supabase
     .from('saved_businesses')
@@ -175,21 +214,21 @@ async function generateDigestData(supabase: any, userId: string) {
     .limit(10)
 
   // Build digest structure
-  const digestData = {
-    overnight_discoveries: (recentSearches || []).map((search: any) => ({
+  const digestData: DigestData = {
+    overnight_discoveries: (recentSearches || []).map((search: SavedBusiness) => ({
       type: 'opportunity',
       title: `New business matches found`,
       description: 'Companies matching your search criteria',
       action_url: `/business/${search.business_id}`,
       priority: 'medium'
     })),
-    urgent_alerts: (staleLeads || []).slice(0, 3).map((lead: any) => ({
+    urgent_alerts: (staleLeads || []).slice(0, 3).map((lead: SavedBusiness) => ({
       type: 'follow_up',
       title: `Lead needs follow-up`,
       company_ids: [lead.business_id],
       days_since_contact: Math.floor((Date.now() - new Date(lead.updated_at).getTime()) / (24 * 60 * 60 * 1000))
     })),
-    completed_work: (completedReports || []).map((report: any) => ({
+    completed_work: (completedReports || []).map((report: ResearchReport) => ({
       type: 'research_report',
       title: `Research completed: ${report.company_name}`,
       report_ids: [report.id]
@@ -209,7 +248,7 @@ async function generateDigestData(supabase: any, userId: string) {
 /**
  * Calculate priority score based on digest content
  */
-function calculatePriorityScore(digestData: any): number {
+function calculatePriorityScore(digestData: DigestData): number {
   let score = 5 // Base score
 
   // Increase for urgent alerts

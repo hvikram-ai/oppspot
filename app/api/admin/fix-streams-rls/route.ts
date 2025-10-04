@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
  * Apply the RLS fix migration for streams table
  * This temporarily disables RLS to allow stream operations
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Fix Streams RLS] Error:', error)
     return NextResponse.json(
       {
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
  * GET /api/admin/fix-streams-rls
  * Check current RLS status for streams table
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
         : 'RLS appears to be working correctly.'
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       { error: 'Failed to check RLS status', message: error.message },
       { status: 500 }

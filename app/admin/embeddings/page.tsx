@@ -85,8 +85,8 @@ export default function EmbeddingsAdminPage() {
 
       // Reload stats
       await loadStats()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to generate embeddings')
     } finally {
       setIsGenerating(false)
     }
@@ -151,7 +151,7 @@ export default function EmbeddingsAdminPage() {
         <CardHeader>
           <CardTitle>Generate Embeddings</CardTitle>
           <CardDescription>
-            Generate vector embeddings for companies that don't have them yet
+            Generate vector embeddings for companies that don&apos;t have them yet
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -268,7 +268,7 @@ export default function EmbeddingsAdminPage() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            • Embeddings are generated using OpenAI's text-embedding-3-small model (1536 dimensions)
+            • Embeddings are generated using OpenAI&apos;s text-embedding-3-small model (1536 dimensions)
           </p>
           <p>
             • Cost: $0.02 per 1 million tokens (~$0.00002 per company)

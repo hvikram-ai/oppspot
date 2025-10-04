@@ -10,7 +10,7 @@ import { getResearchGPTService } from '@/lib/research-gpt/research-gpt-service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { companyId: string } }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
     // Get authenticated user
@@ -24,7 +24,7 @@ export async function GET(
       );
     }
 
-    const reportId = params.companyId;
+    const { companyId: reportId } = await params;
 
     // Get progress
     const service = getResearchGPTService();

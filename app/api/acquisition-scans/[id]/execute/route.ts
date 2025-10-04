@@ -31,9 +31,9 @@ export async function POST(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single()
+      .single() as { data: Scan | null; error: unknown }
 
-    if (fetchError) {
+    if (fetchError || !scan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }

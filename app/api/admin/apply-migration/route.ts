@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
           statement: statement.substring(0, 100),
           status: 'queued'
         })
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`[Migration] Error executing statement:`, error)
         results.push({
           statement: statement.substring(0, 100),
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       url: `${supabaseUrl.replace('https://', 'https://supabase.com/dashboard/project/')}/sql/new`
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Migration] Error:', error)
     return NextResponse.json(
       { error: error.message },

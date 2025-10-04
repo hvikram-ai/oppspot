@@ -66,7 +66,7 @@ export const LazyRecentActivity = dynamic(
 
 // Map components (heavy - only load when visible)
 export const LazyMapView = dynamic(
-  () => import('@/components/map/map-view'),
+  () => import('@/components/map/map-view').then(mod => ({ default: mod.MapView })),
   {
     loading: () => (
       <div className="w-full h-[600px] bg-muted animate-pulse flex items-center justify-center">

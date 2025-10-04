@@ -453,7 +453,7 @@ Based on this research, provide a detailed outreach strategy in the following JS
     input: RecommendationInput
   ): ConfidenceLevel {
     let score = 0;
-    let maxScore = 10;
+    const maxScore = 10;
 
     // Data quality
     if (input.signals.all_signals.length >= 5) score += 2;

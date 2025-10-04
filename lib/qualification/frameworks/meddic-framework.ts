@@ -617,7 +617,7 @@ export class MEDDICFramework {
   /**
    * Map qualification to database format
    */
-  private mapToDatabase(qualification: MEDDICQualification): any {
+  private mapToDatabase(qualification: MEDDICQualification): Record<string, unknown> {
     return {
       lead_id: qualification.lead_id,
       company_id: qualification.company_id,
@@ -644,7 +644,7 @@ export class MEDDICFramework {
   /**
    * Map from database format to qualification
    */
-  private mapFromDatabase(data: any): MEDDICQualification {
+  private mapFromDatabase(data: Record<string, unknown>): MEDDICQualification {
     return {
       id: data.id,
       lead_id: data.lead_id,

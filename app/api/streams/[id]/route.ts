@@ -26,7 +26,7 @@ export async function GET(
     const result = await StreamService.getStreamDetail(id, user.id)
 
     return NextResponse.json(result)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching stream:', error)
 
     if (error.message === 'Access denied') {
@@ -58,7 +58,7 @@ export async function PATCH(
     const stream = await StreamService.updateStream(id, user.id, body)
 
     return NextResponse.json(stream)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating stream:', error)
 
     if (error.message === 'Insufficient permissions') {
@@ -99,7 +99,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting stream:', error)
 
     if (error.message === 'Insufficient permissions') {

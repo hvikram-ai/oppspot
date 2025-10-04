@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
           : 0
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Semantic Search] Error:', error)
 
     if (error instanceof z.ZodError) {

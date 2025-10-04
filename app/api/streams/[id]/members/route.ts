@@ -42,7 +42,7 @@ export async function POST(
     const member = await StreamService.addMember(streamId, user.id, body)
 
     return NextResponse.json(member, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error adding member:', error)
 
     if (error.message === 'Insufficient permissions') {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * GET /api/dashboard/metrics
@@ -113,7 +114,7 @@ function getPeriodStart(from: Date, period: string): Date {
   return date
 }
 
-async function calculateTimeSaved(supabase: any, userId: string, start: Date, end: Date): Promise<number> {
+async function calculateTimeSaved(supabase: SupabaseClient, userId: string, start: Date, end: Date): Promise<number> {
   // Estimate: Each research report saves ~2 hours
   const { count } = await supabase
     .from('research_reports')
@@ -125,7 +126,7 @@ async function calculateTimeSaved(supabase: any, userId: string, start: Date, en
   return (count || 0) * 2
 }
 
-async function calculatePipelineValue(supabase: any, userId: string, start: Date, end: Date): Promise<number> {
+async function calculatePipelineValue(supabase: SupabaseClient, userId: string, start: Date, end: Date): Promise<number> {
   // Estimate: Count saved businesses with estimated value
   const { count } = await supabase
     .from('saved_businesses')
@@ -138,7 +139,7 @@ async function calculatePipelineValue(supabase: any, userId: string, start: Date
   return (count || 0) * 5000
 }
 
-async function getActiveLeads(supabase: any, userId: string): Promise<number> {
+async function getActiveLeads(supabase: SupabaseClient, userId: string): Promise<number> {
   const { count } = await supabase
     .from('saved_businesses')
     .select('*', { count: 'exact', head: true })
@@ -148,7 +149,7 @@ async function getActiveLeads(supabase: any, userId: string): Promise<number> {
   return count || 0
 }
 
-async function getResearchCredits(supabase: any, userId: string): Promise<number> {
+async function getResearchCredits(supabase: SupabaseClient, userId: string): Promise<number> {
   // Get user's research quota (100 per month)
   const monthStart = new Date()
   monthStart.setDate(1)
@@ -164,7 +165,7 @@ async function getResearchCredits(supabase: any, userId: string): Promise<number
   return Math.max(0, totalCredits - (used || 0))
 }
 
-async function getSearchCount(supabase: any, userId: string, start: Date, end: Date): Promise<number> {
+async function getSearchCount(supabase: SupabaseClient, userId: string, start: Date, end: Date): Promise<number> {
   // Count saved businesses as proxy for searches
   const { count } = await supabase
     .from('saved_businesses')
@@ -176,7 +177,7 @@ async function getSearchCount(supabase: any, userId: string, start: Date, end: D
   return count || 0
 }
 
-async function getConversionRate(supabase: any, userId: string, start: Date, end: Date): Promise<number> {
+async function getConversionRate(supabase: SupabaseClient, userId: string, start: Date, end: Date): Promise<number> {
   // Simplified conversion calculation
   const { count: total } = await supabase
     .from('saved_businesses')

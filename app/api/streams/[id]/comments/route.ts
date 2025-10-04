@@ -34,7 +34,7 @@ export async function POST(
     const comment = await StreamService.addComment(streamId, user.id, body)
 
     return NextResponse.json(comment, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating comment:', error)
 
     if (error.message === 'Access denied') {

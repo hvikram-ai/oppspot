@@ -45,7 +45,7 @@ export async function POST(
       message: 'Workflow execution started',
       streamId
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Workflow Execute] Error:', error)
     return NextResponse.json(
       { error: error.message },

@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         processed += companies.length
 
         console.log(`[Generate Embeddings] Batch ${i / batchSize + 1}: Processed ${companies.length} companies`)
-      } catch (error: any) {
+      } catch (error: unknown) {
         failed += batch.length
         errors.push(`Batch ${i / batchSize + 1}: ${error.message}`)
         console.error(`[Generate Embeddings] Batch error:`, error)
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
       stats
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Generate Embeddings] Error:', error)
 
     if (error instanceof z.ZodError) {
@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
       stats,
       message: `${stats.withEmbeddings} of ${stats.total} companies have embeddings (${stats.percentage.toFixed(1)}%)`
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Embedding Stats] Error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch stats' },

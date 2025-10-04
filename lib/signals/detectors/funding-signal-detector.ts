@@ -12,6 +12,43 @@ import {
   RecommendedAction
 } from '../types/buying-signals';
 
+// Funding round data interface
+export interface FundingRoundData {
+  round_type: RoundType
+  amount: number
+  currency?: string
+  valuation?: number
+  investors?: Investor[]
+  lead_investor?: string
+  announcement_date?: Date
+  closing_date?: Date
+  source: string
+  source_url?: string
+  source_reliability?: 'verified' | 'high' | 'medium' | 'low'
+  use_of_funds?: string[]
+  growth_stage?: GrowthStage
+}
+
+// Company data interface
+export interface CompanyData {
+  id: string
+  name: string
+  employee_count?: string
+  industry?: string
+  revenue?: string
+  growth_rate?: 'high' | 'medium' | 'low'
+  [key: string]: unknown
+}
+
+// Funding insights interface
+export interface FundingInsights {
+  investment_focus: string[]
+  expected_initiatives: string[]
+  buyer_readiness_score: number
+  competitive_window: number
+  likely_tech_investments: string[]
+}
+
 export class FundingSignalDetector {
   private static instance: FundingSignalDetector;
 
@@ -24,7 +61,7 @@ export class FundingSignalDetector {
     return this.instance;
   }
 
-  async detectFundingRound(companyId: string, fundingData: any): Promise<FundingSignal | null> {
+  async detectFundingRound(companyId: string, fundingData: FundingRoundData): Promise<FundingSignal | null> {
     const supabase = await createClient();
 
     try {
@@ -155,7 +192,7 @@ export class FundingSignalDetector {
     }
   }
 
-  private calculateSignalStrength(fundingData: any): SignalStrength {
+  private calculateSignalStrength(fundingData: FundingRoundData): SignalStrength {
     const amount = fundingData.amount || 0;
     const roundType = fundingData.round_type;
 
@@ -171,7 +208,7 @@ export class FundingSignalDetector {
     }
   }
 
-  private calculateBuyingProbability(fundingData: any, company: any): number {
+  private calculateBuyingProbability(fundingData: FundingRoundData, company: CompanyData): number {
     let probability = 50; // Base probability
 
     // Increase based on round size
@@ -199,7 +236,7 @@ export class FundingSignalDetector {
     return Math.min(100, probability);
   }
 
-  private generateFundingInsights(fundingData: any, company: any) {
+  private generateFundingInsights(fundingData: FundingRoundData, company: CompanyData): FundingInsights {
     const amount = fundingData.amount || 0;
     const roundType = fundingData.round_type;
 
@@ -237,7 +274,7 @@ export class FundingSignalDetector {
     return insights;
   }
 
-  private estimateBudgetAvailability(fundingData: any): BudgetEstimate {
+  private estimateBudgetAvailability(fundingData: FundingRoundData): BudgetEstimate {
     const amount = fundingData.amount || 0;
 
     // Estimate 20-30% of funding for technology/vendors
@@ -259,7 +296,7 @@ export class FundingSignalDetector {
     };
   }
 
-  private generateRecommendations(fundingData: any, insights: any): RecommendedAction[] {
+  private generateRecommendations(fundingData: FundingRoundData, insights: FundingInsights): RecommendedAction[] {
     const recommendations: RecommendedAction[] = [];
 
     // Immediate outreach for large rounds
@@ -295,7 +332,7 @@ export class FundingSignalDetector {
     return recommendations;
   }
 
-  private calculateEngagementWindow(fundingData: any) {
+  private calculateEngagementWindow(fundingData: FundingRoundData) {
     const announcementDate = new Date(fundingData.announcement_date || Date.now());
 
     // Optimal engagement is 2-8 weeks after funding announcement
@@ -306,7 +343,7 @@ export class FundingSignalDetector {
     };
   }
 
-  private calculateConfidenceScore(fundingData: any): number {
+  private calculateConfidenceScore(fundingData: FundingRoundData): number {
     let confidence = 60; // Base confidence
 
     // Increase confidence based on data completeness
@@ -318,7 +355,7 @@ export class FundingSignalDetector {
     return Math.min(100, confidence);
   }
 
-  private assessImpact(fundingData: any, company: any): ImpactAssessment {
+  private assessImpact(fundingData: FundingRoundData, company: CompanyData): ImpactAssessment {
     const amount = fundingData.amount || 0;
 
     return {
@@ -330,7 +367,7 @@ export class FundingSignalDetector {
     };
   }
 
-  private estimateBurnRate(fundingData: any, company: any): number {
+  private estimateBurnRate(fundingData: FundingRoundData, company: CompanyData): number {
     // Simple burn rate estimation based on funding amount and stage
     const amount = fundingData.amount || 0;
     const monthlyBurn = amount / 18; // Assume 18 months runway target
@@ -338,7 +375,7 @@ export class FundingSignalDetector {
     return monthlyBurn;
   }
 
-  private calculateRunway(fundingData: any, company: any): number {
+  private calculateRunway(fundingData: FundingRoundData, company: CompanyData): number {
     const amount = fundingData.amount || 0;
     const burnRate = this.estimateBurnRate(fundingData, company);
 
@@ -364,7 +401,7 @@ export class FundingSignalDetector {
     }
   }
 
-  private async checkDuplicateFunding(companyId: string, fundingData: any): Promise<boolean> {
+  private async checkDuplicateFunding(companyId: string, fundingData: FundingRoundData): Promise<boolean> {
     const supabase = await createClient();
 
     // Check for similar funding signals in the last 30 days

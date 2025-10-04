@@ -26,12 +26,50 @@ export interface DataQuery {
   orderDirection?: 'asc' | 'desc'
 }
 
+// Transformation config interfaces
+export interface MapTransformationConfig {
+  mapper?: <T>(item: T) => T
+}
+
+export interface FilterTransformationConfig {
+  predicate?: <T>(item: T) => boolean
+}
+
+export interface AggregateTransformationConfig {
+  type?: 'count' | 'sum' | 'avg' | 'group'
+  field?: string
+  groupBy?: string
+}
+
+export interface JoinTransformationConfig {
+  leftKey?: string
+  rightKey?: string
+  type?: 'inner' | 'left' | 'right' | 'outer'
+}
+
+export interface EnrichTransformationConfig {
+  modelId: string
+  enrichField?: string
+  inputFields?: string[]
+}
+
+export type TransformationConfig =
+  | MapTransformationConfig
+  | FilterTransformationConfig
+  | AggregateTransformationConfig
+  | JoinTransformationConfig
+  | EnrichTransformationConfig
+
 export interface DataTransformation {
   id: string
   name: string
   type: 'map' | 'filter' | 'aggregate' | 'join' | 'enrich'
-  config: Record<string, unknown>
+  config: TransformationConfig
 }
+
+// Type for generic data items
+export type DataItem = Record<string, unknown>
+export type DataSet = DataItem[]
 
 export interface DataPipeline {
   id: string
@@ -187,7 +225,7 @@ export class UnifiedDataLayer {
   /**
    * Query database source (Supabase)
    */
-  private async queryDatabase(source: DataSource, query: DataQuery): Promise<any> {
+  private async queryDatabase(source: DataSource, query: DataQuery): Promise<DataSet> {
     const supabase = await createClient()
 
     let dbQuery = supabase.from(query.entity).select(
@@ -234,7 +272,7 @@ export class UnifiedDataLayer {
   /**
    * Query API source
    */
-  private async queryAPI(source: DataSource, query: DataQuery): Promise<any> {
+  private async queryAPI(source: DataSource, query: DataQuery): Promise<DataSet | DataItem> {
     const baseUrl = source.config.baseUrl
     const apiKey = source.config.apiKey
 
@@ -257,7 +295,7 @@ export class UnifiedDataLayer {
     baseUrl: string,
     apiKey: string,
     query: DataQuery
-  ): Promise<any> {
+  ): Promise<DataSet | DataItem> {
     const endpoint = query.entity === 'search' ? '/search/companies' : `/company/${query.entity}`
     const url = new URL(`${baseUrl}${endpoint}`)
 
@@ -288,7 +326,7 @@ export class UnifiedDataLayer {
     baseUrl: string,
     apiKey: string,
     query: DataQuery
-  ): Promise<any> {
+  ): Promise<DataSet> {
     const endpoint = query.entity || 'everything'
     const url = new URL(`${baseUrl}/${endpoint}`)
 
@@ -318,7 +356,7 @@ export class UnifiedDataLayer {
   async aggregate(
     queries: DataQuery[],
     transformation?: DataTransformation
-  ): Promise<any> {
+  ): Promise<DataSet | DataItem | number | Record<string, DataSet>> {
     const results = await Promise.all(
       queries.map(query => this.query(query))
     )
@@ -333,7 +371,7 @@ export class UnifiedDataLayer {
   /**
    * Apply transformation to data
    */
-  private applyTransformation(data: any, transformation: DataTransformation): any {
+  private applyTransformation(data: DataSet | DataItem | number, transformation: DataTransformation): DataSet | DataItem | number {
     switch (transformation.type) {
       case 'map':
         return this.mapTransformation(data, transformation.config)
@@ -358,24 +396,25 @@ export class UnifiedDataLayer {
   /**
    * Map transformation
    */
-  private mapTransformation(data: any[], config: any): any[] {
-    const mapper = config.mapper || ((item: any) => item)
-    return data.flat().map(mapper)
+  private mapTransformation(data: DataSet | DataSet[], config: MapTransformationConfig): DataSet {
+    const mapper = config.mapper || ((item: DataItem) => item)
+    return (Array.isArray(data[0]) ? data.flat() : data as DataSet).map(mapper as (item: DataItem) => DataItem)
   }
 
   /**
    * Filter transformation
    */
-  private filterTransformation(data: any[], config: any): any[] {
+  private filterTransformation(data: DataSet | DataSet[], config: FilterTransformationConfig): DataSet {
     const predicate = config.predicate || (() => true)
-    return data.flat().filter(predicate)
+    const flatData = Array.isArray(data[0]) ? data.flat() : data as DataSet
+    return flatData.filter(predicate as (item: DataItem) => boolean)
   }
 
   /**
    * Aggregate transformation
    */
-  private aggregateTransformation(data: any[], config: any): any {
-    const flat = data.flat()
+  private aggregateTransformation(data: DataSet | DataSet[], config: AggregateTransformationConfig): number | Record<string, DataSet> | DataSet {
+    const flat = Array.isArray(data[0]) ? data.flat() as DataSet : data as DataSet
     const aggregation = config.type || 'count'
 
     switch (aggregation) {
@@ -383,15 +422,15 @@ export class UnifiedDataLayer {
         return flat.length
 
       case 'sum':
-        return flat.reduce((sum, item) => sum + (item[config.field] || 0), 0)
+        return flat.reduce((sum, item) => sum + (Number(item[config.field || '']) || 0), 0)
 
       case 'avg':
-        const sum = flat.reduce((s, item) => s + (item[config.field] || 0), 0)
+        const sum = flat.reduce((s, item) => s + (Number(item[config.field || '']) || 0), 0)
         return flat.length > 0 ? sum / flat.length : 0
 
       case 'group':
-        return flat.reduce((groups, item) => {
-          const key = item[config.groupBy]
+        return flat.reduce((groups: Record<string, DataSet>, item) => {
+          const key = String(item[config.groupBy || ''])
           groups[key] = groups[key] || []
           groups[key].push(item)
           return groups
@@ -405,7 +444,7 @@ export class UnifiedDataLayer {
   /**
    * Join transformation
    */
-  private joinTransformation(data: any[], config: any): any[] {
+  private joinTransformation(data: DataSet[], config: JoinTransformationConfig): DataSet {
     if (data.length < 2) return data[0] || []
 
     const [left, right] = data
@@ -413,10 +452,10 @@ export class UnifiedDataLayer {
     const rightKey = config.rightKey || 'id'
     const joinType = config.type || 'inner'
 
-    const joined: any[] = []
+    const joined: DataSet = []
 
     for (const leftItem of left) {
-      const rightItem = right.find((r: any) => r[rightKey] === leftItem[leftKey])
+      const rightItem = right.find((r: DataItem) => r[rightKey] === leftItem[leftKey])
 
       if (rightItem || joinType === 'left') {
         joined.push({
@@ -428,7 +467,7 @@ export class UnifiedDataLayer {
 
     if (joinType === 'right' || joinType === 'outer') {
       for (const rightItem of right) {
-        if (!left.find((l: any) => l[leftKey] === rightItem[rightKey])) {
+        if (!left.find((l: DataItem) => l[leftKey] === rightItem[rightKey])) {
           joined.push(rightItem)
         }
       }
@@ -440,7 +479,7 @@ export class UnifiedDataLayer {
   /**
    * Enrich transformation using ML models
    */
-  private async enrichTransformation(data: any[], config: any): Promise<any[]> {
+  private async enrichTransformation(data: DataSet | DataSet[], config: EnrichTransformationConfig): Promise<DataSet> {
     const modelId = config.modelId
     const enrichField = config.enrichField || 'enrichment'
 
@@ -472,7 +511,7 @@ export class UnifiedDataLayer {
   /**
    * Execute a data pipeline
    */
-  async executePipeline(pipelineId: string): Promise<any> {
+  async executePipeline(pipelineId: string): Promise<DataSet | DataItem | number | Record<string, DataSet>> {
     const pipeline = this.pipelines.get(pipelineId)
     if (!pipeline) {
       throw new Error(`Pipeline ${pipelineId} not found`)
@@ -506,7 +545,7 @@ export class UnifiedDataLayer {
   /**
    * Save data to destination
    */
-  private async saveToDestination(data: any, destination: string): Promise<void> {
+  private async saveToDestination(data: DataSet | DataItem | number | Record<string, DataSet>, destination: string): Promise<void> {
     const [source, entity] = destination.split('.')
 
     if (source === 'supabase-primary') {
@@ -520,7 +559,7 @@ export class UnifiedDataLayer {
   /**
    * Get unified company profile from multiple sources
    */
-  async getUnifiedCompanyProfile(companyId: string): Promise<any> {
+  async getUnifiedCompanyProfile(companyId: string): Promise<DataItem> {
     // Aggregate data from multiple sources
     const [
       businessData,
@@ -579,7 +618,7 @@ export class UnifiedDataLayer {
     return `${query.source}:${query.entity}:${JSON.stringify(query.filters || {})}`
   }
 
-  private getFromCache(key: string): any {
+  private getFromCache(key: string): unknown {
     const cached = this.cache.get(key)
     if (!cached) return null
 
@@ -591,7 +630,7 @@ export class UnifiedDataLayer {
     return cached.data
   }
 
-  private setCache(key: string, data: any): void {
+  private setCache(key: string, data: unknown): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now()

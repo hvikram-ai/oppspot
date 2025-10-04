@@ -308,7 +308,7 @@ export class ResearchRepository {
     const supabase = await createClient();
 
     // Try to get existing quota
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from('user_research_quotas')
       .select('*')
       .eq('user_id', userId)

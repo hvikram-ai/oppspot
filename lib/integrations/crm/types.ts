@@ -39,8 +39,8 @@ export interface CRMIntegration {
   refreshToken?: string;
   tokenExpiresAt?: Date;
   instanceUrl?: string;
-  config: Record<string, any>;
-  fieldMappings: Record<string, any>;
+  config: Record<string, unknown>;
+  fieldMappings: Record<string, unknown>;
   syncDirection: SyncDirection;
   syncFrequency: SyncFrequency;
   autoEnrich: boolean;
@@ -77,7 +77,7 @@ export interface Contact {
     postalCode?: string;
     country?: string;
   };
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
 }
 
 export interface Company {
@@ -102,7 +102,7 @@ export interface Company {
     twitter?: string;
     facebook?: string;
   };
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
 }
 
 export interface Deal {
@@ -116,7 +116,7 @@ export interface Deal {
   companyId?: string;
   ownerId?: string;
   description?: string;
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
 }
 
 export interface Task {
@@ -130,7 +130,7 @@ export interface Task {
     type: 'contact' | 'company' | 'deal';
     id: string;
   };
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
 }
 
 export interface Note {
@@ -152,7 +152,7 @@ export interface CRMContact {
   firstName?: string;
   lastName?: string;
   phone?: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -161,7 +161,7 @@ export interface CRMCompany {
   id: string;
   name: string;
   domain?: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -171,7 +171,7 @@ export interface CRMDeal {
   name: string;
   amount?: number;
   stage?: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -180,7 +180,7 @@ export interface CRMTask {
   id: string;
   title: string;
   dueDate?: Date;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -236,7 +236,7 @@ export interface SyncLog {
   oppspotEntityId?: string;
   oppspotEntityType?: string;
   crmEntityId?: string;
-  payload?: Record<string, any>;
+  payload?: Record<string, unknown>;
   enrichments?: EnrichmentResult;
   enrichmentTimeMs?: number;
   status: SyncStatus;
@@ -259,12 +259,12 @@ export interface SyncJob {
   integrationId: string;
   jobType: 'sync_contact' | 'sync_company' | 'sync_deal' | 'enrich_and_sync' | 'bulk_sync';
   priority: number; // 1-10
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   status: QueueStatus;
   attempts: number;
   maxAttempts: number;
   errorMessage?: string;
-  result?: Record<string, any>;
+  result?: Record<string, unknown>;
   scheduledFor: Date;
   startedAt?: Date;
   completedAt?: Date;
@@ -329,7 +329,7 @@ export interface WebhookPayload {
   objectType: EntityType;
   objectId: string;
   occurredAt: Date;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 // =====================================================
@@ -341,7 +341,7 @@ export class CRMIntegrationError extends Error {
     message: string,
     public code?: string,
     public statusCode?: number,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'CRMIntegrationError';
@@ -349,7 +349,7 @@ export class CRMIntegrationError extends Error {
 }
 
 export class CRMAuthenticationError extends CRMIntegrationError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, 'AUTH_ERROR', 401, details);
     this.name = 'CRMAuthenticationError';
   }
@@ -359,7 +359,7 @@ export class CRMRateLimitError extends CRMIntegrationError {
   constructor(
     message: string,
     public retryAfter?: number,
-    details?: any
+    details?: unknown
   ) {
     super(message, 'RATE_LIMIT', 429, details);
     this.name = 'CRMRateLimitError';
@@ -367,7 +367,7 @@ export class CRMRateLimitError extends CRMIntegrationError {
 }
 
 export class CRMValidationError extends CRMIntegrationError {
-  constructor(message: string, public fields?: string[], details?: any) {
+  constructor(message: string, public fields?: string[], details?: unknown) {
     super(message, 'VALIDATION_ERROR', 400, details);
     this.name = 'CRMValidationError';
   }

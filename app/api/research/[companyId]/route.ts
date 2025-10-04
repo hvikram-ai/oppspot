@@ -25,7 +25,7 @@ const ResearchRequestSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { companyId: string } }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
     // Get authenticated user
@@ -39,7 +39,7 @@ export async function POST(
       );
     }
 
-    const companyId = params.companyId;
+    const { companyId } = await params;
 
     // Parse query params
     const searchParams = request.nextUrl.searchParams;
@@ -148,7 +148,7 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { companyId: string } }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
     // Get authenticated user
@@ -162,7 +162,7 @@ export async function GET(
       );
     }
 
-    const reportId = params.companyId;
+    const { companyId: reportId } = await params;
 
     // Get complete report with all sections
     const service = getResearchGPTService();

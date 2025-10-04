@@ -605,7 +605,7 @@ export class BANTFramework {
   /**
    * Map qualification to database format
    */
-  private mapToDatabase(qualification: BANTQualification): any {
+  private mapToDatabase(qualification: BANTQualification): Record<string, unknown> {
     return {
       lead_id: qualification.lead_id,
       company_id: qualification.company_id,
@@ -627,7 +627,7 @@ export class BANTFramework {
   /**
    * Map from database format to qualification
    */
-  private mapFromDatabase(data: any): BANTQualification {
+  private mapFromDatabase(data: Record<string, unknown>): BANTQualification {
     return {
       id: data.id,
       lead_id: data.lead_id,

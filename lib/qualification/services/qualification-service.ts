@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { BANTFramework } from '../frameworks/bant-framework'
 import { MEDDICFramework } from '../frameworks/meddic-framework'
 import { LeadRoutingEngine } from '../routing/lead-routing-engine'
@@ -13,8 +14,120 @@ import type {
   AdvancedAlertConfig
 } from '@/types/qualification'
 
+// Qualification input data
+export interface QualificationInput {
+  budget?: number
+  authority?: string[]
+  need?: string
+  timeline?: string
+  [key: string]: unknown
+}
+
+// Alert result
+export interface QualificationAlert {
+  id?: string
+  leadId: string
+  configId: string
+  message: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  triggeredAt: Date
+  resolved?: boolean
+}
+
+// Bulk qualification lead
+export interface BulkQualificationLead {
+  leadId: string
+  companyId: string
+  data: QualificationInput
+}
+
+// Bulk qualification result
+export interface BulkQualificationResult {
+  leadId: string
+  success: boolean
+  qualification?: BANTQualification | MEDDICQualification | null
+  assignment?: LeadAssignment | null
+  alerts?: QualificationAlert[]
+  error?: string
+}
+
+// Requalification criteria
+export interface RequalificationCriteria {
+  minScore?: number
+  maxScore?: number
+  framework?: 'BANT' | 'MEDDIC'
+  status?: string
+  dateFrom?: Date
+  dateTo?: Date
+}
+
+// Requalification result
+export interface RequalificationResult {
+  requalifiedCount: number
+  successCount: number
+  failedCount: number
+  results: Array<{
+    leadId: string
+    success: boolean
+    newScore?: number
+    error?: string
+  }>
+}
+
+// Export filters
+export interface ExportFilters {
+  framework?: 'BANT' | 'MEDDIC'
+  minScore?: number
+  maxScore?: number
+  dateFrom?: Date
+  dateTo?: Date
+}
+
+// Qualification result
+export interface QualificationResult {
+  qualification: BANTQualification | MEDDICQualification | null
+  assignment: LeadAssignment | null
+  alerts: QualificationAlert[]
+  checklist: QualificationChecklist | null
+}
+
+// Dashboard data
+export interface QualificationDashboard {
+  bantQualifications: BANTQualification[]
+  meddicQualifications: MEDDICQualification[]
+  assignments: LeadAssignment[]
+  alerts: QualificationAlert[]
+  checklists: QualificationChecklist[]
+  analytics: {
+    totalLeads: number
+    qualifiedLeads: number
+    disqualifiedLeads: number
+    averageScore: number
+    conversionRate: number
+  }
+}
+
+// Qualification history
+export interface QualificationHistory {
+  bant: BANTQualification[]
+  meddic: MEDDICQualification[]
+  assignments: LeadAssignment[]
+  alerts: QualificationAlert[]
+  checklists: QualificationChecklist[]
+  recycling: Array<Record<string, unknown>>
+}
+
+// Qualification recommendation
+export interface QualificationRecommendation {
+  type: 'action' | 'insight' | 'warning'
+  title: string
+  description: string
+  priority: 'low' | 'medium' | 'high'
+  actionItems: string[]
+}
+
 export class QualificationService {
-  private supabase: any
+  private supabase: SupabaseClient | null = null
   private bantFramework: BANTFramework
   private meddicFramework: MEDDICFramework
   private routingEngine: LeadRoutingEngine
@@ -45,17 +158,12 @@ export class QualificationService {
     leadId: string,
     companyId: string,
     framework: 'BANT' | 'MEDDIC' | 'AUTO',
-    data: any
-  ): Promise<{
-    qualification: BANTQualification | MEDDICQualification | null
-    assignment: LeadAssignment | null
-    alerts: any[]
-    checklist: QualificationChecklist | null
-  }> {
+    data: QualificationInput
+  ): Promise<QualificationResult> {
     try {
       let qualification = null
       let assignment = null
-      let alerts: any[] = []
+      let alerts: QualificationAlert[] = []
       let checklist = null
 
       // Determine which framework to use
@@ -83,15 +191,18 @@ export class QualificationService {
         alerts = await this.checkQualificationAlerts(leadId, qualification)
 
         // Route the lead if qualified
-        if (qualification.qualification_status === 'qualified' ||
-            (qualification as any).forecast_category === 'commit') {
+        const isMEDDIC = 'forecast_category' in qualification
+        const isQualified = qualification.qualification_status === 'qualified' ||
+                           (isMEDDIC && (qualification as MEDDICQualification).forecast_category === 'commit')
+
+        if (isQualified) {
           assignment = await this.routingEngine.routeLead({
             id: leadId,
             company_id: companyId,
             score: qualification.overall_score,
             framework,
             qualification_status: qualification.qualification_status ||
-                                (qualification as any).forecast_category
+                                (isMEDDIC ? (qualification as MEDDICQualification).forecast_category : undefined)
           })
         }
 
@@ -103,8 +214,11 @@ export class QualificationService {
         )
 
         // Check if lead needs recycling
-        if (qualification.qualification_status === 'disqualified' ||
-            (qualification as any).forecast_category === 'omitted') {
+        const needsRecycling = qualification.qualification_status === 'disqualified' ||
+                              ('forecast_category' in qualification &&
+                               (qualification as MEDDICQualification).forecast_category === 'omitted')
+
+        if (needsRecycling) {
           await this.recyclingEngine.evaluateLead(leadId, qualification)
         }
       }
@@ -188,9 +302,9 @@ export class QualificationService {
   private async checkQualificationAlerts(
     leadId: string,
     qualification: BANTQualification | MEDDICQualification
-  ): Promise<any[]> {
+  ): Promise<QualificationAlert[]> {
     try {
-      const alerts: any[] = []
+      const alerts: QualificationAlert[] = []
       const configs = await this.alertSystem.getAlertConfigs()
 
       for (const config of configs) {
@@ -222,7 +336,7 @@ export class QualificationService {
   /**
    * Get qualification dashboard data
    */
-  async getQualificationDashboard(orgId?: string): Promise<any> {
+  async getQualificationDashboard(orgId?: string): Promise<QualificationDashboard> {
     try {
       const supabase = await this.getSupabase()
 
@@ -293,7 +407,7 @@ export class QualificationService {
   /**
    * Get qualification history for a lead
    */
-  async getQualificationHistory(leadId: string): Promise<any> {
+  async getQualificationHistory(leadId: string): Promise<QualificationHistory> {
     try {
       const supabase = await this.getSupabase()
 
@@ -342,9 +456,9 @@ export class QualificationService {
    * Bulk qualify multiple leads
    */
   async bulkQualifyLeads(
-    leads: Array<{ leadId: string; companyId: string; data: any }>,
+    leads: BulkQualificationLead[],
     framework: 'BANT' | 'MEDDIC' | 'AUTO'
-  ): Promise<any[]> {
+  ): Promise<BulkQualificationResult[]> {
     const results = []
 
     for (const lead of leads) {
@@ -369,7 +483,7 @@ export class QualificationService {
   /**
    * Re-qualify leads based on new criteria
    */
-  async requalifyLeads(criteria: any): Promise<any> {
+  async requalifyLeads(criteria: RequalificationCriteria): Promise<RequalificationResult> {
     try {
       const supabase = await this.getSupabase()
 
@@ -435,7 +549,7 @@ export class QualificationService {
   /**
    * Get qualification recommendations
    */
-  async getQualificationRecommendations(leadId: string): Promise<any> {
+  async getQualificationRecommendations(leadId: string): Promise<QualificationRecommendation[]> {
     try {
       const history = await this.getQualificationHistory(leadId)
       const recommendations = []
@@ -546,7 +660,7 @@ export class QualificationService {
   /**
    * Export qualification data
    */
-  async exportQualificationData(format: 'csv' | 'json', filters?: any): Promise<any> {
+  async exportQualificationData(format: 'csv' | 'json', filters?: ExportFilters): Promise<string> {
     try {
       const data = await this.getQualificationDashboard()
 
@@ -568,7 +682,7 @@ export class QualificationService {
   /**
    * Convert data to CSV format
    */
-  private convertToCSV(data: any[]): string {
+  private convertToCSV(data: Array<Record<string, unknown>>): string {
     if (!data || data.length === 0) return ''
 
     const headers = Object.keys(data[0])

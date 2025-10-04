@@ -33,7 +33,7 @@ async function getReport(reportId: string, userId: string) {
 export default async function ReportPage({
   params,
 }: {
-  params: { reportId: string };
+  params: Promise<{ reportId: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -42,11 +42,13 @@ export default async function ReportPage({
     redirect('/login');
   }
 
+  const { reportId } = await params;
+
   // Get report from database directly (server-side)
   const { data: report, error: reportError } = await supabase
     .from('research_reports')
     .select('*')
-    .eq('id', params.reportId)
+    .eq('id', reportId)
     .eq('user_id', user.id)
     .single();
 

@@ -7,6 +7,18 @@ import {
   CampaignStep
 } from '../types/qualification';
 
+interface LeadData {
+  id?: string;
+  total_score?: number;
+  last_contact_date?: string;
+  recent_website_visits?: number;
+  email_opens?: number;
+  content_downloads?: number;
+  event_attendance?: boolean;
+  original_assigned_to?: string;
+  assigned_to?: string;
+}
+
 export class LeadRecyclingEngine {
   private static instance: LeadRecyclingEngine;
 
@@ -85,7 +97,7 @@ export class LeadRecyclingEngine {
 
   private async findApplicableRule(
     reason: string,
-    leadData: any,
+    leadData: LeadData,
     companyId: string
   ): Promise<LeadRecyclingRule | null> {
     const supabase = await createClient();
@@ -111,7 +123,7 @@ export class LeadRecyclingEngine {
   private matchesConditions(
     rule: LeadRecyclingRule,
     reason: string,
-    leadData: any
+    leadData: LeadData
   ): boolean {
     const conditions = rule.trigger_conditions;
 
@@ -152,7 +164,7 @@ export class LeadRecyclingEngine {
     return true;
   }
 
-  private hasEngagementSignal(leadData: any, signal: string): boolean {
+  private hasEngagementSignal(leadData: LeadData, signal: string): boolean {
     switch (signal) {
       case 'website_visit':
         return leadData.recent_website_visits > 0;
@@ -170,7 +182,7 @@ export class LeadRecyclingEngine {
   }
 
   private async executeRecycling(
-    leadData: any,
+    leadData: LeadData,
     rule: LeadRecyclingRule | null,
     reason: string
   ) {
@@ -265,7 +277,7 @@ export class LeadRecyclingEngine {
 
   private async selectNurtureCampaign(
     reason: string,
-    leadData: any
+    leadData: LeadData
   ): Promise<NurtureCampaign | null> {
     const supabase = await createClient();
 
@@ -390,7 +402,7 @@ export class LeadRecyclingEngine {
 
   private async determineAssignment(
     strategy: string,
-    leadData: any
+    leadData: LeadData
   ): Promise<string | null> {
     const supabase = await createClient();
 
@@ -467,7 +479,7 @@ export class LeadRecyclingEngine {
     leadId: string,
     companyId: string,
     ruleId: string | undefined,
-    result: any
+    result: Record<string, unknown>
   ) {
     const supabase = await createClient();
 

@@ -1,17 +1,54 @@
-  Migrations (6 files):
-  - /home/vik/oppspot/supabase/migrations/20251001_dashboard_preferences.sql
-  - /home/vik/oppspot/supabase/migrations/20251001_ai_digest.sql
-  - /home/vik/oppspot/supabase/migrations/20251001_priority_queue.sql
-  - /home/vik/oppspot/supabase/migrations/20251001_feature_tracking.sql
-  - /home/vik/oppspot/supabase/migrations/20251001_feature_spotlight.sql
-  - /home/vik/oppspot/supabase/migrations/20251001_triggers_functions.sql
+-----------------------------------
+demo@oppspot.com
+
+Demo123456!
+-----------------------
+
+
+
+  1. Create a Companies House bulk importer (fastest way to get 5M UK companies)
+  2. Build enrichment agents (LinkedIn scraper, website analyzer)
+  3. Set up update workflows (daily/weekly data refresh)
+  4. Add buying signal detection (job postings, funding news)
+
+
+
+------------------------
+
+
+---------------------------
 
 
 
 
 
 
+HV TODO
+20250202_add_organizations_insert_policy.sql
 
+
+  1. Test goal-oriented stream creation - Verify the full wizard flow works
+  2. 
+  (app/api/streams/goal/route.ts:142-206)
+  3.
+
+  Medium Priority
+
+  4. 
+  5. 
+  6. 
+
+  Nice to Have
+
+  7. Re-enable RLS properly - Once everything works, add back proper RLS policies
+  8.
+  9. 
+
+
+
+
+
+https://vercel.com/vikhs-projects/oppspot/logs
 
 
 -------------------
@@ -21,6 +58,15 @@
   2. Semantic stakeholder search: "Find CTOs interested in AI/ML"
   3. Deal matching: "Which deals match this success story?"
   4. Content recommendations: "Relevant case studies for this prospect"
+
+
+
+
+  Would you like me to:
+  1. 
+  2. Integrate these components into the existing stream wizard?
+  3. Or start implementing the agent execution logic?
+
 -----------------
 
 QUICK_START.md 
@@ -36,11 +82,13 @@ research.md
 /home/vik/oppspot/specs/004-command-center-dashboard-redesign/spec.md
 
 
+  Test queries to try:
+  - "Find fintech companies in London"
+  - "Research Revolut"
+  - "Find companies similar to Stripe"
+  - "Which accounts are showing buying signals?"
 
------------------------------------
-demo@oppspot.com
 
-Demo123456!
 
 
 ----------  Technical Debt Cleanup Plan

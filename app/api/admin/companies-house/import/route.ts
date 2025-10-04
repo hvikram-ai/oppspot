@@ -46,10 +46,11 @@ export async function POST(request: NextRequest) {
       progress: currentImport.getProgress()
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[CH Import API] Error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to start import', message: error.message },
+      { error: 'Failed to start import', message },
       { status: 500 }
     )
   }
@@ -87,10 +88,11 @@ export async function GET(request: NextRequest) {
       progress: currentImport.getProgress()
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[CH Import API] Error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to get progress', message: error.message },
+      { error: 'Failed to get progress', message },
       { status: 500 }
     )
   }
@@ -119,10 +121,11 @@ export async function DELETE(request: NextRequest) {
       message: 'Import cancelled'
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[CH Import API] Error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to cancel import', message: error.message },
+      { error: 'Failed to cancel import', message },
       { status: 500 }
     )
   }

@@ -37,7 +37,9 @@
     "ollama:start": "tsx scripts/start-ollama-integration.ts",
     "ollama:interactive": "tsx scripts/start-ollama-integration.ts --interactive",
     "ollama:setup": "tsx scripts/start-ollama-integration.ts --download-models",
-    "ollama:test": "tsx scripts/test-ollama-integration.ts"
+    "ollama:test": "tsx scripts/test-ollama-integration.ts",
+    "import:ch": "tsx scripts/import-companies-house.ts",
+    "import:ch:test": "tsx scripts/import-companies-house.ts --test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

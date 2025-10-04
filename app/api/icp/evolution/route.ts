@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       evolution: evolution || [],
       count: evolution?.length || 0
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ICP Evolution API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch evolution log', message: error.message },

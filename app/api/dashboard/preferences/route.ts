@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
  * Fetches user's dashboard preferences
  * Creates default preferences if they don't exist
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -103,7 +103,7 @@ export async function PUT(request: NextRequest) {
       'show_empty_state_tutorials'
     ]
 
-    const updateData: Record<string, any> = {}
+    const updateData: Record<string, unknown> = {}
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         updateData[field] = body[field]

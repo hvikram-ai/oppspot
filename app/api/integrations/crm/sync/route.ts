@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('SmartSync sync error:', error);
 
     if (error instanceof z.ZodError) {
@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       logs: logs || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get sync logs error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to fetch sync logs' },

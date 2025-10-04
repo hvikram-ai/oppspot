@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
         message: 'CRM integration connected successfully',
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('SmartSync connect error:', error);
 
     if (error instanceof z.ZodError) {
@@ -209,7 +209,7 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({
       integrations: integrations || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('List integrations error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to list integrations' },

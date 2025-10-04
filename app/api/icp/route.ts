@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       profiles: profiles || [],
       count: profiles?.length || 0
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ICP API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch ICP profiles', message: error.message },
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ICP API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to process ICP request', message: error.message },

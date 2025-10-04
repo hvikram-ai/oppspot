@@ -18,6 +18,44 @@ import {
   WebhookConfig,
 } from './types';
 
+// HubSpot API data structures
+export interface HubSpotProperties {
+  [key: string]: unknown
+}
+
+export interface HubSpotContact {
+  id: string
+  properties: HubSpotProperties
+  associations?: unknown
+}
+
+export interface HubSpotCompany {
+  id: string
+  properties: HubSpotProperties
+  associations?: unknown
+}
+
+export interface HubSpotDeal {
+  id: string
+  properties: HubSpotProperties
+  associations?: unknown
+}
+
+export interface HubSpotTask {
+  id: string
+  properties: HubSpotProperties
+}
+
+export interface HubSpotAssociation {
+  id: string
+  type: string
+}
+
+export interface HubSpotFieldOption {
+  value: string
+  label: string
+}
+
 export class HubSpotConnector extends BaseCRMConnector {
   private readonly baseUrl = 'https://api.hubapi.com';
   private readonly apiVersion = 'v3';
@@ -168,7 +206,7 @@ export class HubSpotConnector extends BaseCRMConnector {
         limit: 100,
       });
 
-      return response.data.results.map((result: any) => this.mapHubSpotToContact(result));
+      return response.data.results.map((result: HubSpotContact) => this.mapHubSpotToContact(result));
     } catch (error) {
       throw await this.handleAPIError(error);
     }
@@ -256,7 +294,7 @@ export class HubSpotConnector extends BaseCRMConnector {
         limit: 100,
       });
 
-      return response.data.results.map((result: any) => this.mapHubSpotToCompany(result));
+      return response.data.results.map((result: HubSpotCompany) => this.mapHubSpotToCompany(result));
     } catch (error) {
       throw await this.handleAPIError(error);
     }
@@ -272,7 +310,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     try {
       const properties = this.mapDealToHubSpot(deal);
 
-      const associations: any[] = [];
+      const associations: HubSpotAssociation[] = [];
       if (deal.contactId) {
         associations.push({
           to: { id: deal.contactId },
@@ -350,7 +388,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     try {
       const properties = this.mapTaskToHubSpot(task);
 
-      const associations: any[] = [];
+      const associations: HubSpotAssociation[] = [];
       if (task.relatedTo) {
         const typeMap: Record<string, number> = {
           contact: 204,
@@ -433,7 +471,7 @@ export class HubSpotConnector extends BaseCRMConnector {
         hs_timestamp: new Date().toISOString(),
       };
 
-      const associations: any[] = [];
+      const associations: HubSpotAssociation[] = [];
       if (note.relatedTo) {
         const typeMap: Record<string, number> = {
           contact: 202,
@@ -485,13 +523,13 @@ export class HubSpotConnector extends BaseCRMConnector {
         `/crm/v3/properties/${objectTypeMap[entityType]}`
       );
 
-      return response.data.results.map((prop: any) => ({
+      return response.data.results.map((prop: { name: string; label: string; type: string; description?: string; required?: boolean; options?: HubSpotFieldOption[] }) => ({
         name: prop.name,
         label: prop.label,
         type: this.mapHubSpotFieldType(prop.type),
         description: prop.description,
         required: prop.required || false,
-        options: prop.options?.map((opt: any) => ({
+        options: prop.options?.map((opt: HubSpotFieldOption) => ({
           label: opt.label,
           value: opt.value,
         })),
@@ -556,8 +594,8 @@ export class HubSpotConnector extends BaseCRMConnector {
   // Mapping Functions
   // =====================================================
 
-  private mapContactToHubSpot(contact: Partial<Contact>): Record<string, any> {
-    const properties: Record<string, any> = {};
+  private mapContactToHubSpot(contact: Partial<Contact>): Record<string, unknown> {
+    const properties: Record<string, unknown> = {};
 
     if (contact.email) properties.email = contact.email;
     if (contact.firstName) properties.firstname = contact.firstName;
@@ -584,7 +622,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     return properties;
   }
 
-  private mapHubSpotToContact(data: any): CRMContact {
+  private mapHubSpotToContact(data: HubSpotContact): CRMContact {
     return {
       id: data.id,
       email: data.properties.email,
@@ -597,8 +635,8 @@ export class HubSpotConnector extends BaseCRMConnector {
     };
   }
 
-  private mapCompanyToHubSpot(company: Partial<Company>): Record<string, any> {
-    const properties: Record<string, any> = {};
+  private mapCompanyToHubSpot(company: Partial<Company>): Record<string, unknown> {
+    const properties: Record<string, unknown> = {};
 
     if (company.name) properties.name = company.name;
     if (company.domain) properties.domain = company.domain;
@@ -625,7 +663,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     return properties;
   }
 
-  private mapHubSpotToCompany(data: any): CRMCompany {
+  private mapHubSpotToCompany(data: HubSpotCompany): CRMCompany {
     return {
       id: data.id,
       name: data.properties.name,
@@ -636,8 +674,8 @@ export class HubSpotConnector extends BaseCRMConnector {
     };
   }
 
-  private mapDealToHubSpot(deal: Partial<Deal>): Record<string, any> {
-    const properties: Record<string, any> = {};
+  private mapDealToHubSpot(deal: Partial<Deal>): Record<string, unknown> {
+    const properties: Record<string, unknown> = {};
 
     if (deal.name) properties.dealname = deal.name;
     if (deal.amount) properties.amount = deal.amount;
@@ -653,7 +691,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     return properties;
   }
 
-  private mapHubSpotToDeal(data: any): CRMDeal {
+  private mapHubSpotToDeal(data: HubSpotDeal): CRMDeal {
     return {
       id: data.id,
       name: data.properties.dealname,
@@ -665,8 +703,8 @@ export class HubSpotConnector extends BaseCRMConnector {
     };
   }
 
-  private mapTaskToHubSpot(task: Partial<Task>): Record<string, any> {
-    const properties: Record<string, any> = {};
+  private mapTaskToHubSpot(task: Partial<Task>): Record<string, unknown> {
+    const properties: Record<string, unknown> = {};
 
     if (task.title) properties.hs_task_subject = task.title;
     if (task.description) properties.hs_task_body = task.description;
@@ -682,7 +720,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     return properties;
   }
 
-  private mapHubSpotToTask(data: any): CRMTask {
+  private mapHubSpotToTask(data: HubSpotTask): CRMTask {
     return {
       id: data.id,
       title: data.properties.hs_task_subject,

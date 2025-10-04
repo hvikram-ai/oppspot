@@ -81,7 +81,7 @@ export class DataSourceFactory {
     let snapshot: Partial<CompanySnapshot> = {};
     let buying_signals: BuyingSignal[] = [];
     let decision_makers: DecisionMaker[] = [];
-    let revenue_signals: RevenueSignal[] = [];
+    const revenue_signals: RevenueSignal[] = [];
     let sources: Source[] = [];
 
     // Companies House

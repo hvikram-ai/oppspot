@@ -33,6 +33,11 @@ export default function ImportBusinessesPage() {
     total_imported: number
     source: string
     metadata?: Record<string, unknown>
+    event_data?: {
+      errors_count?: number
+      query?: string
+      imported_count?: number
+    }
   }
   
   const [recentImports, setRecentImports] = useState<RecentImport[]>([])
@@ -64,9 +69,9 @@ export default function ImportBusinessesPage() {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { role: string } | null }
 
-    if (profile?.role !== 'admin' && profile?.role !== 'owner') {
+    if (profile && profile.role !== 'admin' && profile.role !== 'owner') {
       toast.error('Admin access required')
       router.push('/dashboard')
     }

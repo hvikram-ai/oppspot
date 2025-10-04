@@ -49,7 +49,7 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
   const supabase = await createClient()
 
   // Handle API-prefixed IDs (from real-time search results)
-  let businessId = params.id
+  const businessId = params.id
   if (params.id.startsWith('api-')) {
     // Extract company number from api-12345678 format
     const companyNumber = params.id.replace('api-', '')

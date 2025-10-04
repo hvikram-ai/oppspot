@@ -15,7 +15,7 @@ export interface AgentConfig {
   orgId: string
   name: string
   type: string
-  configuration: Record<string, any>
+  configuration: Record<string, unknown>
   isActive: boolean
   scheduleCron?: string
 }
@@ -24,13 +24,13 @@ export interface AgentExecutionContext {
   executionId: string
   agentId: string
   orgId: string
-  input: Record<string, any>
+  input: Record<string, unknown>
   startTime: Date
 }
 
 export interface AgentExecutionResult {
   success: boolean
-  output: Record<string, any>
+  output: Record<string, unknown>
   error?: string
   metrics: {
     durationMs: number
@@ -63,7 +63,7 @@ export abstract class BaseAgent {
   /**
    * Run agent with full lifecycle management
    */
-  async run(input: Record<string, any> = {}): Promise<AgentExecutionResult> {
+  async run(input: Record<string, unknown> = {}): Promise<AgentExecutionResult> {
     const supabase = await createClient()
     // Use existing execution_id if provided, otherwise create new one
     const executionId = input.execution_id || crypto.randomUUID()
@@ -141,7 +141,9 @@ export abstract class BaseAgent {
       console.log(`[${this.config.type}] Completed execution ${executionId} in ${result.metrics.durationMs}ms`)
 
       return result
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      const errorStack = error instanceof Error ? error.stack : undefined
       console.error(`[${this.config.type}] Execution ${executionId} failed:`, error)
 
       // Update execution record (failed)
@@ -151,8 +153,8 @@ export abstract class BaseAgent {
           status: 'failed',
           completed_at: new Date().toISOString(),
           duration_ms: Date.now() - startTime.getTime(),
-          error_message: error.message,
-          error_stack: error.stack
+          error_message: errorMessage,
+          error_stack: errorStack
         })
         .eq('id', executionId)
 
@@ -161,7 +163,7 @@ export abstract class BaseAgent {
         executionId,
         agentId: this.config.id,
         agentType: this.config.type,
-        error: error.message
+        error: errorMessage
       })
 
       throw error
@@ -177,7 +179,7 @@ export abstract class BaseAgent {
     const supabase = await createClient()
 
     // Simple cron parsing (extend as needed)
-    let nextRun = new Date()
+    const nextRun = new Date()
 
     // Daily at specific hour: "0 9 * * *"
     if (this.config.scheduleCron.match(/^0 (\d+) \* \* \*$/)) {
@@ -207,7 +209,7 @@ export abstract class BaseAgent {
   /**
    * Helper to emit events
    */
-  protected emitEvent(type: string, data: Record<string, any>): void {
+  protected emitEvent(type: string, data: Record<string, unknown>): void {
     eventBus.emit({
       type,
       source: this.config.type,
@@ -249,7 +251,7 @@ export abstract class BaseAgent {
     signalType: string,
     signalStrength: 'very_strong' | 'strong' | 'moderate' | 'weak',
     confidenceScore: number,
-    signalData: Record<string, any>
+    signalData: Record<string, unknown>
   ): Promise<string> {
     const supabase = await createClient()
 

@@ -26,7 +26,7 @@ const createAgentSchema = z.object({
   schedule_cron: z.string().optional()
 })
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -62,10 +62,11 @@ export async function GET(request: NextRequest) {
       count: agents?.length || 0,
       agents: agents || []
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Agents API] Error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to fetch agents', message: error.message },
+      { error: 'Failed to fetch agents', message },
       { status: 500 }
     )
   }
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
       success: true,
       agent
     }, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Agents API] Error:', error)
 
     if (error instanceof z.ZodError) {
@@ -129,8 +130,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to create agent', message: error.message },
+      { error: 'Failed to create agent', message },
       { status: 500 }
     )
   }

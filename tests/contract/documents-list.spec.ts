@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('GET /api/data-room/documents', () => {
   let testDataRoomId: string;
-  let uploadedDocumentIds: string[] = [];
+  const uploadedDocumentIds: string[] = [];
 
   test.beforeAll(async ({ request }) => {
     // Setup: Create a test data room

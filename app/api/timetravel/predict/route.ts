@@ -283,7 +283,7 @@ export async function POST(request: NextRequest) {
       prediction: savedPrediction || prediction
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Prediction error:', error)
     return NextResponse.json({
       error: error.message || 'Prediction failed'
@@ -340,7 +340,7 @@ export async function GET(request: NextRequest) {
       predictions
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Fetch predictions error:', error)
     return NextResponse.json({
       error: error.message || 'Failed to fetch predictions'

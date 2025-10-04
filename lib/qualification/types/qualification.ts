@@ -169,10 +169,10 @@ export interface LeadRoutingRule {
   // Actions
   routing_algorithm: 'round_robin' | 'weighted' | 'skill_based' | 'territory' | 'account_based' | 'ai_optimized';
   assignment_type: 'team' | 'individual' | 'queue';
-  assignment_target?: any;
+  assignment_target?: string | string[] | Record<string, unknown>;
   sla_hours?: number;
   escalation_hours?: number;
-  escalation_target?: any;
+  escalation_target?: string | string[];
 
   // Advanced settings
   settings?: {
@@ -180,7 +180,7 @@ export interface LeadRoutingRule {
     timezone_aware?: boolean;
     holiday_handling?: 'queue' | 'next_available' | 'escalate';
     capacity_planning?: boolean;
-    skill_matching?: any;
+    skill_matching?: Record<string, unknown>;
   };
 }
 
@@ -205,7 +205,7 @@ export interface LeadAssignment {
 
   response_time_minutes?: number;
   resolution_time_hours?: number;
-  routing_metadata?: any;
+  routing_metadata?: Record<string, unknown>;
 }
 
 export interface RoutingDecision {
@@ -238,16 +238,16 @@ export interface ThresholdAlertConfig {
 
   compound_conditions?: {
     operator: 'AND' | 'OR';
-    conditions: any[];
+    conditions: Array<Record<string, unknown>>;
   };
 
   actions: {
     notify?: string[];
-    assign_task?: any;
+    assign_task?: Record<string, unknown>;
     update_stage?: string;
     add_to_campaign?: string;
     trigger_workflow?: string;
-    webhook?: any;
+    webhook?: Record<string, unknown>;
   };
 
   use_ml_prediction?: boolean;
@@ -294,12 +294,12 @@ export interface ChecklistItem {
 
   // Answer/Evidence
   answer?: string;
-  evidence?: any[];
+  evidence?: Array<Record<string, unknown>>;
 
   // Validation
   is_required: boolean;
   validation_type?: 'manual' | 'automatic' | 'hybrid';
-  validation_data?: any;
+  validation_data?: Record<string, unknown>;
 
   // Scoring impact
   weight?: number;
@@ -309,7 +309,7 @@ export interface ChecklistItem {
   dependencies?: {
     prerequisite_items?: string[];
     unlocks_items?: string[];
-    conditional_display?: any;
+    conditional_display?: Record<string, unknown>;
   };
 
   // Intelligence
@@ -344,7 +344,7 @@ export interface LeadRecyclingRule {
 
   use_ai_optimization?: boolean;
   personalization_level?: 'high' | 'medium' | 'low';
-  settings?: any;
+  settings?: Record<string, unknown>;
 }
 
 export interface LeadRecyclingHistory {
@@ -361,7 +361,7 @@ export interface LeadRecyclingHistory {
 
   outcome?: 're_qualified' | 'still_nurturing' | 'archived' | 'converted' | 'lost';
   outcome_date?: string;
-  outcome_details?: any;
+  outcome_details?: Record<string, unknown>;
 
   created_at?: string;
 }
@@ -379,12 +379,12 @@ export interface NurtureCampaign {
   trigger_reason?: string;
 
   sequence_steps?: CampaignStep[];
-  branching_logic?: any;
-  exit_criteria?: any;
+  branching_logic?: Record<string, unknown>;
+  exit_criteria?: Record<string, unknown>;
 
   use_dynamic_content?: boolean;
   use_ai_copywriting?: boolean;
-  personalization_rules?: any;
+  personalization_rules?: Record<string, unknown>;
 
   // Performance metrics
   total_leads?: number;
@@ -536,7 +536,7 @@ export interface CampaignStep {
   type: 'email' | 'call' | 'content' | 'event' | 'task';
   timing: string;
   content?: string;
-  conditions?: any;
+  conditions?: Record<string, unknown>;
 }
 
 // ============= API Request/Response Types =============
@@ -618,7 +618,7 @@ export interface QualificationDashboardData {
     nurture_conversion_rate: number;
   };
 
-  recent_activities: any[];
-  upcoming_reviews: any[];
-  alerts: any[];
+  recent_activities: Array<Record<string, unknown>>;
+  upcoming_reviews: Array<Record<string, unknown>>;
+  alerts: Array<Record<string, unknown>>;
 }

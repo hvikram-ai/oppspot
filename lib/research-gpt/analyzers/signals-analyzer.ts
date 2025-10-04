@@ -300,7 +300,7 @@ export class SignalsAnalyzer {
     data: AggregatedResearchData
   ): ConfidenceLevel {
     let score = 0;
-    let maxScore = 10;
+    const maxScore = 10;
 
     // Number of signals found
     if (signals.all_signals.length >= 10) score += 3;

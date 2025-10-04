@@ -18,6 +18,69 @@ import {
   RecommendedAction
 } from '../types/buying-signals';
 
+// Job posting data interface
+export interface JobPostingData {
+  job_id?: string
+  title: string
+  description: string
+  location?: string
+  posted_date?: Date
+  source: string
+  url?: string
+  source_reliability?: 'verified' | 'high' | 'medium' | 'low'
+}
+
+// Volume metrics interface
+export interface VolumeMetrics {
+  total_open_positions: number
+  department_distribution: DepartmentCount[]
+  posting_velocity: number
+  growth_rate: number
+  comparative_analysis: {
+    industry_average: number
+    percentile: number
+  }
+}
+
+// Growth analysis interface
+export interface GrowthAnalysis {
+  growth_indicator: GrowthIndicator
+  department_expansion: boolean
+  new_initiative_likelihood: number
+  technology_adoption: Technology[]
+  strategic_direction: string[]
+}
+
+// Technology signals interface
+export interface TechnologySignals {
+  tech_stack: TechStack
+  new_technologies: Technology[]
+  migration_signals: Technology[]
+  integration_needs: Integration[]
+  infrastructure_changes: Infrastructure[]
+}
+
+// Buying indicators interface
+export interface BuyingIndicators {
+  budget_allocation_likely: boolean
+  procurement_timeline?: {
+    start: Date
+    end: Date
+  }
+  solution_categories: SolutionCategory[]
+  pain_points: PainPoint[]
+  decision_makers_hiring: boolean
+}
+
+// Hiring trends interface
+export interface HiringTrends {
+  total_postings: number
+  department_growth: { [key: string]: number }
+  technology_trends: { [key: string]: number }
+  hiring_velocity: number
+  expansion_signal: boolean
+}
+
 export class JobPostingAnalyzer {
   private static instance: JobPostingAnalyzer;
 
@@ -44,7 +107,7 @@ export class JobPostingAnalyzer {
 
   async analyzeJobPosting(
     companyId: string,
-    jobData: any
+    jobData: JobPostingData
   ): Promise<JobPostingSignal | null> {
     const supabase = await createClient();
 
@@ -330,7 +393,7 @@ export class JobPostingAnalyzer {
     }
   }
 
-  private extractRemoteOptions(jobData: any): RemoteOption {
+  private extractRemoteOptions(jobData: JobPostingData): RemoteOption {
     const text = (jobData.title + ' ' + jobData.description + ' ' + (jobData.location || '')).toLowerCase();
 
     if (text.includes('remote') || text.includes('work from home') || text.includes('wfh')) {
@@ -431,7 +494,7 @@ export class JobPostingAnalyzer {
     };
   }
 
-  private calculateSignalStrength(jobData: any, volumeMetrics: any): SignalStrength {
+  private calculateSignalStrength(jobData: JobPostingData, volumeMetrics: VolumeMetrics): SignalStrength {
     const totalPositions = volumeMetrics?.total_open_positions || 0;
     const growthRate = volumeMetrics?.growth_rate || 0;
 
@@ -446,7 +509,7 @@ export class JobPostingAnalyzer {
     }
   }
 
-  private calculateBuyingProbability(jobData: any, technologies: Technology[], volumeMetrics: any): number {
+  private calculateBuyingProbability(jobData: JobPostingData, technologies: Technology[], volumeMetrics: VolumeMetrics): number {
     let probability = 30; // Base probability
 
     // Increase based on volume
@@ -473,7 +536,7 @@ export class JobPostingAnalyzer {
     return Math.min(100, probability);
   }
 
-  private analyzeGrowthSignals(jobData: any, volumeMetrics: any, technologies: Technology[]) {
+  private analyzeGrowthSignals(jobData: JobPostingData, volumeMetrics: VolumeMetrics, technologies: Technology[]): GrowthAnalysis {
     const growthRate = volumeMetrics?.growth_rate || 0;
     const totalPositions = volumeMetrics?.total_open_positions || 0;
 
@@ -495,7 +558,7 @@ export class JobPostingAnalyzer {
     };
   }
 
-  private inferStrategicDirection(jobData: any, technologies: Technology[]): string[] {
+  private inferStrategicDirection(jobData: JobPostingData, technologies: Technology[]): string[] {
     const directions: string[] = [];
     const techCategories = new Set(technologies.map(t => t.category));
 
@@ -515,7 +578,7 @@ export class JobPostingAnalyzer {
     return directions;
   }
 
-  private identifyTechnologySignals(technologies: Technology[], jobData: any) {
+  private identifyTechnologySignals(technologies: Technology[], jobData: JobPostingData): TechnologySignals {
     // Group technologies by category
     const techStack: TechStack = {
       frontend: technologies.filter(t => ['react', 'angular', 'vue'].includes(t.name)),
@@ -548,11 +611,11 @@ export class JobPostingAnalyzer {
     };
   }
 
-  private determineBuyingIndicators(jobData: any, technologies: Technology[], analysis: any) {
+  private determineBuyingIndicators(jobData: JobPostingData, technologies: Technology[], analysis: GrowthAnalysis): BuyingIndicators {
     const dept = this.extractDepartment(jobData.title, jobData.description);
     const level = this.extractLevel(jobData.title);
 
-    const indicators: any = {
+    const indicators: BuyingIndicators = {
       budget_allocation_likely: false,
       procurement_timeline: undefined,
       solution_categories: [] as SolutionCategory[],
@@ -617,7 +680,7 @@ export class JobPostingAnalyzer {
     return indicators;
   }
 
-  private calculateConfidenceScore(jobData: any): number {
+  private calculateConfidenceScore(jobData: JobPostingData): number {
     let confidence = 50; // Base confidence
 
     // Increase based on data completeness
@@ -630,7 +693,7 @@ export class JobPostingAnalyzer {
     return Math.min(100, confidence);
   }
 
-  private createImpactAssessment(jobData: any, analysis: any, buyingIndicators: any): ImpactAssessment {
+  private createImpactAssessment(jobData: JobPostingData, analysis: GrowthAnalysis, buyingIndicators: BuyingIndicators): ImpactAssessment {
     return {
       revenue_impact: buyingIndicators.budget_allocation_likely ? 500000 : 100000,
       urgency_level: analysis.growth_indicator === 'rapid' ? 8 : 5,
@@ -641,7 +704,7 @@ export class JobPostingAnalyzer {
     };
   }
 
-  private generateRecommendedActions(jobData: any, technologies: Technology[], buyingIndicators: any): RecommendedAction[] {
+  private generateRecommendedActions(jobData: JobPostingData, technologies: Technology[], buyingIndicators: BuyingIndicators): RecommendedAction[] {
     const actions: RecommendedAction[] = [];
 
     if (buyingIndicators.budget_allocation_likely) {
@@ -674,7 +737,7 @@ export class JobPostingAnalyzer {
     return actions;
   }
 
-  private calculateEngagementWindow(jobData: any) {
+  private calculateEngagementWindow(jobData: JobPostingData) {
     const postedDate = new Date(jobData.posted_date || Date.now());
 
     return {
@@ -684,7 +747,7 @@ export class JobPostingAnalyzer {
     };
   }
 
-  private async checkDuplicateJobPosting(companyId: string, jobData: any): Promise<boolean> {
+  private async checkDuplicateJobPosting(companyId: string, jobData: JobPostingData): Promise<boolean> {
     const supabase = await createClient();
 
     // Check for similar job postings in the last 7 days
@@ -701,7 +764,7 @@ export class JobPostingAnalyzer {
   }
 
   // Analyze hiring trends over time
-  async detectHiringTrends(companyId: string): Promise<any> {
+  async detectHiringTrends(companyId: string): Promise<HiringTrends | null> {
     const supabase = await createClient();
 
     const { data: postings } = await supabase

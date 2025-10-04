@@ -1,18 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+
+interface NotificationTemplate {
+  title: string
+  message: string
+  description?: string
+  action?: {
+    label: string
+    url: string
+  }
+}
 
 export interface QualificationNotification {
   type: 'lead_qualified' | 'lead_assigned' | 'sla_warning' | 'alert_triggered' |
         'checklist_completed' | 'lead_recycled' | 'score_change' | 'action_required'
   recipient: string
   leadId: string
-  data: any
+  data: Record<string, unknown>
 }
 
 export class QualificationNotificationService {
-  private supabase: any
+  private supabase: SupabaseClient
 
   constructor() {
     // Initialize in methods
@@ -55,8 +66,8 @@ export class QualificationNotificationService {
   /**
    * Get notification template based on type
    */
-  private getTemplate(type: string, data: any): any {
-    const templates: Record<string, any> = {
+  private getTemplate(type: string, data: Record<string, unknown>): NotificationTemplate {
+    const templates: Record<string, NotificationTemplate> = {
       lead_qualified: {
         title: '🎯 Lead Qualified!',
         message: `${data.companyName || 'Lead'} has been qualified with a score of ${data.score}%.`,
@@ -170,7 +181,7 @@ export class QualificationNotificationService {
   /**
    * Create in-app notification
    */
-  private async createInAppNotification(userId: string, template: any): Promise<void> {
+  private async createInAppNotification(userId: string, template: NotificationTemplate): Promise<void> {
     try {
       const supabase = await this.getSupabase()
 
@@ -196,7 +207,7 @@ export class QualificationNotificationService {
   /**
    * Send email notification
    */
-  private async sendEmailNotification(userId: string, template: any): Promise<void> {
+  private async sendEmailNotification(userId: string, template: NotificationTemplate): Promise<void> {
     try {
       const supabase = await this.getSupabase()
 
@@ -263,7 +274,7 @@ export class QualificationNotificationService {
   /**
    * Send push notification
    */
-  private async sendPushNotification(userId: string, template: any): Promise<void> {
+  private async sendPushNotification(userId: string, template: NotificationTemplate): Promise<void> {
     // TODO: Implement push notifications using service like OneSignal or Firebase
     console.log('Push notification would be sent:', { userId, template })
   }

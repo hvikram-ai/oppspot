@@ -38,7 +38,7 @@ export async function GET(
     const items = await StreamService.getItems(streamId, user.id, filters)
 
     return NextResponse.json(items)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching items:', error)
 
     if (error.message === 'Access denied') {
@@ -85,7 +85,7 @@ export async function POST(
     const item = await StreamService.createItem(streamId, user.id, body)
 
     return NextResponse.json(item, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating item:', error)
 
     if (error.message === 'Insufficient permissions') {

@@ -13,7 +13,7 @@ import { triggerAgent } from '@/lib/inngest/trigger-agent'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { agentId: string } }
+  { params }: { params: Promise<{ agentId: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -23,7 +23,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { agentId } = params
+    const { agentId } = await params
 
     // Fetch agent
     const { data: agent, error: fetchError } = await supabase
@@ -104,7 +104,7 @@ export async function POST(
       error: result.error,
       async: false
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Agent Run API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to run agent', message: error.message },

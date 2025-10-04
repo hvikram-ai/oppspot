@@ -331,7 +331,7 @@ export class RevenueAnalyzer {
     data: AggregatedResearchData
   ): ConfidenceLevel {
     let score = 0;
-    let maxScore = 10;
+    const maxScore = 10;
 
     // Number of revenue signals
     if (revenue_signals.all_signals.length >= 5) score += 2;

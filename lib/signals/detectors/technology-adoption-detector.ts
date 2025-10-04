@@ -12,6 +12,54 @@ import {
   RecommendedAction
 } from '../types/buying-signals';
 
+// Technology adoption data interface
+export interface TechnologyAdoptionData {
+  technology_name: string
+  vendor?: string
+  detection_date?: Date
+  detection_method: DetectionMethod
+  detection_confidence?: number
+  context?: string
+  deployment_scope?: DeploymentScope
+  source: string
+  source_url?: string
+  source_reliability?: 'verified' | 'high' | 'medium' | 'low'
+}
+
+// Company data interface
+export interface CompanyData {
+  id: string
+  name: string
+  employee_count?: string
+  growth_rate?: 'high' | 'medium' | 'low'
+  [key: string]: unknown
+}
+
+// Technology impact interface
+export interface TechnologyImpact {
+  estimated_users: number
+  deployment_scope: DeploymentScope
+  integration_complexity: ComplexityLevel
+  replaced_technology?: string
+  complementary_technologies: string[]
+  integration_requirements: string[]
+}
+
+// Technology opportunity interface
+export interface TechnologyOpportunity {
+  cross_sell_opportunities: string[]
+  competitive_displacement: boolean
+  expansion_potential: ComplexityLevel
+}
+
+// Technology adoption prediction interface
+export interface TechnologyPrediction {
+  likely_adoptions: string[]
+  replacement_candidates: string[]
+  expansion_opportunities: string[]
+  timeline: string
+}
+
 export class TechnologyAdoptionDetector {
   private static instance: TechnologyAdoptionDetector;
 
@@ -49,7 +97,7 @@ export class TechnologyAdoptionDetector {
 
   async detectTechnologyAdoption(
     companyId: string,
-    adoptionData: any
+    adoptionData: TechnologyAdoptionData
   ): Promise<TechnologyAdoptionSignal | null> {
     const supabase = await createClient();
 
@@ -172,7 +220,7 @@ export class TechnologyAdoptionDetector {
     }
   }
 
-  private determineAdoptionType(adoptionData: any): AdoptionType {
+  private determineAdoptionType(adoptionData: TechnologyAdoptionData): AdoptionType {
     const techName = adoptionData.technology_name?.toLowerCase();
     const context = adoptionData.context?.toLowerCase() || '';
 
@@ -211,7 +259,7 @@ export class TechnologyAdoptionDetector {
     return 'new_implementation';
   }
 
-  private determineAdoptionStage(adoptionData: any): AdoptionStage {
+  private determineAdoptionStage(adoptionData: TechnologyAdoptionData): AdoptionStage {
     const context = adoptionData.context?.toLowerCase() || '';
     const detectionMethod = adoptionData.detection_method;
 
@@ -254,7 +302,7 @@ export class TechnologyAdoptionDetector {
   }
 
   private calculateSignalStrength(
-    adoptionData: any,
+    adoptionData: TechnologyAdoptionData,
     adoptionType: AdoptionType,
     adoptionStage: AdoptionStage
   ): SignalStrength {
@@ -281,10 +329,10 @@ export class TechnologyAdoptionDetector {
   }
 
   private calculateBuyingProbability(
-    adoptionData: any,
+    adoptionData: TechnologyAdoptionData,
     adoptionType: AdoptionType,
     adoptionStage: AdoptionStage,
-    company: any
+    company: CompanyData
   ): number {
     let probability = 30; // Base probability
 
@@ -317,11 +365,11 @@ export class TechnologyAdoptionDetector {
     return Math.min(100, probability);
   }
 
-  private analyzeImpact(adoptionData: any, adoptionType: AdoptionType, company: any) {
+  private analyzeImpact(adoptionData: TechnologyAdoptionData, adoptionType: AdoptionType, company: CompanyData): TechnologyImpact {
     const techName = adoptionData.technology_name?.toLowerCase();
     const category = this.categorizeTechnology(techName);
 
-    const impact: any = {
+    const impact: TechnologyImpact = {
       estimated_users: this.estimateUsers(adoptionData, company),
       deployment_scope: this.determineDeploymentScope(adoptionData, company),
       integration_complexity: this.assessIntegrationComplexity(techName, category),
@@ -333,7 +381,7 @@ export class TechnologyAdoptionDetector {
     return impact;
   }
 
-  private estimateUsers(adoptionData: any, company: any): number {
+  private estimateUsers(adoptionData: TechnologyAdoptionData, company: CompanyData): number {
     const scope = adoptionData.deployment_scope;
     const companySize = parseInt(company.employee_count || '100');
 
@@ -348,7 +396,7 @@ export class TechnologyAdoptionDetector {
     }
   }
 
-  private determineDeploymentScope(adoptionData: any, company: any): DeploymentScope {
+  private determineDeploymentScope(adoptionData: TechnologyAdoptionData, company: CompanyData): DeploymentScope {
     const context = adoptionData.context?.toLowerCase() || '';
 
     if (context.includes('company-wide') || context.includes('enterprise') ||
@@ -379,7 +427,7 @@ export class TechnologyAdoptionDetector {
     return 'low';
   }
 
-  private identifyReplacedTechnology(techName: string, adoptionData: any): string | undefined {
+  private identifyReplacedTechnology(techName: string, adoptionData: TechnologyAdoptionData): string | undefined {
     const context = adoptionData.context?.toLowerCase() || '';
 
     // Check replacement mappings
@@ -442,11 +490,11 @@ export class TechnologyAdoptionDetector {
     return requirements;
   }
 
-  private identifyOpportunities(adoptionData: any, adoptionType: AdoptionType, impact: any) {
+  private identifyOpportunities(adoptionData: TechnologyAdoptionData, adoptionType: AdoptionType, impact: TechnologyImpact): TechnologyOpportunity {
     const techName = adoptionData.technology_name?.toLowerCase();
     const category = this.categorizeTechnology(techName);
 
-    const opportunity: any = {
+    const opportunity: TechnologyOpportunity = {
       cross_sell_opportunities: this.identifyCrossSellOpportunities(techName, category, impact),
       competitive_displacement: this.assessCompetitiveDisplacement(adoptionData, adoptionType),
       expansion_potential: this.assessExpansionPotential(adoptionType, impact)
@@ -455,7 +503,7 @@ export class TechnologyAdoptionDetector {
     return opportunity;
   }
 
-  private identifyCrossSellOpportunities(techName: string, category: string, impact: any): string[] {
+  private identifyCrossSellOpportunities(techName: string, category: string, impact: TechnologyImpact): string[] {
     const opportunities: string[] = [];
 
     // Based on technology category
@@ -480,7 +528,7 @@ export class TechnologyAdoptionDetector {
     return opportunities.slice(0, 5);
   }
 
-  private assessCompetitiveDisplacement(adoptionData: any, adoptionType: AdoptionType): boolean {
+  private assessCompetitiveDisplacement(adoptionData: TechnologyAdoptionData, adoptionType: AdoptionType): boolean {
     // Replacement adoption types often indicate competitive displacement
     if (adoptionType === 'replacement') {
       return true;
@@ -493,7 +541,7 @@ export class TechnologyAdoptionDetector {
     return competitorKeywords.some(keyword => context.includes(keyword));
   }
 
-  private assessExpansionPotential(adoptionType: AdoptionType, impact: any): ComplexityLevel {
+  private assessExpansionPotential(adoptionType: AdoptionType, impact: TechnologyImpact): ComplexityLevel {
     if (adoptionType === 'pilot' || impact.deployment_scope === 'pilot') {
       return 'high'; // Pilots have high expansion potential
     } else if (impact.deployment_scope === 'team' || impact.deployment_scope === 'department') {
@@ -526,7 +574,7 @@ export class TechnologyAdoptionDetector {
     }
   }
 
-  private calculateConfidenceScore(adoptionData: any): number {
+  private calculateConfidenceScore(adoptionData: TechnologyAdoptionData): number {
     let confidence = 50; // Base confidence
 
     // Detection method impacts confidence
@@ -549,9 +597,9 @@ export class TechnologyAdoptionDetector {
   }
 
   private createImpactAssessment(
-    adoptionData: any,
+    adoptionData: TechnologyAdoptionData,
     adoptionType: AdoptionType,
-    impact: any
+    impact: TechnologyImpact
   ): ImpactAssessment {
     // Estimate revenue impact based on technology type and scope
     let revenueImpact = 100000; // Base
@@ -574,10 +622,10 @@ export class TechnologyAdoptionDetector {
   }
 
   private generateRecommendedActions(
-    adoptionData: any,
+    adoptionData: TechnologyAdoptionData,
     adoptionType: AdoptionType,
     adoptionStage: AdoptionStage,
-    opportunity: any
+    opportunity: TechnologyOpportunity
   ): RecommendedAction[] {
     const actions: RecommendedAction[] = [];
 
@@ -668,7 +716,7 @@ export class TechnologyAdoptionDetector {
     };
   }
 
-  private async checkDuplicateTechnologySignal(companyId: string, adoptionData: any): Promise<boolean> {
+  private async checkDuplicateTechnologySignal(companyId: string, adoptionData: TechnologyAdoptionData): Promise<boolean> {
     const supabase = await createClient();
 
     // Check for similar technology signals in the last 30 days
@@ -699,7 +747,7 @@ export class TechnologyAdoptionDetector {
   }
 
   // Predict technology adoption based on patterns
-  async predictTechnologyAdoption(companyId: string): Promise<any> {
+  async predictTechnologyAdoption(companyId: string): Promise<TechnologyPrediction> {
     const supabase = await createClient();
 
     // Get company's current technology profile

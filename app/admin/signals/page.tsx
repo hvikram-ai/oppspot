@@ -18,8 +18,7 @@ import {
   Globe,
   AlertCircle,
   CheckCircle2,
-  XCircle,
-  Clock
+  XCircle
 } from 'lucide-react'
 
 interface BuyingSignal {
@@ -28,14 +27,14 @@ interface BuyingSignal {
   signal_type: string
   signal_strength: 'very_strong' | 'strong' | 'moderate' | 'weak'
   confidence_score: number
-  signal_data: any
+  signal_data: Record<string, unknown>
   detected_at: string
   detected_by: string
   status: 'active' | 'acted_upon' | 'expired' | 'false_positive'
   created_at: string
 }
 
-const signalTypeIcons: Record<string, any> = {
+const signalTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   funding_round: TrendingUp,
   executive_change: Users,
   job_posting: Briefcase,
@@ -85,7 +84,7 @@ export default function BuyingSignalsPage() {
 
       // Mock data for now
       setSignals([])
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load signals:', err)
     } finally {
       setIsLoading(false)
@@ -93,8 +92,8 @@ export default function BuyingSignalsPage() {
   }
 
   const updateSignalStatus = async (
-    signalId: string,
-    status: 'acted_upon' | 'false_positive'
+    _signalId: string,
+    _status: 'acted_upon' | 'false_positive'
   ) => {
     try {
       // TODO: Create API endpoint
@@ -103,7 +102,7 @@ export default function BuyingSignalsPage() {
       //   body: JSON.stringify({ status })
       // })
       loadSignals()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update signal:', err)
     }
   }

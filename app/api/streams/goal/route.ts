@@ -163,12 +163,12 @@ export async function POST(request: NextRequest) {
       })
 
     // Assign agents if requested
-    let assignedAgentRecords = []
+    const assignedAgentRecords = []
     if (agentsToAssign.length > 0) {
       // First, create or get AI agent records for each agent type
       for (const suggestedAgent of agentsToAssign) {
         // Check if agent already exists for this org
-        let { data: existingAgent } = await supabase
+        const { data: existingAgent } = await supabase
           .from('ai_agents')
           .select('id')
           .eq('org_id', profile.org_id)

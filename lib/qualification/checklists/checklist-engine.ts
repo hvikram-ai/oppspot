@@ -194,7 +194,7 @@ export class ChecklistEngine {
     template: ChecklistTemplate
   ): Promise<ChecklistItem[]> {
     const supabase = await this.getSupabase();
-    const items: any[] = [];
+    const items: Array<Omit<ChecklistItem, 'id'>> = [];
     let orderIndex = 0;
 
     for (const category of template.categories) {
@@ -307,14 +307,14 @@ export class ChecklistEngine {
    * Populate a single item based on available data
    */
   private async populateItem(
-    item: any,
+    item: ChecklistItem,
     data: {
-      lead: any;
-      company: any;
-      bantQual: any;
-      meddicQual: any;
+      lead: Record<string, unknown>;
+      company: Record<string, unknown>;
+      bantQual: Record<string, unknown>;
+      meddicQual: Record<string, unknown>;
     }
-  ): Promise<{ answer: string; evidence: any[]; suggestion?: string; confidence?: number } | null> {
+  ): Promise<{ answer: string; evidence: Array<Record<string, unknown>>; suggestion?: string; confidence?: number } | null> {
     const question = item.question.toLowerCase();
 
     // Budget-related questions
@@ -480,13 +480,13 @@ export class ChecklistEngine {
 
     // Find items that depend on this completed item
     const dependentItems = items.filter(item => {
-      const deps = item.dependencies as any;
+      const deps = item.dependencies as { prerequisite_items?: string[] } | undefined;
       return deps?.prerequisite_items?.includes(itemId);
     });
 
     // Update dependent items
     for (const item of dependentItems) {
-      const deps = item.dependencies as any;
+      const deps = item.dependencies as { prerequisite_items?: string[] } | undefined;
       const prereqs = deps.prerequisite_items || [];
 
       // Check if all prerequisites are met
@@ -1005,20 +1005,20 @@ export class ChecklistEngine {
   /**
    * Map checklist from database format
    */
-  private mapChecklistFromDatabase(data: any): QualificationChecklist {
+  private mapChecklistFromDatabase(data: Record<string, unknown> & { checklist_items?: Array<Record<string, unknown>> }): QualificationChecklist {
     return {
-      id: data.id,
-      lead_id: data.lead_id,
-      company_id: data.company_id,
-      framework: data.framework,
-      template_id: data.template_id,
-      total_items: data.total_items,
-      completed_items: data.completed_items,
-      completion_percentage: data.completion_percentage,
-      status: data.status,
-      started_at: data.started_at,
-      completed_at: data.completed_at,
-      items: data.checklist_items?.map((item: any) => ({
+      id: data.id as string,
+      lead_id: data.lead_id as string,
+      company_id: data.company_id as string | undefined,
+      framework: data.framework as 'BANT' | 'MEDDIC' | 'CUSTOM',
+      template_id: data.template_id as string | undefined,
+      total_items: data.total_items as number,
+      completed_items: data.completed_items as number,
+      completion_percentage: data.completion_percentage as number,
+      status: data.status as 'not_started' | 'in_progress' | 'completed' | 'abandoned',
+      started_at: data.started_at as string | undefined,
+      completed_at: data.completed_at as string | undefined,
+      items: data.checklist_items?.map((item: Record<string, unknown>) => ({
         id: item.id,
         checklist_id: item.checklist_id,
         category: item.category,

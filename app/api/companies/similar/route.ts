@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
           : 0
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Similar Companies] Error:', error)
 
     if (error instanceof z.ZodError) {

@@ -15,6 +15,72 @@ import {
   Connection
 } from '../types/buying-signals';
 
+// Executive change data interface
+export interface ExecutiveChangeData {
+  position: string
+  department?: string
+  incoming_executive?: Executive
+  outgoing_executive?: Executive
+  change_type: ChangeType
+  effective_date?: Date
+  announcement_date?: Date
+  source: string
+}
+
+// Company data interface (reused from technology-adoption-detector)
+export interface CompanyData {
+  id: string
+  name: string
+  employee_count?: string
+  growth_rate?: 'high' | 'medium' | 'low'
+  [key: string]: unknown
+}
+
+// Executive impact interface
+export interface ExecutiveImpact {
+  decision_making_impact: DecisionImpact
+  budget_authority: boolean
+  likely_initiatives: Initiative[]
+  vendor_preferences: VendorPreference[]
+  technology_bias: TechnologyPreference[]
+}
+
+// Executive intelligence interface
+export interface ExecutiveIntelligence {
+  previous_companies: Array<{ name: string; industry: string }>
+  previous_vendors_used: string[]
+  known_methodologies: string[]
+  published_articles: string[]
+  speaking_engagements: string[]
+  social_media_presence: string[]
+}
+
+// Executive opportunity scores interface
+export interface ExecutiveOpportunity {
+  relevance_score: number
+  timing_score: number
+  influence_score: number
+  accessibility_score: number
+}
+
+// Engagement strategy interface
+export interface EngagementStrategy {
+  approach: 'immediate' | 'warming' | 'educational' | 'referral'
+  key_messages: string[]
+  value_propositions: string[]
+  introduction_paths: IntroductionPath[]
+  common_connections: Connection[]
+}
+
+// Executive background analysis interface
+export interface ExecutiveBackground {
+  preferred_vendors: string[]
+  technology_stack_experience: string[]
+  methodology_preferences: string[]
+  budget_management_style: 'aggressive' | 'balanced' | 'conservative'
+  decision_making_style: 'collaborative' | 'autocratic' | 'delegative'
+}
+
 export class ExecutiveChangeDetector {
   private static instance: ExecutiveChangeDetector;
 
@@ -29,7 +95,7 @@ export class ExecutiveChangeDetector {
 
   async detectExecutiveChange(
     companyId: string,
-    changeData: any
+    changeData: ExecutiveChangeData
   ): Promise<ExecutiveChangeSignal | null> {
     const supabase = await createClient();
 
@@ -156,7 +222,7 @@ export class ExecutiveChangeDetector {
     }
   }
 
-  private calculateSignalStrength(changeData: any): SignalStrength {
+  private calculateSignalStrength(changeData: ExecutiveChangeData): SignalStrength {
     const level = this.determineExecutiveLevel(changeData.position);
     const changeType = changeData.change_type;
 
@@ -178,7 +244,7 @@ export class ExecutiveChangeDetector {
     return 'weak';
   }
 
-  private calculateBuyingProbability(changeData: any, company: any): number {
+  private calculateBuyingProbability(changeData: ExecutiveChangeData, company: CompanyData): number {
     let probability = 40; // Base probability
 
     const level = this.determineExecutiveLevel(changeData.position);
@@ -213,11 +279,11 @@ export class ExecutiveChangeDetector {
     return Math.min(100, probability);
   }
 
-  private assessExecutiveImpact(changeData: any, company: any) {
+  private assessExecutiveImpact(changeData: ExecutiveChangeData, company: CompanyData): ExecutiveImpact {
     const level = this.determineExecutiveLevel(changeData.position);
     const department = changeData.department?.toLowerCase();
 
-    const impact: any = {
+    const impact: ExecutiveImpact = {
       decision_making_impact: 'low' as DecisionImpact,
       budget_authority: false,
       likely_initiatives: [] as Initiative[],
@@ -307,7 +373,7 @@ export class ExecutiveChangeDetector {
     return impact;
   }
 
-  private async gatherExecutiveIntelligence(executive: Executive | undefined) {
+  private async gatherExecutiveIntelligence(executive: Executive | undefined): Promise<ExecutiveIntelligence | null> {
     if (!executive) return null;
 
     // This would typically integrate with LinkedIn API, news sources, etc.
@@ -324,7 +390,7 @@ export class ExecutiveChangeDetector {
     };
   }
 
-  private calculateOpportunityScores(changeData: any, company: any, intelligence: any) {
+  private calculateOpportunityScores(changeData: ExecutiveChangeData, company: CompanyData, intelligence: ExecutiveIntelligence | null): ExecutiveOpportunity {
     const level = this.determineExecutiveLevel(changeData.position);
     const department = changeData.department?.toLowerCase();
 
@@ -371,8 +437,8 @@ export class ExecutiveChangeDetector {
     };
   }
 
-  private generateEngagementStrategy(changeData: any, intelligence: any, opportunity: any) {
-    const strategy: any = {
+  private generateEngagementStrategy(changeData: ExecutiveChangeData, intelligence: ExecutiveIntelligence | null, opportunity: ExecutiveOpportunity): EngagementStrategy {
+    const strategy: EngagementStrategy = {
       approach: 'warming' as const,
       key_messages: [],
       value_propositions: [],
@@ -453,7 +519,7 @@ export class ExecutiveChangeDetector {
     }
   }
 
-  private calculateConfidenceScore(changeData: any): number {
+  private calculateConfidenceScore(changeData: ExecutiveChangeData): number {
     let confidence = 60; // Base confidence
 
     // Increase based on data completeness
@@ -465,7 +531,7 @@ export class ExecutiveChangeDetector {
     return Math.min(100, confidence);
   }
 
-  private createImpactAssessment(changeData: any, impact: any): ImpactAssessment {
+  private createImpactAssessment(changeData: ExecutiveChangeData, impact: ExecutiveImpact): ImpactAssessment {
     const level = this.determineExecutiveLevel(changeData.position);
 
     return {
@@ -477,7 +543,7 @@ export class ExecutiveChangeDetector {
     };
   }
 
-  private generateRecommendedActions(changeData: any, opportunity: any): RecommendedAction[] {
+  private generateRecommendedActions(changeData: ExecutiveChangeData, opportunity: ExecutiveOpportunity): RecommendedAction[] {
     const actions: RecommendedAction[] = [];
 
     if (opportunity.timing_score > 80) {
@@ -517,7 +583,7 @@ export class ExecutiveChangeDetector {
     return actions;
   }
 
-  private calculateEngagementWindow(changeData: any) {
+  private calculateEngagementWindow(changeData: ExecutiveChangeData) {
     const effectiveDate = new Date(changeData.effective_date || Date.now());
 
     // Optimal engagement is 2-4 weeks after start date for new hires
@@ -537,7 +603,7 @@ export class ExecutiveChangeDetector {
     }
   }
 
-  private async checkDuplicateExecutiveChange(companyId: string, changeData: any): Promise<boolean> {
+  private async checkDuplicateExecutiveChange(companyId: string, changeData: ExecutiveChangeData): Promise<boolean> {
     const supabase = await createClient();
 
     // Check for similar executive changes in the last 30 days
@@ -564,7 +630,7 @@ export class ExecutiveChangeDetector {
   }
 
   // Analyze executive background for vendor preferences
-  async analyzeExecutiveBackground(executive: Executive): Promise<any> {
+  async analyzeExecutiveBackground(executive: Executive): Promise<ExecutiveBackground> {
     // This would analyze previous roles, companies, and public statements
     // to understand technology preferences and vendor relationships
 

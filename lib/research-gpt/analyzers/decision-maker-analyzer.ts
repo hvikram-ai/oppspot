@@ -343,7 +343,7 @@ export class DecisionMakerAnalyzer {
     data: AggregatedResearchData
   ): ConfidenceLevel {
     let score = 0;
-    let maxScore = 10;
+    const maxScore = 10;
 
     // Number of decision makers found
     if (decisionMakers.all_decision_makers.length >= 10) score += 3;

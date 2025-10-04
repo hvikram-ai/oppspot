@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,29 +71,7 @@ export default function AIScoringPage() {
 
   const supabase = createClient();
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  useEffect(() => {
-    filterScores();
-  }, [scores, searchTerm, timingFilter, minScoreFilter]);
-
-  const checkUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        await fetchScores();
-      }
-    } catch (error) {
-      console.error('Error checking user:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchScores = async () => {
+  const fetchScores = useCallback(async () => {
     try {
       setRefreshing(true);
       const response = await fetch('/api/ai-scoring/predictive');
@@ -110,9 +88,23 @@ export default function AIScoringPage() {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, []);
 
-  const filterScores = () => {
+  const checkUser = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        await fetchScores();
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase, fetchScores]);
+
+  const filterScores = useCallback(() => {
     let filtered = [...scores];
 
     // Search filter
@@ -136,7 +128,15 @@ export default function AIScoringPage() {
     }
 
     setFilteredScores(filtered);
-  };
+  }, [scores, searchTerm, timingFilter, minScoreFilter]);
+
+  useEffect(() => {
+    checkUser();
+  }, [checkUser]);
+
+  useEffect(() => {
+    filterScores();
+  }, [filterScores]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
