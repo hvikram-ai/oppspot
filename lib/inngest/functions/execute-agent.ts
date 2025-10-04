@@ -7,6 +7,8 @@ import { inngest } from '@/lib/inngest/client'
 import { createClient } from '@/lib/supabase/server'
 import { createScoutAgent } from '@/lib/ai/agents/scout-agent'
 import { createOpportunityBot } from '@/lib/ai/agents/opportunity-bot'
+import { createLinkedInScraperAgent } from '@/lib/ai/agents/linkedin-scraper-agent'
+import { createWebsiteAnalyzerAgent } from '@/lib/ai/agents/website-analyzer-agent'
 
 export const executeAgentFunction = inngest.createFunction(
   {
@@ -48,6 +50,12 @@ export const executeAgentFunction = inngest.createFunction(
       } else if (agent.agent_type === 'opportunity_bot') {
         const opportunityBot = await createOpportunityBot(agentId)
         return await opportunityBot.run(input)
+      } else if (agent.agent_type === 'linkedin_scraper_agent') {
+        const linkedInAgent = await createLinkedInScraperAgent(agentId)
+        return await linkedInAgent.run(input)
+      } else if (agent.agent_type === 'website_analyzer_agent') {
+        const websiteAgent = await createWebsiteAnalyzerAgent(agentId)
+        return await websiteAgent.run(input)
       } else if (agent.agent_type === 'research_gpt') {
         // ResearchGPT runs on-demand per company, not as background agent
         console.log('[Inngest] ResearchGPT is an on-demand agent, not suitable for scheduled runs')
