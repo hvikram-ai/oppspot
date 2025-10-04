@@ -17,7 +17,9 @@ const createAgentSchema = z.object({
     'scout_agent',
     'scoring_agent',
     'writer_agent',
-    'relationship_agent'
+    'relationship_agent',
+    'linkedin_scraper_agent',
+    'website_analyzer_agent'
   ]),
   name: z.string().min(1).max(255),
   description: z.string().optional(),

@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createScoutAgent } from '@/lib/ai/agents/scout-agent'
 import { createOpportunityBot } from '@/lib/ai/agents/opportunity-bot'
+import { createLinkedInScraperAgent } from '@/lib/ai/agents/linkedin-scraper-agent'
+import { createWebsiteAnalyzerAgent } from '@/lib/ai/agents/website-analyzer-agent'
 import { triggerAgent } from '@/lib/inngest/trigger-agent'
 
 export async function POST(
@@ -56,15 +58,20 @@ export async function POST(
 
     // Option 1: Run in background with Inngest (recommended for long-running tasks)
     if (runAsync) {
-      await triggerAgent(agentId, agent.org_id, input)
+      try {
+        await triggerAgent(agentId, agent.org_id, input)
 
-      return NextResponse.json({
-        success: true,
-        message: 'Agent execution queued',
-        agentId,
-        agentType: agent.agent_type,
-        async: true
-      }, { status: 202 }) // 202 Accepted
+        return NextResponse.json({
+          success: true,
+          message: 'Agent execution queued',
+          agentId,
+          agentType: agent.agent_type,
+          async: true
+        }, { status: 202 }) // 202 Accepted
+      } catch (inngestError) {
+        console.warn('[Agent API] Inngest not available, falling back to sync execution:', inngestError)
+        // Fall through to sync execution if Inngest fails
+      }
     }
 
     // Option 2: Run synchronously (for immediate results)
@@ -76,6 +83,12 @@ export async function POST(
     } else if (agent.agent_type === 'opportunity_bot') {
       const opportunityBot = await createOpportunityBot(agentId)
       result = await opportunityBot.run(input)
+    } else if (agent.agent_type === 'linkedin_scraper_agent') {
+      const linkedInAgent = await createLinkedInScraperAgent(agentId)
+      result = await linkedInAgent.run(input)
+    } else if (agent.agent_type === 'website_analyzer_agent') {
+      const websiteAgent = await createWebsiteAnalyzerAgent(agentId)
+      result = await websiteAgent.run(input)
     } else if (agent.agent_type === 'research_gpt') {
       // ResearchGPT is on-demand per company
       result = {
@@ -106,8 +119,9 @@ export async function POST(
     })
   } catch (error: unknown) {
     console.error('[Agent Run API] Error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to run agent', message: error.message },
+      { error: 'Failed to run agent', message },
       { status: 500 }
     )
   }
