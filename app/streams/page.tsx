@@ -49,33 +49,10 @@ export default function StreamsPage() {
           console.log('Setting org_id from profile:', profile.org_id)
           setOrgId(profile.org_id)
         } else {
-          console.log('No org_id, creating organization...')
-          // If user doesn't have org_id, create one
-          const { data: newOrg, error: orgError } = await supabase
-            .from('organizations')
-            .insert({
-              name: 'My Organization',
-              slug: `org-${user.id.substring(0, 8)}`
-            })
-            .select()
-            .single()
-
-          console.log('New org:', newOrg, 'Error:', orgError)
-
-          if (newOrg) {
-            // Update profile with new org_id
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ org_id: newOrg.id })
-              .eq('id', user.id)
-
-            console.log('Profile update error:', updateError)
-
-            setOrgId(newOrg.id)
-            console.log('Set org_id to:', newOrg.id)
-          } else {
-            console.error('Failed to create organization:', orgError)
-          }
+          // If user doesn't have org_id, the API will create one when they create their first stream
+          // Set a temporary placeholder to enable the wizard
+          setOrgId('pending')
+          console.log('No org_id found - will be created when first stream is created')
         }
       } catch (error) {
         console.error('Error in getOrgId:', error)
@@ -86,7 +63,7 @@ export default function StreamsPage() {
 
   // Fetch streams
   useEffect(() => {
-    if (!orgId) return
+    if (!orgId || orgId === 'pending') return
     fetchStreams()
   }, [orgId, statusFilter, searchQuery])
 
@@ -130,6 +107,22 @@ export default function StreamsPage() {
       const newStream = await response.json()
       console.log('[StreamsPage] Stream created:', newStream)
       setStreams([newStream, ...streams])
+
+      // If org_id was pending, refresh the profile to get the actual org_id
+      if (orgId === 'pending') {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('org_id')
+            .eq('id', user.id)
+            .single()
+
+          if (profile?.org_id) {
+            setOrgId(profile.org_id)
+          }
+        }
+      }
     } catch (error) {
       console.error('[StreamsPage] Error creating stream:', error)
       throw error
