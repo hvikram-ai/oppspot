@@ -200,18 +200,45 @@ Keep responses under 200 words unless detailed explanation needed.`
     try {
       const supabase = await createClient()
 
-      // Build search query
+      // Build search query with proper filtering
       let query = supabase.from('businesses').select('*')
 
-      // Apply filters
+      // Apply industry filter - search in categories array and industry text field
       if (params.industries?.length) {
-        query = query.in('industry', params.industries)
+        const industryConditions = params.industries.flatMap(industry => {
+          const industryLower = industry.toLowerCase()
+          return [
+            `categories.cs.{${industry}}`,
+            `categories.cs.{${industryLower}}`,
+            `industry.ilike.%${industry}%`,
+            `description.ilike.%${industry}%`,
+            `name.ilike.%${industry}%`
+          ]
+        })
+        query = query.or(industryConditions.join(','))
       }
 
+      // Apply location filter - search in multiple location fields
       if (params.locations?.length) {
-        query = query.in('city', params.locations)
+        const locationConditions = params.locations.flatMap(location => [
+          `city.ilike.%${location}%`,
+          `address->>city.ilike.%${location}%`,
+          `address->>state.ilike.%${location}%`
+        ])
+        query = query.or(locationConditions.join(','))
       }
 
+      // Apply keyword search - search across name, description, categories
+      if (params.keywords?.length) {
+        const keywordConditions = params.keywords.flatMap(keyword => [
+          `name.ilike.%${keyword}%`,
+          `description.ilike.%${keyword}%`,
+          `categories.cs.{${keyword}}`
+        ])
+        query = query.or(keywordConditions.join(','))
+      }
+
+      // Apply company size filter
       if (params.company_size) {
         if (params.company_size.min) {
           query = query.gte('employee_count', params.company_size.min)
@@ -226,7 +253,10 @@ Keep responses under 200 words unless detailed explanation needed.`
 
       const { data: companies, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error('[ChatService] Search query error:', error)
+        throw error
+      }
 
       return {
         type: 'companies',
@@ -238,7 +268,7 @@ Keep responses under 200 words unless detailed explanation needed.`
       console.error('[ChatService] Search error:', error)
       return {
         type: 'error',
-        data: { error: 'Search failed' },
+        data: { error: 'Search failed', details: error instanceof Error ? error.message : 'Unknown error' },
         preview: 'Sorry, the search encountered an error'
       }
     }
