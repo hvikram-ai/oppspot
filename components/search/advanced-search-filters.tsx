@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { X, Search, BookmarkPlus, Trash2, Star } from 'lucide-react'
 import type { AdvancedFilters } from '@/types/filters'
-import { advancedFilterService } from '@/lib/search/advanced-filter-service'
+import { countActiveFilters } from '@/lib/search/filter-utils'
 import {
   Dialog,
   DialogContent,
@@ -81,7 +81,7 @@ export function AdvancedSearchFilters({
 
   // Count active filters
   const activeFilterCount = useMemo(
-    () => advancedFilterService.countActiveFilters(filters),
+    () => countActiveFilters(filters),
     [filters]
   )
 
