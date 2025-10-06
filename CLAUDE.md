@@ -223,6 +223,20 @@ Password: Demo123456!
 
 **Note**: Demo mode uses static sample data and disables certain destructive actions to protect the testing environment.
 
+## Git & GitHub Configuration
+
+### Git User Configuration
+Current git configuration for this repository:
+- **Name**: vik
+- **Email**: hvikram.ai@gmail.com
+
+### GitHub Account
+- **Primary Account**: hvikram-ai
+- **Repository**: https://github.com/hvikram-ai/oppspot
+- **Alternative Email**: hirendra.vikram@aiborg.ai (if needed for different contexts)
+
+**Note**: GitHub CLI authentication may be required for operations like creating pull requests. Use `gh auth login` if needed.
+
 ## Deployment Information
 
 ### Production URLs
