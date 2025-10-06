@@ -4,10 +4,101 @@ demo@oppspot.com
 Demo123456!
 -----------------------
 
+INNGEST
+npx inngest-cli@latest dev
+
+
+----------------------------------------
+
+
+Step-by-Step Local Inngest Setup
+
+  1. Terminal 1: Start Inngest Dev Server ✅ (Already running)
+
+  The Inngest dev server is already running at http://localhost:8288 - good!
+
+  2. Terminal 2: Start Next.js Dev Server ❌ (Not running)
+
+  Open a new terminal in the oppspot directory and start your app:
+
+  cd /home/vik/oppspot
+  npm run dev
+
+  This should start on http://localhost:3000 (or 3001/3002 if 3000 is busy)
+
+  3. Verify Connection
+
+  Once both are running, check the connection:
+
+  # Check if Next.js is running
+  curl http://localhost:3000/api/inngest
+
+  # Should return something like:
+  # {"mode":"dev","has_event_key":false,"has_signing_key":false,"function_co
+  unt":4}
+
+  4. Check Inngest Dashboard
+
+  1. Open http://localhost:8288 in your browser
+  2. You should see the Inngest dev UI
+  3. Navigate to Functions tab
+  4. You should see your 4 functions:
+    - Execute Agent
+    - Generate Embedding
+    - Daily Opportunity Scan
+    - Daily Signal Monitor
+
+  5. Test Agent Execution
+
+  Now when you trigger an agent from your app:
+
+  1. Events will appear immediately in http://localhost:8288
+  2. Go to Stream or Runs tab to see execution logs
+  3. You'll see real-time updates as the agent runs
+
+
+
+
+
+
+
+--------------------------------------
+
+
+
+---------------------------
+
+  Option 2: Local Development Dashboard
+
+  If you want to test locally:
+
+  # Terminal 1: Start Inngest dev server
+  npx inngest-cli@latest dev
+
+  # Terminal 2: Start Next.js
+  npm run dev
+
+  # Then open: http://localhost:8288
+
+  ---
+  What You Can Monitor:
+
+  - Daily Opportunity Scan - Runs at 9am UTC daily
+  - Daily Signal Monitor - Runs at 8am UTC daily
+  - Agent Executions - Any background agent runs
+  - Embedding Generation - AI embedding jobs
+
+  The dashboard at https://app.inngest.com will show you all the activity,
+  logs, and any errors from these scheduled jobs!
+
+
+
+-----------------------------
+
 
 
   1. Create a Companies House bulk importer (fastest way to get 5M UK companies)
-  2. Build enrichment agents (LinkedIn scraper, website analyzer)
+  2. 
   3. Set up update workflows (daily/weekly data refresh)
   4. Add buying signal detection (job postings, funding news)
 
@@ -18,8 +109,30 @@ Demo123456!
 
 ---------------------------
 
+  Remaining Technical Debt (Non-Blocking):
+
+  - 470 'any' types in lib/ and API routes - Should be addressed
+  incrementally over time
+  - ~20 unused variables - Mostly with _ prefix (intentionally unused
+  parameters)
+  - TypeScript strict mode still disabled in next.config.ts (by design per
+  CLAUDE.md)
 
 
+ Remaining breakdown:
+  - 🔴 High Priority (144 types)
+    - lib/qualification: 88 types
+    - app/api routes: 56 types
+  - 🟡 Medium Priority (34 types)
+    - lib/integrations: 18 types
+    - lib/research-gpt: 16 types
+  - 🟢 Low Priority (~272 types)
+    - Other lib/* modules
+
+  The build compiles successfully and all pages work! Would you like me to
+  continue fixing more 'any' types? I can tackle the high-priority modules
+  (lib/qualification with 88 types, or remaining API routes with 56 types)
+  to make more substantial progress.
 
 
 
