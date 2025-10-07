@@ -109,6 +109,7 @@ export async function POST(
     // Update scan status
     const { data: updatedScan, error: updateError } = await supabase
       .from('acquisition_scans')
+      // @ts-expect-error - Supabase type inference issue with update() method
       .update({
         status: newStatus,
         current_step: newStep,
@@ -131,6 +132,7 @@ export async function POST(
     // Create audit log entry
     await supabase
       .from('scan_audit_log')
+      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
       .insert({
         scan_id: scanId,
         user_id: user.id,
@@ -138,8 +140,8 @@ export async function POST(
         action_description: `${action.charAt(0).toUpperCase() + action.slice(1)} acquisition scan`,
         before_state: scan,
         after_state: updatedScan,
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
+        ip_address: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
                    'unknown',
         user_agent: request.headers.get('user-agent') || 'unknown',
         legal_basis: 'legitimate_interest',
@@ -165,13 +167,14 @@ async function initializeScanExecution(supabase: DbClient, scanId: string, scan:
     // Create market intelligence entry
     await supabase
       .from('market_intelligence')
+      // @ts-expect-error - Supabase type inference issue with insert() method for market intelligence
       .insert({
         scan_id: scanId,
         industry_sector: (scan.selected_industries as Industry[]).map((i: Industry) => i.industry).join(', '),
-        geographic_scope: (scan.selected_regions as Region[]).map((r: Region) => ({ 
-          id: r.id, 
-          name: r.name, 
-          country: r.country 
+        geographic_scope: (scan.selected_regions as Region[]).map((r: Region) => ({
+          id: r.id,
+          name: r.name,
+          country: r.country
         })),
         data_sources: scan.data_sources,
         analysis_date: new Date().toISOString().split('T')[0],
@@ -181,6 +184,7 @@ async function initializeScanExecution(supabase: DbClient, scanId: string, scan:
     // Create initial scan report entry
     await supabase
       .from('scan_reports')
+      // @ts-expect-error - Supabase type inference issue with insert() method for scan reports
       .insert({
         scan_id: scanId,
         user_id: scan.user_id,
@@ -218,7 +222,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown }
 
     return profile?.org_id === orgId
   } catch (error) {

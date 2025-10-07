@@ -563,6 +563,677 @@ export interface Database {
           updated_at?: string
         }
       }
+      target_companies: {
+        Row: {
+          id: string
+          scan_id: string | null
+          business_id: string | null
+          company_name: string
+          companies_house_number: string | null
+          registration_country: string
+          website: string | null
+          industry_codes: string[] | null
+          business_description: string | null
+          year_incorporated: number | null
+          employee_count_range: string | null
+          registered_address: Json | null
+          trading_address: Json | null
+          phone: string | null
+          email: string | null
+          discovery_source: string
+          discovery_method: string | null
+          discovery_confidence: number
+          overall_score: number
+          strategic_fit_score: number
+          financial_health_score: number
+          risk_score: number
+          analysis_status: 'pending' | 'analyzing' | 'completed' | 'excluded' | 'shortlisted'
+          created_at: string
+          updated_at: string
+          analyzed_at: string | null
+        }
+        Insert: {
+          id?: string
+          scan_id?: string | null
+          business_id?: string | null
+          company_name: string
+          companies_house_number?: string | null
+          registration_country?: string
+          website?: string | null
+          industry_codes?: string[] | null
+          business_description?: string | null
+          year_incorporated?: number | null
+          employee_count_range?: string | null
+          registered_address?: Json | null
+          trading_address?: Json | null
+          phone?: string | null
+          email?: string | null
+          discovery_source: string
+          discovery_method?: string | null
+          discovery_confidence?: number
+          overall_score?: number
+          strategic_fit_score?: number
+          financial_health_score?: number
+          risk_score?: number
+          analysis_status?: 'pending' | 'analyzing' | 'completed' | 'excluded' | 'shortlisted'
+          created_at?: string
+          updated_at?: string
+          analyzed_at?: string | null
+        }
+        Update: {
+          id?: string
+          scan_id?: string | null
+          business_id?: string | null
+          company_name?: string
+          companies_house_number?: string | null
+          registration_country?: string
+          website?: string | null
+          industry_codes?: string[] | null
+          business_description?: string | null
+          year_incorporated?: number | null
+          employee_count_range?: string | null
+          registered_address?: Json | null
+          trading_address?: Json | null
+          phone?: string | null
+          email?: string | null
+          discovery_source?: string
+          discovery_method?: string | null
+          discovery_confidence?: number
+          overall_score?: number
+          strategic_fit_score?: number
+          financial_health_score?: number
+          risk_score?: number
+          analysis_status?: 'pending' | 'analyzing' | 'completed' | 'excluded' | 'shortlisted'
+          created_at?: string
+          updated_at?: string
+          analyzed_at?: string | null
+        }
+      }
+      risk_assessments: {
+        Row: {
+          id: string
+          target_company_id: string | null
+          financial_risk_score: number
+          financial_risk_factors: Json | null
+          operational_risk_score: number
+          key_person_dependency: boolean
+          customer_concentration_risk: number | null
+          supplier_concentration_risk: number | null
+          operational_risk_factors: Json | null
+          regulatory_risk_score: number
+          compliance_status: Json | null
+          pending_investigations: Json | null
+          regulatory_risk_factors: Json | null
+          market_risk_score: number
+          competitive_position: 'leader' | 'strong' | 'moderate' | 'weak' | 'unknown' | null
+          market_share_estimate: number | null
+          competitive_threats: Json | null
+          market_risk_factors: Json | null
+          technology_risk_score: number
+          ip_portfolio_strength: 'strong' | 'moderate' | 'weak' | 'none' | 'unknown' | null
+          technology_obsolescence_risk: number | null
+          cybersecurity_assessment: Json | null
+          technology_risk_factors: Json | null
+          esg_risk_score: number
+          environmental_compliance: Json | null
+          social_responsibility_issues: Json | null
+          governance_concerns: Json | null
+          esg_risk_factors: Json | null
+          overall_risk_score: number
+          risk_category: 'low' | 'moderate' | 'high' | 'critical' | null
+          risk_mitigation_strategies: Json | null
+          red_flags: Json | null
+          assessment_method: string
+          confidence_level: number
+          last_updated: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          target_company_id?: string | null
+          financial_risk_score?: number
+          financial_risk_factors?: Json | null
+          operational_risk_score?: number
+          key_person_dependency?: boolean
+          customer_concentration_risk?: number | null
+          supplier_concentration_risk?: number | null
+          operational_risk_factors?: Json | null
+          regulatory_risk_score?: number
+          compliance_status?: Json | null
+          pending_investigations?: Json | null
+          regulatory_risk_factors?: Json | null
+          market_risk_score?: number
+          competitive_position?: 'leader' | 'strong' | 'moderate' | 'weak' | 'unknown' | null
+          market_share_estimate?: number | null
+          competitive_threats?: Json | null
+          market_risk_factors?: Json | null
+          technology_risk_score?: number
+          ip_portfolio_strength?: 'strong' | 'moderate' | 'weak' | 'none' | 'unknown' | null
+          technology_obsolescence_risk?: number | null
+          cybersecurity_assessment?: Json | null
+          technology_risk_factors?: Json | null
+          esg_risk_score?: number
+          environmental_compliance?: Json | null
+          social_responsibility_issues?: Json | null
+          governance_concerns?: Json | null
+          esg_risk_factors?: Json | null
+          overall_risk_score?: number
+          risk_category?: 'low' | 'moderate' | 'high' | 'critical' | null
+          risk_mitigation_strategies?: Json | null
+          red_flags?: Json | null
+          assessment_method?: string
+          confidence_level?: number
+          last_updated?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          target_company_id?: string | null
+          financial_risk_score?: number
+          financial_risk_factors?: Json | null
+          operational_risk_score?: number
+          key_person_dependency?: boolean
+          customer_concentration_risk?: number | null
+          supplier_concentration_risk?: number | null
+          operational_risk_factors?: Json | null
+          regulatory_risk_score?: number
+          compliance_status?: Json | null
+          pending_investigations?: Json | null
+          regulatory_risk_factors?: Json | null
+          market_risk_score?: number
+          competitive_position?: 'leader' | 'strong' | 'moderate' | 'weak' | 'unknown' | null
+          market_share_estimate?: number | null
+          competitive_threats?: Json | null
+          market_risk_factors?: Json | null
+          technology_risk_score?: number
+          ip_portfolio_strength?: 'strong' | 'moderate' | 'weak' | 'none' | 'unknown' | null
+          technology_obsolescence_risk?: number | null
+          cybersecurity_assessment?: Json | null
+          technology_risk_factors?: Json | null
+          esg_risk_score?: number
+          environmental_compliance?: Json | null
+          social_responsibility_issues?: Json | null
+          governance_concerns?: Json | null
+          esg_risk_factors?: Json | null
+          overall_risk_score?: number
+          risk_category?: 'low' | 'moderate' | 'high' | 'critical' | null
+          risk_mitigation_strategies?: Json | null
+          red_flags?: Json | null
+          assessment_method?: string
+          confidence_level?: number
+          last_updated?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      financial_analysis: {
+        Row: {
+          id: string
+          target_company_id: string | null
+          analysis_year: number | null
+          revenue: number | null
+          gross_profit: number | null
+          ebitda: number | null
+          net_income: number | null
+          total_assets: number | null
+          total_liabilities: number | null
+          shareholders_equity: number | null
+          cash_and_equivalents: number | null
+          total_debt: number | null
+          gross_margin: number | null
+          ebitda_margin: number | null
+          net_margin: number | null
+          roe: number | null
+          roa: number | null
+          debt_to_equity: number | null
+          current_ratio: number | null
+          quick_ratio: number | null
+          revenue_growth_3y: number | null
+          profit_growth_3y: number | null
+          employee_growth_3y: number | null
+          altman_z_score: number | null
+          credit_rating: string | null
+          financial_distress_signals: Json | null
+          estimated_revenue_multiple: number | null
+          estimated_ebitda_multiple: number | null
+          estimated_enterprise_value: number | null
+          valuation_method: string | null
+          valuation_confidence: 'low' | 'medium' | 'high' | null
+          data_sources: Json | null
+          data_quality_score: number
+          last_financial_update: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          target_company_id?: string | null
+          analysis_year?: number | null
+          revenue?: number | null
+          gross_profit?: number | null
+          ebitda?: number | null
+          net_income?: number | null
+          total_assets?: number | null
+          total_liabilities?: number | null
+          shareholders_equity?: number | null
+          cash_and_equivalents?: number | null
+          total_debt?: number | null
+          gross_margin?: number | null
+          ebitda_margin?: number | null
+          net_margin?: number | null
+          roe?: number | null
+          roa?: number | null
+          debt_to_equity?: number | null
+          current_ratio?: number | null
+          quick_ratio?: number | null
+          revenue_growth_3y?: number | null
+          profit_growth_3y?: number | null
+          employee_growth_3y?: number | null
+          altman_z_score?: number | null
+          credit_rating?: string | null
+          financial_distress_signals?: Json | null
+          estimated_revenue_multiple?: number | null
+          estimated_ebitda_multiple?: number | null
+          estimated_enterprise_value?: number | null
+          valuation_method?: string | null
+          valuation_confidence?: 'low' | 'medium' | 'high' | null
+          data_sources?: Json | null
+          data_quality_score?: number
+          last_financial_update?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          target_company_id?: string | null
+          analysis_year?: number | null
+          revenue?: number | null
+          gross_profit?: number | null
+          ebitda?: number | null
+          net_income?: number | null
+          total_assets?: number | null
+          total_liabilities?: number | null
+          shareholders_equity?: number | null
+          cash_and_equivalents?: number | null
+          total_debt?: number | null
+          gross_margin?: number | null
+          ebitda_margin?: number | null
+          net_margin?: number | null
+          roe?: number | null
+          roa?: number | null
+          debt_to_equity?: number | null
+          current_ratio?: number | null
+          quick_ratio?: number | null
+          revenue_growth_3y?: number | null
+          profit_growth_3y?: number | null
+          employee_growth_3y?: number | null
+          altman_z_score?: number | null
+          credit_rating?: string | null
+          financial_distress_signals?: Json | null
+          estimated_revenue_multiple?: number | null
+          estimated_ebitda_multiple?: number | null
+          estimated_enterprise_value?: number | null
+          valuation_method?: string | null
+          valuation_confidence?: 'low' | 'medium' | 'high' | null
+          data_sources?: Json | null
+          data_quality_score?: number
+          last_financial_update?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      due_diligence: {
+        Row: {
+          id: string
+          target_company_id: string | null
+          documents_analyzed: Json | null
+          document_completeness_score: number
+          missing_documents: Json | null
+          corporate_structure: Json | null
+          subsidiary_companies: Json | null
+          legal_entity_type: string | null
+          jurisdiction: string | null
+          key_contracts: Json | null
+          contract_risk_assessment: Json | null
+          intellectual_property: Json | null
+          employee_structure: Json | null
+          employment_contracts_review: Json | null
+          pension_obligations: number | null
+          hr_compliance_status: Json | null
+          operational_metrics: Json | null
+          it_infrastructure_assessment: Json | null
+          supply_chain_analysis: Json | null
+          customer_analysis: Json | null
+          environmental_assessments: Json | null
+          sustainability_metrics: Json | null
+          esg_compliance: Json | null
+          legal_issues: Json | null
+          compliance_violations: Json | null
+          financial_irregularities: Json | null
+          operational_concerns: Json | null
+          due_diligence_score: number
+          recommendation: 'proceed' | 'proceed_with_conditions' | 'further_investigation' | 'reject' | null
+          key_findings: Json | null
+          next_steps: Json | null
+          analysis_depth: 'preliminary' | 'standard' | 'comprehensive' | null
+          automation_confidence: number
+          manual_review_required: boolean
+          created_at: string
+          updated_at: string
+          last_verification_date: string
+        }
+        Insert: {
+          id?: string
+          target_company_id?: string | null
+          documents_analyzed?: Json | null
+          document_completeness_score?: number
+          missing_documents?: Json | null
+          corporate_structure?: Json | null
+          subsidiary_companies?: Json | null
+          legal_entity_type?: string | null
+          jurisdiction?: string | null
+          key_contracts?: Json | null
+          contract_risk_assessment?: Json | null
+          intellectual_property?: Json | null
+          employee_structure?: Json | null
+          employment_contracts_review?: Json | null
+          pension_obligations?: number | null
+          hr_compliance_status?: Json | null
+          operational_metrics?: Json | null
+          it_infrastructure_assessment?: Json | null
+          supply_chain_analysis?: Json | null
+          customer_analysis?: Json | null
+          environmental_assessments?: Json | null
+          sustainability_metrics?: Json | null
+          esg_compliance?: Json | null
+          legal_issues?: Json | null
+          compliance_violations?: Json | null
+          financial_irregularities?: Json | null
+          operational_concerns?: Json | null
+          due_diligence_score?: number
+          recommendation?: 'proceed' | 'proceed_with_conditions' | 'further_investigation' | 'reject' | null
+          key_findings?: Json | null
+          next_steps?: Json | null
+          analysis_depth?: 'preliminary' | 'standard' | 'comprehensive' | null
+          automation_confidence?: number
+          manual_review_required?: boolean
+          created_at?: string
+          updated_at?: string
+          last_verification_date?: string
+        }
+        Update: {
+          id?: string
+          target_company_id?: string | null
+          documents_analyzed?: Json | null
+          document_completeness_score?: number
+          missing_documents?: Json | null
+          corporate_structure?: Json | null
+          subsidiary_companies?: Json | null
+          legal_entity_type?: string | null
+          jurisdiction?: string | null
+          key_contracts?: Json | null
+          contract_risk_assessment?: Json | null
+          intellectual_property?: Json | null
+          employee_structure?: Json | null
+          employment_contracts_review?: Json | null
+          pension_obligations?: number | null
+          hr_compliance_status?: Json | null
+          operational_metrics?: Json | null
+          it_infrastructure_assessment?: Json | null
+          supply_chain_analysis?: Json | null
+          customer_analysis?: Json | null
+          environmental_assessments?: Json | null
+          sustainability_metrics?: Json | null
+          esg_compliance?: Json | null
+          legal_issues?: Json | null
+          compliance_violations?: Json | null
+          financial_irregularities?: Json | null
+          operational_concerns?: Json | null
+          due_diligence_score?: number
+          recommendation?: 'proceed' | 'proceed_with_conditions' | 'further_investigation' | 'reject' | null
+          key_findings?: Json | null
+          next_steps?: Json | null
+          analysis_depth?: 'preliminary' | 'standard' | 'comprehensive' | null
+          automation_confidence?: number
+          manual_review_required?: boolean
+          created_at?: string
+          updated_at?: string
+          last_verification_date?: string
+        }
+      }
+      valuation_models: {
+        Row: {
+          id: string
+          target_company_id: string | null
+          valuation_method: 'dcf' | 'comparable_company' | 'precedent_transaction' | 'asset_based' | 'hybrid'
+          revenue_projections: Json | null
+          expense_projections: Json | null
+          capex_projections: Json | null
+          working_capital_projections: Json | null
+          terminal_growth_rate: number | null
+          discount_rate: number | null
+          revenue_multiple_range: Json | null
+          ebitda_multiple_range: Json | null
+          comparable_companies: Json | null
+          precedent_transactions: Json | null
+          base_case_value: number | null
+          bull_case_value: number | null
+          bear_case_value: number | null
+          probability_weighted_value: number | null
+          enterprise_value: number | null
+          equity_value: number | null
+          net_debt_adjustment: number | null
+          scenarios: Json | null
+          sensitivity_analysis: Json | null
+          monte_carlo_results: Json | null
+          revenue_synergies: number | null
+          cost_synergies: number | null
+          one_time_costs: number | null
+          synergy_realization_timeline: Json | null
+          model_version: number
+          assumptions: Json | null
+          confidence_interval: Json | null
+          model_quality_score: number
+          created_at: string
+          updated_at: string
+          model_date: string
+        }
+        Insert: {
+          id?: string
+          target_company_id?: string | null
+          valuation_method: 'dcf' | 'comparable_company' | 'precedent_transaction' | 'asset_based' | 'hybrid'
+          revenue_projections?: Json | null
+          expense_projections?: Json | null
+          capex_projections?: Json | null
+          working_capital_projections?: Json | null
+          terminal_growth_rate?: number | null
+          discount_rate?: number | null
+          revenue_multiple_range?: Json | null
+          ebitda_multiple_range?: Json | null
+          comparable_companies?: Json | null
+          precedent_transactions?: Json | null
+          base_case_value?: number | null
+          bull_case_value?: number | null
+          bear_case_value?: number | null
+          probability_weighted_value?: number | null
+          enterprise_value?: number | null
+          equity_value?: number | null
+          net_debt_adjustment?: number | null
+          scenarios?: Json | null
+          sensitivity_analysis?: Json | null
+          monte_carlo_results?: Json | null
+          revenue_synergies?: number | null
+          cost_synergies?: number | null
+          one_time_costs?: number | null
+          synergy_realization_timeline?: Json | null
+          model_version?: number
+          assumptions?: Json | null
+          confidence_interval?: Json | null
+          model_quality_score?: number
+          created_at?: string
+          updated_at?: string
+          model_date?: string
+        }
+        Update: {
+          id?: string
+          target_company_id?: string | null
+          valuation_method?: 'dcf' | 'comparable_company' | 'precedent_transaction' | 'asset_based' | 'hybrid'
+          revenue_projections?: Json | null
+          expense_projections?: Json | null
+          capex_projections?: Json | null
+          working_capital_projections?: Json | null
+          terminal_growth_rate?: number | null
+          discount_rate?: number | null
+          revenue_multiple_range?: Json | null
+          ebitda_multiple_range?: Json | null
+          comparable_companies?: Json | null
+          precedent_transactions?: Json | null
+          base_case_value?: number | null
+          bull_case_value?: number | null
+          bear_case_value?: number | null
+          probability_weighted_value?: number | null
+          enterprise_value?: number | null
+          equity_value?: number | null
+          net_debt_adjustment?: number | null
+          scenarios?: Json | null
+          sensitivity_analysis?: Json | null
+          monte_carlo_results?: Json | null
+          revenue_synergies?: number | null
+          cost_synergies?: number | null
+          one_time_costs?: number | null
+          synergy_realization_timeline?: Json | null
+          model_version?: number
+          assumptions?: Json | null
+          confidence_interval?: Json | null
+          model_quality_score?: number
+          created_at?: string
+          updated_at?: string
+          model_date?: string
+        }
+      }
+      data_source_configs: {
+        Row: {
+          id: string
+          source_name: string
+          source_type: 'api' | 'database' | 'file_feed' | 'web_scraping' | 'manual'
+          endpoint_url: string | null
+          authentication: Json | null
+          rate_limits: Json | null
+          field_mappings: Json | null
+          data_transformations: Json | null
+          reliability_score: number
+          update_frequency: string | null
+          last_successful_sync: string | null
+          sync_error_count: number
+          total_requests: number
+          successful_requests: number
+          cost_per_request: number | null
+          monthly_budget: number | null
+          is_active: boolean
+          is_premium: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          source_name: string
+          source_type: 'api' | 'database' | 'file_feed' | 'web_scraping' | 'manual'
+          endpoint_url?: string | null
+          authentication?: Json | null
+          rate_limits?: Json | null
+          field_mappings?: Json | null
+          data_transformations?: Json | null
+          reliability_score?: number
+          update_frequency?: string | null
+          last_successful_sync?: string | null
+          sync_error_count?: number
+          total_requests?: number
+          successful_requests?: number
+          cost_per_request?: number | null
+          monthly_budget?: number | null
+          is_active?: boolean
+          is_premium?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          source_name?: string
+          source_type?: 'api' | 'database' | 'file_feed' | 'web_scraping' | 'manual'
+          endpoint_url?: string | null
+          authentication?: Json | null
+          rate_limits?: Json | null
+          field_mappings?: Json | null
+          data_transformations?: Json | null
+          reliability_score?: number
+          update_frequency?: string | null
+          last_successful_sync?: string | null
+          sync_error_count?: number
+          total_requests?: number
+          successful_requests?: number
+          cost_per_request?: number | null
+          monthly_budget?: number | null
+          is_active?: boolean
+          is_premium?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      industry_taxonomy: {
+        Row: {
+          id: string
+          parent_id: string | null
+          level: number
+          sic_code: string | null
+          naics_code: string | null
+          custom_code: string | null
+          name: string
+          description: string | null
+          keywords: string[] | null
+          typical_business_size: 'micro' | 'small' | 'medium' | 'large' | 'enterprise' | null
+          consolidation_opportunity: 'low' | 'moderate' | 'high' | 'very_high' | null
+          regulatory_complexity: 'low' | 'moderate' | 'high' | 'very_high' | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          parent_id?: string | null
+          level: number
+          sic_code?: string | null
+          naics_code?: string | null
+          custom_code?: string | null
+          name: string
+          description?: string | null
+          keywords?: string[] | null
+          typical_business_size?: 'micro' | 'small' | 'medium' | 'large' | 'enterprise' | null
+          consolidation_opportunity?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          regulatory_complexity?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          parent_id?: string | null
+          level?: number
+          sic_code?: string | null
+          naics_code?: string | null
+          custom_code?: string | null
+          name?: string
+          description?: string | null
+          keywords?: string[] | null
+          typical_business_size?: 'micro' | 'small' | 'medium' | 'large' | 'enterprise' | null
+          consolidation_opportunity?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          regulatory_complexity?: 'low' | 'moderate' | 'high' | 'very_high' | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

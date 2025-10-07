@@ -3,7 +3,7 @@
  * Registers all services and their dependencies in the DI container
  */
 
-import { Container } from './core/container'
+import { Container, ServiceLifetime } from './core/container'
 
 // Domain Services
 import { InMemoryEventBus, InMemoryEventStore } from './domain/events/domain-event.base'
@@ -65,98 +65,98 @@ export function registerServices(
   // ============================================================================
   // INFRASTRUCTURE LAYER
   // ============================================================================
-  
+
   // Event System
-  container.registerSingleton<IEventBus>('IEventBus', () => new InMemoryEventBus())
-  container.registerSingleton<IEventStore>('IEventStore', () => new InMemoryEventStore())
-  
+  container.registerFactory<IEventBus>('IEventBus', () => new InMemoryEventBus(), ServiceLifetime.SINGLETON)
+  container.registerFactory<IEventStore>('IEventStore', () => new InMemoryEventStore(), ServiceLifetime.SINGLETON)
+
   // Caching
-  container.registerSingleton<ICacheService>('ICacheService', (c) => {
+  container.registerFactory<ICacheService>('ICacheService', (c: any) => {
     const redisClient = c.tryResolve('redisClient')
     return new CacheService(redisClient)
-  })
-  
+  }, ServiceLifetime.SINGLETON)
+
   // Rate Limiting
-  container.registerSingleton<IRateLimitingService>('IRateLimitingService', (c) => {
+  container.registerFactory<IRateLimitingService>('IRateLimitingService', (c: any) => {
     const redisClient = c.tryResolve('redisClient')
     return new RateLimitingService(redisClient)
-  })
-  
+  }, ServiceLifetime.SINGLETON)
+
   // Cost Management
-  container.registerSingleton<ICostManagementService>('ICostManagementService', () => {
+  container.registerFactory<ICostManagementService>('ICostManagementService', () => {
     return new CostManagementService()
-  })
+  }, ServiceLifetime.SINGLETON)
 
   // ============================================================================
   // REPOSITORY LAYER
   // ============================================================================
-  
-  container.registerScoped<IScanRepository>('IScanRepository', (c) => {
+
+  container.registerFactory<IScanRepository>('IScanRepository', (c: any) => {
     const database = c.resolve('database')
     return new ScanRepository(database)
-  })
-  
-  container.registerScoped<ICompanyRepository>('ICompanyRepository', (c) => {
+  }, ServiceLifetime.SCOPED)
+
+  container.registerFactory<ICompanyRepository>('ICompanyRepository', (c: any) => {
     const database = c.resolve('database')
     return new CompanyRepository(database)
-  })
+  }, ServiceLifetime.SCOPED)
 
   // ============================================================================
   // DATA SOURCE LAYER
   // ============================================================================
-  
-  container.registerSingleton('DataSourceFactory', () => new DataSourceFactory())
-  
-  container.registerFactory('DataSourceProviders', (c) => {
+
+  container.registerFactory('DataSourceFactory', () => new DataSourceFactory(), ServiceLifetime.SINGLETON)
+
+  container.registerFactory('DataSourceProviders', (c: any) => {
     const factory = c.resolve('DataSourceFactory') as DataSourceFactory
-    
+
     // Initialize and return all available data sources as a Map
     const sources = new Map()
-    
+
     // Register individual data sources
-    const availableSources = factory.getAvailableSources()
+    const availableSources = factory.getAvailableDataSources?.() || []
     for (const sourceId of availableSources) {
       try {
-        const provider = factory.createProvider(sourceId, {})
+        const provider = (factory as any).createDataSource?.(sourceId, {})
         sources.set(sourceId, provider)
       } catch (error) {
         console.warn(`Failed to initialize data source ${sourceId}:`, error)
       }
     }
-    
+
     return sources
   })
 
   // ============================================================================
   // APPLICATION LAYER
   // ============================================================================
-  
+
   // Data Collection Service
-  container.registerScoped<IDataCollectionService>('IDataCollectionService', (c) => {
+  container.registerFactory<IDataCollectionService>('IDataCollectionService', (c: any) => {
     return new DataCollectionService(
       c.resolve('DataSourceProviders'),
-      c.resolve<ICompanyRepository>('ICompanyRepository'),
-      c.resolve<IRateLimitingService>('IRateLimitingService'),
-      c.resolve<ICacheService>('ICacheService'),
-      c.resolve<IEventBus>('IEventBus')
+      c.resolve('ICompanyRepository') as ICompanyRepository,
+      c.resolve('IRateLimitingService') as IRateLimitingService,
+      c.resolve('ICacheService') as ICacheService,
+      c.resolve('IEventBus') as IEventBus
     )
-  })
-  
+  }, ServiceLifetime.SCOPED)
+
   // Company Analysis Service
-  container.registerScoped<ICompanyAnalysisService>('ICompanyAnalysisService', (c) => {
+  container.registerFactory<ICompanyAnalysisService>('ICompanyAnalysisService', (c: any) => {
     return new CompanyAnalysisService(
       c.resolve('DataSourceProviders'),
-      c.resolve<ICacheService>('ICacheService')
+      c.resolve('ICacheService') as ICacheService
     )
-  })
-  
+  }, ServiceLifetime.SCOPED)
+
   // Scan Orchestration Service (replaces ScanningEngine)
-  container.registerScoped<IScanOrchestrationService>('IScanOrchestrationService', (c) => {
+  container.registerFactory<IScanOrchestrationService>('IScanOrchestrationService', (c: any) => {
     return new ScanOrchestrationService(
-      c.resolve<IDataCollectionService>('IDataCollectionService'),
-      c.resolve<ICompanyAnalysisService>('ICompanyAnalysisService'),
-      c.resolve<ICostManagementService>('ICostManagementService'),
-      c.resolve<IScanRepository>('IScanRepository'),
+      c.resolve('IDataCollectionService') as IDataCollectionService,
+      c.resolve('ICompanyAnalysisService') as ICompanyAnalysisService,
+      c.resolve('ICostManagementService') as ICostManagementService,
+      c.resolve('IScanRepository') as IScanRepository,
       c.resolve<IEventBus>('IEventBus')
     )
   })

@@ -417,6 +417,11 @@ export interface CompanySearchQuery {
   readonly region?: string
   readonly sizeRange?: SizeRange
   readonly maxResults?: number
+  readonly filters?: {
+    industry?: string
+    region?: string
+    sizeRange?: SizeRange
+  }
 }
 
 export interface CompanySearchResult {

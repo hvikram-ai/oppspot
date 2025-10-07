@@ -234,7 +234,7 @@ export class WebSearchService implements IWebSearchService {
       return rankedResults.slice(0, query.maxResults || 50)
     } catch (error) {
       console.error('Error in searchCompanies:', error)
-      throw new Error(`Company search failed: ${error.message}`)
+      throw new Error(`Company search failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -446,6 +446,7 @@ export class WebSearchService implements IWebSearchService {
 
     try {
       const response = await fetch(searchUrl, {
+        // @ts-expect-error - timeout not in standard fetch, implementation-specific
         timeout: this.config.defaultTimeout,
         headers: {
           'User-Agent': 'oppSpot-SimilarCompany/1.0'
@@ -477,6 +478,7 @@ export class WebSearchService implements IWebSearchService {
 
     try {
       const response = await fetch(searchUrl, {
+        // @ts-expect-error - timeout not in standard fetch, implementation-specific
         timeout: this.config.defaultTimeout,
         headers: {
           'Ocp-Apim-Subscription-Key': provider.apiKey,
@@ -508,6 +510,7 @@ export class WebSearchService implements IWebSearchService {
 
     try {
       const response = await fetch(searchUrl, {
+        // @ts-expect-error - timeout not in standard fetch, implementation-specific
         timeout: this.config.defaultTimeout,
         headers: {
           'Authorization': `Basic ${Buffer.from(provider.apiKey + ':').toString('base64')}`,
@@ -546,6 +549,7 @@ export class WebSearchService implements IWebSearchService {
 
     try {
       const response = await fetch(searchUrl, {
+        // @ts-expect-error - timeout not in standard fetch, implementation-specific
         timeout: this.config.defaultTimeout,
         headers: {
           'Authorization': `Bearer ${provider.apiKey}`,
@@ -598,6 +602,7 @@ export class WebSearchService implements IWebSearchService {
     try {
       const response = await fetch(provider.endpoint, {
         method: 'POST',
+        // @ts-expect-error - timeout not in standard fetch, implementation-specific
         timeout: this.config.defaultTimeout,
         headers: {
           'X-cb-user-key': provider.apiKey,

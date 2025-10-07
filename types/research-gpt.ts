@@ -38,7 +38,9 @@ export type SignalType =
   | 'expansion'
   | 'leadership'
   | 'tech_change'
-  | 'social_sentiment';
+  | 'social_sentiment'
+  | 'funding'
+  | 'product_launch';
 
 export type SignalPriority = 'high' | 'medium' | 'low';
 
@@ -275,6 +277,7 @@ export interface BuyingSignal {
   description: string;
   source_url: string;
   source_type: string;
+  category?: string;
 
   // Type-specific details
   details: HiringSignal | ExpansionSignal | LeadershipSignal | TechSignal | SocialSentimentSignal;
@@ -364,6 +367,9 @@ export interface RevenueSignal {
   source_url: string;
   confidence_level: ConfidenceLevel;
   published_date: string | null;
+  signal_type?: string;
+  positive?: boolean;
+  description?: string;
 }
 
 /**

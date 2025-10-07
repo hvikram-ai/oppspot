@@ -106,6 +106,7 @@ export class PeerIdentifier {
       // Create peer group
       const { data: peerGroup, error: groupError } = await this.supabase
         .from('peer_groups')
+        // @ts-expect-error - Supabase type inference issue with insert() method
         .insert({
           name,
           description,
@@ -116,7 +117,7 @@ export class PeerIdentifier {
         .select()
         .single()
 
-      if (groupError) throw groupError
+      if (groupError || !peerGroup) throw groupError || new Error('Failed to create peer group')
 
       // Add members
       const members = companyIds.map(companyId => ({
@@ -127,6 +128,7 @@ export class PeerIdentifier {
 
       const { error: memberError } = await this.supabase
         .from('peer_group_members')
+        // @ts-expect-error - Supabase type inference issue with insert() method
         .insert(members)
 
       if (memberError) throw memberError
@@ -160,17 +162,19 @@ export class PeerIdentifier {
       .limit(1)
       .single()
 
+    const companyData = company as any
+
     return {
-      company_id: company.id,
-      company_name: company.name,
-      industry_codes: company.sic_codes || [],
-      revenue: metrics?.revenue || company.accounts?.turnover,
-      employee_count: metrics?.employee_count || company.employee_count,
-      revenue_growth: metrics?.revenue_growth_yoy,
-      location: company.address?.city || company.registered_office_address?.locality,
-      business_model: this.inferBusinessModel(company),
-      incorporation_date: company.incorporation_date,
-      metrics
+      company_id: companyData.id,
+      company_name: companyData.name,
+      industry_codes: companyData.sic_codes || [],
+      revenue: (metrics as any)?.revenue || companyData.accounts?.turnover,
+      employee_count: (metrics as any)?.employee_count || companyData.employee_count,
+      revenue_growth: (metrics as any)?.revenue_growth_yoy,
+      location: companyData.address?.city || companyData.registered_office_address?.locality,
+      business_model: this.inferBusinessModel(companyData),
+      incorporation_date: companyData.incorporation_date,
+      metrics: metrics as any
     }
   }
 

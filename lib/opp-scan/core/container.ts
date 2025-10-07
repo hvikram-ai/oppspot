@@ -68,8 +68,8 @@ export class Container implements IContainer {
   }
 
   registerFactory<T>(
-    token: string | symbol | Function, 
-    factory: (...args: unknown[]) => T | Promise<T>, 
+    token: string | symbol | Function,
+    factory: (...args: unknown[]) => T | Promise<T>,
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT
   ): void {
     this.register({
@@ -77,6 +77,22 @@ export class Container implements IContainer {
       factory,
       lifetime
     })
+  }
+
+  registerInstance<T>(token: string | symbol | Function, instance: T): void {
+    this.register({
+      token,
+      instance,
+      lifetime: ServiceLifetime.SINGLETON
+    })
+  }
+
+  tryResolve<T>(token: string | symbol | Function): T | undefined {
+    try {
+      return this.resolve<T>(token)
+    } catch {
+      return undefined
+    }
   }
 
   resolve<T>(token: string | symbol | Function): T {

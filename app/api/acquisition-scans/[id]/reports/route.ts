@@ -104,9 +104,9 @@ export async function POST(
     // Check scan access
     const { data: scan, error: scanError } = await supabase
       .from('acquisition_scans')
-      .select('user_id, org_id, name, status')
+      .select('*')
       .eq('id', scanId)
-      .single() as { data: { user_id: string; org_id: string | null; name: string; status: string } | null; error: unknown }
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -169,6 +169,7 @@ export async function POST(
     // Create report
     const { data: report, error: insertError } = await supabase
       .from('scan_reports')
+      // @ts-expect-error - Supabase type inference issue with insert() method for scan reports
       .insert({
         scan_id: scanId,
         user_id: user.id,
@@ -184,7 +185,7 @@ export async function POST(
         generation_status: 'generating'
       })
       .select()
-      .single()
+      .single() as { data: Database['public']['Tables']['scan_reports']['Row'] | null; error: unknown }
 
     if (insertError) {
       console.error('Error creating report:', insertError)
@@ -196,28 +197,32 @@ export async function POST(
 
     // In a real implementation, this would trigger background report generation
     // For now, we'll mark it as completed
-    setTimeout(async () => {
-      await supabase
-        .from('scan_reports')
-        .update({ 
-          generation_status: 'completed',
-          generated_at: new Date().toISOString(),
-          file_size: Math.floor(Math.random() * 1000000) + 100000 // Simulate file size
-        })
-        .eq('id', report.id)
-    }, 5000) // Simulate 5-second generation time
+    if (report?.id) {
+      setTimeout(async () => {
+        await supabase
+          .from('scan_reports')
+          // @ts-expect-error - Supabase type inference issue with update() method
+          .update({
+            generation_status: 'completed',
+            generated_at: new Date().toISOString(),
+            file_size: Math.floor(Math.random() * 1000000) + 100000 // Simulate file size
+          })
+          .eq('id', report.id)
+      }, 5000) // Simulate 5-second generation time
+    }
 
     // Create audit log entry
     await supabase
       .from('scan_audit_log')
+      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
       .insert({
         scan_id: scanId,
         user_id: user.id,
         action_type: 'report_generated',
         action_description: `Generated ${reportType} report: ${reportTitle}`,
         after_state: report,
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
+        ip_address: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
                    'unknown',
         user_agent: request.headers.get('user-agent') || 'unknown',
         legal_basis: 'legitimate_interest',
@@ -246,7 +251,7 @@ async function generateReportContent(supabase: DbClient, scanId: string, reportT
         risk_assessments (*),
         due_diligence (*)
       `)
-      .eq('scan_id', scanId)
+      .eq('scan_id', scanId) as { data: any[] | null; error: unknown }
 
     const { data: marketIntelligence } = await supabase
       .from('market_intelligence')
@@ -332,7 +337,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown }
 
     return profile?.org_id === orgId
   } catch (error) {

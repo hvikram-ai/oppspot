@@ -7,6 +7,52 @@ Demo123456!
 INNGEST
 npx inngest-cli@latest dev
 
+------------------------------
+
+
+
+  Immediate (This Week)
+
+  1. Fix TypeScript config - Exclude test files:
+  // tsconfig.json
+  "exclude": ["node_modules", "tests", "**/*.spec.ts"]
+  1. This alone eliminates ~800 errors.
+  2. Regenerate database types:
+  npx supabase gen types typescript --project-id fuqdbewftdthbjfcecrz >
+  types/database.ts
+  2. Should fix ~600 never type errors.
+
+  Short Term (Next 2 Weeks)
+
+  3. Fix top 10 files with most any types
+  4. Clean up unused imports (~40 instances)
+  5. Re-enable strict TypeScript checking progressively
+
+  Medium Term (Next Month)
+
+  6. Implement stubbed TODO items (billing, notifications, etc.)
+  7. Replace remaining ~400 any types systematically
+  8. Add proper error handling for unknown types
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ----------------------------------------
 

@@ -243,6 +243,85 @@ export interface AnalysisSummary {
 }
 
 // ==========================================
+// REPOSITORY ABSTRACTIONS
+// ==========================================
+
+export interface IScanRepository {
+  findById(id: string): Promise<any | null>
+  findByUserId(userId: string): Promise<any[]>
+  findByStatus(status: ScanStatus): Promise<any[]>
+  save(scan: any): Promise<void>
+  update(scan: any): Promise<void>
+  delete(id: string): Promise<void>
+}
+
+export interface ICompanyRepository {
+  findById(id: string): Promise<any | null>
+  findByUserId(userId: string): Promise<any[]>
+  save(company: any): Promise<void>
+  update(company: any): Promise<void>
+  delete(id: string): Promise<void>
+}
+
+// ==========================================
+// SERVICE ABSTRACTIONS
+// ==========================================
+
+export interface IDataCollectionService {
+  collectData(params: any): Promise<any>
+}
+
+export interface ICompanyAnalysisService {
+  analyzeCompany(company: any): Promise<any>
+}
+
+export interface IScanOrchestrationService {
+  orchestrateScan(scanId: string): Promise<any>
+}
+
+export interface ICacheService {
+  get(key: string): Promise<any>
+  set(key: string, value: any, ttl?: number): Promise<void>
+  delete(key: string): Promise<void>
+}
+
+export interface IRateLimitingService {
+  checkLimit(key: string): Promise<boolean>
+  increment(key: string): Promise<void>
+}
+
+export interface ICostManagementService {
+  trackCost(scanId: string, cost: number): Promise<void>
+  getCost(scanId: string): Promise<number>
+}
+
+// ==========================================
+// EVENT STORE
+// ==========================================
+
+export interface IEventStore {
+  append(streamId: string, events: any[]): Promise<void>
+  getEvents(streamId: string): Promise<any[]>
+}
+
+// ==========================================
+// CONTAINER
+// ==========================================
+
+export interface IContainer {
+  register<T>(name: string, factory: () => T): void
+  resolve<T>(name: string): T
+}
+
+// ==========================================
+// USE CASE
+// ==========================================
+
+export interface UseCase<TInput, TOutput> {
+  execute(input: TInput): Promise<TOutput>
+}
+
+// ==========================================
 // PIPELINE ABSTRACTIONS
 // ==========================================
 

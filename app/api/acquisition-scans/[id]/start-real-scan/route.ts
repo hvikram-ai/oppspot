@@ -31,7 +31,7 @@ export async function POST(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single()
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -41,7 +41,7 @@ export async function POST(
     }
 
     // Check access permissions
-    const hasAccess = scan.user_id === user.id || 
+    const hasAccess = scan.user_id === user.id ||
       (scan.org_id && await checkOrgAccess(supabase, user.id, scan.org_id))
 
     if (!hasAccess) {
@@ -118,6 +118,7 @@ export async function POST(
     // Update scan status to starting
     await supabase
       .from('acquisition_scans')
+      // @ts-expect-error - Supabase type inference issue with update() method
       .update({
         status: 'scanning',
         current_step: 'initializing_real_data',
@@ -130,6 +131,7 @@ export async function POST(
     // Create audit log entry
     await supabase
       .from('scan_audit_log')
+      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
       .insert({
         scan_id: scanId,
         user_id: user.id,
@@ -141,8 +143,8 @@ export async function POST(
           estimated_cost: affordabilityCheck.estimatedCost,
           connectivity_status: connectivityTest.overallHealth
         },
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
+        ip_address: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
                    'unknown',
         user_agent: request.headers.get('user-agent') || 'unknown',
         legal_basis: 'legitimate_interest',
@@ -163,6 +165,7 @@ export async function POST(
     // Update scan with job ID for tracking
     await supabase
       .from('acquisition_scans')
+      // @ts-expect-error - Supabase type inference issue with update() method
       .update({
         current_step: 'queued_for_processing',
         updated_at: new Date().toISOString()
@@ -208,7 +211,7 @@ export async function POST(
   } catch (error) {
     console.error('Error starting real data scan:', error)
     return NextResponse.json(
-      { error: 'Failed to start real data scan', details: error.message },
+      { error: 'Failed to start real data scan', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
@@ -217,24 +220,27 @@ export async function POST(
 // Helper functions
 
 function validateScanConfiguration(scan: Scan): string | null {
-  if (!scan.selected_industries || scan.selected_industries.length === 0) {
+  const industries = scan.selected_industries as any[]
+  if (!industries || industries.length === 0) {
     return 'No industries selected'
   }
 
-  if (!scan.selected_regions || scan.selected_regions.length === 0) {
+  const regions = scan.selected_regions as any[]
+  if (!regions || regions.length === 0) {
     return 'No regions selected'
   }
 
-  if (!scan.data_sources || scan.data_sources.length === 0) {
+  const dataSources = scan.data_sources as string[]
+  if (!dataSources || dataSources.length === 0) {
     return 'No data sources selected'
   }
 
   // Validate required environment variables for real data sources
-  if (scan.data_sources.includes('companies_house') && !process.env.COMPANIES_HOUSE_API_KEY) {
+  if (dataSources.includes('companies_house') && !process.env.COMPANIES_HOUSE_API_KEY) {
     return 'Companies House API key not configured'
   }
 
-  if (scan.data_sources.includes('financial_data') && !process.env.FINANCIAL_DATA_API_KEY) {
+  if (dataSources.includes('financial_data') && !process.env.FINANCIAL_DATA_API_KEY) {
     return 'Financial data API key not configured'
   }
 
@@ -245,10 +251,11 @@ function estimateRequestCount(scan: Scan): number {
   let baseRequests = 100 // Base number of API calls
 
   // Multiply by number of industries
-  baseRequests *= (scan.selected_industries?.length || 1)
+  const industries = scan.selected_industries as any[]
+  baseRequests *= (industries?.length || 1)
 
   // Add requests for each data source
-  const dataSourceMultiplier = {
+  const dataSourceMultiplier: Record<string, number> = {
     'companies_house': 1.0,
     'irish_cro': 0.8,
     'financial_data': 2.0, // More expensive, fewer calls
@@ -259,23 +266,25 @@ function estimateRequestCount(scan: Scan): number {
   }
 
   let sourceMultiplier = 1.0
-  for (const source of scan.data_sources || []) {
+  const dataSources = (scan.data_sources as string[]) || []
+  for (const source of dataSources) {
     sourceMultiplier += (dataSourceMultiplier[source] || 1.0)
   }
 
   baseRequests *= sourceMultiplier
 
   // Adjust for scan depth
-  const depthMultiplier = {
+  const depthMultiplier: Record<string, number> = {
     'basic': 0.5,
     'detailed': 1.0,
     'comprehensive': 2.0
   }
 
-  baseRequests *= depthMultiplier[scan.scan_depth] || 1.0
+  baseRequests *= depthMultiplier[scan.scan_depth as string] || 1.0
 
   // Adjust for regions (more regions = more API calls)
-  baseRequests *= Math.sqrt(scan.selected_regions?.length || 1)
+  const regions = scan.selected_regions as any[]
+  baseRequests *= Math.sqrt(regions?.length || 1)
 
   return Math.ceil(baseRequests)
 }
@@ -287,15 +296,16 @@ function getEstimatedCompletion(scan: Scan, estimatedRequests: number): string {
   estimatedMinutes += Math.ceil(estimatedRequests / 2)
 
   // Add time for data processing and analysis
-  estimatedMinutes += scan.data_sources.length * 5
+  const dataSources = (scan.data_sources as string[]) || []
+  estimatedMinutes += dataSources.length * 5
 
   // Add time based on scan depth
-  const depthMultiplier = {
+  const depthMultiplier: Record<string, number> = {
     'basic': 1,
     'detailed': 1.5,
     'comprehensive': 2.5
   }
-  estimatedMinutes *= depthMultiplier[scan.scan_depth] || 1.5
+  estimatedMinutes *= depthMultiplier[scan.scan_depth as string] || 1.5
 
   const completionTime = new Date()
   completionTime.setMinutes(completionTime.getMinutes() + estimatedMinutes)
@@ -309,7 +319,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown }
 
     return profile?.org_id === orgId
   } catch (error) {

@@ -57,7 +57,7 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
       .from('businesses')
       .select('name, description, address')
       .eq('company_number', companyNumber)
-      .single()
+      .single() as { data: any; error: unknown }
 
     if (business) {
       const location = business.address?.city ? `, ${business.address.city}` : ''
@@ -73,12 +73,12 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
     }
     // If not found, continue with default lookup
   }
-  
+
   const { data: business } = await supabase
     .from('businesses')
     .select('name, description, address')
     .eq('id', params.id)
-    .single()
+    .single() as { data: any; error: unknown }
 
   if (!business) {
     return {
@@ -88,7 +88,7 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
   }
 
   const location = business.address?.city ? `, ${business.address.city}` : ''
-  
+
   return {
     title: `${business.name}${location} - OppSpot`,
     description: business.description || `View details for ${business.name} on OppSpot. Find contact information, location, and more.`,

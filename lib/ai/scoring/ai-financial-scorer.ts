@@ -8,6 +8,23 @@ import { createClient } from '@/lib/supabase/server'
 import { getOllamaClient, isOllamaEnabled } from '@/lib/ai/ollama'
 import { FinancialScore } from './financial-health-scorer'
 
+// Type definitions for company data
+interface CompanyData {
+  id?: string
+  name?: string
+  company_number?: string
+  company_status?: string
+  company_type?: string
+  incorporation_date?: string
+  sic_codes?: string[]
+  registered_office_address?: {
+    locality?: string
+    [key: string]: any
+  }
+  companies_house_data?: any
+  [key: string]: any
+}
+
 export class AIFinancialScorer {
   private ollama = getOllamaClient()
 
@@ -15,7 +32,8 @@ export class AIFinancialScorer {
    * Calculate financial score with AI intelligence
    */
   async calculateScore(company: Record<string, unknown>): Promise<FinancialScore> {
-    console.log(`[AIFinancialScorer] Analyzing ${company.name}`)
+    const companyData = company as CompanyData
+    console.log(`[AIFinancialScorer] Analyzing ${companyData.name}`)
 
     // Check if AI is available
     if (!isOllamaEnabled() || !(await this.isOllamaAvailable())) {
@@ -43,32 +61,33 @@ export class AIFinancialScorer {
    * Gather comprehensive financial context for AI analysis
    */
   private async gatherFinancialContext(company: Record<string, unknown>): Promise<string> {
+    const companyData = company as CompanyData
     const supabase = await createClient()
 
     // Fetch stored financial metrics
     const { data: metrics } = await supabase
       .from('financial_metrics')
       .select('*')
-      .eq('company_id', company.id)
+      .eq('company_id', companyData.id as any)
       .order('fiscal_year', { ascending: false })
       .limit(3) // Get last 3 years
 
     // Build comprehensive context
     let context = `
     COMPANY PROFILE:
-    Name: ${company.name}
-    Company Number: ${company.company_number || 'Not provided'}
-    Status: ${company.company_status || 'Unknown'}
-    Type: ${company.company_type || 'Unknown'}
-    Incorporated: ${company.incorporation_date || 'Unknown'}
-    Age: ${this.calculateCompanyAge(company.incorporation_date)} years
-    Industry (SIC): ${company.sic_codes?.join(', ') || 'Not specified'}
-    Location: ${company.registered_office_address?.locality || 'UK'}
+    Name: ${companyData.name}
+    Company Number: ${companyData.company_number || 'Not provided'}
+    Status: ${companyData.company_status || 'Unknown'}
+    Type: ${companyData.company_type || 'Unknown'}
+    Incorporated: ${companyData.incorporation_date || 'Unknown'}
+    Age: ${this.calculateCompanyAge(companyData.incorporation_date)} years
+    Industry (SIC): ${companyData.sic_codes?.join(', ') || 'Not specified'}
+    Location: ${companyData.registered_office_address?.locality || 'UK'}
     `
 
     // Add Companies House data if available
-    if (company.companies_house_data) {
-      const ch = company.companies_house_data
+    if (companyData.companies_house_data) {
+      const ch = companyData.companies_house_data as any
       context += `
 
     REGULATORY COMPLIANCE:

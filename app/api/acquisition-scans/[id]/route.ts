@@ -37,9 +37,9 @@ export async function GET(
         )
       `)
       .eq('id', scanId)
-      .single()
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] & { target_companies: Array<{ id: string; company_name: string; overall_score: number; analysis_status: string; created_at: string }> } | null; error: unknown }
 
-    if (scanError) {
+    if (scanError || !scan) {
       console.error('Error fetching scan:', scanError)
       return NextResponse.json(
         { error: 'Scan not found' },
@@ -48,7 +48,7 @@ export async function GET(
     }
 
     // Check access permissions
-    const hasAccess = scan.user_id === user.id || 
+    const hasAccess = scan.user_id === user.id ||
       (scan.org_id && await checkOrgAccess(supabase, user.id, scan.org_id))
 
     if (!hasAccess) {
@@ -111,9 +111,9 @@ export async function PATCH(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single()
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
 
-    if (fetchError) {
+    if (fetchError || !existingScan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
@@ -121,7 +121,7 @@ export async function PATCH(
     }
 
     // Check access permissions
-    const hasAccess = existingScan.user_id === user.id || 
+    const hasAccess = existingScan.user_id === user.id ||
       (existingScan.org_id && await checkOrgAccess(supabase, user.id, existingScan.org_id))
 
     if (!hasAccess) {
@@ -132,15 +132,17 @@ export async function PATCH(
     }
 
     // Update the scan
+    const updateData = {
+      ...body,
+      updated_at: new Date().toISOString()
+    } as Database['public']['Tables']['acquisition_scans']['Update']
     const { data: updatedScan, error: updateError } = await supabase
       .from('acquisition_scans')
-      .update({
-        ...body,
-        updated_at: new Date().toISOString()
-      })
+      // @ts-expect-error - Supabase type inference issue with update() method
+      .update(updateData)
       .eq('id', scanId)
       .select()
-      .single()
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
 
     if (updateError) {
       console.error('Error updating scan:', updateError)
@@ -151,22 +153,24 @@ export async function PATCH(
     }
 
     // Create audit log entry
-    await supabase
-      .from('scan_audit_log')
-      .insert({
+    const auditData = {
         scan_id: scanId,
         user_id: user.id,
         action_type: 'scan_updated',
         action_description: `Updated acquisition scan`,
-        before_state: existingScan,
-        after_state: updatedScan,
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
+        before_state: existingScan as Database['public']['Tables']['scan_audit_log']['Row']['before_state'],
+        after_state: updatedScan as Database['public']['Tables']['scan_audit_log']['Row']['after_state'],
+        ip_address: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
                    'unknown',
         user_agent: request.headers.get('user-agent') || 'unknown',
         legal_basis: 'legitimate_interest',
         retention_period: 365
-      })
+      } as Database['public']['Tables']['scan_audit_log']['Insert']
+    await supabase
+      .from('scan_audit_log')
+      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
+      .insert(auditData)
 
     return NextResponse.json({ scan: updatedScan })
   } catch (error) {
@@ -201,9 +205,9 @@ export async function DELETE(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single()
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
 
-    if (fetchError) {
+    if (fetchError || !existingScan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
@@ -211,7 +215,7 @@ export async function DELETE(
     }
 
     // Check access permissions
-    const hasAccess = existingScan.user_id === user.id || 
+    const hasAccess = existingScan.user_id === user.id ||
       (existingScan.org_id && await checkOrgAccess(supabase, user.id, existingScan.org_id))
 
     if (!hasAccess) {
@@ -236,21 +240,23 @@ export async function DELETE(
     }
 
     // Create audit log entry
-    await supabase
-      .from('scan_audit_log')
-      .insert({
+    const deleteAuditData = {
         scan_id: scanId,
         user_id: user.id,
         action_type: 'scan_deleted',
         action_description: `Deleted acquisition scan: ${existingScan.name}`,
-        before_state: existingScan,
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
+        before_state: existingScan as Database['public']['Tables']['scan_audit_log']['Row']['before_state'],
+        ip_address: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
                    'unknown',
         user_agent: request.headers.get('user-agent') || 'unknown',
         legal_basis: 'legitimate_interest',
         retention_period: 365
-      })
+      } as Database['public']['Tables']['scan_audit_log']['Insert']
+    await supabase
+      .from('scan_audit_log')
+      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
+      .insert(deleteAuditData)
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -269,7 +275,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown }
 
     return profile?.org_id === orgId
   } catch (error) {
