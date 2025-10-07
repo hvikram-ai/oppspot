@@ -100,6 +100,31 @@ const RESTRICTED_ACTIONS = [
 // Default demo scans
 const DEFAULT_DEMO_SCANS: AcquisitionScan[] = [
   {
+    id: 'demo-scan-showcase',
+    name: '🎯 Full-Stack SaaS Targets - UK & Ireland 2025',
+    description: 'SHOWCASE DEMO: Comprehensive acquisition scan demonstrating all parameters - Growth-stage B2B SaaS companies with £2M-£10M revenue, 25-200 employees, strong unit economics, and expansion potential',
+    status: 'completed',
+    progress_percentage: 100,
+    targets_identified: 127,
+    targets_analyzed: 127,
+    created_at: '2025-01-10T09:00:00Z',
+    updated_at: '2025-01-10T15:30:00Z',
+    started_at: '2025-01-10T09:05:00Z',
+    completed_at: '2025-01-10T15:30:00Z',
+    current_step: 'completed',
+    selected_industries: [
+      { key: 'technology:saas', industry: 'Technology', subcategory: 'SaaS/Cloud Software' },
+      { key: 'technology:enterprise-software', industry: 'Technology', subcategory: 'Enterprise Software' },
+      { key: 'technology:devtools', industry: 'Technology', subcategory: 'Developer Tools' }
+    ],
+    selected_regions: [
+      { id: 'london', name: 'Greater London', country: 'England' },
+      { id: 'manchester', name: 'Greater Manchester', country: 'England' },
+      { id: 'edinburgh', name: 'Edinburgh', country: 'Scotland' },
+      { id: 'dublin', name: 'Dublin', country: 'Ireland' }
+    ]
+  },
+  {
     id: 'demo-scan-1',
     name: 'UK FinTech Acquisition Scan',
     description: 'Comprehensive scan for financial technology acquisitions in the UK market',
