@@ -228,26 +228,27 @@ Password: Demo123456!
 ### Git User Configuration
 Current git configuration for this repository:
 - **Name**: vik
-- **Email**: hvikram.ai@gmail.com
+- **Email**: hirendra.vikram@boardguru.ai
 
 ### GitHub Account
-- **Primary Account**: hvikram-ai
-- **Repository**: https://github.com/hvikram-ai/oppspot
-- **Alternative Email**: hirendra.vikram@aiborg.ai (if needed for different contexts)
+- **Organization**: BoardGuruHV
+- **Repository**: https://github.com/BoardGuruHV/oppspot
+- **Previous Account**: hvikram-ai (legacy)
 
 **Note**: GitHub CLI authentication may be required for operations like creating pull requests. Use `gh auth login` if needed.
 
 ## Deployment Information
 
 ### Production URLs
-- **Primary Vercel Deployment**: https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/
-- **Vercel Project Dashboard**: https://vercel.com/vikhs-projects/oppspot
-- **Custom Domain**: Not yet configured (would be https://oppspot.vercel.app/ or https://oppspot.ai/)
+- **Primary Vercel Deployment**: https://oppspot-one.vercel.app/
+- **Vercel Account**: hirendra.vikram@boardguru.ai
+- **Vercel Project Dashboard**: https://vercel.com/boardguruhv/oppspot-one
+- **Custom Domain**: Not yet configured (potential: https://oppspot.ai/)
 - **Note**: OAuth uses `window.location.origin` dynamically - works with any deployment URL
 
 ### Deployment Platform
 - **Hosting**: Vercel (automatic deployment on push to main branch)
-- **Repository**: https://github.com/hvikram-ai/oppspot
+- **Repository**: https://github.com/BoardGuruHV/oppspot
 - **Build Command**: `npm run build`
 - **Output Directory**: `.next`
 - **Install Command**: `npm install --legacy-peer-deps`
@@ -271,8 +272,7 @@ When configuring OAuth providers, use these URLs:
 ```
 http://localhost:3000
 http://localhost:3001
-https://oppspot.vercel.app
-https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app
+https://oppspot-one.vercel.app
 https://oppspot.ai
 ```
 
@@ -281,7 +281,6 @@ https://oppspot.ai
 https://fuqdbewftdthbjfcecrz.supabase.co/auth/v1/callback
 http://localhost:3000/auth/callback
 http://localhost:3001/auth/callback
-https://oppspot.vercel.app/auth/callback
-https://oppspot-git-main-hirendra-vikrams-projects-5145f119.vercel.app/auth/callback
+https://oppspot-one.vercel.app/auth/callback
 https://oppspot.ai/auth/callback
 ```
