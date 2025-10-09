@@ -191,13 +191,13 @@ export default function AISettingsPage() {
 
       if (keys) {
         setApiKeys(keys.map(key => ({
-          id: key.id,
-          provider: key.provider,
-          keyName: key.key_name,
-          maskedKey: maskApiKey(key.provider),
-          isActive: key.is_active,
-          lastUsed: key.last_used,
-          createdAt: key.created_at
+          id: (key as any).id,
+          provider: (key as any).provider,
+          keyName: (key as any).key_name,
+          maskedKey: maskApiKey((key as any).provider),
+          isActive: (key as any).is_active,
+          lastUsed: (key as any).last_used,
+          createdAt: (key as any).created_at
         })))
       }
     } catch (error) {

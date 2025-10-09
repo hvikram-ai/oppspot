@@ -371,23 +371,23 @@ export class SmartSyncOrchestrator {
     const mapped: any = { ...payload };
 
     for (const mapping of mappings) {
-      const value = payload[mapping.oppspot_field] || payload.customFields?.[mapping.oppspot_field];
+      const value = payload[(mapping as any).oppspot_field] || payload.customFields?.[(mapping as any).oppspot_field];
 
       if (value !== undefined && value !== null) {
         // Apply transformation if specified
-        if (mapping.transform_function) {
+        if ((mapping as any).transform_function) {
           try {
             // TODO: Implement safe function execution
-            mapped[mapping.crm_field] = value;
+            mapped[(mapping as any).crm_field] = value;
           } catch (error) {
             console.error('Transform error:', error);
-            mapped[mapping.crm_field] = value;
+            mapped[(mapping as any).crm_field] = value;
           }
         } else {
-          mapped[mapping.crm_field] = value;
+          mapped[(mapping as any).crm_field] = value;
         }
-      } else if (mapping.default_value) {
-        mapped[mapping.crm_field] = mapping.default_value;
+      } else if ((mapping as any).default_value) {
+        mapped[(mapping as any).crm_field] = (mapping as any).default_value;
       }
     }
 

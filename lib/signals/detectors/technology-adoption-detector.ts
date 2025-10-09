@@ -769,11 +769,11 @@ export class TechnologyAdoptionDetector {
     };
 
     // Simple prediction logic (would be ML model in production)
-    if (currentTech?.some(t => t.technology_name?.toLowerCase().includes('kubernetes'))) {
+    if (currentTech?.some(t => (t as any).technology_name?.toLowerCase().includes('kubernetes'))) {
       predictions.likely_adoptions.push('Service mesh', 'GitOps tools');
     }
 
-    if (currentTech?.some(t => t.technology_category === 'cloud')) {
+    if (currentTech?.some(t => (t as any).technology_category === 'cloud')) {
       predictions.expansion_opportunities.push('Multi-cloud', 'Cloud cost optimization');
     }
 

@@ -114,20 +114,20 @@ export class ScanRepository implements IScanRepository {
 
       return result.rows.map((row: unknown) => 
         ScanEntity.fromSnapshot(
-          row.id,
-          row.configuration,
-          row.status,
-          row.progress,
-          row.current_stage,
-          row.companies_discovered,
-          row.companies_analyzed,
-          row.errors || [],
-          row.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
-          new Date(row.created_at),
-          new Date(row.updated_at),
-          row.started_at ? new Date(row.started_at) : undefined,
-          row.completed_at ? new Date(row.completed_at) : undefined,
-          row.estimated_completion ? new Date(row.estimated_completion) : undefined
+          (row as any).id,
+          (row as any).configuration,
+          (row as any).status,
+          (row as any).progress,
+          (row as any).current_stage,
+          (row as any).companies_discovered,
+          (row as any).companies_analyzed,
+          (row as any).errors || [],
+          (row as any).costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
+          new Date((row as any).created_at),
+          new Date((row as any).updated_at),
+          (row as any).started_at ? new Date((row as any).started_at) : undefined,
+          (row as any).completed_at ? new Date((row as any).completed_at) : undefined,
+          (row as any).estimated_completion ? new Date((row as any).estimated_completion) : undefined
         )
       )
     } catch (error) {
@@ -243,20 +243,20 @@ export class ScanRepository implements IScanRepository {
 
       return result.rows.map((row: unknown) => 
         ScanEntity.fromSnapshot(
-          row.id,
-          row.configuration,
-          row.status,
-          row.progress,
-          row.current_stage,
-          row.companies_discovered,
-          row.companies_analyzed,
-          row.errors || [],
-          row.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
-          new Date(row.created_at),
-          new Date(row.updated_at),
-          row.started_at ? new Date(row.started_at) : undefined,
-          row.completed_at ? new Date(row.completed_at) : undefined,
-          row.estimated_completion ? new Date(row.estimated_completion) : undefined
+          (row as any).id,
+          (row as any).configuration,
+          (row as any).status,
+          (row as any).progress,
+          (row as any).current_stage,
+          (row as any).companies_discovered,
+          (row as any).companies_analyzed,
+          (row as any).errors || [],
+          (row as any).costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
+          new Date((row as any).created_at),
+          new Date((row as any).updated_at),
+          (row as any).started_at ? new Date((row as any).started_at) : undefined,
+          (row as any).completed_at ? new Date((row as any).completed_at) : undefined,
+          (row as any).estimated_completion ? new Date((row as any).estimated_completion) : undefined
         )
       )
     } catch (error) {
@@ -288,20 +288,20 @@ export class ScanRepository implements IScanRepository {
 
       return result.rows.map((row: unknown) => 
         ScanEntity.fromSnapshot(
-          row.id,
-          row.configuration,
-          row.status,
-          row.progress,
-          row.current_stage,
-          row.companies_discovered,
-          row.companies_analyzed,
-          row.errors || [],
-          row.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
-          new Date(row.created_at),
-          new Date(row.updated_at),
-          row.started_at ? new Date(row.started_at) : undefined,
-          row.completed_at ? new Date(row.completed_at) : undefined,
-          row.estimated_completion ? new Date(row.estimated_completion) : undefined
+          (row as any).id,
+          (row as any).configuration,
+          (row as any).status,
+          (row as any).progress,
+          (row as any).current_stage,
+          (row as any).companies_discovered,
+          (row as any).companies_analyzed,
+          (row as any).errors || [],
+          (row as any).costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
+          new Date((row as any).created_at),
+          new Date((row as any).updated_at),
+          (row as any).started_at ? new Date((row as any).started_at) : undefined,
+          (row as any).completed_at ? new Date((row as any).completed_at) : undefined,
+          (row as any).estimated_completion ? new Date((row as any).estimated_completion) : undefined
         )
       )
     } catch (error) {

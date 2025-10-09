@@ -78,12 +78,12 @@ export class DetractorManager {
           const riskScore = await this.calculateDetractorRiskScore(stakeholder);
           const priority = this.determineMitigationPriority(
             riskScore,
-            stakeholder.influence_scores?.[0]?.overall_influence || 0
+            (stakeholder as any).influence_scores?.[0]?.overall_influence || 0
           );
 
           return {
             stakeholder: stakeholder as Stakeholder,
-            management: stakeholder.detractor_management?.[0] as DetractorManagement | undefined,
+            management: (stakeholder as any).detractor_management?.[0] as DetractorManagement | undefined,
             risk_score: riskScore,
             mitigation_priority: priority
           };
@@ -697,8 +697,8 @@ export class DetractorManager {
 
       // Calculate trend
       const sentiments = engagements
-        .filter(e => e.sentiment_score !== null)
-        .map(e => e.sentiment_score as number);
+        .filter(e => (e as Error).sentiment_score !== null)
+        .map(e => (e as Error).sentiment_score as number);
 
       if (sentiments.length < 2) {
         return 'stable';

@@ -333,7 +333,7 @@ export class UnifiedDataLayer {
     // Add query parameters
     if (query.filters) {
       for (const [key, value] of Object.entries(query.filters)) {
-        url.searchParams.append(key, value.toString())
+        url.searchParams.append(key, (value as any).toString())
       }
     }
 

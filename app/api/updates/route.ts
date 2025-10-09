@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         
         // Add interaction status if user is authenticated
         if (user && updates.length > 0) {
-          const updateIds = updates.map(u => u.id)
+          const updateIds = updates.map((u: any) => u.id)
           const { data: interactions } = await supabase
             .from('update_interactions')
             .select('update_id, interaction_type')
@@ -80,10 +80,10 @@ export async function GET(request: NextRequest) {
           updates = updates.map(update => ({
             ...update,
             has_liked: interactions?.some(
-              i => i.update_id === update.id && i.interaction_type === 'like'
+              i => i.update_id === (update as any).id && i.interaction_type === 'like'
             ) || false,
             has_viewed: interactions?.some(
-              i => i.update_id === update.id && i.interaction_type === 'view'
+              i => i.update_id === (update as any).id && i.interaction_type === 'view'
             ) || false
           }))
         }

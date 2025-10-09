@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
       { 
         error: errorMessage,
         error_type: 'intelligent_analysis_error',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
         suggestions: [
           'Ensure Ollama is running locally',
           'Check your internet connection for web scraping',
@@ -253,7 +253,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Failed to retrieve analysis status',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
       },
       { status: 500 }
     )

@@ -223,7 +223,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
       : industry.id
 
     const existingIndex = selectedIndustries.findIndex((item: unknown) => 
-      item.key === industryKey
+      (item as any).key === industryKey
     )
 
     let newSelection
@@ -260,7 +260,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
       ? `${industry.id}:${subcategory.id}`
       : industry.id
     
-    return config.selectedIndustries?.some((item: unknown) => item.key === industryKey) || false
+    return config.selectedIndustries?.some((item: unknown) => (item as any).key === industryKey) || false
   }
 
   const getConsolidationColor = (opportunity: string) => {

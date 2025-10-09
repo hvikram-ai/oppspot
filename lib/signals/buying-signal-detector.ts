@@ -188,10 +188,10 @@ export class BuyingSignalDetector {
     let highIntentPages = 0
 
     for (const activity of activities) {
-      pageTypeCounts[activity.page_type] = (pageTypeCounts[activity.page_type] || 0) + 1
-      totalTimeOnSite += activity.time_on_page || 0
+      pageTypeCounts[(activity as any).page_type] = (pageTypeCounts[(activity as any).page_type] || 0) + 1
+      totalTimeOnSite += (activity as any).time_on_page || 0
 
-      if (['pricing', 'demo', 'contact'].includes(activity.page_type)) {
+      if (['pricing', 'demo', 'contact'].includes((activity as any).page_type)) {
         highIntentPages++
       }
     }

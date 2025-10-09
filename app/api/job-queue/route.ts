@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Job queue API error:', error)
     return NextResponse.json(
-      { error: 'Failed to process job queue request', details: error.message },
+      { error: 'Failed to process job queue request', details: (error as Error).message },
       { status: 500 }
     )
   }
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Job queue API error:', error)
     return NextResponse.json(
-      { error: 'Failed to process job queue request', details: error.message },
+      { error: 'Failed to process job queue request', details: (error as Error).message },
       { status: 500 }
     )
   }

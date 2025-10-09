@@ -426,7 +426,7 @@ export class DataCollector {
     const features: Record<string, unknown> = {}
     
     for (const [metricType, values] of Object.entries(groupedMetrics)) {
-      const nums = values.map(v => v.value)
+      const nums = values.map((v: any) => v.value)
       features[metricType] = {
         mean: this.calculateMean(nums),
         std: this.calculateStd(nums),

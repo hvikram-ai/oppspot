@@ -329,7 +329,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
 
   const handleRegionToggle = (region: Region) => {
     const selectedRegions = config.selectedRegions || []
-    const existingIndex = selectedRegions.findIndex((r: unknown) => r.id === region.id)
+    const existingIndex = selectedRegions.findIndex((r: unknown) => (r as any).id === region.id)
 
     let newSelection
     if (existingIndex >= 0) {
@@ -355,7 +355,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
   }
 
   const isRegionSelected = (region: Region) => {
-    return config.selectedRegions?.some((r: unknown) => r.id === region.id) || false
+    return config.selectedRegions?.some((r: unknown) => (r as any).id === region.id) || false
   }
 
   const isRequirementSelected = (requirement: RegulatoryRequirement) => {

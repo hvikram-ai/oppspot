@@ -189,18 +189,18 @@ export class NotificationService {
 
     for (const token of tokens) {
       try {
-        if (token.platform === 'web') {
-          await this.sendWebPush(token.token, data)
-        } else if (token.platform === 'ios' || token.platform === 'android') {
-          await this.sendMobilePush(token.token, token.platform, data)
+        if ((token as any).platform === 'web') {
+          await this.sendWebPush((token as any).token, data)
+        } else if ((token as any).platform === 'ios' || (token as any).platform === 'android') {
+          await this.sendMobilePush((token as any).token, (token as any).platform, data)
         }
       } catch (error) {
-        console.error(`Push notification failed for token ${token.token}:`, error)
+        console.error(`Push notification failed for token ${(token as any).token}:`, error)
         // Mark token as inactive if it fails
         await this.supabase
           .from('push_tokens')
           .update({ is_active: false })
-          .eq('token', token.token)
+          .eq('token', (token as any).token)
       }
     }
   }

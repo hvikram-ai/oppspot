@@ -319,7 +319,7 @@ export class ChecklistEngine {
             ml_suggestion: populated.suggestion,
             confidence_score: populated.confidence
           })
-          .eq('id', item.id);
+          .eq('id', (item as any).id);
       }
     }
 
@@ -454,7 +454,7 @@ export class ChecklistEngine {
     if (!items) return;
 
     const totalItems = items.length;
-    const completedItems = items.filter(i => i.status === 'completed').length;
+    const completedItems = items.filter((i: any) => i.status === 'completed').length;
     const completionPercentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
     // Determine status
@@ -466,8 +466,8 @@ export class ChecklistEngine {
     }
 
     // Check if all required items are complete
-    const requiredItems = items.filter(i => i.is_required);
-    const requiredComplete = requiredItems.filter(i => i.status === 'completed').length;
+    const requiredItems = items.filter((i: any) => i.is_required);
+    const requiredComplete = requiredItems.filter((i: any) => i.status === 'completed').length;
     const requiredCompletion = requiredItems.length > 0
       ? (requiredComplete / requiredItems.length) * 100
       : 100;
@@ -511,29 +511,29 @@ export class ChecklistEngine {
 
     // Find items that depend on this completed item
     const dependentItems = items.filter(item => {
-      const deps = item.dependencies as { prerequisite_items?: string[] } | undefined;
+      const deps = (item as any).dependencies as { prerequisite_items?: string[] } | undefined;
       return deps?.prerequisite_items?.includes(itemId);
     });
 
     // Update dependent items
     for (const item of dependentItems) {
-      const deps = item.dependencies as { prerequisite_items?: string[] } | undefined;
+      const deps = (item as any).dependencies as { prerequisite_items?: string[] } | undefined;
       const prereqs = deps?.prerequisite_items || [];
 
       // Check if all prerequisites are met
       const prereqsMet = prereqs.every((prereqId: string) => {
-        const prereqItem = items.find(i => i.id === prereqId) as Record<string, unknown> | undefined;
+        const prereqItem = items.find(i => (i as any).id === prereqId) as Record<string, unknown> | undefined;
         return prereqItem?.status === 'completed';
       });
 
-      if (prereqsMet && item.status === 'blocked') {
+      if (prereqsMet && (item as any).status === 'blocked') {
         await supabase
           .from('checklist_items')
           .update({
             status: 'pending',
             updated_at: new Date().toISOString()
           })
-          .eq('id', item.id);
+          .eq('id', (item as any).id);
       }
     }
   }

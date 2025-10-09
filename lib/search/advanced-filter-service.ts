@@ -519,29 +519,29 @@ export class AdvancedFilterService {
       if (error) throw error;
 
       return {
-        industries: data.available_industries || [],
+        industries: (data as any).available_industries || [],
         ownershipTypes: ['private', 'public', 'vc_backed', 'pe_backed', 'family_owned', 'government', 'nonprofit'],
         fundingRounds: ['pre_seed', 'seed', 'series_a', 'series_b', 'series_c', 'series_d', 'series_e', 'growth', 'private_equity', 'debt'],
-        investors: data.available_investors || [],
-        productsServices: data.available_products || [],
-        endMarkets: data.available_end_markets || [],
+        investors: (data as any).available_investors || [],
+        productsServices: (data as any).available_products || [],
+        endMarkets: (data as any).available_end_markets || [],
         employeeRanges: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1001-5000', '5001+'],
         priorities: ['high', 'medium', 'low'],
         crmSyncStatuses: ['synced', 'not_synced', 'pending', 'failed'],
         employeeCountRange: {
-          min: data.min_employee_count || 0,
-          max: data.max_employee_count || 10000,
+          min: (data as any).min_employee_count || 0,
+          max: (data as any).max_employee_count || 10000,
         },
         revenueRange: {
-          min: data.min_revenue || 0,
-          max: data.max_revenue || 1000000000,
+          min: (data as any).min_revenue || 0,
+          max: (data as any).max_revenue || 1000000000,
         },
         fundingRange: {
-          min: data.min_funding || 0,
-          max: data.max_funding || 1000000000,
+          min: (data as any).min_funding || 0,
+          max: (data as any).max_funding || 1000000000,
         },
         foundedYearRange: {
-          min: data.min_founded_year || 1900,
+          min: (data as any).min_founded_year || 1900,
           max: new Date().getFullYear(),
         },
       };

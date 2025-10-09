@@ -386,18 +386,18 @@ export class QualificationService {
       const stats = {
         totalLeads: allQualifications.length,
         qualified: allQualifications.filter(q =>
-          q.qualification_status === 'qualified' || q.forecast_category === 'commit'
+          (q as any).qualification_status === 'qualified' || (q as any).forecast_category === 'commit'
         ).length,
         nurture: allQualifications.filter(q =>
-          q.qualification_status === 'nurture' || q.forecast_category === 'best_case'
+          (q as any).qualification_status === 'nurture' || (q as any).forecast_category === 'best_case'
         ).length,
         disqualified: allQualifications.filter(q =>
-          q.qualification_status === 'disqualified' || q.forecast_category === 'omitted'
+          (q as any).qualification_status === 'disqualified' || (q as any).forecast_category === 'omitted'
         ).length,
         avgBANTScore: bantQualifications?.length ?
-          bantQualifications.reduce((sum, q) => sum + q.overall_score, 0) / bantQualifications.length : 0,
+          bantQualifications.reduce((sum, q) => sum + (q as any).overall_score, 0) / bantQualifications.length : 0,
         avgMEDDICScore: meddicQualifications?.length ?
-          meddicQualifications.reduce((sum, q) => sum + q.overall_score, 0) / meddicQualifications.length : 0,
+          meddicQualifications.reduce((sum, q) => sum + (q as any).overall_score, 0) / meddicQualifications.length : 0,
         activeAssignments: assignments?.length || 0,
         recentAlerts: recentAlerts?.length || 0
       }

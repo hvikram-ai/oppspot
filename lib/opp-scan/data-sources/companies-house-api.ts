@@ -208,8 +208,8 @@ export class CompaniesHouseAPI {
     try {
       const response = await this.makeRequest(url)
       return {
-        officers: response.items || [],
-        totalResults: response.total_results || 0
+        officers: (response as any).items || [],
+        totalResults: (response as any).total_results || 0
       }
     } catch (error) {
       console.error(`Failed to get officers for ${companyNumber}:`, error)
@@ -233,8 +233,8 @@ export class CompaniesHouseAPI {
     try {
       const response = await this.makeRequest(url)
       return {
-        filings: response.items || [],
-        totalResults: response.total_results || 0
+        filings: (response as any).items || [],
+        totalResults: (response as any).total_results || 0
       }
     } catch (error) {
       console.error(`Failed to get filings for ${companyNumber}:`, error)

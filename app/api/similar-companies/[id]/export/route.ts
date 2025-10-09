@@ -407,7 +407,7 @@ async function generatePDFExport(
         user_id: userId,
         export_type: 'executive_summary',
         export_format: 'pdf',
-        export_title: `Similar Companies Analysis - ${exportData.analysis.targetCompany || 'Unknown'}`,
+        export_title: `Similar Companies Analysis - ${(exportData as any).analysis.targetCompany || 'Unknown'}`,
         export_description: 'Executive summary of similar company analysis for MnA evaluation',
         export_content: exportData,
         generation_status: 'failed',

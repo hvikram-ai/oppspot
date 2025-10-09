@@ -314,7 +314,7 @@ export class SimilarCompanyUseCase {
       metrics.cacheHitRate = this.calculateCacheHitRate(metrics)
 
       // Record usage tracking
-      await this.recordFeatureUsage(request, analysisRecord.id, metrics)
+      await this.recordFeatureUsage(request, (analysisRecord as any).id, metrics)
 
       return {
         similarityAnalysis,

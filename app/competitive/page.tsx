@@ -571,20 +571,20 @@ export default function CompetitiveAnalysisPage() {
                   <CardContent>
                     <div className="space-y-3">
                       {marketAnalysis.top_businesses.map((business, idx) => (
-                        <div key={business.id} className="flex items-center justify-between">
+                        <div key={(business as any).id} className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <Badge variant="outline">{idx + 1}</Badge>
                             <div>
-                              <p className="font-medium">{business.name}</p>
+                              <p className="font-medium">{(business as any).name}</p>
                               <p className="text-sm text-muted-foreground">
-                                ⭐ {business.rating} • {business.review_count} reviews
+                                ⭐ {(business as any).rating} • {(business as any).review_count} reviews
                               </p>
                             </div>
                           </div>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => router.push(`/business/${business.id}`)}
+                            onClick={() => router.push(`/business/${(business as any).id}`)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>

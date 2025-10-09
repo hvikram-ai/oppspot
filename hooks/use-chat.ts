@@ -140,14 +140,14 @@ export function useChat(options: UseChatOptions = {}) {
         handleNonStreamResponse(data)
       }
     } catch (err: unknown) {
-      if (err.name === 'AbortError') {
+      if ((err as Error).name === 'AbortError') {
         console.log('Stream aborted')
       } else {
         console.error('Chat error:', err)
         setError(err)
         options.onError?.(err)
         
-        toast.error(err.message || 'Failed to send message')
+        toast.error((err as Error).message || 'Failed to send message')
 
         // Add error message to chat
         const errorMessage: ChatMessage = {
@@ -267,22 +267,22 @@ export function useChat(options: UseChatOptions = {}) {
   const handleNonStreamResponse = (data: unknown) => {
     const assistantMessage: ChatMessage = {
       role: 'assistant',
-      content: data.message.content,
+      content: (data as any).message.content,
       timestamp: new Date().toISOString(),
-      confidence: data.message.confidence,
-      tool_calls: data.message.tool_calls
+      confidence: (data as any).message.confidence,
+      tool_calls: (data as any).message.tool_calls
     }
     
     setMessages(prev => [...prev, assistantMessage])
     
-    if (data.message.citations) {
-      setCitations(data.message.citations)
-      options.onCitation?.(data.message.citations)
+    if ((data as any).message.citations) {
+      setCitations((data as any).message.citations)
+      options.onCitation?.((data as any).message.citations)
     }
     
-    if (data.session_id && !sessionId) {
-      setSessionId(data.session_id)
-      localStorage.setItem('chat_session_id', data.session_id)
+    if ((data as any).session_id && !sessionId) {
+      setSessionId((data as any).session_id)
+      localStorage.setItem('chat_session_id', (data as any).session_id)
     }
     
     options.onMessage?.(assistantMessage)

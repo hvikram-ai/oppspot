@@ -182,14 +182,14 @@ export class ChatOrchestrator {
       // Add assistant message to history
       const assistantMsg: ChatMessage = {
         role: 'assistant',
-        content: response.content,
+        content: (response as any).content,
         tool_calls: toolResults.length > 0 ? toolResults : undefined,
         citations: citations.length > 0 ? citations : undefined,
-        confidence: response.confidence,
+        confidence: (response as any).confidence,
         metadata: {
           timestamp: new Date().toISOString(),
           model: 'mistral:7b',
-          tokens_used: response.tokens_used
+          tokens_used: (response as any).tokens_used
         }
       }
       this.conversationHistory.push(assistantMsg)
@@ -606,12 +606,12 @@ Response:`;
     
     if (!error && data) {
       this.conversationHistory = data.map(msg => ({
-        role: msg.role as ChatMessage['role'],
-        content: msg.content,
-        tool_calls: msg.tool_calls,
-        citations: msg.citations,
-        confidence: msg.confidence_score,
-        metadata: msg.metadata
+        role: (msg as any).role as ChatMessage['role'],
+        content: (msg as any).content,
+        tool_calls: (msg as any).tool_calls,
+        citations: (msg as any).citations,
+        confidence: (msg as any).confidence_score,
+        metadata: (msg as any).metadata
       }))
     }
   }

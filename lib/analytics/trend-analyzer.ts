@@ -357,7 +357,7 @@ export class TrendAnalyzer {
       
       // Add seasonal adjustment if applicable
       let seasonalAdjustment = 0
-      if (seasonality.hasSeasonality && seasonality.weekly.exists && days >= 7) {
+      if (seasonality.hasSeasonality && (seasonality.weekly as any).exists && days >= 7) {
         seasonalAdjustment = (Math.random() - 0.5) * 0.1 // Simplified
       }
       
@@ -417,10 +417,10 @@ export class TrendAnalyzer {
     
     // Seasonality insight
     if (seasonality.hasSeasonality) {
-      if (seasonality.weekly.exists) {
-        insights.push(`Weekly patterns detected with ${(seasonality.weekly.strength * 100).toFixed(0)}% consistency`)
+      if ((seasonality.weekly as any).exists) {
+        insights.push(`Weekly patterns detected with ${((seasonality.weekly as any).strength * 100).toFixed(0)}% consistency`)
       }
-      if (seasonality.monthly.exists) {
+      if ((seasonality.monthly as any).exists) {
         insights.push(`Monthly cyclical patterns observed in the data`)
       }
     }

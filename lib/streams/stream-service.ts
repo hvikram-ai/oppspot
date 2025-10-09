@@ -658,7 +658,7 @@ export class StreamService {
             body: `in a comment: ${data.content.substring(0, 100)}`,
             priority: 'medium',
             item_id: data.item_id || null,
-            comment_id: comment.id,
+            comment_id: (comment as any).id,
             actor_id: userId
           })
         }

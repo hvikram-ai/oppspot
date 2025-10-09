@@ -71,59 +71,59 @@ export default async function ResearchPage() {
           ) : (
             <div className="space-y-4" data-testid="research-history-list">
               {reports.map((report) => (
-                <Card key={report.id} className="p-6" data-testid="history-item">
+                <Card key={(report as any).id} className="p-6" data-testid="history-item">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <Link
-                          href={`/research/${report.id}`}
+                          href={`/research/${(report as any).id}`}
                           className="text-xl font-semibold hover:underline"
                         >
-                          {report.company_name}
+                          {(report as any).company_name}
                         </Link>
                         <Badge
                           variant={
-                            report.status === 'complete'
+                            (report as any).status === 'complete'
                               ? 'default'
-                              : report.status === 'generating'
+                              : (report as any).status === 'generating'
                               ? 'secondary'
                               : 'outline'
                           }
                         >
-                          {report.status}
+                          {(report as any).status}
                         </Badge>
                       </div>
 
                       <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {formatDistanceToNow(new Date(report.created_at), {
+                          {formatDistanceToNow(new Date((report as any).created_at), {
                             addSuffix: true,
                           })}
                         </div>
 
-                        {report.sections_complete > 0 && (
+                        {(report as any).sections_complete > 0 && (
                           <div className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4" />
-                            {report.sections_complete}/6 sections
+                            {(report as any).sections_complete}/6 sections
                           </div>
                         )}
 
-                        {report.confidence_score && (
+                        {(report as any).confidence_score && (
                           <div>
-                            Confidence: {(report.confidence_score * 100).toFixed(0)}%
+                            Confidence: {((report as any).confidence_score * 100).toFixed(0)}%
                           </div>
                         )}
 
-                        {report.total_sources > 0 && (
-                          <div>{report.total_sources} sources</div>
+                        {(report as any).total_sources > 0 && (
+                          <div>{(report as any).total_sources} sources</div>
                         )}
                       </div>
 
-                      {report.generated_at && report.cached_until && (
+                      {(report as any).generated_at && (report as any).cached_until && (
                         <p className="text-xs text-muted-foreground mt-2">
                           Valid until{' '}
-                          {formatDistanceToNow(new Date(report.cached_until), {
+                          {formatDistanceToNow(new Date((report as any).cached_until), {
                             addSuffix: true,
                           })}
                         </p>
@@ -131,7 +131,7 @@ export default async function ResearchPage() {
                     </div>
 
                     <Button asChild variant="outline">
-                      <Link href={`/research/${report.id}`}>View Report</Link>
+                      <Link href={`/research/${(report as any).id}`}>View Report</Link>
                     </Button>
                   </div>
                 </Card>

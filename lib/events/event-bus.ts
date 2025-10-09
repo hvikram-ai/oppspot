@@ -69,8 +69,8 @@ export class EventBus {
       priority: 1,
       async: true,
       handler: async (event) => {
-        if (event.data.company_id) {
-          await this.triggerLeadScoring(event.data.company_id)
+        if ((event.data as any).company_id) {
+          await this.triggerLeadScoring((event.data as any).company_id)
         }
       }
     })
@@ -83,8 +83,8 @@ export class EventBus {
       priority: 2,
       async: true,
       handler: async (event) => {
-        if (event.data.company_id) {
-          await this.triggerBANTCalculation(event.data.company_id)
+        if ((event.data as any).company_id) {
+          await this.triggerBANTCalculation((event.data as any).company_id)
         }
       }
     })
@@ -321,7 +321,7 @@ export class EventBus {
       // @ts-ignore - Supabase type inference issue
       await supabase.from('lead_scores').upsert({
         company_id: companyId,
-        score: prediction.output.score,
+        score: (prediction.output as any).score,
         updated_at: new Date().toISOString()
       })
     } catch (error) {
@@ -336,7 +336,7 @@ export class EventBus {
       const prediction = await modelManager.predict('bant-classifier-v1', companyData)
 
       // Emit qualification event if needed
-      if (prediction.output.status === 'highly_qualified') {
+      if ((prediction.output as any).status === 'highly_qualified') {
         this.emit({
           type: 'lead.qualified',
           source: 'bant-calculator',
@@ -421,7 +421,7 @@ export class EventBus {
 
   private async triggerModelTraining(event: SystemEvent): Promise<void> {
     try {
-      console.log('[ML] Training requested for model:', event.data.model_id)
+      console.log('[ML] Training requested for model:', (event.data as any).model_id)
       // In production, this would trigger actual model training pipeline
     } catch (error) {
       console.error('[EventBus] ML training error:', error)

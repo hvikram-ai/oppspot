@@ -500,7 +500,7 @@ export class LeadRoutingEngine {
       return 0.5; // Default 50% if no history
     }
 
-    const completed = assignments.filter(a => a.status === 'completed').length;
+    const completed = assignments.filter((a: any) => a.status === 'completed').length;
     return completed / assignments.length;
   }
 
@@ -592,7 +592,7 @@ export class LeadRoutingEngine {
       let performanceScore = 70; // Default
       if (completedAssignments && completedAssignments.length > 0) {
         const avgResponseTime = completedAssignments.reduce((sum, a) =>
-          sum + (a.response_time_minutes || 0), 0
+          sum + ((a as any).response_time_minutes || 0), 0
         ) / completedAssignments.length;
 
         // Better response time = higher score

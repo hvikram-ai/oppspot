@@ -152,7 +152,7 @@ export class PeerIdentifier {
 
       // Add members
       const members = companyIds.map(companyId => ({
-        peer_group_id: typedPeerGroup.id,
+        peer_group_id: (typedPeerGroup as any).id,
         company_id: companyId,
         is_active: true
       }))

@@ -89,12 +89,12 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   }
 
   const handleNotificationClick = async (notification: unknown) => {
-    if (!notification.is_read) {
-      await markAsRead(notification.id)
+    if (!(notification as any).is_read) {
+      await markAsRead((notification as any).id)
     }
     
-    if (notification.action_url) {
-      window.location.href = notification.action_url
+    if ((notification as any).action_url) {
+      window.location.href = (notification as any).action_url
     }
   }
 

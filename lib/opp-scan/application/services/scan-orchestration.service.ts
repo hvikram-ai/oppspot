@@ -316,7 +316,7 @@ export class ScanOrchestrationService implements IScanOrchestrationService {
     // Base duration estimate in milliseconds
     const baseTimePerCompany = 100 // 100ms per company
     const estimatedCompanies = Object.values(costEstimate.estimatedRequestCounts)
-      .reduce((sum, sourceCounts) => sum + (sourceCounts.company_detail || 0), 0)
+      .reduce((sum, sourceCounts) => sum + ((sourceCounts as any).company_detail || 0), 0)
     
     let duration = estimatedCompanies * baseTimePerCompany
     

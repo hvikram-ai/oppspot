@@ -157,14 +157,14 @@ export class AIFinancialScorer {
     FINANCIAL METRICS (Latest Available):
     `
       const latest = metrics[0]
-      if (latest.revenue) context += `Revenue: £${(latest.revenue / 1000000).toFixed(2)}M\n`
-      if (latest.revenue_growth_rate) context += `Revenue Growth: ${latest.revenue_growth_rate}%\n`
-      if (latest.ebitda) context += `EBITDA: £${(latest.ebitda / 1000000).toFixed(2)}M\n`
-      if (latest.ebitda_margin) context += `EBITDA Margin: ${latest.ebitda_margin}%\n`
-      if (latest.net_income) context += `Net Income: £${(latest.net_income / 1000000).toFixed(2)}M\n`
-      if (latest.current_ratio) context += `Current Ratio: ${latest.current_ratio}\n`
-      if (latest.debt_to_equity_ratio) context += `Debt/Equity: ${latest.debt_to_equity_ratio}\n`
-      if (latest.employee_count) context += `Employees: ${latest.employee_count}\n`
+      if ((latest as any).revenue) context += `Revenue: £${((latest as any).revenue / 1000000).toFixed(2)}M\n`
+      if ((latest as any).revenue_growth_rate) context += `Revenue Growth: ${(latest as any).revenue_growth_rate}%\n`
+      if ((latest as any).ebitda) context += `EBITDA: £${((latest as any).ebitda / 1000000).toFixed(2)}M\n`
+      if ((latest as any).ebitda_margin) context += `EBITDA Margin: ${(latest as any).ebitda_margin}%\n`
+      if ((latest as any).net_income) context += `Net Income: £${((latest as any).net_income / 1000000).toFixed(2)}M\n`
+      if ((latest as any).current_ratio) context += `Current Ratio: ${(latest as any).current_ratio}\n`
+      if ((latest as any).debt_to_equity_ratio) context += `Debt/Equity: ${(latest as any).debt_to_equity_ratio}\n`
+      if ((latest as any).employee_count) context += `Employees: ${(latest as any).employee_count}\n`
 
       // Add trend analysis if multiple years available
       if (metrics.length > 1) {
@@ -173,12 +173,12 @@ export class AIFinancialScorer {
     TRENDS (Year-over-Year):
     `
         const previous = metrics[1]
-        if (latest.revenue && previous.revenue) {
-          const revChange = ((latest.revenue - previous.revenue) / previous.revenue * 100).toFixed(1)
+        if ((latest as any).revenue && (previous as any).revenue) {
+          const revChange = (((latest as any).revenue - (previous as any).revenue) / (previous as any).revenue * 100).toFixed(1)
           context += `Revenue Change: ${revChange}%\n`
         }
-        if (latest.employee_count && previous.employee_count) {
-          const empChange = latest.employee_count - previous.employee_count
+        if ((latest as any).employee_count && (previous as any).employee_count) {
+          const empChange = (latest as any).employee_count - (previous as any).employee_count
           context += `Employee Change: ${empChange > 0 ? '+' : ''}${empChange}\n`
         }
       }

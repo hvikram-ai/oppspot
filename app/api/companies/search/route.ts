@@ -343,24 +343,24 @@ export async function POST(request: NextRequest) {
 
           // Use Promise.allSettled to enrich all companies in parallel without blocking
           const enrichmentPromises = results
-            .filter(company => company.company_number) // Only companies with numbers
-            .map(company => {
+            .filter((company: any) => company.company_number) // Only companies with numbers
+            .map((company: any) => {
               // Call the enrich endpoint for each company
               const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
                               `https://${process.env.VERCEL_URL}` ||
                               'http://localhost:3000'
 
-              return fetch(`${baseUrl}/api/companies/${company.company_number}/enrich`, {
+              return fetch(`${baseUrl}/api/companies/${(company as any).company_number}/enrich`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
               })
               .then(res => res.json())
               .then(data => {
-                console.log(`Enriched ${company.company_number}:`, data.source)
+                console.log(`Enriched ${(company as any).company_number}:`, data.source)
                 return data
               })
               .catch(err => {
-                console.error(`Failed to enrich ${company.company_number}:`, err)
+                console.error(`Failed to enrich ${(company as any).company_number}:`, err)
                 return null
               })
             })

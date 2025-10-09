@@ -352,7 +352,7 @@ export class ResearchRepository {
 
     // Check if we need to reset for new period
     const now = new Date();
-    const periodEnd = new Date(data.period_end);
+    const periodEnd = new Date((data as any).period_end);
 
     if (now > periodEnd) {
       // Reset quota

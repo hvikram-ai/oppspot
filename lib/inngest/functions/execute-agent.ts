@@ -82,7 +82,7 @@ export const executeAgentFunction = inngest.createFunction(
     if (result.success && result.output.signals?.length > 0) {
       await step.run('send-notifications', async () => {
         // TODO: Send email/Slack notifications
-        console.log(`[Inngest] Agent ${agent.name} found ${result.output.signals.length} signals`)
+        console.log(`[Inngest] Agent ${agent.name} found ${(result.output.signals as any).length} signals`)
       })
     }
 

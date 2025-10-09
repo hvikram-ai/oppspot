@@ -1063,8 +1063,8 @@ function SimilarCompanyDetailContent() {
   }
 
   const handleCompanySelect = (company: unknown) => {
-    setSelectedCompany(company.id)
-    setSelectedMatch(company.id)
+    setSelectedCompany((company as any).id)
+    setSelectedMatch((company as any).id)
   }
 
   const getScoreColor = (score: number) => {

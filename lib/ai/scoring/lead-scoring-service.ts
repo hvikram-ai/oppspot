@@ -475,7 +475,7 @@ export class LeadScoringService {
       if (data && data.length > 0) {
         const weights: any = {}
         data.forEach(criteria => {
-          weights[criteria.criteria_type] = criteria.weight
+          weights[(criteria as any).criteria_type] = (criteria as any).weight
         })
         return { ...this.defaultWeights, ...weights }
       }
@@ -576,8 +576,8 @@ export class LeadScoringService {
     if (!alerts) return
 
     for (const alert of alerts) {
-      if (this.shouldTriggerAlert(score, alert.criteria)) {
-        console.log(`[LeadScoring] Triggering alert: ${alert.alert_name}`)
+      if (this.shouldTriggerAlert(score, (alert as any).criteria)) {
+        console.log(`[LeadScoring] Triggering alert: ${(alert as any).alert_name}`)
         // TODO: Implement notification sending
       }
     }

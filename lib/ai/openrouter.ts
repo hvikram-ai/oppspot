@@ -165,7 +165,7 @@ export class OpenRouterClient implements LLMProvider, LLMService {
     
     if (business.address) {
       const addr = business.address as unknown
-      parts.push(`Location: ${addr.formatted || addr.vicinity || 'UK/Ireland'}`)
+      parts.push(`Location: ${(addr as any).formatted || (addr as any).vicinity || 'UK/Ireland'}`)
     }
     
     if (business.website) {
@@ -178,11 +178,11 @@ export class OpenRouterClient implements LLMProvider, LLMService {
     
     if (business.metadata) {
       const meta = business.metadata as unknown
-      if (meta.google_data?.types) {
-        parts.push(`Business Types: ${meta.google_data.types.join(', ')}`)
+      if ((meta as any).google_data?.types) {
+        parts.push(`Business Types: ${(meta as any).google_data.types.join(', ')}`)
       }
-      if (meta.google_data?.price_level) {
-        const priceLevel = '£'.repeat(meta.google_data.price_level)
+      if ((meta as any).google_data?.price_level) {
+        const priceLevel = '£'.repeat((meta as any).google_data.price_level)
         parts.push(`Price Level: ${priceLevel}`)
       }
     }

@@ -772,7 +772,7 @@ export class BenchmarkEngine {
 
     if (!members || members.length === 0) return []
 
-    const companyIds = members.map(m => m.company_id)
+    const companyIds = members.map((m: any) => m.company_id)
 
     const { data: metrics } = await this.supabase
       .from('company_metrics')
@@ -783,8 +783,8 @@ export class BenchmarkEngine {
     // Group by company and take latest metric for each
     const latestMetrics: Record<string, CompanyMetrics> = {}
     metrics?.forEach(metric => {
-      if (!latestMetrics[metric.company_id]) {
-        latestMetrics[metric.company_id] = metric
+      if (!latestMetrics[(metric as any).company_id]) {
+        latestMetrics[(metric as any).company_id] = metric
       }
     })
 

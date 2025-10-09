@@ -336,7 +336,7 @@ export class PlatformChatOrchestrator {
     const { companyName } = params
     
     // For SendBird specifically, provide detailed analysis
-    if (companyName.toLowerCase().includes('sendbird')) {
+    if ((companyName as any).toLowerCase().includes('sendbird')) {
       return {
         success: true,
         data: {
@@ -489,11 +489,11 @@ export class PlatformChatOrchestrator {
     if (action.type === 'company_search' && result.data) {
       const { companies = [], totalFound = 0 } = result.data
       
-      if (companies.length === 0) {
+      if ((companies as any).length === 0) {
         return `No companies found matching your search criteria. Try adjusting your search terms or filters.`
       }
       
-      let response = `I found **${totalFound || companies.length} companies** matching your search criteria:\n\n`
+      let response = `I found **${totalFound || (companies as any).length} companies** matching your search criteria:\n\n`
       
       companies.slice(0, 5).forEach((company: Record<string, unknown>, index: number) => {
         response += `${index + 1}. **${company.name}**\n`
@@ -503,8 +503,8 @@ export class PlatformChatOrchestrator {
         response += '\n'
       })
       
-      if (totalFound > 5 || companies.length > 5) {
-        response += `*Showing top 5 of ${totalFound || companies.length} results. Use filters to refine your search.*`
+      if (totalFound > 5 || (companies as any).length > 5) {
+        response += `*Showing top 5 of ${totalFound || (companies as any).length} results. Use filters to refine your search.*`
       }
       
       return response

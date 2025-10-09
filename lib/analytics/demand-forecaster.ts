@@ -157,8 +157,8 @@ export class DemandForecaster {
     // In production, this would use actual transaction or search data
     const baselineDemand = 100
     const businessCount = businesses.length
-    const avgRating = businesses.reduce((sum, b) => sum + (b.rating || 0), 0) / businessCount
-    const totalReviews = businesses.reduce((sum, b) => sum + (b.review_count || 0), 0)
+    const avgRating = businesses.reduce((sum, b) => sum + ((b as any).rating || 0), 0) / businessCount
+    const totalReviews = businesses.reduce((sum, b) => sum + ((b as any).review_count || 0), 0)
     
     // Demand formula (simplified)
     const demand = baselineDemand * 

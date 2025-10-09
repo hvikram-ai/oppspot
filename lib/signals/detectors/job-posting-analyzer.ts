@@ -788,7 +788,7 @@ export class JobPostingAnalyzer {
 
     postings.forEach(posting => {
       // Department trends
-      const dept = posting.department || 'Unknown';
+      const dept = (posting as any).department || 'Unknown';
       departmentGrowth[dept] = (departmentGrowth[dept] || 0) + 1;
 
       // Technology trends

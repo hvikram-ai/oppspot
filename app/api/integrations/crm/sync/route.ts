@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error.message || 'Sync failed' },
+      { error: (error as Error).message || 'Sync failed' },
       { status: 500 }
     );
   }
@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('Get sync logs error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch sync logs' },
+      { error: (error as Error).message || 'Failed to fetch sync logs' },
       { status: 500 }
     );
   }

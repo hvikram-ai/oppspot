@@ -439,9 +439,9 @@ export class FundingSignalDetector {
     if (!previousRounds) return [];
 
     return previousRounds.map(round => ({
-      round_type: round.round_type as RoundType,
-      amount: round.amount,
-      date: round.announcement_date
+      round_type: (round as any).round_type as RoundType,
+      amount: (round as any).amount,
+      date: (round as any).announcement_date
     }));
   }
 
@@ -453,7 +453,7 @@ export class FundingSignalDetector {
       .select('amount')
       .eq('company_id', companyId) as { data: Row<'funding_signals'>[] | null; error: any };
 
-    const previousTotal = rounds?.reduce((sum, round) => sum + (round.amount || 0), 0) || 0;
+    const previousTotal = rounds?.reduce((sum, round) => sum + ((round as any).amount || 0), 0) || 0;
     return previousTotal + currentAmount;
   }
 

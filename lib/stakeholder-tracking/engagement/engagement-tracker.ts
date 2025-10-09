@@ -147,7 +147,7 @@ export class EngagementTracker {
 
       // Outcome factor
       const positiveOutcomes = recentEngagements.filter(
-        e => e.outcome === 'positive'
+        e => (e as Error).outcome === 'positive'
       ).length;
       const outcomeRatio = recentEngagements.length > 0
         ? positiveOutcomes / recentEngagements.length
@@ -156,9 +156,9 @@ export class EngagementTracker {
 
       // Sentiment factor
       const avgSentiment = recentEngagements
-        .filter(e => e.sentiment_score !== null)
-        .reduce((sum, e) => sum + (e.sentiment_score + 100) / 2, 0) /
-        (recentEngagements.filter(e => e.sentiment_score !== null).length || 1);
+        .filter(e => (e as Error).sentiment_score !== null)
+        .reduce((sum, e) => sum + ((e as Error).sentiment_score + 100) / 2, 0) /
+        (recentEngagements.filter(e => (e as Error).sentiment_score !== null).length || 1);
       engagementScore = Math.round(Math.min(100, engagementScore * (avgSentiment / 50)));
 
       // Update stakeholder
@@ -197,8 +197,8 @@ export class EngagementTracker {
       }
 
       const sentiments = engagements
-        .filter(e => e.sentiment_score !== null)
-        .map(e => e.sentiment_score as number);
+        .filter(e => (e as Error).sentiment_score !== null)
+        .map(e => (e as Error).sentiment_score as number);
 
       if (sentiments.length < 2) {
         return 'stable';
@@ -678,16 +678,16 @@ export class EngagementTracker {
 
       engagements.forEach(e => {
         // Type distribution
-        engagementTypes[e.engagement_type] = (engagementTypes[e.engagement_type] || 0) + 1;
+        engagementTypes[(e as Error).engagement_type] = (engagementTypes[(e as Error).engagement_type] || 0) + 1;
 
         // Outcome distribution
-        if (e.outcome) {
-          outcomeDistribution[e.outcome] = (outcomeDistribution[e.outcome] || 0) + 1;
+        if ((e as Error).outcome) {
+          outcomeDistribution[(e as Error).outcome] = (outcomeDistribution[(e as Error).outcome] || 0) + 1;
         }
 
         // Sentiment average
-        if (e.sentiment_score !== null) {
-          totalSentiment += e.sentiment_score;
+        if ((e as Error).sentiment_score !== null) {
+          totalSentiment += (e as Error).sentiment_score;
           sentimentCount++;
         }
       });

@@ -294,8 +294,8 @@ export class DataSourceFactory {
         const source = this.getDataSource(sourceId)
         
         // Test connection if method exists
-        if (source.testConnection) {
-          const result = await source.testConnection()
+        if ((source as any).testConnection) {
+          const result = await (source as any).testConnection()
           results.push({
             sourceId,
             success: result.success,

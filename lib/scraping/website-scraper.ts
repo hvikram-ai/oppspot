@@ -375,7 +375,7 @@ export class WebsiteScraper {
             testimonial.rating = Math.min(stars, 5)
           }
           
-          if (testimonial.author || testimonial.text.length > 50) {
+          if (testimonial.author || (testimonial.text as any).length > 50) {
             testimonials.push(testimonial)
           }
         }

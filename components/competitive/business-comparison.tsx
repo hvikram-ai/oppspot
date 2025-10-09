@@ -425,14 +425,14 @@ export function BusinessComparison({
                     <h4 className="font-semibold mb-2">Market Position</h4>
                     <div className="space-y-2">
                       {insights.market_position.map((pos: unknown) => (
-                        <div key={pos.id} className="flex items-center justify-between">
-                          <span className="text-sm">{pos.name}</span>
+                        <div key={(pos as any).id} className="flex items-center justify-between">
+                          <span className="text-sm">{(pos as any).name}</span>
                           <Badge variant={
-                            pos.position === 'Market leader' ? 'default' :
-                            pos.position === 'Top competitor' ? 'secondary' :
+                            (pos as any).position === 'Market leader' ? 'default' :
+                            (pos as any).position === 'Top competitor' ? 'secondary' :
                             'outline'
                           }>
-                            {pos.position}
+                            {(pos as any).position}
                           </Badge>
                         </div>
                       ))}
