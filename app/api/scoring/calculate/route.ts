@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { LeadScoringService } from '@/lib/ai/scoring/lead-scoring-service'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     // Initialize scoring service
     const scoringService = new LeadScoringService()

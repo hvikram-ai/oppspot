@@ -12,6 +12,7 @@ import { createOpportunityBot } from '@/lib/ai/agents/opportunity-bot'
 import { createLinkedInScraperAgent } from '@/lib/ai/agents/linkedin-scraper-agent'
 import { createWebsiteAnalyzerAgent } from '@/lib/ai/agents/website-analyzer-agent'
 import { triggerAgent } from '@/lib/inngest/trigger-agent'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(
   request: NextRequest,
@@ -32,7 +33,7 @@ export async function POST(
       .from('ai_agents')
       .select('*')
       .eq('id', agentId)
-      .single()
+      .single() as { data: Row<'ai_agents'> | null; error: any }
 
     if (fetchError || !agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
@@ -43,7 +44,7 @@ export async function POST(
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (profile?.org_id !== agent.org_id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

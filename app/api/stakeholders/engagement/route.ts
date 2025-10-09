@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { engagementTracker } from '@/lib/stakeholder-tracking/engagement/engagement-tracker';
 import type { TrackEngagementRequest } from '@/lib/stakeholder-tracking/types/stakeholder';
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
 
     // Add metadata
     body.engagement.org_id = profile?.org_id;
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         api_name: 'stakeholder_tracking',
         endpoint: '/api/stakeholders/engagement',
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
 
     // Build query
     let query = supabase

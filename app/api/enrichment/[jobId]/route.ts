@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createEnrichmentOrchestrator } from '@/lib/ai/enrichment/enrichment-orchestrator'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(
   request: NextRequest,
@@ -31,7 +32,7 @@ export async function GET(
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json(
@@ -101,7 +102,7 @@ export async function DELETE(
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json(

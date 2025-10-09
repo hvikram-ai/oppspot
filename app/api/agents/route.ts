@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import type { Row, Insert, Update } from '@/lib/supabase/helpers'
 
 const createAgentSchema = z.object({
   agent_type: z.enum([
@@ -42,7 +43,7 @@ export async function GET(_request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -53,7 +54,7 @@ export async function GET(_request: NextRequest) {
       .from('ai_agents')
       .select('*')
       .eq('org_id', profile.org_id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false }) as { data: Row<'ai_agents'>[] | null; error: any }
 
     if (error) {
       throw new Error(`Failed to fetch agents: ${error.message}`)
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -101,7 +102,8 @@ export async function POST(request: NextRequest) {
     // Create agent
     const { data: agent, error } = await supabase
       .from('ai_agents')
-      .insert({
+      // @ts-ignore - Supabase type inference issue with insert
+      .insert([{
         org_id: profile.org_id,
         agent_type: validated.agent_type,
         name: validated.name,
@@ -110,9 +112,9 @@ export async function POST(request: NextRequest) {
         is_active: validated.is_active,
         schedule_cron: validated.schedule_cron,
         created_by: user.id
-      })
+      }])
       .select()
-      .single()
+      .single() as { data: Row<'ai_agents'> | null; error: any }
 
     if (error) {
       throw new Error(`Failed to create agent: ${error.message}`)

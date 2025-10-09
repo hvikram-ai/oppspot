@@ -5,6 +5,7 @@
 
 import { ExtendedGoalTemplate, ALL_TEMPLATES } from './template-library'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface RecommendationContext {
   userId: string
@@ -200,7 +201,7 @@ export class TemplateRecommender {
       .from('streams')
       .select('goal_template_id, goal_status')
       .eq('created_by', userId)
-      .not('goal_template_id', 'is', null)
+      .not('goal_template_id', 'is', null) as { data: Row<'streams'>[] | null; error: any }
 
     if (!streams || streams.length === 0) {
       return {

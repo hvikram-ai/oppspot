@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { Row } from '@/lib/supabase/helpers'
 import {
   Building2, 
   Users, 
@@ -152,12 +153,11 @@ export default function OnboardingPage() {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
-         
-        .single() as unknown
+        .single()
 
-      if (profile?.org_id) {
+      const typedProfile = profile as Row<'profiles'>
+      if (typedProfile?.org_id) {
         await (supabase
-           
           .from('organizations') as unknown)
           .update({
             settings: {
@@ -165,7 +165,7 @@ export default function OnboardingPage() {
               company_size: formData.companySize,
             },
           })
-          .eq('id', profile.org_id)
+          .eq('id', typedProfile.org_id)
       }
 
       toast.success('Welcome aboard! Let&apos;s start discovering opportunities.')

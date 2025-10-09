@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { AddStreamMemberRequest } from '@/types/streams'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 export async function POST(
   request: NextRequest,
@@ -45,7 +46,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error('Error adding member:', error)
 
-    if (error.message === 'Insufficient permissions') {
+    if (getErrorMessage(error) === 'Insufficient permissions') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }

@@ -9,16 +9,72 @@ import {
   ICacheService,
   CompanyEntity,
   ScanConfiguration,
-  CompanyAnalysisResult,
-  FinancialHealthResult,
-  RiskAssessmentResult,
-  StrategicFitResult,
-  MarketPositionResult
+  IndustrySelection,
+  RegionSelection
 } from '../../core/interfaces'
+
+// ==========================================
+// ANALYSIS RESULT TYPES
+// ==========================================
+
+export interface CompanyAnalysisResult {
+  overallScore: number
+  financialHealth: FinancialHealthResult
+  riskAssessment: RiskAssessmentResult
+  strategicFit: StrategicFitResult
+  marketPosition: MarketPositionResult
+  analysisDate: Date
+  confidence: number
+}
+
+export interface FinancialHealthResult {
+  score: number
+  metrics: Record<string, unknown>
+  indicators: string[]
+  concerns: string[]
+}
+
+export interface RiskFactor {
+  category: 'regulatory' | 'operational' | 'financial' | 'market'
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  description: string
+  impact: number
+  likelihood: number
+}
+
+export interface RiskAssessmentResult {
+  overallRiskScore: number
+  riskLevel: 'low' | 'moderate' | 'high' | 'critical'
+  riskFactors: RiskFactor[]
+  mitigationStrategies: string[]
+  redFlags: string[]
+}
+
+export interface AlignmentFactor {
+  category: string
+  score: number
+  description: string
+  weight: number
+}
+
+export interface StrategicFitResult {
+  score: number
+  alignmentFactors: AlignmentFactor[]
+  synergyOpportunities: string[]
+  integrationComplexity: 'low' | 'medium' | 'high' | 'very_high'
+}
+
+export interface MarketPositionResult {
+  competitivePosition: 'weak' | 'moderate' | 'strong' | 'dominant'
+  marketShare: number
+  growthPotential: number
+  competitiveAdvantages: string[]
+  threats: string[]
+}
 
 export class CompanyAnalysisService implements ICompanyAnalysisService {
   private readonly analysisTimeout = 30000 // 30 seconds per company
-  
+
   constructor(
     private readonly dataSources: Map<string, IDataSourceProvider>,
     private readonly cacheService: ICacheService
@@ -37,10 +93,10 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     const batchSize = 10
     for (let i = 0; i < companies.length; i += batchSize) {
       const batch = companies.slice(i, i + batchSize)
-      
+
       const batchPromises = batch.map(async (company) => {
         try {
-          const analysis = await this.analyzeCompany(company, configuration)
+          const analysis = await this.analyzeCompanyWithConfig(company, configuration)
           completedCompanies++
           progressCallback?.(completedCompanies / totalCompanies * 100)
           return analysis
@@ -53,7 +109,7 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
       })
 
       const batchResults = await Promise.allSettled(batchPromises)
-      
+
       for (const result of batchResults) {
         if (result.status === 'fulfilled' && result.value) {
           results.push(result.value)
@@ -64,7 +120,23 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     return results
   }
 
-  async analyzeCompany(
+  // Interface implementation - delegates to full implementation with basic config
+  async analyzeCompany(company: any): Promise<any> {
+    // Create a basic configuration for the analysis
+    const basicConfig: ScanConfiguration = {
+      id: 'basic-analysis',
+      userId: 'system',
+      name: 'Basic Analysis',
+      selectedIndustries: [],
+      selectedRegions: [],
+      dataSources: [],
+      scanDepth: 'basic',
+      requiredCapabilities: []
+    }
+    return this.analyzeCompanyWithConfig(company, basicConfig)
+  }
+
+  async analyzeCompanyWithConfig(
     company: CompanyEntity,
     configuration: ScanConfiguration
   ): Promise<CompanyAnalysisResult> {
@@ -125,11 +197,14 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     }
 
     // Company age analysis
-    const age = company.getCompanyAge()
-    if (age && age > 10) {
-      indicators.push('Established business with market presence')
-    } else if (age && age < 2) {
-      concerns.push('Early-stage company with limited track record')
+    if (company.foundingYear) {
+      const currentYear = new Date().getFullYear()
+      const age = currentYear - company.foundingYear
+      if (age > 10) {
+        indicators.push('Established business with market presence')
+      } else if (age < 2) {
+        concerns.push('Early-stage company with limited track record')
+      }
     }
 
     // Employee count analysis
@@ -164,13 +239,13 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     company: CompanyEntity,
     configuration: ScanConfiguration
   ): Promise<RiskAssessmentResult> {
-    const riskFactors: string[] = []
+    const riskFactors: RiskFactor[] = []
     const redFlags: string[] = []
     const mitigationStrategies: string[] = []
 
     // Industry risk assessment
     const highRiskIndustries = ['cryptocurrency', 'gambling', 'adult-entertainment']
-    const isHighRiskIndustry = company.industryCodes.some(code => 
+    const isHighRiskIndustry = company.industryCodes.some(code =>
       highRiskIndustries.some(risk => code.toLowerCase().includes(risk))
     )
 
@@ -209,7 +284,8 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
       })
     }
 
-    if (company.isLowConfidence()) {
+    // Check for low confidence (using confidenceScore directly)
+    if (company.confidenceScore < 0.5) {
       riskFactors.push({
         category: 'operational' as const,
         severity: 'medium' as const,
@@ -239,12 +315,12 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     company: CompanyEntity,
     configuration: ScanConfiguration
   ): Promise<StrategicFitResult> {
-    const alignmentFactors: string[] = []
+    const alignmentFactors: AlignmentFactor[] = []
     const synergyOpportunities: string[] = []
-    
+
     // Industry alignment
-    const targetIndustries = configuration.selectedIndustries.map(i => i.code)
-    const industryOverlap = company.industryCodes.filter(code => 
+    const targetIndustries = configuration.selectedIndustries.map((i: IndustrySelection) => i.sicCode)
+    const industryOverlap = company.industryCodes.filter(code =>
       targetIndustries.includes(code)
     ).length
 
@@ -259,9 +335,9 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     }
 
     // Geographic alignment
-    const targetRegions = configuration.selectedRegions.map(r => r.code)
+    const targetRegions = configuration.selectedRegions.map((r: RegionSelection) => r.country)
     const isInTargetRegion = targetRegions.includes(company.country)
-    
+
     if (isInTargetRegion) {
       alignmentFactors.push({
         category: 'Geographic Fit',
@@ -276,14 +352,14 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     if (company.employeeCount) {
       const empCount = this.parseEmployeeCount(company.employeeCount)
       let sizeScore = 50
-      
+
       if (empCount >= 50 && empCount <= 500) {
         sizeScore = 85 // Sweet spot for acquisition
         synergyOpportunities.push('Optimal size for integration and growth')
       } else if (empCount > 1000) {
         sizeScore = 40 // May be too large for smooth integration
       }
-      
+
       alignmentFactors.push({
         category: 'Size Compatibility',
         score: sizeScore,
@@ -293,7 +369,7 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     }
 
     // Technology/digital presence
-    if (company.hasWebPresence()) {
+    if (company.website) {
       alignmentFactors.push({
         category: 'Digital Presence',
         score: 70,
@@ -322,12 +398,16 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
     // Mock market position analysis - in real implementation would use external data
     const competitiveAdvantages: string[] = []
     const threats: string[] = []
-    
-    if (company.isEstablishedCompany()) {
+
+    // Check if company is established (founded more than 5 years ago)
+    const currentYear = new Date().getFullYear()
+    const isEstablished = company.foundingYear && (currentYear - company.foundingYear) > 5
+
+    if (isEstablished) {
       competitiveAdvantages.push('Established market presence')
     }
-    
-    if (company.hasWebPresence()) {
+
+    if (company.website) {
       competitiveAdvantages.push('Digital presence and accessibility')
     } else {
       threats.push('Limited digital presence may affect competitiveness')

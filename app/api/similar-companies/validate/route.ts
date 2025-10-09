@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { WebSearchService } from '@/lib/opp-scan/services/web-search-service'
 import { SimilarCompanyUseCase } from '@/lib/opp-scan/services/similar-company-use-case'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Simple in-memory rate limiting for demo mode
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
@@ -154,9 +156,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Company validation error:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to validate company',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       },
       { status: 500 }
     )
@@ -253,9 +255,9 @@ export async function GET() {
   } catch (error) {
     console.error('Service health check error:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to check service health',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       },
       { status: 500 }
     )

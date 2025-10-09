@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(_request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function GET(_request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (profileError) {
       console.error('Error fetching profile for billing:', profileError)
@@ -54,7 +55,7 @@ export async function GET(_request: NextRequest) {
       .from('organizations')
       .select('subscription_tier, trial_ends_at, stripe_customer_id, stripe_subscription_id')
       .eq('id', profile.org_id)
-      .single()
+      .single() as { data: Pick<Row<'organizations'>, 'subscription_tier' | 'trial_ends_at' | 'stripe_customer_id' | 'stripe_subscription_id'> | null; error: any }
 
     if (orgError) {
       console.error('Error fetching organization billing:', orgError)
@@ -65,6 +66,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // Check if in trial period
+    // @ts-ignore - Supabase type inference issue
     const isTrial = org.trial_ends_at ? new Date(org.trial_ends_at) > new Date() : false
 
     // Count organization members

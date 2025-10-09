@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 

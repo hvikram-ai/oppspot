@@ -2,6 +2,64 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { QualificationDashboardData } from '@/lib/qualification/types/qualification';
 
+// Type definitions for qualification tables
+interface BantQualification {
+  budget_score: number | null;
+  authority_score: number | null;
+  need_score: number | null;
+  timeline_score: number | null;
+  overall_score: number | null;
+  next_review_date?: string;
+  lead_id?: string;
+  id?: string;
+  lead?: {
+    company?: {
+      name?: string;
+    };
+  };
+}
+
+interface MeddicQualification {
+  overall_score: number | null;
+  qualification_confidence: number | null;
+  forecast_category: string | null;
+}
+
+interface LeadAssignment {
+  response_time_minutes: number | null;
+  status: string | null;
+}
+
+interface QualificationChecklist {
+  status: string | null;
+  completion_percentage: number | null;
+  total_items: number | null;
+  completed_items: number | null;
+}
+
+interface LeadRecyclingHistory {
+  outcome: string | null;
+}
+
+interface ThresholdAlert {
+  id: string;
+  status: string;
+  triggered_at: string;
+  [key: string]: any;
+}
+
+interface QualificationActivity {
+  id: string;
+  created_at: string;
+  lead?: {
+    id?: string;
+    company?: {
+      name?: string;
+    };
+  };
+  [key: string]: any;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -47,7 +105,7 @@ export async function GET(request: NextRequest) {
     // Get BANT scores
     const { data: bantScores } = await supabase
       .from('bant_qualifications')
-      .select('budget_score, authority_score, need_score, timeline_score, overall_score');
+      .select('budget_score, authority_score, need_score, timeline_score, overall_score') as { data: BantQualification[] | null; error: any };
 
     const bantAverages = {
       average_overall: 0,
@@ -68,7 +126,7 @@ export async function GET(request: NextRequest) {
     // Get MEDDIC scores
     const { data: meddicScores } = await supabase
       .from('meddic_qualifications')
-      .select('overall_score, qualification_confidence, forecast_category');
+      .select('overall_score, qualification_confidence, forecast_category') as { data: MeddicQualification[] | null; error: any };
 
     const meddicData = {
       average_overall: 0,
@@ -93,7 +151,7 @@ export async function GET(request: NextRequest) {
     // Get routing metrics
     const { data: assignments } = await supabase
       .from('lead_assignments')
-      .select('response_time_minutes, status');
+      .select('response_time_minutes, status') as { data: LeadAssignment[] | null; error: any };
 
     const routingMetrics = {
       total_assignments: assignments?.length || 0,
@@ -121,7 +179,7 @@ export async function GET(request: NextRequest) {
     // Get checklist metrics
     const { data: checklists } = await supabase
       .from('qualification_checklists')
-      .select('status, completion_percentage, total_items, completed_items');
+      .select('status, completion_percentage, total_items, completed_items') as { data: QualificationChecklist[] | null; error: any };
 
     const checklistMetrics = {
       completion_rate: 0,
@@ -143,7 +201,7 @@ export async function GET(request: NextRequest) {
     // Get recycling metrics
     const { data: recyclingHistory } = await supabase
       .from('lead_recycling_history')
-      .select('outcome');
+      .select('outcome') as { data: LeadRecyclingHistory[] | null; error: any };
 
     const recyclingMetrics = {
       total_recycled: recyclingHistory?.length || 0,
@@ -170,7 +228,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(10) as { data: QualificationActivity[] | null; error: any };
 
     // Get upcoming reviews
     const { data: upcomingReviews } = await supabase
@@ -185,7 +243,7 @@ export async function GET(request: NextRequest) {
       `)
       .gte('next_review_date', new Date().toISOString())
       .order('next_review_date', { ascending: true })
-      .limit(10);
+      .limit(10) as { data: BantQualification[] | null; error: any };
 
     // Get active alerts
     const { data: alerts } = await supabase
@@ -193,7 +251,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('status', 'triggered')
       .order('triggered_at', { ascending: false })
-      .limit(10);
+      .limit(10) as { data: ThresholdAlert[] | null; error: any };
 
     const dashboardData: QualificationDashboardData = {
       total_leads: totalLeads || 0,

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   Stakeholder,
   ChampionTracking,
@@ -247,7 +248,7 @@ export class ChampionIdentifier {
         .from('champion_tracking')
         .select('*')
         .eq('stakeholder_id', stakeholder_id)
-        .single();
+        .single() as { data: Row<'champion_tracking'> | null; error: any };
 
       if (existing) {
         return existing as ChampionTracking;
@@ -258,7 +259,7 @@ export class ChampionIdentifier {
         .from('stakeholders')
         .select('org_id')
         .eq('id', stakeholder_id)
-        .single();
+        .single() as { data: Row<'stakeholders'> | null; error: any };
 
       // Create new tracking
       const { data, error } = await supabase
@@ -357,7 +358,7 @@ export class ChampionIdentifier {
         .from('champion_tracking')
         .select('development_actions')
         .eq('id', tracking_id)
-        .single();
+        .single() as { data: Row<'champion_tracking'> | null; error: any };
 
       const currentActions = tracking?.development_actions || [];
 

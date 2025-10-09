@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   BenchmarkComparison,
   CompanyMetrics,
@@ -186,7 +187,7 @@ export class BenchmarkEngine {
       .eq('company_id', companyId)
       .order('metric_date', { ascending: false })
       .limit(1)
-      .single()
+      .single() as { data: Row<'company_metrics'> | null; error: any }
 
     if (error || !data) {
       // If no metrics exist, try to calculate from existing business data
@@ -204,7 +205,7 @@ export class BenchmarkEngine {
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
     if (!business) return null
 
@@ -217,7 +218,15 @@ export class BenchmarkEngine {
 
     // Try to extract financial data from companies_house_data or accounts
     if (business.accounts) {
-      const accounts = business.accounts
+      const accounts = business.accounts as Record<string, unknown> & {
+        turnover?: number
+        gross_profit?: number
+        operating_profit?: number
+        profit_loss?: number
+        total_assets?: number
+        total_liabilities?: number
+        shareholders_funds?: number
+      }
       metrics.revenue = accounts.turnover
       metrics.gross_profit = accounts.gross_profit
       metrics.operating_profit = accounts.operating_profit
@@ -249,7 +258,7 @@ export class BenchmarkEngine {
       .from('industry_benchmarks')
       .select('*')
       .eq('industry_code', industryCode)
-      .order('metric_date', { ascending: false })
+      .order('metric_date', { ascending: false }) as { data: Row<'industry_benchmarks'>[] | null; error: any }
 
     if (error || !data || data.length === 0) {
       // Generate synthetic benchmarks if none exist
@@ -676,7 +685,7 @@ export class BenchmarkEngine {
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .single() as { data: Row<'benchmark_comparisons'> | null; error: any }
 
     return data
   }
@@ -699,7 +708,7 @@ export class BenchmarkEngine {
       .from('businesses')
       .select('sic_codes')
       .eq('id', companyId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
     if (data?.sic_codes && data.sic_codes.length > 0) {
       // Return primary SIC code (first two digits)
@@ -717,7 +726,7 @@ export class BenchmarkEngine {
       .from('peer_groups')
       .select('*')
       .eq('id', peerGroupId)
-      .single()
+      .single() as { data: Row<'peer_groups'> | null; error: any }
 
     return data
   }
@@ -736,7 +745,7 @@ export class BenchmarkEngine {
       .select('id')
       .contains('sic_codes', [industryCode])
       .neq('id', companyId)
-      .limit(20)
+      .limit(20) as { data: Row<'businesses'>[] | null; error: any }
 
     if (!peers || peers.length === 0) return null
 
@@ -759,7 +768,7 @@ export class BenchmarkEngine {
       .from('peer_group_members')
       .select('company_id')
       .eq('peer_group_id', peerGroupId)
-      .eq('is_active', true)
+      .eq('is_active', true) as { data: Row<'peer_group_members'>[] | null; error: any }
 
     if (!members || members.length === 0) return []
 
@@ -769,7 +778,7 @@ export class BenchmarkEngine {
       .from('company_metrics')
       .select('*')
       .in('company_id', companyIds)
-      .order('metric_date', { ascending: false })
+      .order('metric_date', { ascending: false }) as { data: Row<'company_metrics'>[] | null; error: any }
 
     // Group by company and take latest metric for each
     const latestMetrics: Record<string, CompanyMetrics> = {}
@@ -788,6 +797,7 @@ export class BenchmarkEngine {
   private async saveComparison(comparison: BenchmarkComparison): Promise<void> {
     await this.supabase
       .from('benchmark_comparisons')
+      // @ts-ignore - Supabase type inference issue
       .upsert(comparison)
   }
 

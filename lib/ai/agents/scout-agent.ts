@@ -14,6 +14,7 @@
 
 import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } from './base-agent'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface ScoutAgentConfig {
   signals: string[] // Which signals to monitor
@@ -154,7 +155,7 @@ export class ScoutAgent extends BaseAgent {
       throw new Error(`Failed to fetch companies: ${error.message}`)
     }
 
-    return data || []
+    return (data as Row<'businesses'>[] | null) || []
   }
 
   /**
@@ -242,7 +243,7 @@ export async function createScoutAgent(agentId: string): Promise<ScoutAgent> {
     .select('*')
     .eq('id', agentId)
     .eq('agent_type', 'scout_agent')
-    .single()
+    .single() as { data: Row<'ai_agents'> | null; error: any }
 
   if (error || !data) {
     throw new Error(`Scout agent not found: ${agentId}`)

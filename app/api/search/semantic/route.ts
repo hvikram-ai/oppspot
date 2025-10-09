@@ -15,6 +15,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { z } from 'zod'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 const searchSchema = z.object({
   query: z.string().min(1).max(500),
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Semantic search failed', message: error.message },
+      { error: 'Semantic search failed', message: getErrorMessage(error) },
       { status: 500 }
     )
   }

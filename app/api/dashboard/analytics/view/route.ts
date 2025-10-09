@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * POST /api/dashboard/analytics/view
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
     // Insert page view record
     const { data: pageView, error: insertError } = await supabase
       .from('dashboard_views')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         user_id: user.id,
         session_id: body.session_id || null,

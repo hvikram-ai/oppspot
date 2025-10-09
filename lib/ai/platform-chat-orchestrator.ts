@@ -259,6 +259,7 @@ export class PlatformChatOrchestrator {
         .select('*')
       
       if (query) {
+        // @ts-ignore - Supabase type inference issue
         searchQuery = searchQuery.textSearch('name', query)
       }
       
@@ -298,8 +299,8 @@ export class PlatformChatOrchestrator {
           countries: location ? [location] : ['UK', 'Ireland'],
           industryCodes: industry ? [industry] : []
         }
-      })
-      
+      }) as unknown as { companies: unknown[]; total_found: number }
+
       return {
         success: true,
         data: {
@@ -438,7 +439,15 @@ export class PlatformChatOrchestrator {
     context: PlatformContext
   ): Promise<string> {
     if (action.type === 'similarity_analysis' && result.data) {
-      const { topMatches = [], targetCompany, analysis = {} } = result.data
+      const { topMatches = [], targetCompany, analysis = {} } = result.data as {
+        topMatches?: unknown[]
+        targetCompany?: string
+        analysis?: {
+          executive_summary?: string
+          total_companies_analyzed?: number
+          average_similarity_score?: number
+        }
+      }
       
       let response = `I've analyzed companies similar to **${targetCompany}** using OppSpot's AI-powered similarity engine.\n\n`
       

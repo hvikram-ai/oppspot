@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DataEnrichmentService } from '@/lib/services/data-enrichment'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Enrich a single business or batch of businesses with data from multiple sources
 export async function POST(request: NextRequest) {
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
         if (Object.keys(merged).length > 0) {
           const { error: updateError } = await supabase
             .from('businesses')
+            // @ts-ignore - Type inference issue
             .update(merged)
             .eq('id', businessId)
           
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
         .from('businesses')
         .select('*')
         .eq('id', businessId)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
       
       const stats = updatedBusiness 
         ? enrichmentService.getEnrichmentStats(updatedBusiness)
@@ -95,10 +97,12 @@ export async function POST(request: NextRequest) {
         .from('businesses')
         .select('*')
         .in('id', businessIds)
-      
+
+      const typedBusinesses = businesses as Row<'businesses'>[] | null
+
       const statsMap: Record<string, unknown> = {}
-      if (businesses) {
-        for (const business of businesses) {
+      if (typedBusinesses) {
+        for (const business of typedBusinesses) {
           statsMap[business.id] = enrichmentService.getEnrichmentStats(business)
         }
       }
@@ -140,38 +144,40 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('id', businessId)
       .single()
-    
-    if (error || !business) {
+
+    const typedBusiness = business as Row<'businesses'> | null
+
+    if (error || !typedBusiness) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       )
     }
-    
+
     const enrichmentService = new DataEnrichmentService()
-    const stats = enrichmentService.getEnrichmentStats(business)
+    const stats = enrichmentService.getEnrichmentStats(typedBusiness)
     
     // Determine which sources can still be enriched
     const availableSources = []
-    if (!business.company_number || !business.companies_house_last_updated) {
+    if (!typedBusiness.company_number || !typedBusiness.companies_house_last_updated) {
       availableSources.push('companies_house')
     }
-    if (!business.google_place_id) {
+    if (!typedBusiness.google_place_id) {
       availableSources.push('google_places')
     }
-    if (!business.social_links || Object.keys(business.social_links as Record<string, unknown>).length === 0) {
+    if (!typedBusiness.social_links || Object.keys(typedBusiness.social_links as Record<string, unknown>).length === 0) {
       availableSources.push('social_media')
     }
-    if (business.website) {
+    if (typedBusiness.website) {
       availableSources.push('web_scraping')
     }
-    
+
     return NextResponse.json({
       businessId,
       stats,
       availableSources,
       enrichmentHistory: {
-        companies_house: business.companies_house_last_updated,
+        companies_house: typedBusiness.companies_house_last_updated,
         last_enriched: stats.lastEnriched
       }
     })

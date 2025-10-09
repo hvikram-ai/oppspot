@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Helper function to calculate age in hours
 function getAgeInHours(dateString: string | null): number | null {
@@ -188,23 +189,25 @@ export async function POST(request: NextRequest) {
         .eq('company_number', searchTerm.toUpperCase())
         .single()
 
-      if (exactMatch) {
+      const typedExactMatch = exactMatch as Row<'businesses'> | null
+
+      if (typedExactMatch) {
         // Check if cache is still valid
-        if (exactMatch.companies_house_last_updated && 
-            companiesHouse.isCacheValid(exactMatch.companies_house_last_updated)) {
+        if (typedExactMatch.companies_house_last_updated &&
+            companiesHouse.isCacheValid(typedExactMatch.companies_house_last_updated)) {
           results.push({
-            ...exactMatch,
+            ...typedExactMatch,
             source: 'cache',
-            cache_age: getAgeInHours(exactMatch.companies_house_last_updated)
+            cache_age: getAgeInHours(typedExactMatch.companies_house_last_updated)
           })
           sources.cache++
         } else {
           // Cache expired, add to results but mark for refresh
           results.push({
-            ...exactMatch,
+            ...typedExactMatch,
             source: 'cache_expired',
             needs_refresh: true,
-            cache_age: getAgeInHours(exactMatch.companies_house_last_updated)
+            cache_age: getAgeInHours(typedExactMatch.companies_house_last_updated)
           })
         }
       }
@@ -218,11 +221,13 @@ export async function POST(request: NextRequest) {
           .limit(limit)
           .range(offset, offset + limit - 1)
 
-        if (nameMatches && nameMatches.length > 0) {
-          for (const match of nameMatches) {
-            const isValidCache = match.companies_house_last_updated && 
+        const typedNameMatches = nameMatches as Row<'businesses'>[] | null
+
+        if (typedNameMatches && typedNameMatches.length > 0) {
+          for (const match of typedNameMatches) {
+            const isValidCache = match.companies_house_last_updated &&
               companiesHouse.isCacheValid(match.companies_house_last_updated)
-            
+
             results.push({
               ...match,
               source: isValidCache ? 'cache' : 'cache_expired',
@@ -287,6 +292,7 @@ export async function POST(request: NextRequest) {
         // Log API call for auditing (only if user is authenticated)
         if (user && !demo) {
           try {
+            // @ts-ignore - Supabase type inference issue
             await supabase.from('api_audit_log').insert({
               api_name: 'companies_house',
               endpoint: '/search/companies',
@@ -306,6 +312,10 @@ export async function POST(request: NextRequest) {
 
         for (const apiCompany of apiResults.items) {
           try {
+            const extendedApiCompany = apiCompany as typeof apiCompany & {
+              date_of_creation?: string;
+              snippet?: string
+            }
             // Return the search results immediately
             results.push({
               id: `api-${apiCompany.company_number}`,
@@ -313,9 +323,9 @@ export async function POST(request: NextRequest) {
               name: apiCompany.title || apiCompany.company_name,
               company_status: apiCompany.company_status,
               company_type: apiCompany.company_type,
-              date_of_creation: apiCompany.date_of_creation,
+              date_of_creation: extendedApiCompany.date_of_creation,
               registered_office_address: apiCompany.address || {},
-              snippet: apiCompany.snippet,
+              snippet: extendedApiCompany.snippet,
               source: 'api',
               cache_age: 0,
               enrichment_status: 'pending' // Indicate enrichment will happen
@@ -385,6 +395,7 @@ export async function POST(request: NextRequest) {
         
         // Log failed API call (only if user is authenticated)
         if (user && !demo) {
+          // @ts-ignore - Supabase type inference issue
           try {
             await supabase.from('api_audit_log').insert({
               api_name: 'companies_house',

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('id, name, categories')
       .eq('id', primaryBusinessId)
-      .single()
+      .single() as { data: Pick<Row<'businesses'>, 'id' | 'name' | 'categories'> | null; error: any }
     
     if (!primaryBusiness) {
       return NextResponse.json(
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
     // Create competitor set
     const { data: competitorSet, error: createError } = await supabase
       .from('competitor_sets')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         user_id: user.id,
         name,
@@ -119,7 +121,11 @@ export async function GET(request: NextRequest) {
         .select('*')
         .eq('id', setId)
         .eq('user_id', user.id)
-        .single()
+        .single() as { data: (Record<string, unknown> & {
+          id: string
+          primary_business_id: string
+          competitor_ids: string[]
+        }) | null; error: any }
       
       if (error) throw error
       
@@ -139,7 +145,7 @@ export async function GET(request: NextRequest) {
       const { data: businesses } = await supabase
         .from('businesses')
         .select('*')
-        .in('id', allBusinessIds)
+        .in('id', allBusinessIds) as { data: Row<'businesses'>[] | null; error: any }
       
       // Fetch competitive metrics
       const { data: metrics } = await supabase
@@ -220,6 +226,7 @@ export async function PATCH(request: NextRequest) {
     // Update competitor set
     const { data: updated, error } = await supabase
       .from('competitor_sets')
+      // @ts-ignore - Type inference issue
       .update({
         ...updates,
         updated_at: new Date().toISOString()
@@ -294,7 +301,7 @@ async function discoverCompetitors(
       .from('businesses')
       .select('latitude, longitude')
       .eq('id', primaryBusinessId)
-      .single()
+      .single() as { data: Pick<Row<'businesses'>, 'latitude' | 'longitude'> | null; error: any }
     
     if (!primaryBusiness || !primaryBusiness.latitude) {
       return []

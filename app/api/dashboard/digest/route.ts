@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface SavedBusiness {
   business_id: string
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('user_id', user.id)
       .eq('digest_date', targetDate)
-      .single()
+      .single() as { data: Row<'ai_digest'> | null; error: any }
 
     if (fetchError && fetchError.code === 'PGRST116') {
       return NextResponse.json(
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest) {
         .select('id')
         .eq('user_id', user.id)
         .eq('digest_date', today)
-        .single()
+        .single() as { data: Pick<Row<'ai_digest'>, 'id'> | null; error: any }
 
       if (existing) {
         return NextResponse.json(
@@ -159,6 +160,7 @@ export async function POST(request: NextRequest) {
 
     const { data: digest, error: upsertError } = await supabase
       .from('ai_digest')
+      // @ts-ignore - Supabase type inference issue
       .upsert(digestPayload, {
         onConflict: 'user_id,digest_date',
         ignoreDuplicates: false

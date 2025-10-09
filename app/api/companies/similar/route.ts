@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { z } from 'zod'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 const querySchema = z.object({
   companyId: z.string().uuid(),
@@ -93,7 +95,7 @@ export async function GET(request: NextRequest) {
       .from('businesses')
       .select('id, name, description, categories, sic_codes')
       .eq('id', params.companyId)
-      .single()
+      .single() as { data: Pick<Row<'businesses'>, 'id' | 'name' | 'description' | 'categories' | 'sic_codes'> | null; error: any }
 
     return NextResponse.json({
       success: true,
@@ -119,7 +121,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to find similar companies', message: error.message },
+      { error: 'Failed to find similar companies', message: getErrorMessage(error) },
       { status: 500 }
     )
   }

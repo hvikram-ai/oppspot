@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   Stakeholder,
   DetractorManagement,
@@ -60,7 +61,7 @@ export class DetractorManager {
       // Focus on detractors and at-risk stakeholders
       query = query.or('role_type.eq.detractor,relationship_status.in.(at_risk,lost)');
 
-      const { data: stakeholders, error } = await query;
+      const { data: stakeholders, error } = await query as { data: Row<'stakeholders'>[] | null; error: any };
 
       if (error) {
         console.error('Error identifying detractors:', error);
@@ -124,7 +125,10 @@ export class DetractorManager {
     sentiment_score?: number;
     engagement_score?: number;
     relationship_strength?: number;
+    relationship_status?: string;
     stakeholder_engagement?: Array<{ sentiment_score?: number | null; outcome?: string }>;
+    influence_scores?: Array<{ overall_influence?: number }>;
+    detractor_management?: Array<{ business_impact?: string; blocking_potential?: boolean }>;
     id?: string;
   }): Promise<number> {
     let riskScore = 0;
@@ -183,7 +187,7 @@ export class DetractorManager {
       'established': 10,
       'strong': 0
     };
-    riskScore += (relationshipRisks[stakeholder.relationship_status] || 50) * weights.relationship;
+    riskScore += (relationshipRisks[stakeholder.relationship_status || ''] || 50) * weights.relationship;
 
     // Business impact from detractor management
     const management = stakeholder.detractor_management?.[0];
@@ -195,7 +199,7 @@ export class DetractorManager {
         'low': 30,
         'minimal': 10
       };
-      riskScore += (impactScores[management.business_impact] || 50) * weights.impact;
+      riskScore += (impactScores[management.business_impact || ''] || 50) * weights.impact;
 
       // Adjust for blocking potential
       if (management.blocking_potential) {
@@ -244,7 +248,7 @@ export class DetractorManager {
         .from('detractor_management')
         .select('*')
         .eq('stakeholder_id', stakeholder_id)
-        .single();
+        .single() as { data: Row<'detractor_management'> | null; error: any };
 
       if (existing) {
         return existing as DetractorManagement;
@@ -255,18 +259,18 @@ export class DetractorManager {
         .from('stakeholders')
         .select('org_id, influence_level')
         .eq('id', stakeholder_id)
-        .single();
+        .single() as { data: Row<'stakeholders'> | null; error: any };
 
       // Determine influence radius based on level
       let influence_radius: DetractorManagement['influence_radius'] = 'individual';
-      if (stakeholder?.influence_level) {
-        if (stakeholder.influence_level >= 8) {
+      if ((stakeholder as any)?.influence_level) {
+        if ((stakeholder as any).influence_level >= 8) {
           influence_radius = 'company_wide';
-        } else if (stakeholder.influence_level >= 6) {
+        } else if ((stakeholder as any).influence_level >= 6) {
           influence_radius = 'division';
-        } else if (stakeholder.influence_level >= 4) {
+        } else if ((stakeholder as any).influence_level >= 4) {
           influence_radius = 'department';
-        } else if (stakeholder.influence_level >= 2) {
+        } else if ((stakeholder as any).influence_level >= 2) {
           influence_radius = 'team';
         }
       }
@@ -276,7 +280,7 @@ export class DetractorManager {
         .from('detractor_management')
         .insert({
           stakeholder_id,
-          org_id: stakeholder?.org_id,
+          org_id: (stakeholder as any)?.org_id,
           detractor_level: initial_assessment.detractor_level,
           opposition_reasons: initial_assessment.opposition_reasons,
           business_impact: initial_assessment.business_impact,
@@ -335,7 +339,7 @@ export class DetractorManager {
           stakeholder_engagement!left(*)
         `)
         .eq('id', stakeholder_id)
-        .single();
+        .single() as { data: Row<'stakeholders'> | null; error: any };
 
       if (!data) {
         return {
@@ -345,7 +349,7 @@ export class DetractorManager {
         };
       }
 
-      const management = data.detractor_management?.[0];
+      const management = (data as any).detractor_management?.[0];
       const oppositionReasons = management?.opposition_reasons || [];
 
       let strategy = '';
@@ -442,9 +446,9 @@ export class DetractorManager {
         .from('detractor_management')
         .select('mitigation_actions')
         .eq('id', management_id)
-        .single();
+        .single() as { data: Row<'detractor_management'> | null; error: any };
 
-      const currentActions = management?.mitigation_actions || [];
+      const currentActions = (management as any)?.mitigation_actions || [];
 
       // Add new action
       const newAction: MitigationAction = {
@@ -507,7 +511,7 @@ export class DetractorManager {
           .from('detractor_management')
           .select('stakeholder_id')
           .eq('id', management_id)
-          .single();
+          .single() as { data: Row<'detractor_management'> | null; error: any };
 
         if (management) {
           await supabase
@@ -517,7 +521,7 @@ export class DetractorManager {
               relationship_status: 'developing',
               updated_at: new Date().toISOString()
             })
-            .eq('id', management.stakeholder_id);
+            .eq('id', (management as any).stakeholder_id);
         }
       }
 
@@ -551,7 +555,7 @@ export class DetractorManager {
           stakeholder_engagement!left(*)
         `)
         .eq('id', stakeholder_id)
-        .single();
+        .single() as { data: Row<'stakeholders'> | null; error: any };
 
       if (!data) {
         return {
@@ -565,8 +569,8 @@ export class DetractorManager {
       const barriers: string[] = [];
       let approach = '';
 
-      const management = data.detractor_management?.[0];
-      const engagements = data.stakeholder_engagement || [];
+      const management = (data as any).detractor_management?.[0];
+      const engagements = (data as any).stakeholder_engagement || [];
 
       // Analyze detractor level
       if (management?.detractor_level) {
@@ -633,7 +637,7 @@ export class DetractorManager {
       }
 
       // Consider influence level
-      if (data.influence_level && data.influence_level >= 7) {
+      if ((data as any).influence_level && (data as any).influence_level >= 7) {
         barriers.push('High influence - conversion critical');
         potential += 10; // Worth the effort
       }
@@ -685,7 +689,7 @@ export class DetractorManager {
         .select('engagement_date, sentiment_score')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
-        .limit(10);
+        .limit(10) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
 
       if (!engagements || engagements.length < 2) {
         return 'stable';
@@ -731,7 +735,7 @@ export class DetractorManager {
         .from('detractor_management')
         .select('id')
         .eq('stakeholder_id', stakeholder_id)
-        .single();
+        .single() as { data: Row<'detractor_management'> | null; error: any };
 
       if (management) {
         await supabase
@@ -741,7 +745,7 @@ export class DetractorManager {
             last_assessment_date: new Date().toISOString(),
             next_review_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
           })
-          .eq('id', management.id);
+          .eq('id', (management as any).id);
       }
 
       return trend;

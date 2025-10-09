@@ -3,9 +3,17 @@ import { createClient } from '@/lib/supabase/server'
 import { OppScanEngine } from '@/lib/opp-scan/scanning-engine'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
+type ScanUpdate = Database['public']['Tables']['acquisition_scans']['Update']
+type AuditLogInsert = Database['public']['Tables']['scan_audit_log']['Insert']
+
+// Type guard helpers
+function isJsonArray(value: unknown): value is unknown[] {
+  return Array.isArray(value)
+}
 
 export async function POST(
   request: NextRequest,
@@ -30,7 +38,7 @@ export async function POST(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single()
+      .single<Scan>()
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -68,7 +76,8 @@ export async function POST(
     }
 
     // Update scan status to starting
-    await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateError } = await (supabase as any)
       .from('acquisition_scans')
       .update({
         status: 'scanning',
@@ -79,21 +88,31 @@ export async function POST(
       })
       .eq('id', scanId)
 
+    if (updateError) {
+      console.error('Failed to update scan status:', updateError)
+    }
+
     // Create audit log entry
-    await supabase
+    const auditLogData = {
+      scan_id: scanId,
+      user_id: user.id,
+      action_type: 'scan_started',
+      action_description: 'Started acquisition scan execution',
+      ip_address: request.headers.get('x-forwarded-for') ||
+                 request.headers.get('x-real-ip') ||
+                 'unknown',
+      user_agent: request.headers.get('user-agent') || 'unknown',
+      legal_basis: 'legitimate_interest',
+      retention_period: 365
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: auditError } = await (supabase
       .from('scan_audit_log')
-      .insert({
-        scan_id: scanId,
-        user_id: user.id,
-        action_type: 'scan_started',
-        action_description: 'Started acquisition scan execution',
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
-                   'unknown',
-        user_agent: request.headers.get('user-agent') || 'unknown',
-        legal_basis: 'legitimate_interest',
-        retention_period: 365
-      })
+      .insert(auditLogData as any) as any)
+
+    if (auditError) {
+      console.error('Failed to create audit log:', auditError)
+    }
 
     // Start the scanning engine asynchronously
     // In a production environment, this would be queued as a background job
@@ -122,11 +141,11 @@ export async function POST(
 
 // Validate scan configuration
 function validateScanConfiguration(scan: Scan): string | null {
-  if (!scan.selected_industries || scan.selected_industries.length === 0) {
+  if (!scan.selected_industries || !isJsonArray(scan.selected_industries) || scan.selected_industries.length === 0) {
     return 'No industries selected'
   }
 
-  if (!scan.selected_regions || scan.selected_regions.length === 0) {
+  if (!scan.selected_regions || !isJsonArray(scan.selected_regions) || scan.selected_regions.length === 0) {
     return 'No regions selected'
   }
 
@@ -134,17 +153,17 @@ function validateScanConfiguration(scan: Scan): string | null {
     return 'No data sources selected'
   }
 
-  if (!scan.required_capabilities || scan.required_capabilities.length === 0) {
+  if (!scan.required_capabilities || !isJsonArray(scan.required_capabilities) || scan.required_capabilities.length === 0) {
     return 'No capabilities specified'
   }
 
   // Validate data source configuration
   const requiredSources = ['companies_house']
-  const missingSources = requiredSources.filter(source => 
-    !scan.data_sources.includes(source)
+  const missingSources = requiredSources.filter(source =>
+    !scan.data_sources?.includes(source)
   )
-  
-  if (missingSources.length > 0 && !scan.data_sources.includes('irish_cro')) {
+
+  if (missingSources.length > 0 && !scan.data_sources?.includes('irish_cro')) {
     return 'At least Companies House or Irish CRO data source is required'
   }
 
@@ -156,7 +175,9 @@ function getEstimatedCompletion(scan: Scan): string {
   let estimatedMinutes = 30 // Base time
 
   // Add time based on data sources
-  estimatedMinutes += scan.data_sources.length * 5
+  if (scan.data_sources) {
+    estimatedMinutes += scan.data_sources.length * 5
+  }
 
   // Add time based on scan depth
   const depthMultiplier = {
@@ -167,10 +188,14 @@ function getEstimatedCompletion(scan: Scan): string {
   estimatedMinutes *= depthMultiplier[scan.scan_depth] || 2
 
   // Add time based on region complexity
-  estimatedMinutes += scan.selected_regions.length * 2
+  if (scan.selected_regions && isJsonArray(scan.selected_regions)) {
+    estimatedMinutes += scan.selected_regions.length * 2
+  }
 
   // Add time based on industry complexity
-  estimatedMinutes += scan.selected_industries.length * 3
+  if (scan.selected_industries && isJsonArray(scan.selected_industries)) {
+    estimatedMinutes += scan.selected_industries.length * 3
+  }
 
   const completionTime = new Date()
   completionTime.setMinutes(completionTime.getMinutes() + estimatedMinutes)
@@ -181,11 +206,12 @@ function getEstimatedCompletion(scan: Scan): string {
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
+    type ProfileOrgId = Pick<Database['public']['Tables']['profiles']['Row'], 'org_id'>
     const { data: profile } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single<ProfileOrgId>()
 
     return profile?.org_id === orgId
   } catch (error) {

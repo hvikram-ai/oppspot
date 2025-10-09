@@ -597,14 +597,20 @@ Return as structured JSON matching the CompanyEnrichmentResult format.`
    */
   private identifyDataGaps(data: Record<string, unknown>): string[] {
     const gaps: string[] = []
-    
-    if (!data.company_size?.employee_count) gaps.push('Employee count estimation')
-    if (!data.company_size?.annual_revenue) gaps.push('Revenue information')
-    if (!data.leadership?.key_executives?.length) gaps.push('Leadership team details')
-    if (!data.financial_indicators?.funding_status) gaps.push('Funding and investment history')
-    if (!data.offerings?.primary_products?.length) gaps.push('Product/service portfolio')
-    if (!data.technology_stack?.core_technologies?.length) gaps.push('Technology stack analysis')
-    
+
+    const companySize = data.company_size as { employee_count?: unknown; annual_revenue?: unknown } | undefined
+    const leadership = data.leadership as { key_executives?: unknown[] } | undefined
+    const financialIndicators = data.financial_indicators as { funding_status?: unknown } | undefined
+    const offerings = data.offerings as { primary_products?: unknown[] } | undefined
+    const technologyStack = data.technology_stack as { core_technologies?: unknown[] } | undefined
+
+    if (!companySize?.employee_count) gaps.push('Employee count estimation')
+    if (!companySize?.annual_revenue) gaps.push('Revenue information')
+    if (!leadership?.key_executives?.length) gaps.push('Leadership team details')
+    if (!financialIndicators?.funding_status) gaps.push('Funding and investment history')
+    if (!offerings?.primary_products?.length) gaps.push('Product/service portfolio')
+    if (!technologyStack?.core_technologies?.length) gaps.push('Technology stack analysis')
+
     return gaps
   }
   
@@ -613,27 +619,31 @@ Return as structured JSON matching the CompanyEnrichmentResult format.`
    */
   private generateRecommendations(data: Record<string, unknown>): string[] {
     const recommendations: string[] = []
-    
+
     const completeness = this.calculateCompletenessScore(data)
-    
+
     if (completeness < 70) {
       recommendations.push('Conduct deeper web research for missing data points')
     }
-    
-    if (!data.financial_indicators?.public_company) {
+
+    const financialIndicators = data.financial_indicators as { public_company?: unknown } | undefined
+    const leadership = data.leadership as { key_executives?: unknown[] } | undefined
+    const marketPresence = data.market_presence as { partnerships?: unknown[] } | undefined
+
+    if (!financialIndicators?.public_company) {
       recommendations.push('Check SEC filings for financial disclosures')
     }
-    
-    if (!data.leadership?.key_executives?.length) {
+
+    if (!leadership?.key_executives?.length) {
       recommendations.push('Research LinkedIn for leadership team information')
     }
-    
-    if (!data.market_presence?.partnerships?.length) {
+
+    if (!marketPresence?.partnerships?.length) {
       recommendations.push('Analyze press releases for partnership announcements')
     }
-    
+
     recommendations.push('Set up monitoring for ongoing company intelligence updates')
-    
+
     return recommendations
   }
   

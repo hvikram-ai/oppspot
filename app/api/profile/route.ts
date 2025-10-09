@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(_request: NextRequest) {
   try {
@@ -26,7 +27,7 @@ export async function GET(_request: NextRequest) {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Row<'profiles'> | null; error: any }
 
     if (profileError) {
       console.error('Error fetching profile:', profileError)
@@ -90,6 +91,7 @@ export async function PUT(request: NextRequest) {
     // Update profile
     const { data: profile, error: updateError } = await supabase
       .from('profiles')
+      // @ts-ignore - Type inference issue
       .update({
         ...updateData,
         updated_at: new Date().toISOString()

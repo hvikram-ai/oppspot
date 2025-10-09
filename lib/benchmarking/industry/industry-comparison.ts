@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   IndustryBenchmark,
   CompanyMetrics,
@@ -186,7 +187,7 @@ export class IndustryComparisonEngine {
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
     return data
   }
@@ -201,7 +202,7 @@ export class IndustryComparisonEngine {
       .eq('company_id', companyId)
       .order('metric_date', { ascending: false })
       .limit(1)
-      .single()
+      .single() as { data: Row<'company_metrics'> | null; error: any }
 
     if (!data) {
       // Generate from business data if no metrics exist
@@ -219,7 +220,7 @@ export class IndustryComparisonEngine {
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
     const metrics: CompanyMetrics = {
       company_id: companyId,
@@ -228,11 +229,18 @@ export class IndustryComparisonEngine {
 
     // Extract from Companies House data if available
     if (business?.accounts) {
-      metrics.revenue = business.accounts.turnover
-      metrics.gross_profit = business.accounts.gross_profit
-      metrics.net_profit = business.accounts.profit_loss
-      metrics.total_assets = business.accounts.total_assets
-      metrics.total_liabilities = business.accounts.total_liabilities
+      const accounts = business.accounts as Record<string, unknown> & {
+        turnover?: number
+        gross_profit?: number
+        profit_loss?: number
+        total_assets?: number
+        total_liabilities?: number
+      }
+      metrics.revenue = accounts.turnover
+      metrics.gross_profit = accounts.gross_profit
+      metrics.net_profit = accounts.profit_loss
+      metrics.total_assets = accounts.total_assets
+      metrics.total_liabilities = accounts.total_liabilities
 
       // Calculate ratios
       if (metrics.revenue && metrics.net_profit) {
@@ -533,7 +541,7 @@ export class IndustryComparisonEngine {
       .select('*')
       .eq('industry_code', industryCode)
       .order('metric_date', { ascending: false })
-      .limit(100)
+      .limit(100) as { data: Row<'industry_benchmarks'>[] | null; error: any }
 
     return data || []
   }

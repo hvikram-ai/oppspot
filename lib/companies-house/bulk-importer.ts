@@ -11,6 +11,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import * as Papa from 'papaparse'
+import type { ImportProgress } from '@/types/companies-house'
 
 export interface CompaniesHouseRecord {
   CompanyName: string
@@ -48,20 +49,6 @@ export interface CompaniesHouseRecord {
   URI: string
   'PreviousName_1.CONDATE'?: string
   'PreviousName_1.CompanyName'?: string
-}
-
-export interface ImportProgress {
-  status: 'idle' | 'downloading' | 'processing' | 'completed' | 'failed'
-  totalRows: number
-  processedRows: number
-  importedRows: number
-  skippedRows: number
-  errorRows: number
-  currentBatch: number
-  estimatedTimeRemaining?: number
-  startedAt?: Date
-  completedAt?: Date
-  error?: string
 }
 
 export interface ImportFilters {

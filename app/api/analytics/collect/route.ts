@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DataCollector } from '@/lib/analytics/data-collector'
+import type { Row } from '@/lib/supabase/helpers'
 
 // POST: Collect market metrics
 export async function POST(request: NextRequest) {
@@ -17,8 +18,8 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
-    
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+
     if (profile?.role !== 'admin' && profile?.role !== 'analyst') {
       return NextResponse.json({ error: 'Admin or analyst access required' }, { status: 403 })
     }

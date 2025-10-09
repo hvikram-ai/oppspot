@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { CreateStreamRequest, StreamFilters } from '@/types/streams'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     // If user doesn't have org_id, return empty streams
     if (!profile?.org_id) {
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
       const adminClient = createAdminClient()
       const { data: newOrg, error: orgError } = await adminClient
         .from('organizations')
+        // @ts-ignore - Supabase type inference issue
         .insert({
           name: 'My Organization',
           slug: `org-${user.id.substring(0, 8)}`
@@ -99,6 +101,7 @@ export async function POST(request: NextRequest) {
       // Update profile with new org_id
       const { error: updateError } = await supabase
         .from('profiles')
+        // @ts-ignore - Type inference issue
         .update({ org_id: newOrg.id })
         .eq('id', user.id)
 

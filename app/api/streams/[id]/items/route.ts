@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { CreateStreamItemRequest, StreamItemFilters } from '@/types/streams'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 export async function GET(
   request: NextRequest,
@@ -41,7 +42,7 @@ export async function GET(
   } catch (error: unknown) {
     console.error('Error fetching items:', error)
 
-    if (error.message === 'Access denied') {
+    if (getErrorMessage(error) === 'Access denied') {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -88,7 +89,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error('Error creating item:', error)
 
-    if (error.message === 'Insufficient permissions') {
+    if (getErrorMessage(error) === 'Insufficient permissions') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }

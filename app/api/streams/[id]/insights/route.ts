@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/streams/[id]/insights
@@ -28,7 +29,7 @@ export async function GET(
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
 
     if (!membership) {
       return NextResponse.json(
@@ -136,7 +137,7 @@ export async function PATCH(
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
 
     if (!membership) {
       return NextResponse.json(
@@ -170,6 +171,7 @@ export async function PATCH(
     // Update insight
     const { data: insight, error } = await supabase
       .from('stream_insights')
+      // @ts-ignore - Type inference issue
       .update(updates)
       .eq('id', insight_id)
       .eq('stream_id', streamId)

@@ -32,6 +32,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { CreateListDialog } from '@/components/chatspot/create-list-dialog'
 import Link from 'next/link'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface BusinessList {
   id: string
@@ -112,7 +113,7 @@ export default function ListsPage() {
           const { count } = await supabase
             .from('saved_businesses')
             .select('*', { count: 'exact', head: true })
-            .eq('list_id', list.id)
+            .eq('list_id', (list as Row<'business_lists'>).id)
 
           return {
             ...list,
@@ -236,16 +237,16 @@ export default function ListsPage() {
       console.log('📊 Total records:', data?.length || 0)
 
       // Check for null businesses (foreign key failed)
-      const nullBusinesses = data?.filter(item => !item.businesses) || []
+      const nullBusinesses = data?.filter(item => !(item as { businesses?: unknown }).businesses) || []
       if (nullBusinesses.length > 0) {
         console.warn('⚠️ Found records with null businesses:', nullBusinesses)
-        console.warn('Business IDs that failed to load:', nullBusinesses.map(b => b.business_id))
+        console.warn('Business IDs that failed to load:', nullBusinesses.map(b => (b as Row<'saved_businesses'>).business_id))
         toast.error(`${nullBusinesses.length} businesses couldn't be loaded (may not exist in database)`)
       }
 
-      const formattedData = data?.filter(item => item.businesses).map(item => ({
+      const formattedData = data?.filter(item => (item as { businesses?: unknown }).businesses).map(item => ({
         ...item,
-        business: item.businesses!
+        business: (item as { businesses: unknown }).businesses!
       })) || []
 
       console.log('✅ Successfully formatted businesses:', formattedData.length)

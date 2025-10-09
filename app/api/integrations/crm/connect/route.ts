@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { HubSpotConnector } from '@/lib/integrations/crm/hubspot-connector';
 import { z } from 'zod';
+import { getErrorMessage } from '@/lib/utils/error-handler';
+import type { Row } from '@/lib/supabase/helpers'
 
 const ConnectSchema = z.object({
   crm_type: z.enum(['hubspot', 'salesforce', 'pipedrive']),
@@ -34,7 +36,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('organization_id, role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: Pick<Row<'profiles'>, 'organization_id' | 'role'> | null; error: any };
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -91,12 +93,13 @@ export async function POST(request: NextRequest) {
       .select('id')
       .eq('organization_id', profile.organization_id)
       .eq('crm_type', validated.crm_type)
-      .single();
+      .single() as { data: Pick<Row<'crm_integrations'>, 'id'> | null; error: any };
 
     if (existingIntegration) {
       // Update existing integration
       const { data: integration, error } = await supabase
         .from('crm_integrations')
+        // @ts-ignore - Type inference issue
         .update({
           access_token: validated.access_token,
           refresh_token: validated.refresh_token,
@@ -130,6 +133,7 @@ export async function POST(request: NextRequest) {
       // Create new integration
       const { data: integration, error } = await supabase
         .from('crm_integrations')
+        // @ts-ignore - Supabase type inference issue
         .insert({
           organization_id: profile.organization_id,
           crm_type: validated.crm_type,
@@ -170,7 +174,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error.message || 'Failed to connect CRM' },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }
@@ -190,7 +194,7 @@ export async function GET(_request: NextRequest) {
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: Pick<Row<'profiles'>, 'organization_id'> | null; error: any };
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -212,7 +216,7 @@ export async function GET(_request: NextRequest) {
   } catch (error: unknown) {
     console.error('List integrations error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to list integrations' },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }

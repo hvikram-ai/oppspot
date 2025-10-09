@@ -4,6 +4,7 @@ import CostManagementService from '@/lib/opp-scan/cost-management'
 import DataSourceFactory from '@/lib/opp-scan/data-sources/data-source-factory'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
@@ -31,7 +32,7 @@ export async function POST(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
+      .single() as { data: Row<'acquisition_scans'> | null; error: any }
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -319,7 +320,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: { org_id: string | null } | null; error: unknown }
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any } 
 
     return profile?.org_id === orgId
   } catch (error) {

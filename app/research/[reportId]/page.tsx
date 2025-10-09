@@ -11,6 +11,7 @@ import { ResearchReport } from '@/components/research/research-report';
 import { ResearchProgress } from '@/components/research/research-progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { ResearchReport as ResearchReportType, ResearchSection, Source } from '@/types/research-gpt'
 
 async function getReport(reportId: string, userId: string) {
   const response = await fetch(
@@ -50,7 +51,7 @@ export default async function ReportPage({
     .select('*')
     .eq('id', reportId)
     .eq('user_id', user.id)
-    .single();
+    .single() as { data: ResearchReportType | null; error: any };
 
   if (reportError || !report) {
     notFound();
@@ -74,16 +75,20 @@ export default async function ReportPage({
   const { data: sections } = await supabase
     .from('research_sections')
     .select('*')
-    .eq('report_id', report.id);
+    .eq('report_id', report.id) as { data: ResearchSection[] | null; error: any };
 
   const { data: sources } = await supabase
     .from('research_sources')
     .select('*')
     .eq('report_id', report.id)
-    .order('reliability_score', { ascending: false });
+    .order('reliability_score', { ascending: false }) as { data: Source[] | null; error: any };
 
   // Format sections by type
-  const sectionsByType: Record<string, any> = {};
+  interface SectionsByType {
+    [key: string]: ResearchSection['content'];
+  }
+
+  const sectionsByType: SectionsByType = {};
   if (sections) {
     for (const section of sections) {
       sectionsByType[section.section_type] = section.content;

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { advancedFilterService } from '@/lib/search/advanced-filter-service'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -35,7 +36,12 @@ export async function POST(
       .select('*')
       .eq('id', id)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: (Record<string, unknown> & {
+        id: string
+        name: string
+        description?: string
+        filters: unknown
+      }) | null; error: any }
 
     if (fetchError || !savedSearch) {
       return NextResponse.json(
@@ -57,12 +63,13 @@ export async function POST(
     })
 
     // Increment execution count (fire and forget)
+    // @ts-ignore - Type inference issue
     supabase.rpc('increment_search_execution', {
       p_search_id: id,
       p_result_count: results.total,
     }).then(() => {
       console.log(`Incremented execution count for search: ${id}`)
-    }).catch((err) => {
+    }, (err: unknown) => {
       console.error('Error incrementing execution count:', err)
     })
 

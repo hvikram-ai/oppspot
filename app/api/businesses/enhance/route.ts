@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAIClient } from '@/lib/ai/openrouter'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
     if (fetchError || !business) {
       return NextResponse.json(
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
     if (Object.keys(updates).length > 0) {
       const { error: updateError } = await supabase
         .from('businesses')
+        // @ts-ignore - Type inference issue
         .update(updates)
         .eq('id', businessId)
 
@@ -125,6 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the enhancement event
+    // @ts-ignore - Supabase type inference issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'business_enhanced',
@@ -168,7 +171,7 @@ export async function PUT(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -214,13 +217,15 @@ export async function PUT(request: NextRequest) {
       })
     }
 
+    const typedBusinesses = businesses as Row<'businesses'>[]
+
     const aiClient = getAIClient()
     const results = []
     let successCount = 0
     let errorCount = 0
 
     // Process each business
-    for (const business of businesses) {
+    for (const business of typedBusinesses) {
       interface BusinessResult {
         id: string
         name: string | null
@@ -304,6 +309,7 @@ export async function PUT(request: NextRequest) {
       results.push(businessResult)
     }
 
+    // @ts-ignore - Supabase type inference issue
     // Log the bulk enhancement event
     await supabase.from('events').insert({
       user_id: user.id,

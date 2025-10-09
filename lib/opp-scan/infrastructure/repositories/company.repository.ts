@@ -6,9 +6,49 @@
 import { CompanyEntity } from '../../domain/entities/company.entity'
 import { ICompanyRepository, SearchCriteria } from '../../core/interfaces'
 
+/**
+ * Database row interface for companies table
+ */
+interface CompanyRow {
+  id: string
+  name: string
+  registration_number: string | null
+  country: string
+  industry_codes: string[] | null
+  website: string | null
+  description: string | null
+  employee_count: string | null
+  revenue_estimate: number | null
+  founding_year: number | null
+  address: string | null
+  contact_info: string | null
+  confidence_score: number
+  source_metadata: string
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * Database query result interface
+ */
+interface QueryResult {
+  rows: CompanyRow[]
+  rowCount?: number
+}
+
+/**
+ * Industry count result interface
+ */
+interface IndustryCountRow {
+  industry_code: string
+  count: string
+}
+
 export class CompanyRepository implements ICompanyRepository {
   constructor(
-    private readonly db: { query: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }
+    private readonly db: {
+      query: (sql: string, params: unknown[]) => Promise<QueryResult>
+    }
   ) {}
 
   async findById(id: string): Promise<CompanyEntity | null> {
@@ -37,7 +77,7 @@ export class CompanyRepository implements ICompanyRepository {
         [`%${name}%`]
       )
 
-      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
+      return result.rows.map((row: CompanyRow) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error finding companies by name:', error)
       throw new Error(`Failed to find companies with name ${name}`)
@@ -127,7 +167,7 @@ export class CompanyRepository implements ICompanyRepository {
       params.push(limit)
 
       const result = await this.db.query(query, params)
-      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
+      return result.rows.map((row: CompanyRow) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error searching companies:', error)
       throw new Error('Failed to search companies')
@@ -314,7 +354,7 @@ export class CompanyRepository implements ICompanyRepository {
         [minScore]
       )
 
-      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
+      return result.rows.map((row: CompanyRow) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error finding high confidence companies:', error)
       throw new Error('Failed to find high confidence companies')
@@ -324,13 +364,13 @@ export class CompanyRepository implements ICompanyRepository {
   async countByIndustry(industryCodes: string[]): Promise<Record<string, number>> {
     try {
       const result = await this.db.query(`
-        SELECT 
-          unnest(industry_codes) as industry_code, 
+        SELECT
+          unnest(industry_codes) as industry_code,
           COUNT(*) as count
-        FROM companies 
+        FROM companies
         WHERE industry_codes && $1
         GROUP BY unnest(industry_codes)
-      `, [industryCodes])
+      `, [industryCodes]) as { rows: IndustryCountRow[] }
 
       const counts: Record<string, number> = {}
       for (const row of result.rows) {
@@ -357,9 +397,9 @@ export class CompanyRepository implements ICompanyRepository {
           'SELECT * FROM companies WHERE registration_number = $1 AND id != $2',
           [company.registrationNumber, company.id]
         )
-        
+
         if (regResult.rows.length > 0) {
-          return regResult.rows.map((row: unknown) => this.mapRowToEntity(row))
+          return regResult.rows.map((row: CompanyRow) => this.mapRowToEntity(row))
         }
       }
 
@@ -380,7 +420,7 @@ export class CompanyRepository implements ICompanyRepository {
       query += ' ORDER BY similarity(name, $2) DESC LIMIT 10'
 
       const result = await this.db.query(query, params)
-      return result.rows.map((row: unknown) => this.mapRowToEntity(row))
+      return result.rows.map((row: CompanyRow) => this.mapRowToEntity(row))
     } catch (error) {
       console.error('Error finding similar companies:', error)
       // Fallback to simpler search if similarity extension not available
@@ -388,7 +428,7 @@ export class CompanyRepository implements ICompanyRepository {
     }
   }
 
-  private mapRowToEntity(row: unknown): CompanyEntity {
+  private mapRowToEntity(row: CompanyRow): CompanyEntity {
     return CompanyEntity.fromJSON({
       id: row.id,
       name: row.name,

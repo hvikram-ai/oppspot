@@ -4,17 +4,183 @@
  * Built for MnA directors requiring comprehensive company intelligence
  */
 
-import { 
-  IWebSearchService, 
-  CompanySearchQuery, 
-  CompanySearchResult, 
-  EnrichedCompanyData, 
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import {
+  IWebSearchService,
+  CompanySearchQuery,
+  CompanySearchResult,
+  EnrichedCompanyData,
   CompanyValidationResult,
   SocialPresence,
-  NewsAnalysis 
+  NewsAnalysis
 } from '../core/similarity-interfaces'
 import { CompanyEntity } from '../core/interfaces'
 import { DatabaseSimilaritySearch } from './database-similarity-search'
+
+// API Response Type Definitions
+interface GoogleSearchItem {
+  snippet?: string
+  link?: string
+  displayLink?: string
+  title?: string
+  [key: string]: unknown
+}
+
+interface GoogleSearchResponse {
+  items?: GoogleSearchItem[]
+  [key: string]: unknown
+}
+
+interface BingSearchItem {
+  snippet?: string
+  url?: string
+  displayUrl?: string
+  name?: string
+  [key: string]: unknown
+}
+
+interface BingWebPages {
+  value?: BingSearchItem[]
+  [key: string]: unknown
+}
+
+interface BingSearchResponse {
+  webPages?: BingWebPages
+  [key: string]: unknown
+}
+
+interface CompaniesHouseAddress {
+  address_line_1?: string
+  locality?: string
+  region?: string
+  postal_code?: string
+  country?: string
+  [key: string]: unknown
+}
+
+interface CompaniesHouseItem {
+  company_number?: string
+  title?: string
+  description?: string
+  address?: CompaniesHouseAddress
+  company_status?: string
+  company_type?: string
+  date_of_creation?: string
+  [key: string]: unknown
+}
+
+interface CompaniesHouseResponse {
+  items?: CompaniesHouseItem[]
+  [key: string]: unknown
+}
+
+interface SearchAPIOrganicResult {
+  link?: string
+  title?: string
+  snippet?: string
+  [key: string]: unknown
+}
+
+interface SearchAPIKnowledgeGraph {
+  title?: string
+  name?: string
+  website?: string
+  description?: string
+  founded?: string
+  employees?: string
+  revenue?: string
+  type?: string
+  location?: {
+    country?: string
+    [key: string]: unknown
+  }
+  [key: string]: unknown
+}
+
+// Clearbit API response interfaces
+interface ClearbitGeo {
+  city?: string
+  state?: string
+  country?: string
+  [key: string]: unknown
+}
+
+interface ClearbitCategory {
+  industry?: string
+  [key: string]: unknown
+}
+
+interface ClearbitMetrics {
+  employees?: number
+  funding?: number
+  [key: string]: unknown
+}
+
+interface ClearbitResult {
+  domain?: string
+  name?: string
+  geo?: ClearbitGeo
+  category?: ClearbitCategory
+  description?: string
+  foundedYear?: number
+  metrics?: ClearbitMetrics
+  tags?: string[]
+  [key: string]: unknown
+}
+
+interface ClearbitResponse {
+  results?: ClearbitResult[]
+  [key: string]: unknown
+}
+
+// Crunchbase API response interfaces
+interface CrunchbaseLocationIdentifier {
+  value?: string
+  [key: string]: unknown
+}
+
+interface CrunchbaseCategory {
+  value?: string
+  [key: string]: unknown
+}
+
+interface CrunchbaseFundingTotal {
+  value_usd?: number
+  [key: string]: unknown
+}
+
+interface CrunchbaseWebsite {
+  value?: string
+  [key: string]: unknown
+}
+
+interface CrunchbaseProperties {
+  name?: string
+  location_identifiers?: CrunchbaseLocationIdentifier[]
+  categories?: CrunchbaseCategory[]
+  website?: CrunchbaseWebsite
+  short_description?: string
+  num_employees_enum?: string
+  funding_total?: CrunchbaseFundingTotal
+  [key: string]: unknown
+}
+
+interface CrunchbaseEntity {
+  uuid?: string
+  properties?: CrunchbaseProperties
+  [key: string]: unknown
+}
+
+interface CrunchbaseResponse {
+  entities?: CrunchbaseEntity[]
+  [key: string]: unknown
+}
+
+interface SearchAPIResponse {
+  organic_results?: SearchAPIOrganicResult[]
+  knowledge_graph?: SearchAPIKnowledgeGraph
+  [key: string]: unknown
+}
 
 // Search provider configurations
 interface SearchProviderConfig {
@@ -234,7 +400,7 @@ export class WebSearchService implements IWebSearchService {
       return rankedResults.slice(0, query.maxResults || 50)
     } catch (error) {
       console.error('Error in searchCompanies:', error)
-      throw new Error(`Company search failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(`Company search failed: ${getErrorMessage(error)}`)
     }
   }
 
@@ -627,10 +793,11 @@ export class WebSearchService implements IWebSearchService {
   // Result parsers for different providers
 
   private parseGoogleResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
-    if (!data.items) return []
+    const response = data as GoogleSearchResponse
+    if (!response.items || !Array.isArray(response.items)) return []
 
-    return data.items.map((item: Record<string, unknown>) => {
-      const companyData = this.extractCompanyFromGoogleResult(item)
+    return response.items.map((item) => {
+      const companyData = this.extractCompanyFromGoogleResult(item as Record<string, unknown>)
       return {
         company: companyData,
         relevanceScore: this.calculateRelevanceScore(companyData, query),
@@ -645,10 +812,11 @@ export class WebSearchService implements IWebSearchService {
   }
 
   private parseBingResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
-    if (!data.webPages?.value) return []
+    const response = data as BingSearchResponse
+    if (!response.webPages?.value || !Array.isArray(response.webPages.value)) return []
 
-    return data.webPages.value.map((item: Record<string, unknown>) => {
-      const companyData = this.extractCompanyFromBingResult(item)
+    return response.webPages.value.map((item) => {
+      const companyData = this.extractCompanyFromBingResult(item as Record<string, unknown>)
       return {
         company: companyData,
         relevanceScore: this.calculateRelevanceScore(companyData, query),
@@ -663,14 +831,16 @@ export class WebSearchService implements IWebSearchService {
   }
 
   private parseCompaniesHouseResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
-    if (!data.items) return []
+    const response = data as CompaniesHouseResponse
+    if (!response.items || !Array.isArray(response.items)) return []
 
-    return data.items.map((item: Record<string, unknown>) => {
+    return response.items.map((item) => {
+      const addressData = item.address as Record<string, unknown> | undefined
       const companyData: CompanyEntity = {
-        id: item.company_number,
-        name: item.title,
+        id: item.company_number || '',
+        name: item.title || '',
         registrationNumber: item.company_number,
-        country: this.parseCompanyCountry(item.address),
+        country: this.parseCompanyCountry(addressData),
         industryCodes: [],
         description: item.description,
         address: {
@@ -678,14 +848,14 @@ export class WebSearchService implements IWebSearchService {
           city: item.address?.locality,
           region: item.address?.region,
           postalCode: item.address?.postal_code,
-          country: this.parseCompanyCountry(item.address)
+          country: this.parseCompanyCountry(addressData)
         },
         confidenceScore: 0.95, // High confidence for official records
         sourceMetadata: {
           source: 'companies_house',
           discoveredAt: new Date(),
           confidence: 0.95,
-          rawData: item
+          rawData: item as Record<string, unknown>
         },
         createdAt: new Date(),
         updatedAt: new Date()
@@ -705,15 +875,16 @@ export class WebSearchService implements IWebSearchService {
   }
 
   private parseSearchAPIResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
-    if (!data.organic_results && !data.knowledge_graph) return []
+    const response = data as SearchAPIResponse
+    if (!response.organic_results && !response.knowledge_graph) return []
 
     const results: CompanySearchResult[] = []
 
     // Parse organic search results
-    if (data.organic_results) {
-      data.organic_results.forEach((item: Record<string, unknown>) => {
-        const domain = this.extractDomain(item.link)
-        const companyName = this.extractCompanyNameFromTitle(item.title)
+    if (response.organic_results && Array.isArray(response.organic_results)) {
+      response.organic_results.forEach((item) => {
+        const domain = this.extractDomain(item.link || '')
+        const companyName = this.extractCompanyNameFromTitle(item.title || '')
 
         const companyData: CompanyEntity = {
           id: domain || this.generateId(),
@@ -727,8 +898,8 @@ export class WebSearchService implements IWebSearchService {
             source: 'searchapi',
             discoveredAt: new Date(),
             confidence: 0.75,
-            searchTerms: [item.title],
-            rawData: item
+            searchTerms: item.title ? [item.title] : [],
+            rawData: item as Record<string, unknown>
           },
           createdAt: new Date(),
           updatedAt: new Date()
@@ -737,34 +908,34 @@ export class WebSearchService implements IWebSearchService {
         results.push({
           company: companyData,
           relevanceScore: this.calculateRelevanceScore(companyData, query),
-          matchType: 'web_search',
           source: 'searchapi',
-          snippet: item.snippet,
-          matchedKeywords: this.extractKeywords(item.snippet),
-          discoveredAt: new Date()
+          additionalData: {
+            snippet: item.snippet,
+            discoveredAt: new Date()
+          }
         })
       })
     }
 
     // Parse knowledge graph if available (for direct company matches)
-    if (data.knowledge_graph) {
-      const kg = data.knowledge_graph
+    if (response.knowledge_graph) {
+      const kg = response.knowledge_graph
       const companyData: CompanyEntity = {
-        id: this.extractDomain(kg.website) || this.generateId(),
-        name: kg.title || kg.name,
+        id: this.extractDomain(kg.website || '') || this.generateId(),
+        name: kg.title || kg.name || '',
         country: kg.location?.country || 'United Kingdom',
         industryCodes: kg.type ? [kg.type] : [],
         website: kg.website,
         description: kg.description,
         foundingYear: kg.founded ? parseInt(kg.founded) : undefined,
-        employees: kg.employees,
-        revenue: kg.revenue,
+        employeeCount: kg.employees,
+        revenueEstimate: kg.revenue ? parseFloat(kg.revenue) : undefined,
         confidenceScore: 0.95, // Higher confidence for knowledge graph
         sourceMetadata: {
           source: 'searchapi_knowledge',
           discoveredAt: new Date(),
           confidence: 0.95,
-          rawData: kg
+          rawData: kg as Record<string, unknown>
         },
         createdAt: new Date(),
         updatedAt: new Date()
@@ -773,11 +944,13 @@ export class WebSearchService implements IWebSearchService {
       results.unshift({ // Add to beginning as most relevant
         company: companyData,
         relevanceScore: 1.0, // Perfect match from knowledge graph
-        matchType: 'exact',
         source: 'searchapi_knowledge',
-        snippet: kg.description,
-        matchedKeywords: [],
-        discoveredAt: new Date()
+        additionalData: {
+          snippet: kg.description,
+          matchType: 'exact',
+          matchedKeywords: [],
+          discoveredAt: new Date()
+        }
       })
     }
 
@@ -785,28 +958,29 @@ export class WebSearchService implements IWebSearchService {
   }
 
   private parseClearbitResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
-    if (!data.results) return []
+    const response = data as ClearbitResponse
+    if (!response.results || !Array.isArray(response.results)) return []
 
-    return data.results.map((item: Record<string, unknown>) => {
+    return response.results.map((item) => {
       const companyData: CompanyEntity = {
-        id: item.domain || this.generateId(),
-        name: item.name,
+        id: (item.domain as string) || this.generateId(),
+        name: (item.name as string) || '',
         country: item.geo?.country || 'Unknown',
-        industryCodes: item.category ? [item.category.industry] : [],
+        industryCodes: item.category?.industry ? [item.category.industry] : [],
         website: item.domain ? `https://${item.domain}` : undefined,
         description: item.description,
         foundingYear: item.foundedYear,
         address: item.geo ? {
           city: item.geo.city,
           region: item.geo.state,
-          country: item.geo.country
+          country: item.geo.country || 'Unknown'
         } : undefined,
         confidenceScore: 0.85,
         sourceMetadata: {
           source: 'clearbit_discovery',
           discoveredAt: new Date(),
           confidence: 0.85,
-          rawData: item
+          rawData: item as Record<string, unknown>
         },
         createdAt: new Date(),
         updatedAt: new Date()
@@ -826,23 +1000,24 @@ export class WebSearchService implements IWebSearchService {
   }
 
   private parseCrunchbaseResults(data: Record<string, unknown>, query: CompanySearchQuery): CompanySearchResult[] {
-    if (!data.entities) return []
+    const response = data as CrunchbaseResponse
+    if (!response.entities || !Array.isArray(response.entities)) return []
 
-    return data.entities.map((item: Record<string, unknown>) => {
+    return response.entities.map((item) => {
       const props = item.properties
       const companyData: CompanyEntity = {
-        id: item.uuid,
-        name: props.name,
-        country: props.location_identifiers?.[0]?.value?.split(',').pop()?.trim() || 'Unknown',
-        industryCodes: props.categories?.map((cat: Record<string, unknown>) => cat.value) || [],
-        website: props.website?.value,
-        description: props.short_description,
+        id: (item.uuid as string) || this.generateId(),
+        name: (props?.name as string) || '',
+        country: props?.location_identifiers?.[0]?.value?.split(',').pop()?.trim() || 'Unknown',
+        industryCodes: props?.categories?.map((cat) => cat.value || '') || [],
+        website: props?.website?.value,
+        description: props?.short_description,
         confidenceScore: 0.88,
         sourceMetadata: {
           source: 'crunchbase_search',
           discoveredAt: new Date(),
           confidence: 0.88,
-          rawData: item
+          rawData: item as Record<string, unknown>
         },
         createdAt: new Date(),
         updatedAt: new Date()
@@ -853,9 +1028,9 @@ export class WebSearchService implements IWebSearchService {
         relevanceScore: this.calculateRelevanceScore(companyData, query),
         source: 'crunchbase_search',
         additionalData: {
-          fundingTotal: props.funding_total?.value_usd,
-          numEmployees: props.num_employees_enum,
-          categories: props.categories?.map((cat: Record<string, unknown>) => cat.value)
+          fundingTotal: props?.funding_total?.value_usd,
+          numEmployees: props?.num_employees_enum,
+          categories: props?.categories?.map((cat) => cat.value)
         }
       }
     })
@@ -864,22 +1039,25 @@ export class WebSearchService implements IWebSearchService {
   // Company data extraction helpers
 
   private extractCompanyFromGoogleResult(item: Record<string, unknown>): CompanyEntity {
-    const domain = this.extractDomain(item.link)
-    const companyName = this.extractCompanyNameFromTitle(item.title)
+    const link = (item.link as string) || ''
+    const title = (item.title as string) || ''
+    const snippet = (item.snippet as string) || ''
+    const domain = this.extractDomain(link)
+    const companyName = this.extractCompanyNameFromTitle(title)
 
     return {
       id: domain || this.generateId(),
       name: companyName,
       country: 'Unknown', // Will be enriched later
       industryCodes: [],
-      website: item.link,
-      description: item.snippet,
+      website: link,
+      description: snippet,
       confidenceScore: 0.7,
       sourceMetadata: {
         source: 'google_search',
         discoveredAt: new Date(),
         confidence: 0.7,
-        searchTerms: [item.title],
+        searchTerms: title ? [title] : [],
         rawData: item
       },
       createdAt: new Date(),
@@ -888,22 +1066,25 @@ export class WebSearchService implements IWebSearchService {
   }
 
   private extractCompanyFromBingResult(item: Record<string, unknown>): CompanyEntity {
-    const domain = this.extractDomain(item.url)
-    const companyName = this.extractCompanyNameFromTitle(item.name)
+    const url = (item.url as string) || ''
+    const name = (item.name as string) || ''
+    const snippet = (item.snippet as string) || ''
+    const domain = this.extractDomain(url)
+    const companyName = this.extractCompanyNameFromTitle(name)
 
     return {
       id: domain || this.generateId(),
       name: companyName,
       country: 'Unknown', // Will be enriched later
       industryCodes: [],
-      website: item.url,
-      description: item.snippet,
+      website: url,
+      description: snippet,
       confidenceScore: 0.7,
       sourceMetadata: {
         source: 'bing_search',
         discoveredAt: new Date(),
         confidence: 0.7,
-        searchTerms: [item.name],
+        searchTerms: name ? [name] : [],
         rawData: item
       },
       createdAt: new Date(),
@@ -1171,15 +1352,19 @@ export class WebSearchService implements IWebSearchService {
     return cleanTitle || title
   }
 
-  private parseCompanyCountry(address: Record<string, unknown>): string {
+  private parseCompanyCountry(address: Record<string, unknown> | undefined): string {
     if (!address) return 'UK'
-    
+
     // Companies House addresses
-    if (address.country) return address.country
-    if (address.locality?.toLowerCase().includes('london')) return 'England'
-    if (address.region?.toLowerCase().includes('scotland')) return 'Scotland'
-    if (address.region?.toLowerCase().includes('wales')) return 'Wales'
-    
+    const country = address.country as string | undefined
+    const locality = address.locality as string | undefined
+    const region = address.region as string | undefined
+
+    if (country) return country
+    if (locality?.toLowerCase().includes('london')) return 'England'
+    if (region?.toLowerCase().includes('scotland')) return 'Scotland'
+    if (region?.toLowerCase().includes('wales')) return 'Wales'
+
     return 'UK'
   }
 

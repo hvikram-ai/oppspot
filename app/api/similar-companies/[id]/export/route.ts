@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import { generateSimilarityAnalysisPDF } from '@/lib/pdf/services/similarity-pdf-generator'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -91,7 +93,15 @@ export async function POST(
     }
 
     // Get analysis data (handle demo mode)
-    let analysis
+    type AnalysisData = Row<'similarity_analyses'> & {
+      similar_company_matches?: Array<{
+        company_name: string;
+        overall_score: number;
+        [key: string]: any;
+      }>;
+      [key: string]: any;
+    }
+    let analysis: AnalysisData | null
     if (!isDemoMode) {
       // Only fetch from database for non-demo mode
       const { data: fetchedAnalysis, error: fetchError } = await supabase
@@ -114,14 +124,15 @@ export async function POST(
         )
       }
 
-      if (fetchedAnalysis.status !== 'completed') {
+      const typedAnalysis = fetchedAnalysis as AnalysisData
+      if (typedAnalysis.status !== 'completed') {
         return NextResponse.json(
           { error: 'Analysis must be completed before export' },
           { status: 400 }
         )
       }
 
-      analysis = fetchedAnalysis
+      analysis = typedAnalysis
     } else {
       // For demo mode, let PDF generator handle the demo data
       // Just provide minimal structure that PDF generator expects
@@ -142,21 +153,21 @@ export async function POST(
     const exportData = {
       analysis: {
         id: analysis?.id,
-        targetCompany: analysis?.target_company_name,
-        targetCompanyData: analysis?.target_company_data,
-        configuration: analysis?.analysis_configuration,
+        targetCompany: (analysis as any)?.target_company_name,
+        targetCompanyData: (analysis as any)?.target_company_data,
+        configuration: (analysis as any)?.analysis_configuration,
         summary: {
-          totalCompanies: analysis?.total_companies_analyzed,
-          averageScore: analysis?.average_similarity_score,
-          topScore: analysis?.top_similarity_score,
+          totalCompanies: (analysis as any)?.total_companies_analyzed,
+          averageScore: (analysis as any)?.average_similarity_score,
+          topScore: (analysis as any)?.top_similarity_score,
           analysisDate: analysis?.created_at,
-          completionTime: analysis?.completed_at
+          completionTime: (analysis as any)?.completed_at
         },
         insights: {
-          executiveSummary: analysis?.executive_summary,
-          keyOpportunities: analysis?.key_opportunities || [],
-          riskHighlights: analysis?.risk_highlights || [],
-          strategicRecommendations: analysis?.strategic_recommendations || []
+          executiveSummary: (analysis as any)?.executive_summary,
+          keyOpportunities: (analysis as any)?.key_opportunities || [],
+          riskHighlights: (analysis as any)?.risk_highlights || [],
+          strategicRecommendations: (analysis as any)?.strategic_recommendations || []
         }
       },
       matches: topMatches,
@@ -178,13 +189,13 @@ export async function POST(
     switch (exportFormat) {
       case 'json':
         exportContent = JSON.stringify(exportData, null, 2)
-        fileName = `similar-companies-${analysis.target_company_name}-${analysisId.slice(0, 8)}.json`
+        fileName = `similar-companies-${(analysis as any)?.target_company_name || 'analysis'}-${analysisId.slice(0, 8)}.json`
         contentType = 'application/json'
         break
 
       case 'csv':
         exportContent = generateCSV(topMatches)
-        fileName = `similar-companies-${analysis.target_company_name}-${analysisId.slice(0, 8)}.csv`
+        fileName = `similar-companies-${(analysis as any)?.target_company_name || 'analysis'}-${analysisId.slice(0, 8)}.csv`
         contentType = 'text/csv'
         break
 
@@ -202,7 +213,7 @@ export async function POST(
 
       default:
         exportContent = JSON.stringify(exportData, null, 2)
-        fileName = `similar-companies-${analysis.target_company_name}.json`
+        fileName = `similar-companies-${(analysis as any)?.target_company_name || 'analysis'}.json`
         contentType = 'application/json'
     }
 
@@ -224,9 +235,9 @@ export async function POST(
   } catch (error) {
     console.error('Export error:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to generate export',
-        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       },
       { status: 500 }
     )
@@ -267,7 +278,8 @@ export async function GET(
         )
       }
 
-      if (exportRecord.generation_status === 'completed' && exportRecord.file_path) {
+      const typedRecord = exportRecord as any
+      if (typedRecord.generation_status === 'completed' && typedRecord.file_path) {
         // Return download link or file content
         return NextResponse.json({
           export: exportRecord,
@@ -279,13 +291,13 @@ export async function GET(
 
       return NextResponse.json({
         export: {
-          id: exportRecord.id,
-          type: exportRecord.export_type,
-          format: exportRecord.export_format,
-          status: exportRecord.generation_status,
-          progress: exportRecord.generation_status === 'generating' ? 'In progress' : 'Queued'
+          id: typedRecord.id,
+          type: typedRecord.export_type,
+          format: typedRecord.export_format,
+          status: typedRecord.generation_status,
+          progress: typedRecord.generation_status === 'generating' ? 'In progress' : 'Queued'
         },
-        message: getExportStatusMessage(exportRecord.generation_status)
+        message: getExportStatusMessage(typedRecord.generation_status)
       })
 
     } else {
@@ -310,9 +322,9 @@ export async function GET(
   } catch (error) {
     console.error('Error retrieving export status:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to retrieve export status',
-        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       },
       { status: 500 }
     )
@@ -395,21 +407,21 @@ async function generatePDFExport(
         user_id: userId,
         export_type: 'executive_summary',
         export_format: 'pdf',
-        export_title: `Similar Companies Analysis - ${exportData.analysis.targetCompany}`,
+        export_title: `Similar Companies Analysis - ${exportData.analysis.targetCompany || 'Unknown'}`,
         export_description: 'Executive summary of similar company analysis for MnA evaluation',
         export_content: exportData,
         generation_status: 'failed',
         template_version: 'v1.0',
-        error_message: error instanceof Error ? error.message : 'Unknown error'
-      })
+        error_message: getErrorMessage(error)
+      } as any)
       .select()
-      .single()
+      .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
 
     return NextResponse.json({
       error: 'PDF generation temporarily unavailable',
       message: 'Please try again in a few minutes or contact support',
       exportId: exportRecord?.id,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
     }, { status: 500 })
   }
 }
@@ -428,25 +440,25 @@ async function generatePowerPointExport(
       user_id: userId,
       export_type: 'presentation_slides',
       export_format: 'pptx',
-      export_title: `MnA Similar Companies Presentation - ${exportData.analysis.targetCompany}`,
+      export_title: `MnA Similar Companies Presentation - ${exportData.analysis.targetCompany || 'Unknown'}`,
       export_description: 'PowerPoint presentation for MnA committee review',
       export_content: exportData,
       generation_status: 'pending',
       template_version: 'v1.0'
-    })
+    } as any)
     .select()
-    .single()
+    .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
 
   if (error) {
-    throw new Error(`Failed to create export record: ${error.message}`)
+    throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)
   }
 
   return NextResponse.json({
-    exportId: exportRecord.id,
+    exportId: exportRecord!.id,
     status: 'generating',
     message: 'PowerPoint export is being generated. Check back in a few minutes.',
     estimatedCompletion: '3-5 minutes',
-    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${exportRecord.id}`
+    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${exportRecord!.id}`
   }, { status: 202 })
 }
 
@@ -464,25 +476,25 @@ async function generateExcelExport(
       user_id: userId,
       export_type: 'excel_workbook',
       export_format: 'xlsx',
-      export_title: `Similar Companies Data - ${exportData.analysis.targetCompany}`,
+      export_title: `Similar Companies Data - ${exportData.analysis.targetCompany || 'Unknown'}`,
       export_description: 'Detailed Excel workbook with similarity analysis data',
       export_content: exportData,
       generation_status: 'pending',
       template_version: 'v1.0'
-    })
+    } as any)
     .select()
-    .single()
+    .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
 
   if (error) {
-    throw new Error(`Failed to create export record: ${error.message}`)
+    throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)
   }
 
   return NextResponse.json({
-    exportId: exportRecord.id,
+    exportId: exportRecord!.id,
     status: 'generating',
     message: 'Excel export is being generated. Check back in a few minutes.',
     estimatedCompletion: '1-2 minutes',
-    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${exportRecord.id}`
+    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${exportRecord!.id}`
   }, { status: 202 })
 }
 

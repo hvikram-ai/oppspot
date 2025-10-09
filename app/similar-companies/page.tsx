@@ -68,7 +68,7 @@ function SimilarCompaniesPageContent() {
   
   const [analyses, setAnalyses] = useState<SimilarityAnalysis[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<unknown>(null)
+  const [user, setUser] = useState<{ id: string } | null>(null)
   const [showNewAnalysis, setShowNewAnalysis] = useState(false)
   
   // New analysis form state
@@ -84,7 +84,11 @@ function SimilarCompaniesPageContent() {
     risk: 10
   })
   const [isValidating, setIsValidating] = useState(false)
-  const [validationResult, setValidationResult] = useState<unknown>(null)
+  const [validationResult, setValidationResult] = useState<{
+    valid: boolean
+    message: string
+    suggestions: Array<{ name: string }>
+  } | null>(null)
 
   useEffect(() => {
     const getUser = async () => {
@@ -269,11 +273,15 @@ function SimilarCompaniesPageContent() {
         throw new Error(result.error || `API Error: ${response.status}`)
       }
 
-      const result = await response.json()
+      const result = await response.json() as {
+        cached?: boolean
+        analysis?: { id: string }
+        analysisId?: string
+      }
 
       if (result.cached) {
         toast.success('Analysis retrieved from cache')
-        router.push(`/similar-companies/${result.analysis.id}`)
+        router.push(`/similar-companies/${result.analysis?.id}`)
       } else {
         toast.success('Analysis started successfully')
         setShowNewAnalysis(false)

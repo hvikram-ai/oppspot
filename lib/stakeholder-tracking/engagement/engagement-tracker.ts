@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   StakeholderEngagement,
   EngagementType,
@@ -12,6 +13,24 @@ import type {
   DetectRoleChangeRequest,
   DetectRoleChangeResponse
 } from '../types/stakeholder';
+
+// Interface for role change database row
+interface RoleChangeRow {
+  id?: string;
+  stakeholder_id?: string;
+  org_id?: string;
+  change_type?: string;
+  previous_role?: string;
+  new_role?: string;
+  previous_department?: string | null;
+  new_department?: string | null;
+  change_date?: string;
+  detected_date?: string;
+  impact_on_relationship?: string;
+  continuity_risk?: string;
+  action_required?: boolean;
+  created_at?: string;
+}
 
 export class EngagementTracker {
   private supabase;
@@ -106,7 +125,7 @@ export class EngagementTracker {
         .select('outcome, sentiment_score, engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
-        .limit(10);
+        .limit(10) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
 
       if (!recentEngagements) return;
 
@@ -171,7 +190,7 @@ export class EngagementTracker {
         .select('sentiment_score, engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
-        .limit(10);
+        .limit(10) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
 
       if (!engagements || engagements.length < 2) {
         return 'stable';
@@ -218,6 +237,7 @@ export class EngagementTracker {
       follow_up_date?: string;
       outcome?: string;
       sentiment_score?: number;
+      engagement_type?: string;
     }
   ): Promise<ActionItem[]> {
     const actions: ActionItem[] = [];
@@ -341,7 +361,7 @@ export class EngagementTracker {
         .select('engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
-        .limit(2);
+        .limit(2) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
 
       if (recentEngagements && recentEngagements.length === 2) {
         const daysBetween = Math.floor(
@@ -471,6 +491,12 @@ export class EngagementTracker {
     id: string;
     job_title?: string;
     company_id?: string;
+    title?: string;
+    org_id?: string;
+    department?: string;
+    role_type?: string;
+    influence_level?: number;
+    champion_status?: string;
   }): Promise<Partial<RoleChange> | null> {
     // This is a simplified check - in production, you'd integrate with
     // LinkedIn API, company directories, or other data sources
@@ -479,7 +505,7 @@ export class EngagementTracker {
     const supabase = await this.getSupabase();
 
     // Get most recent role change record
-    const { data: lastChange } = await supabase
+    const result = await supabase
       .from('role_changes')
       .select('*')
       .eq('stakeholder_id', stakeholder.id)
@@ -487,30 +513,36 @@ export class EngagementTracker {
       .limit(1)
       .single();
 
-    // If no previous record or title changed
-    if (!lastChange || lastChange.new_role !== stakeholder.title) {
-      const changeType = this.determineChangeType(
-        lastChange?.new_role,
-        stakeholder.title
-      );
+    const typedLastChange: RoleChangeRow | null = result.data as RoleChangeRow | null;
 
-      return {
-        stakeholder_id: stakeholder.id,
-        org_id: stakeholder.org_id,
-        change_type: changeType,
-        previous_role: lastChange?.new_role || 'Unknown',
-        new_role: stakeholder.title || 'Unknown',
-        previous_department: lastChange?.new_department || stakeholder.department,
-        new_department: stakeholder.department,
-        impact_on_relationship: this.assessRoleChangeImpact(changeType),
-        continuity_risk: this.assessContinuityRisk(changeType, stakeholder),
-        action_required: true,
-        change_date: new Date().toISOString(),
-        detected_date: new Date().toISOString()
-      };
+    // Check if there's no change needed
+    if (typedLastChange && typedLastChange.new_role === stakeholder.title) {
+      return null;
     }
 
-    return null;
+    // Role has changed or this is the first check
+    const previousRole: string | undefined = typedLastChange?.new_role;
+    const previousDepartment: string | null | undefined = typedLastChange?.new_department;
+
+    const changeType = this.determineChangeType(
+      previousRole,
+      stakeholder.title
+    );
+
+    return {
+      stakeholder_id: stakeholder.id,
+      org_id: stakeholder.org_id,
+      change_type: changeType,
+      previous_role: previousRole || 'Unknown',
+      new_role: stakeholder.title || 'Unknown',
+      previous_department: previousDepartment || stakeholder.department,
+      new_department: stakeholder.department,
+      impact_on_relationship: this.assessRoleChangeImpact(changeType),
+      continuity_risk: this.assessContinuityRisk(changeType, stakeholder),
+      action_required: true,
+      change_date: new Date().toISOString(),
+      detected_date: new Date().toISOString()
+    };
   }
 
   /**
@@ -626,7 +658,7 @@ export class EngagementTracker {
         .select('*')
         .eq('stakeholder_id', stakeholder_id)
         .gte('engagement_date', startDate)
-        .order('engagement_date', { ascending: false });
+        .order('engagement_date', { ascending: false }) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
 
       if (!engagements || engagements.length === 0) {
         return {

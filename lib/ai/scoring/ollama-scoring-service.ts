@@ -7,6 +7,7 @@
 import { getOllamaClient, isOllamaEnabled } from '@/lib/ai/ollama'
 import { LlamaPromptOptimizer } from '@/lib/ai/llama-prompt-optimizer'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface AIScore {
   score: number
@@ -217,7 +218,7 @@ export class OllamaScoringService {
       .select('*')
       .eq('company_id', company.id)
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(50) as { data: Row<'engagement_events'>[] | null; error: any }
 
     const prompt = this.buildEngagementAnalysisPrompt(company, engagementEvents || [])
 
@@ -657,7 +658,7 @@ export class OllamaScoringService {
       .from('ai_scoring_cache')
       .select('*')
       .eq('company_id', companyId)
-      .single()
+      .single() as { data: Row<'ai_scoring_cache'> | null; error: any }
 
     if (data && data.cached_at) {
       const age = Date.now() - new Date(data.cached_at).getTime()
@@ -674,6 +675,7 @@ export class OllamaScoringService {
 
     await supabase
       .from('ai_scoring_cache')
+      // @ts-ignore - Supabase type inference issue
       .upsert({
         company_id: companyId,
         analysis_result: result,

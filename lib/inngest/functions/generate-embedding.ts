@@ -6,6 +6,7 @@
 import { inngest } from '@/lib/inngest/client'
 import { ollamaEmbeddingService } from '@/lib/ai/embedding/ollama-embedding-service'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export const generateEmbeddingFunction = inngest.createFunction(
   {
@@ -28,7 +29,7 @@ export const generateEmbeddingFunction = inngest.createFunction(
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       if (error || !data) {
         throw new Error(`Company not found: ${companyId}`)

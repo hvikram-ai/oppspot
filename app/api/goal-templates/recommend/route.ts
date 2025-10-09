@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { TemplateRecommender } from '@/lib/templates/template-recommender'
+import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/goal-templates/recommend
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('industry, company_size')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'industry' | 'company_size'> | null; error: any }
 
     // Get user's template history
     const history = await TemplateRecommender.getUserTemplateHistory(user.id)

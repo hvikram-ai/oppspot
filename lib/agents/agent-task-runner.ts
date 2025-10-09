@@ -14,6 +14,7 @@ import { BaseAgent, AgentExecutionResult } from '@/lib/ai/agents/base-agent'
 import { createOpportunityBot } from '@/lib/agents/opportunity-bot'
 import { createEnrichmentAgent } from '@/lib/agents/enrichment-agent'
 import { createScoringAgent } from '@/lib/agents/scoring-agent'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface AgentTask {
   id: string
@@ -126,7 +127,7 @@ export class AgentTaskRunner {
       .or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`)
       .order('priority', { ascending: false })
       .order('created_at', { ascending: true })
-      .limit(limit)
+      .limit(limit) as { data: Row<'agent_tasks'>[] | null; error: any }
 
     if (error) {
       console.error('[AgentTaskRunner] Error fetching tasks:', error)
@@ -190,7 +191,7 @@ export class AgentTaskRunner {
       .from('ai_agents')
       .select('*')
       .eq('id', task.agent_id)
-      .single()
+      .single() as { data: Row<'ai_agents'> | null; error: any }
 
     if (agentError || !agent) {
       throw new Error(`Agent not found: ${task.agent_id}`)
@@ -319,7 +320,7 @@ export class AgentTaskRunner {
       .from('streams')
       .select('current_progress, target_metrics')
       .eq('id', streamId)
-      .single()
+      .single() as { data: Row<'streams'> | null; error: any }
 
     if (!stream) return
 
@@ -328,6 +329,7 @@ export class AgentTaskRunner {
     const total = stream.target_metrics?.companies_to_find || currentProgress.total
 
     // Update progress
+    // @ts-ignore - Type inference issue
     await supabase.rpc('update_stream_progress', {
       p_stream_id: streamId,
       p_completed: completed,
@@ -353,6 +355,7 @@ export class AgentTaskRunner {
 
     await supabase
       .from('stream_insights')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         stream_id: streamId,
         insight_type: 'progress_update',

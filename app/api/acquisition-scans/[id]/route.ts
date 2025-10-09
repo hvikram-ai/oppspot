@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -37,7 +38,7 @@ export async function GET(
         )
       `)
       .eq('id', scanId)
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] & { target_companies: Array<{ id: string; company_name: string; overall_score: number; analysis_status: string; created_at: string }> } | null; error: unknown }
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] & { target_companies: Array<{ id: string; company_name: string; overall_score: number; analysis_status: string; created_at: string }> } | null; error: any }
 
     if (scanError || !scan) {
       console.error('Error fetching scan:', scanError)
@@ -111,7 +112,7 @@ export async function PATCH(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
+      .single() as { data: Row<'acquisition_scans'> | null; error: any }
 
     if (fetchError || !existingScan) {
       return NextResponse.json(
@@ -142,7 +143,7 @@ export async function PATCH(
       .update(updateData)
       .eq('id', scanId)
       .select()
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
+      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: any }
 
     if (updateError) {
       console.error('Error updating scan:', updateError)
@@ -205,7 +206,7 @@ export async function DELETE(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
+      .single() as { data: Row<'acquisition_scans'> | null; error: any }
 
     if (fetchError || !existingScan) {
       return NextResponse.json(
@@ -275,7 +276,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: { org_id: string | null } | null; error: unknown }
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any } 
 
     return profile?.org_id === orgId
   } catch (error) {

@@ -2,8 +2,32 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { LinkedInClient, ProxycurlClient } from '@/lib/linkedin/client'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 type Business = Database['public']['Tables']['businesses']['Row']
+
+// Proxycurl API response interface
+interface ProxycurlCompanyProfile {
+  name?: string
+  tagline?: string
+  description?: string
+  industry?: string
+  company_size_on_linkedin?: string
+  employee_count?: number
+  hq?: {
+    city?: string
+    country?: string
+  }
+  founded_year?: number
+  website?: string
+  specialities?: string[]
+  follower_count?: number
+  locations?: Array<{
+    city?: string
+    country?: string
+    is_headquarters?: boolean
+  }>
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +44,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -41,7 +65,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
     if (fetchError || !business) {
       return NextResponse.json(
@@ -105,8 +129,8 @@ export async function POST(request: NextRequest) {
     if (process.env.PROXYCURL_API_KEY) {
       try {
         const proxycurl = new ProxycurlClient(process.env.PROXYCURL_API_KEY)
-        const profileData = await proxycurl.getCompanyProfile(finalLinkedInUrl)
-        
+        const profileData = await proxycurl.getCompanyProfile(finalLinkedInUrl) as ProxycurlCompanyProfile
+
         linkedInData = {
           url: finalLinkedInUrl,
           name: profileData.name || business.name,
@@ -131,13 +155,30 @@ export async function POST(request: NextRequest) {
     // Fallback to basic LinkedIn client
     if (!linkedInData) {
       const linkedInClient = new LinkedInClient()
-      linkedInData = await linkedInClient.getCompanyData(finalLinkedInUrl)
-      
-      if (!linkedInData) {
+      const basicData = await linkedInClient.getCompanyData(finalLinkedInUrl)
+
+      if (!basicData) {
         return NextResponse.json(
           { error: 'Failed to fetch LinkedIn data' },
           { status: 500 }
         )
+      }
+
+      // Convert LinkedInCompanyData to LinkedInData format
+      linkedInData = {
+        url: basicData.url || finalLinkedInUrl,
+        name: basicData.name,
+        tagline: basicData.tagline,
+        description: basicData.description,
+        industry: basicData.industry,
+        company_size: basicData.company_size,
+        employee_count: basicData.employee_count,
+        headquarters: basicData.headquarters || null,
+        founded: basicData.founded,
+        website: basicData.website,
+        specialties: basicData.specialties || [],
+        followers: basicData.followers,
+        locations: basicData.locations || []
       }
     }
 
@@ -150,11 +191,11 @@ export async function POST(request: NextRequest) {
           data_source: dataSource,
           last_updated: new Date().toISOString()
         }
-      },
+      } as Database['public']['Tables']['businesses']['Row']['metadata'],
       social_links: {
         ...((business.social_links as Record<string, unknown>) || {}),
         linkedin: finalLinkedInUrl
-      }
+      } as Database['public']['Tables']['businesses']['Row']['social_links']
     }
 
     // Update description if LinkedIn has a better one
@@ -166,6 +207,7 @@ export async function POST(request: NextRequest) {
     // Update the business
     const { error: updateError } = await supabase
       .from('businesses')
+      // @ts-expect-error - Supabase query builder typing issue
       .update(updates)
       .eq('id', businessId)
 
@@ -178,17 +220,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the enrichment event
+    // @ts-ignore - Supabase query builder typing issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'linkedin_enrichment',
-      event_data: {
+      metadata: {
         business_id: businessId,
         business_name: business.name,
         linkedin_url: finalLinkedInUrl,
         data_source: dataSource,
         auto_searched: autoSearch
       }
-    } as Database['public']['Tables']['events']['Insert'])
+    })
 
     return NextResponse.json({
       message: 'LinkedIn data enriched successfully',
@@ -222,7 +265,7 @@ export async function PUT(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -247,7 +290,7 @@ export async function PUT(request: NextRequest) {
 
     query = query.limit(limit)
 
-    const { data: businesses, error: fetchError } = await query
+    const { data: businesses, error: fetchError } = await query as { data: Row<'businesses'>[] | null; error: any }
 
     if (fetchError || !businesses || businesses.length === 0) {
       return NextResponse.json({
@@ -296,15 +339,16 @@ export async function PUT(request: NextRequest) {
                   data_source: 'bulk_search',
                   last_updated: new Date().toISOString()
                 }
-              },
+              } as Database['public']['Tables']['businesses']['Row']['metadata'],
               social_links: {
                 ...((business.social_links as Record<string, unknown>) || {}),
                 linkedin: searchResult.linkedin_url
-              }
+              } as Database['public']['Tables']['businesses']['Row']['social_links']
             }
 
             const { error: updateError } = await supabase
               .from('businesses')
+              // @ts-expect-error - Supabase query builder typing issue
               .update(updates)
               .eq('id', business.id)
 
@@ -336,16 +380,17 @@ export async function PUT(request: NextRequest) {
     }
 
     // Log the bulk enrichment event
+    // @ts-ignore - Supabase query builder typing issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'bulk_linkedin_enrichment',
-      event_data: {
+      metadata: {
         filter,
         total_processed: businesses.length,
         success_count: successCount,
         error_count: errorCount
       }
-    } as Database['public']['Tables']['events']['Insert'])
+    })
 
     return NextResponse.json({
       message: 'Bulk LinkedIn enrichment completed',

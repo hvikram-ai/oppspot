@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { EnrichmentResult } from './types';
+import type { Row } from '@/lib/supabase/helpers'
 
 // =====================================================
 // Enrichment Service
@@ -117,7 +118,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .single() as { data: Row<'research_reports'> | null; error: any };
 
       return research;
     } catch (error) {
@@ -186,7 +187,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .single() as { data: Row<'lead_scores'> | null; error: any };
 
       return scoring?.total_score || 50;
     } catch (error) {
@@ -212,7 +213,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .single() as { data: Row<'lead_scores'> | null; error: any };
 
       const breakdown = scoring?.score_breakdown || {};
 
@@ -331,7 +332,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .single() as { data: Row<'research_reports'> | null; error: any };
 
       const analysis = research?.analysis || {};
 
@@ -359,7 +360,7 @@ export class CRMEnrichmentService {
         .select('id, full_name, role, metadata')
         .eq('organization_id', contactData.organizationId)
         .eq('role', 'sales')
-        .limit(10);
+        .limit(10) as { data: Row<'profiles'>[] | null; error: any };
 
       if (!teamMembers || teamMembers.length === 0) {
         return undefined; // No sales reps available

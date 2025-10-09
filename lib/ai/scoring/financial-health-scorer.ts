@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface FinancialScore {
   score: number
@@ -166,7 +167,7 @@ export class FinancialHealthScorer {
       .order('fiscal_year', { ascending: false })
       .order('fiscal_quarter', { ascending: false })
       .limit(1)
-      .single()
+      .single() as { data: Row<'financial_metrics'> | null; error: any }
 
     if (storedMetrics) {
       return this.mapStoredMetrics(storedMetrics)
@@ -210,13 +211,15 @@ export class FinancialHealthScorer {
   private extractFromCompaniesHouse(data: Record<string, unknown>): FinancialMetrics {
     const metrics: FinancialMetrics = {}
 
+    const accounts = data.accounts as { last_accounts?: { type?: string } } | undefined
+
     // Check for accounts data
-    if (data.accounts) {
+    if (accounts) {
       // Extract basic financial status
-      if (data.accounts.last_accounts) {
+      if (accounts.last_accounts) {
         // Note: Companies House API provides limited financial data
         // Full accounts would need to be downloaded separately
-        metrics.revenue = data.accounts.last_accounts.type === 'full' ? 1000000 : 500000 // Placeholder
+        metrics.revenue = accounts.last_accounts.type === 'full' ? 1000000 : 500000 // Placeholder
       }
     }
 
@@ -358,7 +361,12 @@ export class FinancialHealthScorer {
       return 50 // No data available
     }
 
-    const data = company.companies_house_data
+    const data = company.companies_house_data as Record<string, unknown> & {
+      accounts?: { overdue?: boolean; next_due?: string }
+      confirmation_statement?: { overdue?: boolean }
+      company_status?: string
+      company_status_detail?: string
+    }
 
     // Check accounts filing status
     if (data.accounts?.overdue) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import signalAggregator from '@/lib/signals/engines/signal-aggregation-engine';
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       .from('signal_aggregations')
       .select('*')
       .eq('company_id', companyId)
-      .single();
+      .single() as { data: Row<'signal_aggregations'> | null; error: any };
 
     // Get signals
     let signalsQuery = supabase

@@ -9,6 +9,7 @@ import { createScoutAgent } from '@/lib/ai/agents/scout-agent'
 import { createOpportunityBot } from '@/lib/ai/agents/opportunity-bot'
 import { createLinkedInScraperAgent } from '@/lib/ai/agents/linkedin-scraper-agent'
 import { createWebsiteAnalyzerAgent } from '@/lib/ai/agents/website-analyzer-agent'
+import type { Row } from '@/lib/supabase/helpers'
 
 export const executeAgentFunction = inngest.createFunction(
   {
@@ -27,7 +28,7 @@ export const executeAgentFunction = inngest.createFunction(
         .from('ai_agents')
         .select('*')
         .eq('id', agentId)
-        .single()
+        .single() as { data: Row<'ai_agents'> | null; error: any }
 
       if (error || !data) {
         throw new Error(`Agent not found: ${agentId}`)
@@ -96,6 +97,7 @@ export const executeAgentFunction = inngest.createFunction(
 
         await supabase
           .from('ai_agents')
+          // @ts-ignore - Type inference issue
           .update({ next_run_at: nextRun.toISOString() })
           .eq('id', agentId)
       })

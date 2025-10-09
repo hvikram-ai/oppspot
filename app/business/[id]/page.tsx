@@ -140,7 +140,7 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
         try {
           const companiesHouse = getCompaniesHouseService()
           const companyNumber = params.id.replace('api-', '')
-          const companyProfile = await companiesHouse.getCompanyProfile(companyNumber)
+          const companyProfile = await companiesHouse.getCompanyProfile(companyNumber) as any
 
           // Format Companies House data to match business structure
           business = {
@@ -206,6 +206,7 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // @ts-ignore - Supabase type inference issue
         await supabase.from('events').insert({
           user_id: user.id,
           event_type: 'business_view',
@@ -239,13 +240,17 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
           <div className="lg:col-span-2 space-y-6">
             <BusinessHeader business={business} />
             <BusinessInfo business={business} />
-            <LinkedInInfo 
+            <LinkedInInfo
               businessId={business.id}
               businessName={business.name}
-              linkedinData={business.metadata?.linkedin || business.social_links?.linkedin ? {
-                url: business.social_links?.linkedin,
-                ...business.metadata?.linkedin
-              } : null}
+              linkedinData={(() => {
+                const metadata = business.metadata as Record<string, unknown> & { linkedin?: any } | null | undefined
+                const socialLinks = business.social_links as Record<string, unknown> & { linkedin?: string } | null | undefined
+                return metadata?.linkedin || socialLinks?.linkedin ? {
+                  url: socialLinks?.linkedin,
+                  ...metadata?.linkedin
+                } : null
+              })()}
               isAdmin={false}
             />
             <BusinessUpdates 

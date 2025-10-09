@@ -7,6 +7,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getOllamaClient, isOllamaEnabled } from '@/lib/ai/ollama'
 import { FinancialScore } from './financial-health-scorer'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Type definitions for company data
 interface CompanyData {
@@ -23,6 +24,45 @@ interface CompanyData {
   }
   companies_house_data?: any
   [key: string]: any
+}
+
+// Type definitions for AI analysis response
+interface AIFinancialStability {
+  score: number
+  assessment: string
+  key_indicators?: string[]
+}
+
+interface AIGrowthMomentum {
+  score: number
+  trend: string
+  drivers?: string[]
+}
+
+interface AIComplianceStatus {
+  score: number
+  issues?: string[]
+  strengths?: string[]
+}
+
+interface AILiquidityPosition {
+  score: number
+  assessment: string
+  explanation?: string
+}
+
+interface AIAnalysisResponse {
+  overall_score: number
+  confidence: 'high' | 'medium' | 'low'
+  risk_level: 'low' | 'medium' | 'high' | 'critical'
+  financial_stability?: AIFinancialStability
+  growth_momentum?: AIGrowthMomentum
+  compliance_status?: AIComplianceStatus
+  liquidity_position?: AILiquidityPosition
+  red_flags?: string[]
+  positive_signals?: string[]
+  key_recommendations?: string[]
+  summary?: string
 }
 
 export class AIFinancialScorer {
@@ -70,7 +110,7 @@ export class AIFinancialScorer {
       .select('*')
       .eq('company_id', companyData.id as any)
       .order('fiscal_year', { ascending: false })
-      .limit(3) // Get last 3 years
+      .limit(3) as { data: Row<'financial_metrics'>[] | null; error: any } // Get last 3 years
 
     // Build comprehensive context
     let context = `
@@ -160,7 +200,7 @@ export class AIFinancialScorer {
   /**
    * Perform AI analysis using Ollama
    */
-  private async performAIAnalysis(context: string): Promise<Record<string, unknown>> {
+  private async performAIAnalysis(context: string): Promise<AIAnalysisResponse> {
     const prompt = `
     You are an expert financial analyst specializing in UK company assessment.
     Analyze the following company's financial health and provide a comprehensive risk assessment.
@@ -224,7 +264,7 @@ export class AIFinancialScorer {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0])
+        return JSON.parse(jsonMatch[0]) as AIAnalysisResponse
       }
     } catch (error) {
       console.error('[AIFinancialScorer] Failed to parse AI response:', error)
@@ -237,7 +277,8 @@ export class AIFinancialScorer {
   /**
    * Structure AI response into FinancialScore format
    */
-  private structureAIResponse(aiAnalysis: Record<string, unknown>, company: Record<string, unknown>): FinancialScore {
+  private structureAIResponse(aiAnalysis: AIAnalysisResponse, company: Record<string, unknown>): FinancialScore {
+    const companyData = company as CompanyData
     const factors = []
 
     // Add financial stability factor
@@ -267,7 +308,7 @@ export class AIFinancialScorer {
         name: 'Regulatory Compliance',
         value: aiAnalysis.compliance_status.score || 50,
         impact: this.determineImpact(aiAnalysis.compliance_status.score),
-        explanation: aiAnalysis.compliance_status.issues?.length > 0 ?
+        explanation: aiAnalysis.compliance_status.issues?.length && aiAnalysis.compliance_status.issues.length > 0 ?
           `Issues: ${aiAnalysis.compliance_status.issues.join(', ')}` :
           'Good compliance standing'
       })
@@ -314,10 +355,10 @@ export class AIFinancialScorer {
 
     // Identify missing data
     const missingData = []
-    if (!company.companies_house_data?.accounts?.last_accounts) {
+    if (!companyData.companies_house_data?.accounts?.last_accounts) {
       missingData.push('Financial statements')
     }
-    if (!company.companies_house_data?.officers) {
+    if (!companyData.companies_house_data?.officers) {
       missingData.push('Officer information')
     }
 
@@ -327,8 +368,8 @@ export class AIFinancialScorer {
       value: 100 - (aiAnalysis.risk_level === 'critical' ? 90 :
                     aiAnalysis.risk_level === 'high' ? 70 :
                     aiAnalysis.risk_level === 'medium' ? 50 : 30),
-      impact: aiAnalysis.risk_level === 'low' ? 'positive' :
-              aiAnalysis.risk_level === 'critical' ? 'negative' : 'neutral',
+      impact: aiAnalysis.risk_level === 'low' ? 'positive' as const :
+              aiAnalysis.risk_level === 'critical' ? 'negative' as const : 'neutral' as const,
       explanation: aiAnalysis.summary || 'AI-powered comprehensive risk assessment'
     })
 
@@ -346,11 +387,12 @@ export class AIFinancialScorer {
   private async calculateRuleBasedScore(company: Record<string, unknown>): Promise<FinancialScore> {
     // This is the original rule-based logic from financial-health-scorer.ts
     // Simplified version for fallback
+    const companyData = company as CompanyData
     const factors = []
     let score = 50
 
     // Basic company age scoring
-    const age = this.calculateCompanyAge(company.incorporation_date)
+    const age = this.calculateCompanyAge(companyData.incorporation_date)
     if (age > 10) {
       score += 15
       factors.push({
@@ -370,7 +412,7 @@ export class AIFinancialScorer {
     }
 
     // Check filing status
-    if (company.company_status === 'active') {
+    if (companyData.company_status === 'active') {
       score += 20
       factors.push({
         name: 'Company Status',
@@ -384,12 +426,12 @@ export class AIFinancialScorer {
         name: 'Company Status',
         value: 20,
         impact: 'negative' as const,
-        explanation: `Company status: ${company.company_status}`
+        explanation: `Company status: ${companyData.company_status}`
       })
     }
 
     // Check for red flags
-    if (company.companies_house_data?.has_insolvency_history) {
+    if (companyData.companies_house_data?.has_insolvency_history) {
       score -= 40
       factors.push({
         name: 'Insolvency History',
@@ -429,10 +471,11 @@ export class AIFinancialScorer {
     return 'neutral'
   }
 
-  private getIndustrySector(sicCodes?: string[]): string {
-    if (!sicCodes || sicCodes.length === 0) return 'Unknown'
+  private getIndustrySector(sicCodes?: unknown): string {
+    const codes = sicCodes as string[] | undefined
+    if (!codes || codes.length === 0) return 'Unknown'
 
-    const firstCode = sicCodes[0].substring(0, 2)
+    const firstCode = codes[0].substring(0, 2)
     const sectors: Record<string, string> = {
       '01': 'Agriculture',
       '10': 'Manufacturing',
@@ -457,12 +500,13 @@ export class AIFinancialScorer {
     return sectors[firstCode] || 'Other Services'
   }
 
-  private getIndustryBenchmarks(sicCodes?: string[]): { margin: number; risk: string } {
-    if (!sicCodes || sicCodes.length === 0) {
+  private getIndustryBenchmarks(sicCodes?: unknown): { margin: number; risk: string } {
+    const codes = sicCodes as string[] | undefined
+    if (!codes || codes.length === 0) {
       return { margin: 10, risk: 'Medium' }
     }
 
-    const firstCode = sicCodes[0].substring(0, 2)
+    const firstCode = codes[0].substring(0, 2)
 
     // Simplified industry benchmarks
     const benchmarks: Record<string, { margin: number; risk: string }> = {

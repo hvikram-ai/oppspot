@@ -3,6 +3,7 @@
  * Centralized factory for creating and managing data source integrations
  */
 
+import { getErrorMessage } from '@/lib/utils/error-handler'
 import CompaniesHouseAPI from './companies-house-api'
 import IrishCROAPI from './irish-cro-api'
 import { CompanyData } from '../scanning-engine'
@@ -313,7 +314,7 @@ export class DataSourceFactory {
         results.push({
           sourceId,
           success: false,
-          message: `Connection failed: ${error.message}`,
+          message: `Connection failed: ${getErrorMessage(error)}`,
           responseTime: Date.now() - startTime
         })
       }
@@ -406,7 +407,7 @@ export class DataSourceFactory {
             cost: 0,
             processing_time: Date.now() - startTime,
             search_parameters: params.searchCriteria,
-            errors: [error.message]
+            errors: [getErrorMessage(error)]
           }
         })
       }

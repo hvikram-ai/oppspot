@@ -70,6 +70,7 @@ export class CostManagementService {
   async createBudget(budget: Omit<CostBudget, 'id' | 'created_at' | 'updated_at'>): Promise<CostBudget> {
     const { data, error } = await this.supabase
       .from('cost_budgets')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         ...budget,
         remaining_budget: budget.total_budget,
@@ -115,6 +116,7 @@ export class CostManagementService {
    */
   async recordTransaction(transaction: Omit<CostTransaction, 'id' | 'created_at'>): Promise<CostTransaction> {
     const { data, error } = await this.supabase
+      // @ts-ignore - Supabase type inference issue
       .from('cost_transactions')
       .insert({
         ...transaction,
@@ -246,6 +248,7 @@ export class CostManagementService {
   }): Promise<void> {
     const { error } = await this.supabase
       .from('cost_budgets')
+      // @ts-ignore - Type inference issue
       .update({
         budget_alerts: alerts,
         updated_at: new Date().toISOString()

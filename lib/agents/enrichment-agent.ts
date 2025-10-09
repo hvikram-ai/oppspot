@@ -10,6 +10,7 @@
 
 import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } from '@/lib/ai/agents/base-agent'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export class EnrichmentAgent extends BaseAgent {
   async execute(context: AgentExecutionContext): Promise<AgentExecutionResult> {
@@ -95,7 +96,7 @@ export class EnrichmentAgent extends BaseAgent {
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
       .not('business_id', 'is', null)
-      .limit(50)
+      .limit(50) as { data: Row<'stream_items'>[] | null; error: any }
 
     if (error) {
       this.log(`Error fetching stream items: ${error.message}`, 'error')
@@ -103,10 +104,11 @@ export class EnrichmentAgent extends BaseAgent {
     }
 
     // Filter items that haven't been enriched yet
-    return (items || []).filter(item =>
-      !item.metadata?.enriched_at ||
-      new Date(item.metadata.enriched_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days old
-    )
+    return (items || []).filter(item => {
+      const metadata = item.metadata as Record<string, unknown> & { enriched_at?: string } | null
+      return !metadata?.enriched_at ||
+        new Date(metadata.enriched_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days old
+    })
   }
 
   /**
@@ -120,7 +122,10 @@ export class EnrichmentAgent extends BaseAgent {
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single()
+      .single() as { data: (Row<'businesses'> & {
+        companies_house_number?: string
+        employee_count?: number
+      }) | null; error: any }
 
     if (error || !company) {
       return null
@@ -238,7 +243,7 @@ export class EnrichmentAgent extends BaseAgent {
       .from('stream_items')
       .select('metadata')
       .eq('id', itemId)
-      .single()
+      .single() as { data: Row<'stream_items'> | null; error: any }
 
     const currentMetadata = item?.metadata || {}
 
@@ -251,6 +256,7 @@ export class EnrichmentAgent extends BaseAgent {
     // Update item
     await supabase
       .from('stream_items')
+      // @ts-ignore - Type inference issue
       .update({
         metadata: updatedMetadata
       })
@@ -275,7 +281,7 @@ export async function createEnrichmentAgent(agentId: string): Promise<Enrichment
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single()
+    .single() as { data: Row<'ai_agents'> | null; error: any }
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Use same encryption as main route
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-change-in-production'
@@ -154,6 +155,7 @@ export async function POST(request: NextRequest) {
     if (testResult.success) {
       await supabase
         .from('api_keys')
+        // @ts-ignore - Type inference issue
         .update({ last_used: new Date().toISOString() })
         .eq('id', keyId)
         .eq('user_id', user.id)

@@ -4,6 +4,7 @@
  * Built for comprehensive M&A due diligence and strategic assessment
  */
 
+import { getErrorMessage } from '@/lib/utils/error-handler'
 import { getOllamaClient, isOllamaEnabled } from '@/lib/ai/ollama'
 import { WebsiteScraper } from '@/lib/scraping/website-scraper'
 import { WebSearchService } from '@/lib/opp-scan/services/web-search-service'
@@ -251,7 +252,7 @@ export class TargetIntelligenceService {
 
     } catch (error) {
       console.error('[TargetIntelligence] Analysis failed:', error)
-      throw new Error(`Target intelligence analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(`Target intelligence analysis failed: ${getErrorMessage(error)}`)
     }
   }
 
@@ -297,9 +298,10 @@ export class TargetIntelligenceService {
         )
       )
 
+      type FulfilledResult = PromiseFulfilledResult<unknown[]>
       return searchResults
-        .filter((result): result is PromiseFulfilledResult<unknown> => result.status === 'fulfilled')
-        .map(result => result.value)
+        .filter((result): result is FulfilledResult => result.status === 'fulfilled')
+        .map((result: FulfilledResult) => result.value)
         .flat()
 
     } catch (error) {
@@ -335,8 +337,9 @@ Return the analysis in JSON format with specific numerical estimates where possi
 
     try {
       // Check if Ollama is available
-      const isAvailable = await this.ollamaClient.isAvailable()
-      
+      const ollamaClient = this.ollamaClient as { isAvailable?: () => Promise<boolean> }
+      const isAvailable = ollamaClient.isAvailable ? await ollamaClient.isAvailable() : false
+
       if (!isAvailable) {
         console.warn('[TargetIntelligence] Ollama not available, using fallback analysis')
         return this.generateFallbackFinancialProfile(input, websiteData, webIntelligence)
@@ -722,18 +725,21 @@ Return as detailed JSON with specific scores and recommendations.`
     let score = 0
     if (websiteData?.hasSsl) score += 20
     if (websiteData?.mobileFriendly) score += 20
-    if (websiteData?.technologies?.length > 0) score += 20
-    if (websiteData?.seoScore > 70) score += 20
-    if (websiteData?.socialLinks && Object.keys(websiteData.socialLinks).length > 0) score += 20
+    const technologies = websiteData?.technologies as unknown[] | undefined
+    if (technologies && technologies.length > 0) score += 20
+    if (websiteData?.seoScore && (websiteData.seoScore as number) > 70) score += 20
+    if (websiteData?.socialLinks && Object.keys(websiteData.socialLinks as Record<string, unknown>).length > 0) score += 20
     return score
   }
 
   private calculateOverallConfidence(financial: Record<string, unknown>, market: Record<string, unknown>, esg: Record<string, unknown>): number {
     // Calculate weighted confidence based on data availability and quality
     let confidence = 0
-    confidence += (financial?.revenue_estimate?.confidence || 0) * 0.4
+    const revenueEstimate = financial?.revenue_estimate as { confidence?: number } | undefined
+    confidence += (revenueEstimate?.confidence || 0) * 0.4
     confidence += (market?.competitive_position ? 70 : 30) * 0.3
-    confidence += (esg?.overall_esg_score > 0 ? 60 : 30) * 0.3
+    const esgScore = esg?.overall_esg_score as number | undefined
+    confidence += (esgScore && esgScore > 0 ? 60 : 30) * 0.3
     return Math.round(confidence)
   }
 

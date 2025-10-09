@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface BANTScore {
   budget_score: number
@@ -22,9 +23,9 @@ export interface BANTDetails {
     budget_range?: string
     funding_available: boolean
     recent_funding?: {
-      amount: number
+      amount?: number
       date: string
-      round_type: string
+      round_type?: string
     }
   }
   authority: {
@@ -52,6 +53,85 @@ export interface BANTDetails {
   next_actions: string[]
 }
 
+// Internal score calculation result interfaces
+interface BudgetScoreResult {
+  score: number
+  budget_confirmed: boolean
+  funding_available: boolean
+  recent_funding?: { amount?: number; date: string; round_type?: string }
+  estimated_budget?: number
+  budget_range?: string
+}
+
+interface AuthorityScoreResult {
+  score: number
+  decision_makers_identified: boolean
+  decision_maker_count: number
+  champion_identified: boolean
+  stakeholder_engagement_level: number
+  buying_committee_mapped: boolean
+}
+
+interface NeedScoreResult {
+  score: number
+  pain_points_identified: string[]
+  urgency_level: 'critical' | 'high' | 'medium' | 'low'
+  use_case_fit: number
+  problem_acknowledgment: boolean
+  solution_awareness: boolean
+}
+
+interface TimelineScoreResult {
+  score: number
+  decision_timeline?: string
+  implementation_timeline?: string
+  urgency_indicators: string[]
+  fiscal_year_timing?: string
+  buying_cycle_stage: string
+  timeline_confirmed?: boolean
+}
+
+// Type for score result with details
+interface ScoreWithDetails<T> {
+  score: number
+  details: T
+}
+
+// Stakeholder type
+interface Stakeholder {
+  id?: string
+  company_id?: string
+  is_decision_maker?: boolean
+  is_champion?: boolean
+  has_budget_authority?: boolean
+  engagement_score?: number
+  champion_score?: number
+  role_type?: string
+  decision_authority?: boolean
+  created_at?: string
+  [key: string]: unknown
+}
+
+// Engagement event type
+interface EngagementEvent {
+  id?: string
+  company_id?: string
+  stakeholder_id?: string
+  event_type?: string
+  event_data?: Record<string, unknown>
+  created_at: string
+  [key: string]: unknown
+}
+
+// Lead score type
+interface LeadScore {
+  id?: string
+  company_id?: string
+  industry_alignment_score?: number
+  growth_indicator_score?: number
+  [key: string]: unknown
+}
+
 export class BANTScorer {
   /**
    * Calculate comprehensive BANT score for a company
@@ -67,7 +147,7 @@ export class BANTScorer {
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       if (!company) {
         throw new Error('Company not found')
@@ -82,10 +162,10 @@ export class BANTScorer {
       ])
 
       // Calculate individual BANT components
-      const budgetScore = await this.calculateBudgetScore(company, fundingSignals)
+      const budgetScore = await this.calculateBudgetScore(company as Record<string, unknown>, fundingSignals)
       const authorityScore = await this.calculateAuthorityScore(stakeholders, engagementEvents)
-      const needScore = await this.calculateNeedScore(company, engagementEvents, leadScore)
-      const timelineScore = await this.calculateTimelineScore(engagementEvents, company)
+      const needScore = await this.calculateNeedScore(company as Record<string, unknown>, engagementEvents, leadScore)
+      const timelineScore = await this.calculateTimelineScore(engagementEvents, company as Record<string, unknown>)
 
       // Calculate overall score
       const overallScore = Math.round(
@@ -125,10 +205,39 @@ export class BANTScorer {
         overall_score: overallScore,
         qualification_status: qualificationStatus,
         details: {
-          budget: budgetScore.details,
-          authority: authorityScore.details,
-          need: needScore.details,
-          timeline: timelineScore.details,
+          budget: {
+            estimated_budget: budgetScore.estimated_budget,
+            budget_confirmed: budgetScore.budget_confirmed,
+            budget_range: budgetScore.budget_range,
+            funding_available: budgetScore.funding_available,
+            recent_funding: budgetScore.recent_funding
+          },
+          authority: {
+            decision_makers_identified: authorityScore.decision_makers_identified,
+            decision_maker_count: authorityScore.decision_maker_count,
+            champion_identified: authorityScore.champion_identified,
+            stakeholder_engagement_level: authorityScore.stakeholder_engagement_level,
+            buying_committee_mapped: authorityScore.buying_committee_mapped
+          },
+          need: {
+            pain_points_identified: needScore.pain_points_identified,
+            urgency_level: needScore.urgency_level,
+            use_case_fit: needScore.use_case_fit,
+            problem_acknowledgment: needScore.problem_acknowledgment,
+            solution_awareness: needScore.solution_awareness
+          },
+          timeline: {
+            decision_timeline: timelineScore.decision_timeline,
+            implementation_timeline: timelineScore.implementation_timeline,
+            urgency_indicators: timelineScore.urgency_indicators,
+            buying_stage: (timelineScore.buying_cycle_stage === 'awareness' ||
+                          timelineScore.buying_cycle_stage === 'consideration' ||
+                          timelineScore.buying_cycle_stage === 'decision' ||
+                          timelineScore.buying_cycle_stage === 'purchase')
+                          ? timelineScore.buying_cycle_stage
+                          : 'awareness',
+            timeline_confirmed: timelineScore.timeline_confirmed || false
+          },
           recommendations,
           next_actions: nextActions
         }
@@ -150,22 +259,9 @@ export class BANTScorer {
   private async calculateBudgetScore(
     company: Record<string, unknown>,
     fundingSignals: Array<{ announcement_date: string; amount?: number; round_type?: string }>
-  ): Promise<{
-    score: number;
-    budget_confirmed: boolean;
-    funding_available: boolean;
-    recent_funding?: { amount?: number; date: string; round_type?: string };
-    estimated_budget?: number;
-    budget_range?: string;
-  }> {
+  ): Promise<BudgetScoreResult> {
     let score = 30 // Base score
-    const details: {
-      budget_confirmed: boolean;
-      funding_available: boolean;
-      recent_funding?: { amount?: number; date: string; round_type?: string };
-      estimated_budget?: number;
-      budget_range?: string;
-    } = {
+    const result: Omit<BudgetScoreResult, 'score'> = {
       budget_confirmed: false,
       funding_available: false
     }
@@ -177,34 +273,39 @@ export class BANTScorer {
 
       if (monthsSinceFunding < 6) {
         score += 40 // Very recent funding
-        details.recent_funding = {
+        result.recent_funding = {
           amount: recentFunding.amount,
           date: recentFunding.announcement_date,
           round_type: recentFunding.round_type
         }
-        details.funding_available = true
+        result.funding_available = true
       } else if (monthsSinceFunding < 12) {
         score += 25 // Recent funding
-        details.recent_funding = recentFunding
-        details.funding_available = true
+        result.recent_funding = {
+          amount: recentFunding.amount,
+          date: recentFunding.announcement_date,
+          round_type: recentFunding.round_type
+        }
+        result.funding_available = true
       } else {
         score += 10 // Older funding
       }
 
       // Estimate budget based on funding amount (typically 10-20% of funding for vendors)
       if (recentFunding.amount) {
-        details.estimated_budget = recentFunding.amount * 0.15
-        details.budget_range = this.getBudgetRange(details.estimated_budget)
+        result.estimated_budget = recentFunding.amount * 0.15
+        result.budget_range = this.getBudgetRange(result.estimated_budget)
       }
     }
 
     // Company size indicators
-    if (company.employee_count) {
-      if (company.employee_count > 100) {
+    const employeeCount = company.employee_count as number | undefined
+    if (employeeCount) {
+      if (employeeCount > 100) {
         score += 15 // Larger companies typically have budget
-      } else if (company.employee_count > 25) {
+      } else if (employeeCount > 25) {
         score += 10
-      } else if (company.employee_count > 10) {
+      } else if (employeeCount > 10) {
         score += 5
       }
     }
@@ -215,14 +316,17 @@ export class BANTScorer {
     }
 
     // Growth companies more likely to invest
-    const companyAge = this.yearsSince(new Date(company.date_of_creation))
-    if (companyAge < 5 && companyAge > 1) {
-      score += 10 // Growth stage companies
+    const dateOfCreation = company.date_of_creation as string | undefined
+    if (dateOfCreation) {
+      const companyAge = this.yearsSince(new Date(dateOfCreation))
+      if (companyAge < 5 && companyAge > 1) {
+        score += 10 // Growth stage companies
+      }
     }
 
     return {
       score: Math.min(100, score),
-      ...details
+      ...result
     }
   }
 
@@ -230,24 +334,11 @@ export class BANTScorer {
    * Calculate Authority score
    */
   private async calculateAuthorityScore(
-    stakeholders: Array<{ role_type?: string; decision_authority?: boolean; engagement_score?: number; champion_score?: number }>,
-    engagementEvents: Array<Record<string, unknown>>
-  ): Promise<{
-    score: number;
-    decision_makers_identified: boolean;
-    decision_maker_count: number;
-    champion_identified: boolean;
-    stakeholder_engagement_level: number;
-    buying_committee_mapped: boolean;
-  }> {
+    stakeholders: Stakeholder[],
+    engagementEvents: EngagementEvent[]
+  ): Promise<AuthorityScoreResult> {
     let score = 20 // Base score
-    const details: {
-      decision_makers_identified: boolean;
-      decision_maker_count: number;
-      champion_identified: boolean;
-      stakeholder_engagement_level: number;
-      buying_committee_mapped: boolean;
-    } = {
+    const result: Omit<AuthorityScoreResult, 'score'> = {
       decision_makers_identified: false,
       decision_maker_count: 0,
       champion_identified: false,
@@ -263,13 +354,13 @@ export class BANTScorer {
       const decisionMakers = stakeholders.filter(s => s.is_decision_maker)
       if (decisionMakers.length > 0) {
         score += 20
-        details.decision_makers_identified = true
-        details.decision_maker_count = decisionMakers.length
+        result.decision_makers_identified = true
+        result.decision_maker_count = decisionMakers.length
 
         // Multiple decision makers = buying committee
         if (decisionMakers.length >= 2) {
           score += 10
-          details.buying_committee_mapped = true
+          result.buying_committee_mapped = true
         }
       }
 
@@ -277,7 +368,7 @@ export class BANTScorer {
       const champions = stakeholders.filter(s => s.is_champion)
       if (champions.length > 0) {
         score += 25
-        details.champion_identified = true
+        result.champion_identified = true
       }
 
       // Check for budget authority
@@ -288,7 +379,7 @@ export class BANTScorer {
 
       // Calculate engagement level
       const avgEngagement = stakeholders.reduce((sum, s) => sum + (s.engagement_score || 0), 0) / stakeholders.length
-      details.stakeholder_engagement_level = Math.round(avgEngagement)
+      result.stakeholder_engagement_level = Math.round(avgEngagement)
 
       if (avgEngagement > 70) {
         score += 10
@@ -305,7 +396,7 @@ export class BANTScorer {
 
     return {
       score: Math.min(100, score),
-      ...details
+      ...result
     }
   }
 
@@ -314,24 +405,11 @@ export class BANTScorer {
    */
   private async calculateNeedScore(
     company: Record<string, unknown>,
-    engagementEvents: Array<{ event_type?: string; event_data?: Record<string, unknown> }>,
-    leadScore: Record<string, unknown>
-  ): Promise<{
-    score: number;
-    pain_points_identified: string[];
-    urgency_level: 'critical' | 'high' | 'medium' | 'low';
-    use_case_fit: number;
-    problem_acknowledgment: boolean;
-    solution_awareness: boolean;
-  }> {
+    engagementEvents: EngagementEvent[],
+    leadScore: LeadScore | null
+  ): Promise<NeedScoreResult> {
     let score = 25 // Base score
-    const details: {
-      pain_points_identified: string[];
-      urgency_level: 'critical' | 'high' | 'medium' | 'low';
-      use_case_fit: number;
-      problem_acknowledgment: boolean;
-      solution_awareness: boolean;
-    } = {
+    const result: Omit<NeedScoreResult, 'score'> = {
       pain_points_identified: [],
       urgency_level: 'low',
       use_case_fit: 50,
@@ -342,7 +420,7 @@ export class BANTScorer {
     // High engagement indicates need
     if (engagementEvents.length > 10) {
       score += 20
-      details.problem_acknowledgment = true
+      result.problem_acknowledgment = true
     } else if (engagementEvents.length > 5) {
       score += 10
     }
@@ -353,8 +431,8 @@ export class BANTScorer {
     )
     if (demoEvents.length > 0) {
       score += 25
-      details.solution_awareness = true
-      details.urgency_level = 'high'
+      result.solution_awareness = true
+      result.urgency_level = 'high'
     }
 
     // Document downloads indicate research phase
@@ -363,18 +441,20 @@ export class BANTScorer {
     )
     if (documentEvents.length > 0) {
       score += 10
-      details.solution_awareness = true
+      result.solution_awareness = true
     }
 
     // Use existing lead score as indicator
     if (leadScore) {
-      if (leadScore.industry_alignment_score > 70) {
+      const industryAlignment = leadScore.industry_alignment_score
+      if (industryAlignment && industryAlignment > 70) {
         score += 10
-        details.use_case_fit = leadScore.industry_alignment_score
+        result.use_case_fit = industryAlignment
       }
-      if (leadScore.growth_indicator_score > 70) {
+      const growthIndicator = leadScore.growth_indicator_score
+      if (growthIndicator && growthIndicator > 70) {
         score += 10
-        details.urgency_level = 'medium'
+        result.urgency_level = 'medium'
       }
     }
 
@@ -384,15 +464,15 @@ export class BANTScorer {
     )
     if (recentEvents.length > 5) {
       score += 10
-      details.urgency_level = details.urgency_level === 'low' ? 'medium' : 'high'
+      result.urgency_level = result.urgency_level === 'low' ? 'medium' : 'high'
     }
 
     // Identify pain points from engagement patterns
-    details.pain_points_identified = this.identifyPainPoints(engagementEvents)
+    result.pain_points_identified = this.identifyPainPoints(engagementEvents)
 
     return {
       score: Math.min(100, score),
-      ...details
+      ...result
     }
   }
 
@@ -400,24 +480,11 @@ export class BANTScorer {
    * Calculate Timeline score
    */
   private async calculateTimelineScore(
-    engagementEvents: Array<{ created_at: string; event_type?: string }>,
+    engagementEvents: EngagementEvent[],
     company: Record<string, unknown>
-  ): Promise<{
-    score: number;
-    decision_timeline?: string;
-    implementation_timeline?: string;
-    urgency_indicators: string[];
-    fiscal_year_timing?: string;
-    buying_cycle_stage: string;
-  }> {
+  ): Promise<TimelineScoreResult> {
     let score = 20 // Base score
-    const details: {
-      decision_timeline?: string;
-      implementation_timeline?: string;
-      urgency_indicators: string[];
-      fiscal_year_timing?: string;
-      buying_cycle_stage: string;
-    } = {
+    const result: Omit<TimelineScoreResult, 'score'> = {
       buying_cycle_stage: 'awareness',
       urgency_indicators: []
     }
@@ -429,8 +496,8 @@ export class BANTScorer {
 
     if (recentEvents.length > 5) {
       score += 30
-      details.buying_stage = 'consideration'
-      details.urgency_indicators.push('High recent activity')
+      result.buying_cycle_stage = 'consideration'
+      result.urgency_indicators.push('High recent activity')
     } else if (recentEvents.length > 2) {
       score += 15
     }
@@ -441,7 +508,7 @@ export class BANTScorer {
     )
     if (demoOrMeetings.length > 0) {
       score += 25
-      details.buying_stage = 'decision'
+      result.buying_cycle_stage = 'decision'
 
       // Recent demo = very hot
       const recentDemo = demoOrMeetings.find(e =>
@@ -449,9 +516,9 @@ export class BANTScorer {
       )
       if (recentDemo) {
         score += 15
-        details.urgency_indicators.push('Recent demo attended')
-        details.timeline_confirmed = true
-        details.decision_timeline = '1-3 months'
+        result.urgency_indicators.push('Recent demo attended')
+        result.timeline_confirmed = true
+        result.decision_timeline = '1-3 months'
       }
     }
 
@@ -459,7 +526,7 @@ export class BANTScorer {
     const engagementVelocity = this.calculateEngagementVelocity(engagementEvents)
     if (engagementVelocity > 2) {
       score += 10
-      details.urgency_indicators.push('Accelerating engagement')
+      result.urgency_indicators.push('Accelerating engagement')
     }
 
     // Fiscal year considerations
@@ -467,12 +534,12 @@ export class BANTScorer {
     if (currentMonth === 11 || currentMonth === 2 || currentMonth === 5) {
       // Quarter ends typically have budget urgency
       score += 5
-      details.urgency_indicators.push('Quarter-end approaching')
+      result.urgency_indicators.push('Quarter-end approaching')
     }
 
     return {
       score: Math.min(100, score),
-      ...details
+      ...result
     }
   }
 
@@ -508,13 +575,18 @@ export class BANTScorer {
   /**
    * Generate recommendations based on BANT scores
    */
-  private generateRecommendations(budget: any, authority: any, need: any, timeline: any): string[] {
+  private generateRecommendations(
+    budget: BudgetScoreResult,
+    authority: AuthorityScoreResult,
+    need: NeedScoreResult,
+    timeline: TimelineScoreResult
+  ): string[] {
     const recommendations: string[] = []
 
     // Budget recommendations
     if (budget.score < 50) {
       recommendations.push('Qualify budget availability and procurement process')
-      if (!budget.details.recent_funding) {
+      if (!budget.recent_funding) {
         recommendations.push('Research company financial health and funding status')
       }
     }
@@ -522,10 +594,10 @@ export class BANTScorer {
     // Authority recommendations
     if (authority.score < 50) {
       recommendations.push('Map the buying committee and identify decision makers')
-      if (!authority.details.champion_identified) {
+      if (!authority.champion_identified) {
         recommendations.push('Cultivate an internal champion')
       }
-    } else if (!authority.details.buying_committee_mapped) {
+    } else if (!authority.buying_committee_mapped) {
       recommendations.push('Complete stakeholder mapping')
     }
 
@@ -541,7 +613,7 @@ export class BANTScorer {
     if (timeline.score < 50) {
       recommendations.push('Clarify decision timeline and buying process')
       recommendations.push('Understand any competing priorities')
-    } else if (timeline.details.buying_stage === 'decision') {
+    } else if (timeline.buying_cycle_stage === 'decision') {
       recommendations.push('Prepare proposal and pricing options')
       recommendations.push('Schedule closing call with decision makers')
     }
@@ -554,10 +626,10 @@ export class BANTScorer {
    */
   private generateNextActions(
     status: string,
-    budget: any,
-    authority: any,
-    need: any,
-    timeline: any
+    budget: BudgetScoreResult,
+    authority: AuthorityScoreResult,
+    need: NeedScoreResult,
+    timeline: TimelineScoreResult
   ): string[] {
     const actions: string[] = []
 
@@ -596,20 +668,20 @@ export class BANTScorer {
   /**
    * Helper function to fetch stakeholders
    */
-  private async fetchStakeholders(companyId: string): Promise<any[]> {
+  private async fetchStakeholders(companyId: string): Promise<Stakeholder[]> {
     const supabase = await createClient()
     const { data } = await supabase
       .from('stakeholders')
       .select('*')
       .eq('company_id', companyId)
 
-    return data || []
+    return (data || []) as Stakeholder[]
   }
 
   /**
    * Helper function to fetch funding signals
    */
-  private async fetchFundingSignals(companyId: string): Promise<any[]> {
+  private async fetchFundingSignals(companyId: string): Promise<Array<{ announcement_date: string; amount?: number; round_type?: string }>> {
     const supabase = await createClient()
     const { data } = await supabase
       .from('funding_signals')
@@ -618,13 +690,13 @@ export class BANTScorer {
       .order('announcement_date', { ascending: false })
       .limit(3)
 
-    return data || []
+    return (data || []) as Array<{ announcement_date: string; amount?: number; round_type?: string }>
   }
 
   /**
    * Helper function to fetch engagement events
    */
-  private async fetchEngagementEvents(companyId: string): Promise<any[]> {
+  private async fetchEngagementEvents(companyId: string): Promise<EngagementEvent[]> {
     const supabase = await createClient()
     const { data } = await supabase
       .from('engagement_events')
@@ -633,13 +705,13 @@ export class BANTScorer {
       .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
 
-    return data || []
+    return (data || []) as EngagementEvent[]
   }
 
   /**
    * Helper function to fetch lead score
    */
-  private async fetchLeadScore(companyId: string): Promise<any> {
+  private async fetchLeadScore(companyId: string): Promise<LeadScore | null> {
     const supabase = await createClient()
     const { data } = await supabase
       .from('lead_scores')
@@ -647,7 +719,7 @@ export class BANTScorer {
       .eq('company_id', companyId)
       .single()
 
-    return data
+    return data as LeadScore | null
   }
 
   /**
@@ -665,10 +737,10 @@ export class BANTScorer {
         bant_timeline_score: bantScore.timeline_score,
         bant_overall_score: bantScore.overall_score,
         bant_qualification_status: bantScore.qualification_status,
-        bant_details: bantScore.details,
+        bant_details: bantScore.details as unknown,
         bant_last_calculated: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      })
+      } as never)
       .eq('company_id', companyId)
 
     if (error) {
@@ -680,21 +752,21 @@ export class BANTScorer {
   /**
    * Identify pain points from engagement patterns
    */
-  private identifyPainPoints(events: any[]): string[] {
+  private identifyPainPoints(events: EngagementEvent[]): string[] {
     const painPoints: string[] = []
 
     // Analyze event types and patterns
-    const eventTypes = events.map(e => e.event_type)
+    const eventTypes = events.map(e => e.event_type).filter((t): t is string => t !== undefined)
 
     if (eventTypes.includes('demo_scheduled') || eventTypes.includes('demo_attended')) {
       painPoints.push('Actively evaluating solutions')
     }
 
-    if (events.filter(e => e.event_type.includes('document')).length > 2) {
+    if (events.filter(e => e.event_type?.includes('document')).length > 2) {
       painPoints.push('Researching implementation options')
     }
 
-    if (events.filter(e => e.event_type.includes('meeting')).length > 1) {
+    if (events.filter(e => e.event_type?.includes('meeting')).length > 1) {
       painPoints.push('Internal discussions ongoing')
     }
 
@@ -704,7 +776,7 @@ export class BANTScorer {
   /**
    * Calculate engagement velocity
    */
-  private calculateEngagementVelocity(events: any[]): number {
+  private calculateEngagementVelocity(events: EngagementEvent[]): number {
     if (events.length < 2) return 0
 
     const sortedEvents = events.sort((a, b) =>

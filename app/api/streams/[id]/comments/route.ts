@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { CreateStreamCommentRequest } from '@/types/streams'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 export async function POST(
   request: NextRequest,
@@ -37,7 +38,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error('Error creating comment:', error)
 
-    if (error.message === 'Access denied') {
+    if (getErrorMessage(error) === 'Access denied') {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

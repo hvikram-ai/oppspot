@@ -14,6 +14,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { z } from 'zod'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 const generateSchema = z.object({
   companyIds: z.array(z.string().uuid()).optional(),
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
         throw new Error(`Failed to fetch companies: ${error.message}`)
       }
 
-      targetIds = data?.map(c => c.id) || []
+      targetIds = (data as Row<'businesses'>[] | null)?.map(c => c.id) || []
 
       console.log(`[Generate Embeddings] Found ${targetIds.length} companies without embeddings`)
     } else if (companyIds && companyIds.length > 0) {
@@ -115,20 +117,25 @@ export async function POST(request: NextRequest) {
           throw new Error(`Failed to fetch batch: ${fetchError?.message}`)
         }
 
+        const typedCompanies = companies as Row<'businesses'>[]
+
         // Generate embeddings
         const embeddings = await embeddingService.generateBatchEmbeddings(
-          companies.map(c => ({
-            name: c.name,
-            description: c.description,
-            sic_codes: c.sic_codes,
-            website: c.website,
-            categories: c.categories,
-            address: c.address?.city || c.address?.region
-          }))
+          typedCompanies.map(c => {
+            const address = c.address as Record<string, unknown> | null
+            return {
+              name: c.name,
+              description: c.description,
+              sic_codes: c.sic_codes,
+              website: c.website,
+              categories: c.categories,
+              address: (address?.city as string | undefined) || (address?.region as string | undefined)
+            }
+          })
         )
 
         // Save to database
-        const updates = companies.map((company, index) => ({
+        const updates = typedCompanies.map((company, index) => ({
           companyId: company.id,
           embeddingResult: embeddings[index]
         }))
@@ -140,7 +147,7 @@ export async function POST(request: NextRequest) {
         console.log(`[Generate Embeddings] Batch ${i / batchSize + 1}: Processed ${companies.length} companies`)
       } catch (error: unknown) {
         failed += batch.length
-        errors.push(`Batch ${i / batchSize + 1}: ${error.message}`)
+        errors.push(`Batch ${i / batchSize + 1}: ${getErrorMessage(error)}`)
         console.error(`[Generate Embeddings] Batch error:`, error)
       }
     }
@@ -164,13 +171,13 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request', details: error.errors },
+        { error: 'Invalid request', details: error.issues },
         { status: 400 }
       )
     }
 
     return NextResponse.json(
-      { error: 'Embedding generation failed', message: error.message },
+      { error: 'Embedding generation failed', message: getErrorMessage(error) },
       { status: 500 }
     )
   }

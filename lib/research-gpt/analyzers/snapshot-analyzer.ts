@@ -64,6 +64,7 @@ export class SnapshotAnalyzer {
         // Size metrics
         employee_count: this.estimateEmployeeCount(aggregatedData),
         employee_growth_yoy: this.calculateEmployeeGrowth(aggregatedData),
+        employee_growth_trend: null, // Would need historical data
 
         // Financial data
         revenue_estimate: this.estimateRevenue(aggregatedData),

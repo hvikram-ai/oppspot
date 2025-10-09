@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   AdvancedFilters,
   FilteredSearchRequest,
@@ -28,6 +29,7 @@ export class AdvancedFilterService {
 
       // Get total count
       const { count } = await supabase
+        // @ts-ignore - Type inference issue
         .rpc('count_filtered_businesses', { filter_params: params })
         .single();
 
@@ -39,7 +41,7 @@ export class AdvancedFilterService {
         .select('*')
         .filter(query)
         .order(request.sorting.field, { ascending: request.sorting.direction === 'asc' })
-        .range(offset, offset + request.pagination.perPage - 1);
+        .range(offset, offset + request.pagination.perPage - 1) as { data: Row<'searchable_businesses'>[] | null; error: any };
 
       if (error) throw error;
 
@@ -512,7 +514,7 @@ export class AdvancedFilterService {
       const { data, error } = await supabase
         .from('filter_options')
         .select('*')
-        .single();
+        .single() as { data: Row<'filter_options'> | null; error: any };
 
       if (error) throw error;
 

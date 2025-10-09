@@ -1,5 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
+
+// Extended types for stream-related tables
+interface StreamAgentAssignment {
+  id: string
+  stream_id: string
+  agent_id: string
+  is_active: boolean
+  depends_on_agent_ids: string[] | null
+  execution_config: Record<string, any> | null
+  execution_order: number | null
+  total_executions: number
+  last_executed_at: string | null
+}
+
+interface StreamRow extends Row<'streams'> {
+  goal_criteria: Record<string, any> | null
+  target_metrics: Record<string, any> | null
+  success_criteria: Record<string, any> | null
+  current_progress: Record<string, any> | null
+}
+
+interface AgentExecutionRow extends Row<'agent_executions'> {
+  goal_context: Record<string, any> | null
+}
 
 /**
  * POST /api/streams/[id]/agents/[agentId]/execute
@@ -28,7 +53,7 @@ export async function POST(
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(
@@ -45,20 +70,20 @@ export async function POST(
       .from('streams')
       .select('*')
       .eq('id', streamId)
-      .single()
+      .single() as { data: StreamRow | null; error: any }
 
     const { data: agent } = await supabase
       .from('ai_agents')
       .select('*')
       .eq('id', agentId)
-      .single()
+      .single() as { data: Row<'ai_agents'> | null; error: any }
 
     const { data: assignment } = await supabase
       .from('stream_agent_assignments')
       .select('*')
       .eq('stream_id', streamId)
       .eq('agent_id', agentId)
-      .single()
+      .single() as { data: StreamAgentAssignment | null; error: any }
 
     if (!stream || !agent || !assignment) {
       return NextResponse.json(
@@ -83,7 +108,7 @@ export async function POST(
         .select('agent_id, status')
         .eq('stream_id', streamId)
         .in('agent_id', assignment.depends_on_agent_ids)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }) as { data: Pick<Row<'agent_executions'>, 'agent_id' | 'status'>[] | null; error: any }
 
       const completedDependencies = new Set(
         dependentExecutions
@@ -107,7 +132,7 @@ export async function POST(
     }
 
     // Create agent execution record
-    const { data: execution, error: execError } = await supabase
+    const executionInsert = supabase
       .from('agent_executions')
       .insert({
         agent_id: agentId,
@@ -120,10 +145,12 @@ export async function POST(
           target_metrics: stream.target_metrics,
           success_criteria: stream.success_criteria,
           current_progress: stream.current_progress
-        }
-      })
+        } as any
+      } as any)
       .select()
       .single()
+
+    const { data: execution, error: execError } = await executionInsert as { data: AgentExecutionRow | null; error: any }
 
     if (execError) {
       console.error('Error creating execution:', execError)
@@ -134,24 +161,26 @@ export async function POST(
     }
 
     // Create agent task for async execution
-    await supabase
-      .from('agent_tasks')
-      .insert({
-        agent_id: agentId,
-        org_id: stream.org_id,
-        task_type: 'stream_execution',
-        priority: assignment.execution_order || 5,
-        payload: {
-          stream_id: streamId,
-          execution_id: execution.id,
-          goal_context: execution.goal_context
-        },
-        status: 'pending'
-      })
+    if (execution) {
+      await supabase
+        .from('agent_tasks')
+        .insert({
+          agent_id: agentId,
+          org_id: stream.org_id,
+          task_type: 'stream_execution',
+          priority: assignment.execution_order || 5,
+          payload: {
+            stream_id: streamId,
+            execution_id: execution.id,
+            goal_context: execution.goal_context
+          } as any,
+          status: 'pending'
+        } as any)
+    }
 
     // Update assignment last execution
-    await supabase
-      .from('stream_agent_assignments')
+    const assignmentTable = supabase.from('stream_agent_assignments') as any
+    await assignmentTable
       .update({
         last_executed_at: new Date().toISOString(),
         total_executions: (assignment.total_executions || 0) + 1
@@ -159,40 +188,44 @@ export async function POST(
       .eq('id', assignment.id)
 
     // Create activity
-    await supabase
-      .from('stream_activities')
-      .insert({
-        stream_id: streamId,
-        user_id: user.id,
-        activity_type: 'ai_update',
-        description: `Started execution of ${agent.name}`,
-        is_system: false,
-        importance: 'normal',
-        metadata: {
-          agent_id: agentId,
-          execution_id: execution.id
-        }
-      })
+    if (execution) {
+      await supabase
+        .from('stream_activities')
+        .insert({
+          stream_id: streamId,
+          user_id: user.id,
+          activity_type: 'ai_update',
+          description: `Started execution of ${agent.name}`,
+          is_system: false,
+          importance: 'normal',
+          metadata: {
+            agent_id: agentId,
+            execution_id: execution.id
+          } as any
+        } as any)
+    }
 
     // Generate initial insight
-    await supabase
-      .from('stream_insights')
-      .insert({
-        stream_id: streamId,
-        insight_type: 'progress_update',
-        title: `${agent.name} Started`,
-        description: `${agent.name} has begun working on this goal`,
-        severity: 'info',
-        data: {
-          agent_name: agent.name,
-          agent_type: agent.agent_type,
-          execution_id: execution.id
-        },
-        generated_by: agentId,
-        agent_execution_id: execution.id,
-        is_read: false,
-        is_actionable: false
-      })
+    if (execution) {
+      await supabase
+        .from('stream_insights')
+        .insert({
+          stream_id: streamId,
+          insight_type: 'progress_update',
+          title: `${agent.name} Started`,
+          description: `${agent.name} has begun working on this goal`,
+          severity: 'info',
+          data: {
+            agent_name: agent.name,
+            agent_type: agent.agent_type,
+            execution_id: execution.id
+          } as any,
+          generated_by: agentId,
+          agent_execution_id: execution.id,
+          is_read: false,
+          is_actionable: false
+        } as any)
+    }
 
     return NextResponse.json({
       execution,

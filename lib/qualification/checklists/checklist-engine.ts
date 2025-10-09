@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   QualificationChecklist,
   ChecklistItem,
@@ -19,6 +20,29 @@ interface ChecklistTemplate {
       data_source?: string;
     }[];
   }[];
+}
+
+// Interfaces for BANT/MEDDIC qualification data structure
+interface BudgetDetails {
+  budget_range?: string;
+  budget_confirmed?: boolean;
+  [key: string]: unknown;
+}
+
+interface AuthorityDetails {
+  decision_makers?: Array<unknown>;
+  [key: string]: unknown;
+}
+
+interface NeedDetails {
+  pain_points?: Array<unknown>;
+  [key: string]: unknown;
+}
+
+interface TimelineDetails {
+  decision_date?: string;
+  buying_stage?: string;
+  [key: string]: unknown;
 }
 
 export class ChecklistEngine {
@@ -43,16 +67,16 @@ export class ChecklistEngine {
       const supabase = await this.getSupabase();
 
       // Check for existing checklist
-      const { data: existing } = await supabase
+      const { data: existing } = (await supabase
         .from('qualification_checklists')
         .select('*')
         .eq('lead_id', request.lead_id)
         .eq('company_id', request.company_id)
         .eq('framework', request.framework)
-        .single();
+        .single()) as { data: Record<string, unknown> | null; error: unknown };
 
       if (existing) {
-        return await this.getChecklist(existing.id);
+        return await this.getChecklist(existing.id as string);
       }
 
       // Get template
@@ -113,7 +137,7 @@ export class ChecklistEngine {
       .from('qualification_checklists')
       .select(`
         *,
-        checklist_items(*)
+        checklist_items(*) as { data: Row<'qualification_checklists'>[] | null; error: any }
       `)
       .eq('id', checklistId)
       .single();
@@ -239,41 +263,41 @@ export class ChecklistEngine {
     const supabase = await this.getSupabase();
 
     // Get auto-populatable items
-    const { data: items } = await supabase
+    const { data: items } = (await supabase
       .from('checklist_items')
       .select('*')
       .eq('checklist_id', checklistId)
-      .eq('auto_populate', true);
+      .eq('auto_populate', true)) as { data: Row<'checklist_items'>[] | null; error: unknown };
 
     if (!items || items.length === 0) return;
 
     // Get lead and company data
-    const { data: lead } = await supabase
+    const { data: lead } = (await supabase
       .from('lead_scores')
       .select('*')
       .eq('id', leadId)
-      .single();
+      .single()) as { data: Row<'lead_scores'> | null; error: unknown };
 
-    const { data: company } = await supabase
+    const { data: company } = (await supabase
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single();
+      .single()) as { data: Row<'businesses'> | null; error: unknown };
 
     // Get BANT/MEDDIC qualifications if they exist
-    const { data: bantQual } = await supabase
+    const { data: bantQual } = (await supabase
       .from('bant_qualifications')
       .select('*')
       .eq('lead_id', leadId)
       .eq('company_id', companyId)
-      .single();
+      .single()) as { data: Row<'bant_qualifications'> | null; error: unknown };
 
-    const { data: meddicQual } = await supabase
+    const { data: meddicQual } = (await supabase
       .from('meddic_qualifications')
       .select('*')
       .eq('lead_id', leadId)
       .eq('company_id', companyId)
-      .single();
+      .single()) as { data: Row<'meddic_qualifications'> | null; error: unknown };
 
     // Auto-populate each item
     for (const item of items) {
@@ -309,27 +333,32 @@ export class ChecklistEngine {
   private async populateItem(
     item: ChecklistItem,
     data: {
-      lead: Record<string, unknown>;
-      company: Record<string, unknown>;
-      bantQual: Record<string, unknown>;
-      meddicQual: Record<string, unknown>;
+      lead: Row<'lead_scores'> | null;
+      company: Row<'businesses'> | null;
+      bantQual: Row<'bant_qualifications'> | null;
+      meddicQual: Row<'meddic_qualifications'> | null;
     }
   ): Promise<{ answer: string; evidence: Array<Record<string, unknown>>; suggestion?: string; confidence?: number } | null> {
     const question = item.question.toLowerCase();
 
+    // Cast to any for flexible property access since these are Json fields
+    const bantQualData = data.bantQual as Record<string, unknown> | null;
+    const companyData = data.company as Record<string, unknown> | null;
+    const leadData = data.lead as Record<string, unknown> | null;
+
     // Budget-related questions
     if (question.includes('budget') || question.includes('funding')) {
-      if (data.bantQual?.budget_details) {
-        const budget = data.bantQual.budget_details;
+      if (bantQualData?.budget_details) {
+        const budget = bantQualData.budget_details as BudgetDetails;
         return {
           answer: `Budget range: ${budget.budget_range}, Confirmed: ${budget.budget_confirmed}`,
           evidence: [{ type: 'bant_qualification', data: budget }],
           confidence: budget.budget_confirmed ? 0.9 : 0.6
         };
-      } else if (data.company?.annual_revenue) {
+      } else if (companyData?.annual_revenue) {
         return {
-          answer: `Estimated based on revenue: ${this.estimateBudgetFromRevenue(data.company.annual_revenue)}`,
-          evidence: [{ type: 'company_data', data: { annual_revenue: data.company.annual_revenue } }],
+          answer: `Estimated based on revenue: ${this.estimateBudgetFromRevenue(companyData.annual_revenue as number)}`,
+          evidence: [{ type: 'company_data', data: { annual_revenue: companyData.annual_revenue } }],
           suggestion: 'Budget confirmation needed',
           confidence: 0.5
         };
@@ -338,8 +367,9 @@ export class ChecklistEngine {
 
     // Authority-related questions
     if (question.includes('decision maker') || question.includes('stakeholder')) {
-      if (data.bantQual?.authority_details?.decision_makers) {
-        const dms = data.bantQual.authority_details.decision_makers;
+      const authorityDetails = bantQualData?.authority_details as AuthorityDetails | undefined;
+      if (authorityDetails?.decision_makers) {
+        const dms = authorityDetails.decision_makers;
         return {
           answer: `${dms.length} decision makers identified`,
           evidence: [{ type: 'decision_makers', data: dms }],
@@ -350,8 +380,9 @@ export class ChecklistEngine {
 
     // Need-related questions
     if (question.includes('pain point') || question.includes('challenge')) {
-      if (data.bantQual?.need_details?.pain_points) {
-        const pains = data.bantQual.need_details.pain_points;
+      const needDetails = bantQualData?.need_details as NeedDetails | undefined;
+      if (needDetails?.pain_points) {
+        const pains = needDetails.pain_points;
         return {
           answer: `${pains.length} pain points identified`,
           evidence: [{ type: 'pain_points', data: pains }],
@@ -362,8 +393,8 @@ export class ChecklistEngine {
 
     // Timeline-related questions
     if (question.includes('timeline') || question.includes('decision date')) {
-      if (data.bantQual?.timeline_details) {
-        const timeline = data.bantQual.timeline_details;
+      if (bantQualData?.timeline_details) {
+        const timeline = bantQualData.timeline_details as TimelineDetails;
         return {
           answer: `Decision date: ${timeline.decision_date || 'Not set'}, Stage: ${timeline.buying_stage}`,
           evidence: [{ type: 'timeline', data: timeline }],
@@ -374,10 +405,10 @@ export class ChecklistEngine {
 
     // Company information
     if (question.includes('company size') || question.includes('employees')) {
-      if (data.company?.employee_count) {
+      if (companyData?.employee_count) {
         return {
-          answer: `${data.company.employee_count} employees`,
-          evidence: [{ type: 'company_data', data: { employee_count: data.company.employee_count } }],
+          answer: `${companyData.employee_count} employees`,
+          evidence: [{ type: 'company_data', data: { employee_count: companyData.employee_count } }],
           confidence: 0.95
         };
       }
@@ -385,10 +416,10 @@ export class ChecklistEngine {
 
     // Industry information
     if (question.includes('industry') || question.includes('sector')) {
-      if (data.company?.industry) {
+      if (companyData?.industry) {
         return {
-          answer: data.company.industry,
-          evidence: [{ type: 'company_data', data: { industry: data.company.industry } }],
+          answer: companyData.industry as string,
+          evidence: [{ type: 'company_data', data: { industry: companyData.industry } }],
           confidence: 0.95
         };
       }
@@ -396,10 +427,10 @@ export class ChecklistEngine {
 
     // Lead score
     if (question.includes('lead score') || question.includes('qualification score')) {
-      if (data.lead?.total_score) {
+      if (leadData?.total_score) {
         return {
-          answer: `Lead score: ${data.lead.total_score}/100`,
-          evidence: [{ type: 'lead_score', data: data.lead }],
+          answer: `Lead score: ${leadData.total_score}/100`,
+          evidence: [{ type: 'lead_score', data: leadData }],
           confidence: 0.9
         };
       }
@@ -415,10 +446,10 @@ export class ChecklistEngine {
     const supabase = await this.getSupabase();
 
     // Get all items
-    const { data: items } = await supabase
+    const { data: items } = (await supabase
       .from('checklist_items')
       .select('status, is_required')
-      .eq('checklist_id', checklistId);
+      .eq('checklist_id', checklistId)) as { data: Row<'checklist_items'>[] | null; error: unknown };
 
     if (!items) return;
 
@@ -471,10 +502,10 @@ export class ChecklistEngine {
     const supabase = await this.getSupabase();
 
     // Get all items with dependencies
-    const { data: items } = await supabase
+    const { data: items } = (await supabase
       .from('checklist_items')
       .select('*')
-      .eq('checklist_id', checklistId);
+      .eq('checklist_id', checklistId)) as { data: Row<'checklist_items'>[] | null; error: unknown };
 
     if (!items) return;
 
@@ -487,11 +518,11 @@ export class ChecklistEngine {
     // Update dependent items
     for (const item of dependentItems) {
       const deps = item.dependencies as { prerequisite_items?: string[] } | undefined;
-      const prereqs = deps.prerequisite_items || [];
+      const prereqs = deps?.prerequisite_items || [];
 
       // Check if all prerequisites are met
       const prereqsMet = prereqs.every((prereqId: string) => {
-        const prereqItem = items.find(i => i.id === prereqId);
+        const prereqItem = items.find(i => i.id === prereqId) as Record<string, unknown> | undefined;
         return prereqItem?.status === 'completed';
       });
 
@@ -538,29 +569,29 @@ export class ChecklistEngine {
   private async createRequiredItemsAlert(checklistId: string): Promise<void> {
     const supabase = await this.getSupabase();
 
-    const { data: checklist } = await supabase
+    const { data: checklist } = (await supabase
       .from('qualification_checklists')
       .select('lead_id')
       .eq('id', checklistId)
-      .single();
+      .single()) as { data: Record<string, unknown> | null; error: unknown };
 
     if (!checklist) return;
 
     // Check if alert already exists
-    const { data: existingAlert } = await supabase
+    const { data: existingAlert } = (await supabase
       .from('scoring_alerts')
       .select('id')
-      .eq('lead_id', checklist.lead_id)
+      .eq('lead_id', checklist.lead_id as string)
       .eq('alert_type', 'checklist_required_items')
       .eq('is_resolved', false)
-      .single();
+      .single()) as { data: Record<string, unknown> | null; error: unknown };
 
     if (existingAlert) return;
 
     await supabase
       .from('scoring_alerts')
       .insert({
-        lead_id: checklist.lead_id,
+        lead_id: checklist.lead_id as string,
         alert_type: 'checklist_required_items',
         severity: 'warning',
         title: 'Required checklist items incomplete',

@@ -61,6 +61,14 @@ export interface ScanConfiguration {
   readonly requiredCapabilities: readonly string[]
   readonly strategicObjectives?: Record<string, unknown>
   readonly budget?: BudgetConstraints
+  readonly filters?: {
+    readonly minEmployees?: number
+    readonly maxEmployees?: number
+    readonly minRevenue?: number
+    readonly maxRevenue?: number
+    readonly foundingYear?: number
+    readonly excludeIndustries?: readonly string[]
+  }
 }
 
 export interface IndustrySelection {
@@ -98,8 +106,8 @@ export interface IDataSourceProvider {
   readonly costModel: CostModel
   readonly reliability: number
 
-  search(criteria: SearchCriteria, options?: SearchOptions): AsyncIterator<CompanyEntity>
-  getCompanyDetails(id: string): Promise<CompanyEntity | null>
+  search(criteria: SearchCriteria, options?: SearchOptions): AsyncIterable<any>
+  getCompanyDetails(id: string): Promise<any | null>
   getRateLimit(): RateLimitInfo
   getHealthStatus(): Promise<HealthStatus>
   testConnection(): Promise<ConnectionTestResult>
@@ -129,6 +137,14 @@ export interface SearchCriteria {
   readonly minEmployeeCount?: number
   readonly maxEmployeeCount?: number
   readonly keywords?: readonly string[]
+  readonly filters?: {
+    readonly minEmployees?: number
+    readonly maxEmployees?: number
+    readonly minRevenue?: number
+    readonly maxRevenue?: number
+    readonly foundingYear?: number
+    readonly excludeIndustries?: readonly string[]
+  }
 }
 
 export interface SearchOptions {
@@ -136,6 +152,7 @@ export interface SearchOptions {
   readonly includeInactive?: boolean
   readonly minConfidence?: number
   readonly timeout?: number
+  readonly rateLimitDelay?: number
 }
 
 export interface CostModel {
@@ -280,14 +297,15 @@ export interface IScanOrchestrationService {
 }
 
 export interface ICacheService {
-  get(key: string): Promise<any>
-  set(key: string, value: any, ttl?: number): Promise<void>
+  get<T>(key: string): Promise<T | null>
+  set<T>(key: string, value: T, ttl?: number): Promise<void>
   delete(key: string): Promise<void>
 }
 
 export interface IRateLimitingService {
   checkLimit(key: string): Promise<boolean>
   increment(key: string): Promise<void>
+  getDelay(key: string): Promise<number>
 }
 
 export interface ICostManagementService {
@@ -517,6 +535,7 @@ export interface ICacheProvider {
 
 export interface IEventBus {
   publish<T>(event: DomainEvent<T>): Promise<void>
+  publishMany<T>(events: readonly DomainEvent<T>[]): Promise<void>
   subscribe<T>(eventType: string, handler: EventHandler<T>): void
   unsubscribe<T>(eventType: string, handler: EventHandler<T>): void
 }

@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { Row } from '@/lib/supabase/helpers'
 import {
   User,
   Brain,
@@ -33,7 +34,7 @@ interface SettingSection {
 }
 
 export default function SettingsPage() {
-  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
+  const [user, setUser] = useState<{ id: string; email?: string; profile?: Row<'profiles'> } | null>(null)
   const [loading, setLoading] = useState(true)
   const [completionPercentage, setCompletionPercentage] = useState(0)
 
@@ -52,9 +53,9 @@ export default function SettingsPage() {
           .select('*')
           .eq('id', user.id)
           .single()
-        
-        setUser({ ...user, profile })
-        calculateCompletion(profile)
+
+        setUser({ ...user, profile: profile as Row<'profiles'> })
+        calculateCompletion(profile as Row<'profiles'>)
       }
     } catch (error) {
       console.error('Error loading user data:', error)

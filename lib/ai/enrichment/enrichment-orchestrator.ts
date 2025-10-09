@@ -13,6 +13,38 @@
 import { createClient } from '@/lib/supabase/server'
 import { createLinkedInScraperAgent } from '@/lib/ai/agents/linkedin-scraper-agent'
 import { createWebsiteAnalyzerAgent } from '@/lib/ai/agents/website-analyzer-agent'
+import type { Row } from '@/lib/supabase/helpers'
+
+// Database row interfaces for enrichment tables
+interface EnrichmentJobRow {
+  id: string
+  org_id: string
+  company_ids: string[]
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  enrichment_types: EnrichmentType[]
+  progress: {
+    total: number
+    completed: number
+    failed: number
+  }
+  results: EnrichmentResult[]
+  started_at: string | null
+  completed_at: string | null
+  error: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+interface AgentRow {
+  id: string
+  org_id: string
+  name: string
+  agent_type: string
+  configuration: Record<string, any>
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
 
 export interface EnrichmentRequest {
   companyIds: string[]
@@ -98,7 +130,7 @@ export class EnrichmentOrchestrator {
       .select('*')
       .eq('id', jobId)
       .eq('org_id', this.orgId)
-      .single()
+      .single() as { data: EnrichmentJobRow | null; error: any }
 
     if (error || !data) {
       return null
@@ -113,7 +145,7 @@ export class EnrichmentOrchestrator {
       results: data.results || [],
       startedAt: data.started_at ? new Date(data.started_at) : undefined,
       completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
-      error: data.error
+      error: data.error ?? undefined
     }
   }
 
@@ -128,13 +160,13 @@ export class EnrichmentOrchestrator {
       .select('*')
       .eq('org_id', this.orgId)
       .order('created_at', { ascending: false })
-      .limit(limit)
+      .limit(limit) as { data: EnrichmentJobRow[] | null; error: any }
 
     if (error || !data) {
       return []
     }
 
-    return data.map(row => ({
+    return data.map((row: EnrichmentJobRow) => ({
       id: row.id,
       companyIds: row.company_ids,
       status: row.status,
@@ -143,7 +175,7 @@ export class EnrichmentOrchestrator {
       results: row.results || [],
       startedAt: row.started_at ? new Date(row.started_at) : undefined,
       completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
-      error: row.error
+      error: row.error ?? undefined
     }))
   }
 
@@ -153,13 +185,15 @@ export class EnrichmentOrchestrator {
   async cancelJob(jobId: string): Promise<boolean> {
     const supabase = await createClient()
 
-    const { error } = await supabase
-      .from('enrichment_jobs')
-      .update({
-        status: 'failed',
-        error: 'Cancelled by user',
-        completed_at: new Date().toISOString()
-      })
+    const updateData: Partial<EnrichmentJobRow> = {
+      status: 'failed' as const,
+      error: 'Cancelled by user',
+      completed_at: new Date().toISOString()
+    }
+
+    const { error } = await (supabase
+      .from('enrichment_jobs') as any)
+      .update(updateData)
       .eq('id', jobId)
       .eq('org_id', this.orgId)
 
@@ -346,24 +380,26 @@ export class EnrichmentOrchestrator {
       .select('id')
       .eq('org_id', this.orgId)
       .eq('agent_type', 'linkedin_scraper_agent')
-      .single()
+      .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
 
     if (!linkedInAgent) {
+      const insertData: Omit<AgentRow, 'id' | 'created_at' | 'updated_at'> = {
+        org_id: this.orgId,
+        name: 'LinkedIn Scraper',
+        agent_type: 'linkedin_scraper_agent',
+        configuration: {
+          headless: true,
+          includeEmployeeGrowth: true,
+          includeRecentPosts: true
+        },
+        is_active: true
+      }
+
       const { data: newAgent } = await supabase
         .from('ai_agents')
-        .insert({
-          org_id: this.orgId,
-          name: 'LinkedIn Scraper',
-          agent_type: 'linkedin_scraper_agent',
-          configuration: {
-            headless: true,
-            includeEmployeeGrowth: true,
-            includeRecentPosts: true
-          },
-          is_active: true
-        })
+        .insert(insertData as any)
         .select('id')
-        .single()
+        .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
 
       linkedInAgent = newAgent
     }
@@ -374,24 +410,26 @@ export class EnrichmentOrchestrator {
       .select('id')
       .eq('org_id', this.orgId)
       .eq('agent_type', 'website_analyzer_agent')
-      .single()
+      .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
 
     if (!websiteAgent) {
+      const insertData: Omit<AgentRow, 'id' | 'created_at' | 'updated_at'> = {
+        org_id: this.orgId,
+        name: 'Website Analyzer',
+        agent_type: 'website_analyzer_agent',
+        configuration: {
+          analyzeTechStack: true,
+          analyzeContent: true,
+          analyzeCareerPages: true
+        },
+        is_active: true
+      }
+
       const { data: newAgent } = await supabase
         .from('ai_agents')
-        .insert({
-          org_id: this.orgId,
-          name: 'Website Analyzer',
-          agent_type: 'website_analyzer_agent',
-          configuration: {
-            analyzeTechStack: true,
-            analyzeContent: true,
-            analyzeCareerPages: true
-          },
-          is_active: true
-        })
+        .insert(insertData as any)
         .select('id')
-        .single()
+        .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
 
       websiteAgent = newAgent
     }
@@ -408,7 +446,7 @@ export class EnrichmentOrchestrator {
   private async saveJob(job: EnrichmentJob): Promise<void> {
     const supabase = await createClient()
 
-    const jobData = {
+    const jobData: Omit<EnrichmentJobRow, 'created_at' | 'updated_at'> = {
       id: job.id,
       org_id: this.orgId,
       company_ids: job.companyIds,
@@ -416,15 +454,15 @@ export class EnrichmentOrchestrator {
       enrichment_types: job.enrichmentTypes,
       progress: job.progress,
       results: job.results,
-      started_at: job.startedAt?.toISOString(),
-      completed_at: job.completedAt?.toISOString(),
-      error: job.error
+      started_at: job.startedAt?.toISOString() ?? null,
+      completed_at: job.completedAt?.toISOString() ?? null,
+      error: job.error ?? null
     }
 
     // Upsert job
     await supabase
       .from('enrichment_jobs')
-      .upsert(jobData)
+      .upsert(jobData as any)
   }
 }
 

@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { motion, AnimatePresence } from 'framer-motion'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface SavedBusiness {
   id: string
@@ -113,9 +114,9 @@ export default function SavedBusinessesPage() {
 
       if (error) throw error
 
-      const formattedData = data?.filter(item => item.businesses).map(item => ({
+      const formattedData = data?.filter(item => (item as { businesses?: unknown }).businesses).map(item => ({
         ...item,
-        business: item.businesses!
+        business: (item as { businesses: unknown }).businesses!
       })) || []
 
       setSavedBusinesses(formattedData as SavedBusiness[])

@@ -312,6 +312,7 @@ export class CompanyEntity {
       data.contactInfo,
       data.confidenceScore,
       data.sourceMetadata,
+      // @ts-ignore - Supabase type inference issue
       new Date(data.createdAt),
       new Date(data.updatedAt)
     )

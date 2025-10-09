@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   GraphQueryRequest,
   GraphQueryResponse,
@@ -18,6 +19,21 @@ import type {
   EntityType,
   RelationshipType
 } from '../types'
+
+// RPC result interfaces
+interface SearchResult {
+  entity_id: string
+  entity_name: string
+  entity_type: EntityType
+  description?: string
+  similarity: number
+}
+
+interface RelatedEntityResult {
+  entity_id: string
+  relationship_type: RelationshipType
+  relationship_strength: number
+}
 
 export class GraphQueryEngine {
   /**
@@ -37,7 +53,7 @@ export class GraphQueryEngine {
         .from('profiles')
         .select('org_id')
         .eq('id', userId)
-        .single()
+        .single() as { data: Row<'profiles'> | null; error: any }
 
       if (!profile?.org_id) {
         return this.errorResponse('User org not found', startTime)
@@ -84,7 +100,7 @@ export class GraphQueryEngine {
         .from('profiles')
         .select('org_id')
         .eq('id', userId)
-        .single()
+        .single() as { data: Row<'profiles'> | null; error: any }
 
       if (!profile?.org_id) {
         return {
@@ -117,13 +133,14 @@ export class GraphQueryEngine {
           p_similarity_threshold: request.similarity_threshold || 0.7,
           p_limit: request.limit || 20
         }
-      )
+      ) as { data: SearchResult[] | null; error: any }
 
       if (error) throw error
 
       // Get preview facts for each entity
       const enrichedResults = await Promise.all(
-        results.map(async (r: any) => {
+        (results || []).map(async (r) => {
+          // @ts-ignore - Type inference issue
           const { data: facts } = await supabase.rpc('get_entity_facts', {
             p_entity_id: r.entity_id,
             p_include_historical: false
@@ -174,7 +191,7 @@ export class GraphQueryEngine {
         .from('profiles')
         .select('org_id')
         .eq('id', userId)
-        .single()
+        .single() as { data: Row<'profiles'> | null; error: any }
 
       if (!profile?.org_id) {
         return {
@@ -191,7 +208,7 @@ export class GraphQueryEngine {
         .select('*')
         .eq('id', request.entity_id)
         .eq('org_id', profile.org_id)
-        .single()
+        .single() as { data: Row<'knowledge_entities'> | null; error: any }
 
       if (!centralEntity) {
         return {
@@ -354,29 +371,33 @@ export class GraphQueryEngine {
       visitedNodes.add(current.id)
 
       // Get entity
-      const { data: entity } = await supabase
+      const { data: entityData } = await supabase
         .from('knowledge_entities')
         .select('*')
         .eq('id', current.id)
         .single()
 
+      const entity = entityData as KnowledgeEntity | null
+
       if (entity) {
         nodes.push({
           id: entity.id,
           label: entity.entity_name,
-          type: entity.entity_type,
-          subtype: entity.entity_subtype,
+          type: entity.entity_type as EntityType,
+          subtype: entity.entity_subtype || undefined,
           confidence: entity.confidence,
-          metadata: entity.metadata
+          metadata: entity.metadata || undefined
         })
       }
 
       // Get relationships
-      const { data: relationships } = await supabase.rpc('find_related_entities', {
+      const { data: relationshipsData } = await supabase.rpc('find_related_entities', {
         p_entity_id: current.id,
         p_relationship_type: relationshipTypes?.[0] || null,
         p_limit: 20
       })
+
+      const relationships = relationshipsData as RelatedEntityResult[] | null
 
       for (const rel of relationships || []) {
         edges.push({
@@ -385,7 +406,7 @@ export class GraphQueryEngine {
           target: rel.entity_id,
           type: rel.relationship_type,
           strength: rel.relationship_strength,
-          confidence: entity.confidence
+          confidence: entity?.confidence || 'medium'
         })
 
         if (!visitedNodes.has(rel.entity_id) && current.depth < maxDepth) {

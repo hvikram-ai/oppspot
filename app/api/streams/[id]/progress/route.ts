@@ -1,5 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
+
+// Type definitions for stream-related data
+interface StreamRow {
+  id: string
+  org_id: string
+  name: string
+  description: string | null
+  emoji: string | null
+  color: string | null
+  stream_type: string
+  is_active: boolean
+  created_by: string
+  created_at: string
+  updated_at: string
+  target_metrics?: {
+    companies_to_find?: number
+    min_quality_score?: number
+    [key: string]: any
+  }
+  current_progress?: {
+    completed?: number
+    total?: number
+    percentage?: number
+    last_updated?: string
+    items_by_stage?: Record<string, number>
+    quality_score?: number
+    signals_detected?: number
+    [key: string]: any
+  }
+  goal_status?: string
+  goal_deadline?: string | null
+  [key: string]: any
+}
+
+interface StreamItemRow {
+  id: string
+  stream_id: string
+  item_type: string
+  item_id: string | null
+  position: number
+  stage_id: string | null
+  status?: string
+  metadata: {
+    quality_score?: number
+    signals?: string[]
+    [key: string]: any
+  } | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+interface StreamMemberRow {
+  id: string
+  stream_id: string
+  user_id: string
+  role: string
+  created_at: string
+}
+
+interface AgentExecutionRow {
+  id: string
+  agent_id: string
+  status: string
+  started_at: string | null
+  completed_at: string | null
+  duration_ms: number | null
+  results_summary: Record<string, any> | null
+  ai_agents?: {
+    name?: string
+    agent_type?: string
+  } | null
+}
+
+interface StreamInsightRow {
+  id: string
+  stream_id: string
+  insight_type: string
+  title: string
+  description: string
+  severity: string
+  data: Record<string, any> | null
+  generated_by: string
+  is_read: boolean
+  is_actionable: boolean
+  created_at: string
+}
 
 /**
  * GET /api/streams/[id]/progress
@@ -28,7 +116,7 @@ export async function GET(
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: Pick<StreamMemberRow, 'role'> | null; error: any }
 
     if (!membership) {
       return NextResponse.json(
@@ -42,7 +130,7 @@ export async function GET(
       .from('streams')
       .select('*')
       .eq('id', streamId)
-      .single()
+      .single() as { data: StreamRow | null; error: any }
 
     if (!stream) {
       return NextResponse.json(
@@ -55,12 +143,13 @@ export async function GET(
     const { data: items } = await supabase
       .from('stream_items')
       .select('*')
-      .eq('stream_id', streamId)
+      .eq('stream_id', streamId) as { data: StreamItemRow[] | null; error: any }
 
+    const targetMetrics = stream.target_metrics as { companies_to_find?: number; min_quality_score?: number } | null
     const totalItems = items?.length || 0
     const completedItems = items?.filter(item => item.status === 'completed').length || 0
-    const percentage = stream.target_metrics.companies_to_find
-      ? Math.round((totalItems / stream.target_metrics.companies_to_find) * 100)
+    const percentage = targetMetrics?.companies_to_find
+      ? Math.round((totalItems / targetMetrics.companies_to_find) * 100)
       : totalItems > 0 ? 100 : 0
 
     // Calculate items by stage
@@ -73,30 +162,30 @@ export async function GET(
 
     // Calculate quality metrics
     const itemsWithScores = items?.filter(
-      item => item.metadata && typeof item.metadata.quality_score === 'number'
+      item => item.metadata && typeof (item.metadata as { quality_score?: number }).quality_score === 'number'
     ) || []
 
     const avgQualityScore = itemsWithScores.length > 0
-      ? itemsWithScores.reduce((sum, item) => sum + (item.metadata.quality_score as number), 0) / itemsWithScores.length
+      ? itemsWithScores.reduce((sum, item) => sum + ((item.metadata as { quality_score: number }).quality_score), 0) / itemsWithScores.length
       : 0
 
     const highQualityCount = itemsWithScores.filter(
-      item => (item.metadata.quality_score as number) >= (stream.target_metrics.min_quality_score || 4.0)
+      item => ((item.metadata as { quality_score: number }).quality_score) >= (targetMetrics?.min_quality_score || 4.0)
     ).length
 
     // Count signals detected
     const signalsDetected = items?.reduce((count, item) => {
-      const signals = item.metadata?.signals as string[] || []
+      const signals = (item.metadata as { signals?: string[] } | null)?.signals || []
       return count + signals.length
     }, 0) || 0
 
     // Update stream progress in database
-    await supabase
-      .from('streams')
+    const updateProgressResult = await (supabase
+      .from('streams') as any)
       .update({
         current_progress: {
           completed: totalItems,
-          total: stream.target_metrics.companies_to_find || totalItems,
+          total: targetMetrics?.companies_to_find || totalItems,
           percentage,
           last_updated: new Date().toISOString(),
           items_by_stage: itemsByStage,
@@ -124,13 +213,13 @@ export async function GET(
       `)
       .eq('stream_id', streamId)
       .order('created_at', { ascending: false })
-      .limit(10)
+      .limit(10) as { data: AgentExecutionRow[] | null; error: any }
 
     const recentAgentExecutions = executions?.map(exec => ({
       id: exec.id,
       agent_id: exec.agent_id,
-      agent_name: (exec.ai_agents as any)?.name || 'Unknown',
-      agent_type: (exec.ai_agents as any)?.agent_type || 'unknown',
+      agent_name: exec.ai_agents?.name || 'Unknown',
+      agent_type: exec.ai_agents?.agent_type || 'unknown',
       status: exec.status,
       started_at: exec.started_at,
       completed_at: exec.completed_at,
@@ -144,7 +233,7 @@ export async function GET(
       .select('*')
       .eq('stream_id', streamId)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(20) as { data: StreamInsightRow[] | null; error: any }
 
     // Determine goal status
     let goalStatus = stream.goal_status
@@ -165,19 +254,19 @@ export async function GET(
 
     // Update goal status if changed
     if (goalStatus !== stream.goal_status) {
-      await supabase
-        .from('streams')
+      const updateStatusResult = await (supabase
+        .from('streams') as any)
         .update({ goal_status: goalStatus })
         .eq('id', streamId)
 
       // Create insight for status change
-      await supabase
-        .from('stream_insights')
+      const insertInsightResult = await (supabase
+        .from('stream_insights') as any)
         .insert({
           stream_id: streamId,
           insight_type: 'progress_update',
           title: `Goal Status: ${goalStatus}`,
-          description: `Your goal status has been updated to ${goalStatus.replace('_', ' ')}`,
+          description: `Your goal status has been updated to ${goalStatus?.replace('_', ' ') || ''}`,
           severity: goalStatus === 'completed' ? 'success' : goalStatus === 'at_risk' ? 'warning' : 'info',
           data: {
             previous_status: stream.goal_status,
@@ -194,7 +283,7 @@ export async function GET(
       stream,
       progress: {
         completed: totalItems,
-        total: stream.target_metrics.companies_to_find || totalItems,
+        total: targetMetrics?.companies_to_find || totalItems,
         percentage,
         last_updated: new Date().toISOString(),
         items_by_stage: itemsByStage,

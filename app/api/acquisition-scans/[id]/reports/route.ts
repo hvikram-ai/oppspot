@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
@@ -31,7 +32,7 @@ export async function GET(
       .from('acquisition_scans')
       .select('user_id, org_id')
       .eq('id', scanId)
-      .single() as { data: { user_id: string; org_id: string | null } | null; error: unknown }
+      .single() as { data: Pick<Row<'acquisition_scans'>, 'user_id' | 'org_id'> | null; error: any } 
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -106,7 +107,7 @@ export async function POST(
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: unknown }
+      .single() as { data: Row<'acquisition_scans'> | null; error: any }
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -257,7 +258,7 @@ async function generateReportContent(supabase: DbClient, scanId: string, reportT
       .from('market_intelligence')
       .select('*')
       .eq('scan_id', scanId)
-      .single()
+      .single() as { data: Row<'market_intelligence'> | null; error: any }
 
     // Generate content based on report type
     switch (reportType) {
@@ -337,7 +338,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: { org_id: string | null } | null; error: unknown }
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any } 
 
     return profile?.org_id === orgId
   } catch (error) {

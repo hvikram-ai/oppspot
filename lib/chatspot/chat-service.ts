@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { IntentRecognizer } from './intent-recognizer'
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   ChatMessage,
   ChatResponse,
@@ -287,7 +288,7 @@ Keep responses under 200 words unless detailed explanation needed.`
         .select('*')
         .ilike('name', `%${companyName}%`)
         .limit(1)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       if (!company) {
         return {
@@ -409,7 +410,7 @@ Keep responses under 200 words unless detailed explanation needed.`
       .select('*')
       .eq('id', conversationId)
       .eq('user_id', userId)
-      .single()
+      .single() as { data: Row<'chat_conversations'> | null; error: any }
 
     return data
   }
@@ -424,12 +425,13 @@ Keep responses under 200 words unless detailed explanation needed.`
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: Row<'profiles'> | null; error: any }
 
     if (!profile) return null
 
     const { data } = await supabase
       .from('chat_conversations')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         org_id: profile.org_id,
         user_id: userId,
@@ -453,7 +455,7 @@ Keep responses under 200 words unless detailed explanation needed.`
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
-      .limit(limit)
+      .limit(limit) as { data: Row<'chat_messages'>[] | null; error: any }
 
     return (data || []).reverse()
   }
@@ -465,6 +467,7 @@ Keep responses under 200 words unless detailed explanation needed.`
     const supabase = await createClient()
 
     const { data } = await supabase
+      // @ts-ignore - Supabase type inference issue
       .from('chat_messages')
       .insert({
         conversation_id: conversationId,

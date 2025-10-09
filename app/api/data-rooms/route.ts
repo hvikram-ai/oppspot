@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { CreateDataRoomRequest, DataRoom } from '@/lib/data-room/types'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,7 +31,14 @@ export async function GET(request: NextRequest) {
         data_room_access!inner(permission_level)
       `)
       .eq('status', status)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false }) as {
+        data: Array<Row<'data_rooms'> & {
+          user_id: string
+          profiles?: { name?: string; email?: string }
+          data_room_access?: Array<{ permission_level?: string }>
+        }> | null
+        error: any
+      }
 
     if (error) {
       console.error('[Data Rooms API] List error:', error)
@@ -82,6 +90,7 @@ export async function POST(request: NextRequest) {
     // Create data room
     const { data: dataRoom, error } = await supabase
       .from('data_rooms')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         user_id: user.id,
         name: body.name.trim(),
@@ -94,21 +103,22 @@ export async function POST(request: NextRequest) {
         metadata: body.metadata || {}
       })
       .select()
-      .single()
+      .single() as { data: (Row<'data_rooms'> & { id: string; name: string }) | null; error: any }
 
     if (error) {
       console.error('[Data Rooms API] Create error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // @ts-ignore - Supabase type inference issue
     // Log activity
     await supabase.from('activity_logs').insert({
-      data_room_id: dataRoom.id,
+      data_room_id: dataRoom!.id,
       actor_id: user.id,
       actor_name: user.user_metadata?.name || user.email || 'Unknown',
       actor_email: user.email || '',
       action: 'create_room',
-      details: { name: dataRoom.name },
+      details: { name: dataRoom!.name },
       ip_address: request.headers.get('x-forwarded-for') || '0.0.0.0',
       user_agent: request.headers.get('user-agent') || 'Unknown'
     })

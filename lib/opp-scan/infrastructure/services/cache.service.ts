@@ -5,13 +5,28 @@
 
 import { ICacheService, CacheOptions } from '../../core/interfaces'
 
+// Extended Redis client interface with all required methods
+interface RedisClient {
+  get: (key: string) => Promise<string | null>
+  set: (key: string, value: string, ex: number) => Promise<void>
+  del: (key: string) => Promise<void>
+  setex: (key: string, seconds: number, value: string) => Promise<void>
+  sadd: (key: string, ...members: string[]) => Promise<number>
+  smembers: (key: string) => Promise<string[]>
+  expire: (key: string, seconds: number) => Promise<number>
+  keys: (pattern: string) => Promise<string[]>
+  exists: (...keys: string[]) => Promise<number>
+  pipeline: () => any
+  info: (section?: string) => Promise<string>
+}
+
 export class CacheService implements ICacheService {
   private memoryCache = new Map<string, CacheItem>()
   private readonly defaultTtl = 3600 // 1 hour
   private readonly maxMemoryItems = 1000
-  
+
   constructor(
-    private readonly redisClient?: { get: (key: string) => Promise<string | null>; set: (key: string, value: string, ex: number) => Promise<void>; del: (key: string) => Promise<void> }
+    private readonly redisClient?: RedisClient
   ) {
     // Clean up expired items from memory cache periodically
     setInterval(() => this.cleanupMemoryCache(), 300000) // Every 5 minutes

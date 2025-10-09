@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import {
   LeadRecyclingRule,
   LeadRecyclingHistory,
@@ -17,6 +18,11 @@ interface LeadData {
   event_attendance?: boolean;
   original_assigned_to?: string;
   assigned_to?: string;
+  updated_at?: string;
+  previous_score?: number;
+  score?: number;
+  demo_requested?: boolean;
+  price_inquiry?: boolean;
 }
 
 export class LeadRecyclingEngine {
@@ -112,8 +118,8 @@ export class LeadRecyclingEngine {
 
     // Find matching rule based on conditions
     for (const rule of rules) {
-      if (this.matchesConditions(rule, reason, leadData)) {
-        return rule;
+      if (this.matchesConditions(rule as LeadRecyclingRule, reason, leadData)) {
+        return rule as LeadRecyclingRule;
       }
     }
 
@@ -135,7 +141,7 @@ export class LeadRecyclingEngine {
     }
 
     // Check time since disqualification
-    if (conditions.time_since_disqualification) {
+    if (conditions.time_since_disqualification && leadData.updated_at) {
       const daysSinceDisqualification = this.calculateDaysSince(
         leadData.updated_at
       );
@@ -167,11 +173,11 @@ export class LeadRecyclingEngine {
   private hasEngagementSignal(leadData: LeadData, signal: string): boolean {
     switch (signal) {
       case 'website_visit':
-        return leadData.recent_website_visits > 0;
+        return (leadData.recent_website_visits ?? 0) > 0;
       case 'email_open':
-        return leadData.email_opens > 0;
+        return (leadData.email_opens ?? 0) > 0;
       case 'content_download':
-        return leadData.content_downloads > 0;
+        return (leadData.content_downloads ?? 0) > 0;
       case 'demo_request':
         return leadData.demo_requested === true;
       case 'price_inquiry':
@@ -201,14 +207,16 @@ export class LeadRecyclingEngine {
         );
 
         // Update lead status to re-engaged
-        await supabase
-          .from('lead_scores')
-          .update({
-            status: 're_engaged',
-            assigned_to,
-            re_engaged_at: new Date().toISOString()
-          })
-          .eq('id', leadData.id);
+        if (leadData.id) {
+          await (supabase
+            .from('lead_scores')
+            .update as any)({
+              status: 're_engaged',
+              assigned_to,
+              re_engaged_at: new Date().toISOString()
+            })
+            .eq('id', leadData.id);
+        }
         break;
 
       case 'nurture':
@@ -218,7 +226,7 @@ export class LeadRecyclingEngine {
           leadData
         );
 
-        if (nurture_campaign) {
+        if (nurture_campaign && leadData.id) {
           await this.addToNurtureCampaign(
             leadData.id,
             nurture_campaign.id
@@ -226,18 +234,22 @@ export class LeadRecyclingEngine {
         }
 
         // Update lead status
-        await supabase
-          .from('lead_scores')
-          .update({
-            status: 'nurturing',
-            nurture_campaign_id: nurture_campaign?.id
-          })
-          .eq('id', leadData.id);
+        if (leadData.id) {
+          await (supabase
+            .from('lead_scores')
+            .update as any)({
+              status: 'nurturing',
+              nurture_campaign_id: nurture_campaign?.id
+            })
+            .eq('id', leadData.id);
+        }
         break;
 
       case 're_qualify':
         // Reset qualification and re-run
-        await this.resetQualification(leadData.id);
+        if (leadData.id) {
+          await this.resetQualification(leadData.id);
+        }
 
         // Trigger re-qualification workflow
         assigned_to = await this.determineAssignment(
@@ -245,26 +257,30 @@ export class LeadRecyclingEngine {
           leadData
         );
 
-        await supabase
-          .from('lead_scores')
-          .update({
-            status: 're_qualifying',
-            assigned_to,
-            re_qualification_date: new Date().toISOString()
-          })
-          .eq('id', leadData.id);
+        if (leadData.id) {
+          await (supabase
+            .from('lead_scores')
+            .update as any)({
+              status: 're_qualifying',
+              assigned_to,
+              re_qualification_date: new Date().toISOString()
+            })
+            .eq('id', leadData.id);
+        }
         break;
 
       case 'archive':
         // Archive the lead
-        await supabase
-          .from('lead_scores')
-          .update({
-            status: 'archived',
-            archived_at: new Date().toISOString(),
-            archive_reason: reason
-          })
-          .eq('id', leadData.id);
+        if (leadData.id) {
+          await (supabase
+            .from('lead_scores')
+            .update as any)({
+              status: 'archived',
+              archived_at: new Date().toISOString(),
+              archive_reason: reason
+            })
+            .eq('id', leadData.id);
+        }
         break;
     }
 
@@ -308,10 +324,10 @@ export class LeadRecyclingEngine {
         .eq('is_active', true)
         .single();
 
-      return generalCampaign;
+      return generalCampaign as NurtureCampaign | null;
     }
 
-    return campaign;
+    return campaign as NurtureCampaign;
   }
 
   private async addToNurtureCampaign(
@@ -329,7 +345,7 @@ export class LeadRecyclingEngine {
         enrolled_at: new Date().toISOString(),
         status: 'active',
         current_step: 0
-      });
+      } as any);
 
     // Schedule first campaign step
     const { data: campaign } = await supabase
@@ -338,11 +354,12 @@ export class LeadRecyclingEngine {
       .eq('id', campaignId)
       .single();
 
-    if (campaign?.nurture_campaign_steps?.length) {
+    const typedCampaign = campaign as any;
+    if (typedCampaign?.nurture_campaign_steps?.length) {
       await this.scheduleNextStep(
         leadId,
         campaignId,
-        campaign.nurture_campaign_steps[0]
+        typedCampaign.nurture_campaign_steps[0]
       );
     }
   }
@@ -367,7 +384,7 @@ export class LeadRecyclingEngine {
         task_type: step.type,
         scheduled_for: executionTime,
         status: 'pending'
-      });
+      } as any);
   }
 
   private calculateStepExecutionTime(timing: string): string {
@@ -408,7 +425,7 @@ export class LeadRecyclingEngine {
 
     switch (strategy) {
       case 'original_rep':
-        return leadData.original_assigned_to || leadData.assigned_to;
+        return leadData.original_assigned_to || leadData.assigned_to || null;
 
       case 'new_rep':
         // Get available reps
@@ -421,7 +438,7 @@ export class LeadRecyclingEngine {
         if (reps?.length) {
           // Simple round-robin for now
           const randomIndex = Math.floor(Math.random() * reps.length);
-          return reps[randomIndex].id;
+          return (reps[randomIndex] as any).id;
         }
         break;
 
@@ -434,7 +451,7 @@ export class LeadRecyclingEngine {
           .eq('is_active', true)
           .single();
 
-        return nurtureTeam?.id;
+        return (nurtureTeam as any)?.id;
 
       case 'marketing':
         // Assign to marketing team queue
@@ -465,9 +482,9 @@ export class LeadRecyclingEngine {
       .eq('lead_id', leadId);
 
     // Reset lead score
-    await supabase
+    await (supabase
       .from('lead_scores')
-      .update({
+      .update as any)({
         score: 0,
         qualification_status: null,
         qualified_at: null
@@ -489,10 +506,10 @@ export class LeadRecyclingEngine {
         lead_id: leadId,
         company_id: companyId,
         rule_id: ruleId,
-        recycling_reason: result.action,
-        recycled_to: result.assigned_to,
+        recycling_reason: result.action as string,
+        recycled_to: result.assigned_to as string,
         created_at: new Date().toISOString()
-      });
+      } as any);
   }
 
   private calculateDaysSince(date: string): number {
@@ -522,7 +539,8 @@ export class LeadRecyclingEngine {
     }>();
 
     for (const record of history) {
-      const ruleId = record.rule_id;
+      const typedRecord = record as LeadRecyclingHistory;
+      const ruleId = typedRecord.rule_id;
       if (!ruleId) continue;
 
       if (!rulePerformance.has(ruleId)) {
@@ -536,10 +554,10 @@ export class LeadRecyclingEngine {
       const perf = rulePerformance.get(ruleId)!;
       perf.total++;
 
-      if (record.outcome === 'converted' || record.outcome === 're_qualified') {
+      if (typedRecord.outcome === 'converted' || typedRecord.outcome === 're_qualified') {
         perf.successful++;
-        if (record.outcome_date) {
-          const days = this.calculateDaysSince(record.created_at);
+        if (typedRecord.outcome_date && typedRecord.created_at) {
+          const days = this.calculateDaysSince(typedRecord.created_at);
           perf.avgDaysToConversion =
             (perf.avgDaysToConversion * (perf.successful - 1) + days) / perf.successful;
         }
@@ -552,9 +570,9 @@ export class LeadRecyclingEngine {
 
       // Boost priority for high-performing rules
       if (successRate > 0.3) {
-        await supabase
+        await (supabase
           .from('lead_recycling_rules')
-          .update({
+          .update as any)({
             priority: Math.min(100, Math.round(successRate * 100)),
             settings: {
               success_rate: successRate,
@@ -600,13 +618,13 @@ export class LeadRecyclingEngine {
           )
         )
       `)
-      .eq('lead.company.industry', lead.company?.industry)
+      .eq('lead.company.industry', (lead as any).company?.industry)
       .not('outcome', 'is', null);
 
     if (!similarLeads?.length) return 0.5; // Default 50% if no data
 
     // Calculate success rate for similar leads
-    const successful = similarLeads.filter(l =>
+    const successful = similarLeads.filter((l: any) =>
       l.outcome === 'converted' || l.outcome === 're_qualified'
     ).length;
 

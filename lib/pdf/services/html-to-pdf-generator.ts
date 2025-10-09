@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@/lib/utils/error-handler'
 import puppeteer from 'puppeteer'
 import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -206,7 +207,7 @@ export class HTMLToPDFGenerator {
 
     } catch (error) {
       console.error('HTML-to-PDF generation error:', error)
-      throw new Error(`Failed to generate PDF from HTML: ${error.message}`)
+      throw new Error(`Failed to generate PDF from HTML: ${getErrorMessage(error)}`)
     } finally {
       if (browser) {
         await browser.close()
@@ -249,7 +250,7 @@ export class HTMLToPDFGenerator {
       .single()
 
     if (error) {
-      throw new Error(`Failed to create export record: ${error.message}`)
+      throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)
     }
 
     return exportRecord

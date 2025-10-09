@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
     
     if (!business) {
       return NextResponse.json(

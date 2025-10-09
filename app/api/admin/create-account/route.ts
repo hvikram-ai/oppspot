@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { headers } from 'next/headers'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Admin API endpoint to create premium accounts
 // Protected by API key for security

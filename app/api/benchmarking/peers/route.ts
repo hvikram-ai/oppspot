@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { peerIdentifier } from '@/lib/benchmarking/peers/peer-identifier'
 import type { IdentifyPeersRequest } from '@/lib/benchmarking/types/benchmarking'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         api_name: 'benchmarking',
         endpoint: '/api/benchmarking/peers',
@@ -105,7 +107,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     let query = supabase.from('peer_groups').select('*')
 

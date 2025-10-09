@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -709,7 +710,7 @@ function SimilarCompanyDetailContent() {
 
     } catch (error) {
       console.error('Export error:', error)
-      toast.error(error.message || 'Failed to generate PDF export', { id: 'pdf-export' })
+      toast.error(getErrorMessage(error) || 'Failed to generate PDF export', { id: 'pdf-export' })
     } finally {
       setExportLoading(false)
     }
@@ -762,7 +763,7 @@ function SimilarCompanyDetailContent() {
 
     } catch (error) {
       console.error('Page export error:', error)
-      toast.error(error.message || 'Failed to capture page as PDF', { id: 'page-export' })
+      toast.error(getErrorMessage(error) || 'Failed to capture page as PDF', { id: 'page-export' })
     } finally {
       setPageExportLoading(false)
     }

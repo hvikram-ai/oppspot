@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles, Clock, TrendingUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { Row } from '@/lib/supabase/helpers'
 
 async function getResearchHistory(userId: string) {
   const supabase = await createClient();
@@ -23,14 +24,14 @@ async function getResearchHistory(userId: string) {
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(50) as { data: Row<'research_reports'>[] | null; error: any };
 
   if (error) {
     console.error('Failed to fetch research history:', error);
     return [];
   }
 
-  return reports;
+  return reports || [];
 }
 
 export default async function ResearchPage() {

@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@/lib/utils/error-handler'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { CleanSimilarityTemplate } from '../templates/CleanSimilarityTemplate'
 import { createClient } from '@/lib/supabase/server'
@@ -149,7 +150,7 @@ export class SimilarityPDFGenerator {
 
     } catch (error) {
       console.error('PDF generation error:', error)
-      throw new Error(`Failed to generate PDF: ${error.message}`)
+      throw new Error(`Failed to generate PDF: ${getErrorMessage(error)}`)
     }
   }
 
@@ -357,7 +358,7 @@ export class SimilarityPDFGenerator {
       .single()
 
     if (error) {
-      throw new Error(`Failed to create export record: ${error.message}`)
+      throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)
     }
 
     return exportRecord
@@ -441,7 +442,7 @@ export class SimilarityPDFGenerator {
       return pdfBuffer
     } catch (error) {
       console.error('PDF rendering error:', error)
-      throw new Error(`Failed to render PDF: ${error.message}`)
+      throw new Error(`Failed to render PDF: ${getErrorMessage(error)}`)
     }
   }
 

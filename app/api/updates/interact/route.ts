@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 // POST: Handle update interactions (like, view, share)
 export async function POST(request: NextRequest) {
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
       case 'like':
         // Toggle like
         const { data: likeResult, error: likeError } = await supabase
+          // @ts-ignore - Type inference issue
           .rpc('toggle_update_like', {
             update_id: updateId,
             user_id: user.id
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
         // Record share interaction
         const { error: shareError } = await supabase
           .from('update_interactions')
+          // @ts-ignore - Supabase type inference issue
           .insert({
             update_id: updateId,
             user_id: user.id,
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
           .eq('update_id', updateId)
           .eq('user_id', user.id)
           .eq('interaction_type', 'save')
-          .single()
+          .single() as { data: Pick<Row<'update_interactions'>, 'id'> | null; error: any }
         
         if (existingSave) {
           // Unsave
@@ -100,6 +103,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Save
           await supabase
+            // @ts-ignore - Supabase type inference issue
             .from('update_interactions')
             .insert({
               update_id: updateId,

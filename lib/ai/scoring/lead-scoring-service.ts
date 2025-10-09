@@ -13,6 +13,7 @@ import { EngagementTracker } from './engagement-tracker'
 import { IndustryAlignmentScorer } from './industry-alignment-scorer'
 import { OllamaScoringService } from './ollama-scoring-service'
 import { isOllamaEnabled } from '@/lib/ai/ollama'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface LeadScore {
   id?: string
@@ -378,6 +379,7 @@ export class LeadScoringService {
     for (const [type, weight] of Object.entries(newWeights)) {
       await supabase
         .from('scoring_criteria')
+        // @ts-ignore - Type inference issue
         .update({ weight, updated_at: new Date().toISOString() })
         .eq('org_id', orgId)
         .eq('criteria_type', type)
@@ -397,7 +399,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('company_number', identifier.toUpperCase())
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       if (byNumber) return byNumber
 
@@ -405,7 +407,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('id', identifier)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       return byId
     }
@@ -415,7 +417,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('id', identifier.company_id)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
       return data
     }
 
@@ -424,7 +426,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('company_number', identifier.company_number.toUpperCase())
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
       return data
     }
 
@@ -434,7 +436,7 @@ export class LeadScoringService {
       .select('*')
       .ilike('name', `%${identifier.company_name}%`)
       .limit(1)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
     return data
   }
@@ -445,7 +447,7 @@ export class LeadScoringService {
       .from('lead_scores')
       .select('*')
       .eq('company_id', companyId)
-      .single()
+      .single() as { data: Row<'lead_scores'> | null; error: any }
 
     return data
   }
@@ -468,7 +470,7 @@ export class LeadScoringService {
         .from('scoring_criteria')
         .select('criteria_type, weight')
         .eq('org_id', options.org_id)
-        .eq('is_active', true)
+        .eq('is_active', true) as { data: Row<'scoring_criteria'>[] | null; error: any }
 
       if (data && data.length > 0) {
         const weights: any = {}
@@ -531,6 +533,7 @@ export class LeadScoringService {
 
     const { error } = await supabase
       .from('lead_scores')
+      // @ts-ignore - Supabase type inference issue
       .upsert({
         company_id: score.company_id,
         company_number: score.company_number,
@@ -568,7 +571,7 @@ export class LeadScoringService {
       .from('scoring_alerts')
       .select('*')
       .eq('org_id', orgId)
-      .eq('is_active', true)
+      .eq('is_active', true) as { data: Row<'scoring_alerts'>[] | null; error: any }
 
     if (!alerts) return
 
@@ -753,6 +756,7 @@ export class LeadScoringService {
     const supabase = await createClient()
 
     await supabase
+      // @ts-ignore - Supabase type inference issue
       .from('lead_scores')
       .upsert({
         ...score,

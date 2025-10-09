@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { IntelligentSimilarityService } from '@/lib/intelligent-analysis/intelligent-similarity-service'
 import { IntelligentSimilarityRequest } from '@/lib/intelligent-analysis/intelligent-similarity-service'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Initialize the intelligent similarity service
 let intelligentSimilarityService: IntelligentSimilarityService
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         .from('profiles')
         .select('org_id, role')
         .eq('id', user.id)
-        .single()
+        .single() as { data: (Row<'profiles'> & { org_id?: string; role?: string }) | null; error: any }
       profile = data
     }
 
@@ -161,17 +162,26 @@ export async function POST(request: NextRequest) {
     const analysisResult = await service.generateIntelligentAnalysis(intelligentRequest)
     
     console.log(`[IntelligentAPI] Analysis completed for: ${target_company_name}`)
-    console.log(`[IntelligentAPI] Found ${analysisResult.intelligent_competitors.length} competitors`)
-    console.log(`[IntelligentAPI] Confidence score: ${analysisResult.target_analysis.confidence_score}%`)
+    console.log(`[IntelligentAPI] Found ${analysisResult.similar_company_matches.length} competitors`)
+
+    const targetAnalysis = analysisResult.target_company_analysis as Record<string, unknown> & {
+      confidence_score?: number
+      analysis_metadata?: {
+        processing_time_ms?: number
+        data_sources?: string[]
+        llm_model?: string
+      }
+    }
+    console.log(`[IntelligentAPI] Confidence score: ${targetAnalysis.confidence_score}%`)
 
     return NextResponse.json({
       analysis: analysisResult,
       analysisId,
       status: 'completed',
       message: 'AI-powered similarity analysis completed successfully',
-      processing_time_ms: analysisResult.target_analysis.analysis_metadata.processing_time_ms,
-      data_sources: analysisResult.target_analysis.analysis_metadata.data_sources,
-      llm_model: analysisResult.target_analysis.analysis_metadata.llm_model
+      processing_time_ms: targetAnalysis.analysis_metadata?.processing_time_ms,
+      data_sources: targetAnalysis.analysis_metadata?.data_sources,
+      llm_model: targetAnalysis.analysis_metadata?.llm_model
     })
 
   } catch (error) {

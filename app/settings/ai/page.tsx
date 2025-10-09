@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { Row } from '@/lib/supabase/helpers'
 import {
   Brain,
   Plus,
@@ -171,12 +172,13 @@ export default function AISettingsPage() {
         .from('user_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .single() as { data: Row<'user_settings'> | null; error: any }
 
-      if (settings) {
-        setSelectedProvider(settings.default_ai_provider || 'openrouter')
-        if (settings.local_llm_config?.ollama_url) {
-          setOllamaUrl(settings.local_llm_config.ollama_url)
+      const typedSettings = settings as Row<'user_settings'> | null
+      if (typedSettings) {
+        setSelectedProvider((typedSettings as { default_ai_provider?: string }).default_ai_provider || 'openrouter')
+        if ((typedSettings as { local_llm_config?: { ollama_url?: string } }).local_llm_config?.ollama_url) {
+          setOllamaUrl((typedSettings as { local_llm_config: { ollama_url: string } }).local_llm_config.ollama_url)
         }
       }
 
@@ -185,7 +187,7 @@ export default function AISettingsPage() {
         .from('api_keys')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }) as { data: Row<'api_keys'>[] | null; error: any }
 
       if (keys) {
         setApiKeys(keys.map(key => ({
@@ -314,6 +316,7 @@ export default function AISettingsPage() {
 
       const { error } = await supabase
         .from('user_settings')
+        // @ts-ignore - Supabase type inference issue
         .upsert({
           user_id: user.id,
           default_ai_provider: selectedProvider,

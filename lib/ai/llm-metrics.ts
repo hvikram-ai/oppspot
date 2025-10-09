@@ -407,10 +407,15 @@ export class LLMMetricsCollector implements LLMMonitor {
 
 /**
  * Monitored LLM Provider wrapper
- * 
+ *
  * Wraps any LLM provider with monitoring capabilities
  */
-export class MonitoredLLMProvider<T extends any> {
+export class MonitoredLLMProvider<T extends {
+  complete: (prompt: string, options?: any) => Promise<string>
+  estimateTokens?: (text: string) => number
+  calculateCost?: (tokens: number) => number
+  constructor: { name: string }
+}> {
   private monitor: LLMMetricsCollector
   private provider: T
 
@@ -423,16 +428,16 @@ export class MonitoredLLMProvider<T extends any> {
     const startTime = Date.now()
     let success = false
     let response = ''
-    
+
     try {
       response = await this.provider.complete(prompt, options)
       success = true
-      
+
       const endTime = Date.now()
       const responseTime = endTime - startTime
       const tokens = this.provider.estimateTokens ? this.provider.estimateTokens(response) : 0
       const cost = this.provider.calculateCost ? this.provider.calculateCost(tokens) : 0
-      
+
       this.monitor.recordGeneration({
         tokensGenerated: tokens,
         responseTime,
@@ -440,7 +445,7 @@ export class MonitoredLLMProvider<T extends any> {
         cost,
         provider: this.provider.constructor.name.toLowerCase()
       })
-      
+
       return response
     } catch (error) {
       this.monitor.recordError({

@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { Row } from '@/lib/supabase/helpers'
 
 export default function StreamsPage() {
   const router = useRouter()
@@ -41,7 +42,7 @@ export default function StreamsPage() {
           .from('profiles')
           .select('org_id')
           .eq('id', user.id)
-          .single()
+          .single() as { data: Row<'profiles'> | null; error: any }
 
         console.log('Profile:', profile, 'Error:', profileError)
 
@@ -116,7 +117,7 @@ export default function StreamsPage() {
             .from('profiles')
             .select('org_id')
             .eq('id', user.id)
-            .single()
+            .single() as { data: Row<'profiles'> | null; error: any }
 
           if (profile?.org_id) {
             setOrgId(profile.org_id)

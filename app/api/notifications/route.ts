@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { NotificationService } from '@/lib/notifications/notification-service'
+import type { Row } from '@/lib/supabase/helpers'
 
 // GET: Fetch user notifications
 export async function GET(request: NextRequest) {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
     
     const canSendNotifications = profile?.role === 'admin' || 
                                  profile?.role === 'owner' || 
@@ -156,6 +157,7 @@ export async function PATCH(request: NextRequest) {
         // Mark single notification as read
         const { error } = await supabase
           .from('notifications')
+          // @ts-ignore - Type inference issue
           .update({ 
             is_read: true,
             read_at: new Date().toISOString()

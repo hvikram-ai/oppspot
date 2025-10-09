@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { Row } from '@/lib/supabase/helpers'
 import {
   Bell,
   Mail,
@@ -61,7 +62,7 @@ export default function NotificationSettingsPage() {
         .from('profiles')
         .select('preferences')
         .eq('id', user.id)
-        .single()
+        .single() as { data: Row<'profiles'> | null; error: any }
 
       if (profile?.preferences) {
         setSettings(prev => ({
@@ -90,6 +91,7 @@ export default function NotificationSettingsPage() {
 
       const { error } = await supabase
         .from('profiles')
+        // @ts-ignore - Type inference issue
         .update({ 
           preferences: settings,
           updated_at: new Date().toISOString()

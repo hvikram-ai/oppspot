@@ -15,6 +15,7 @@
 import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } from './base-agent'
 import { createClient } from '@/lib/supabase/server'
 import puppeteer, { Browser, Page } from 'puppeteer'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface LinkedInScraperConfig {
   companyIds?: string[] // Specific companies to scrape
@@ -323,11 +324,13 @@ export class LinkedInScraperAgent extends BaseAgent {
     if (Object.keys(updateData).length > 0) {
       await supabase
         .from('businesses')
+        // @ts-ignore - Type inference issue
         .update(updateData)
         .eq('id', data.companyId)
     }
 
     // Store enrichment metadata
+    // @ts-ignore - Supabase type inference issue
     await supabase.from('enrichment_data').insert({
       company_id: data.companyId,
       source: 'linkedin',
@@ -399,7 +402,7 @@ export async function createLinkedInScraperAgent(agentId: string): Promise<Linke
     .select('*')
     .eq('id', agentId)
     .eq('agent_type', 'linkedin_scraper_agent')
-    .single()
+    .single() as { data: Row<'ai_agents'> | null; error: any }
 
   if (error || !data) {
     throw new Error(`LinkedIn scraper agent not found: ${agentId}`)

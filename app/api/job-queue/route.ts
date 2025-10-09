@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { jobQueue, ScanJobProcessor } from '@/lib/opp-scan/job-queue'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
           .from('acquisition_scans')
           .select('*')
           .eq('id', scanId)
-          .single()
+          .single() as { data: Row<'acquisition_scans'> | null; error: any }
 
         if (scanError || !scan) {
           return NextResponse.json(
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
         // Update scan status to queued
         await supabase
           .from('acquisition_scans')
+          // @ts-ignore - Type inference issue
           .update({
             status: 'scanning',
             current_step: 'queued_for_processing',
@@ -189,7 +191,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     return profile?.org_id === orgId
   } catch (error) {

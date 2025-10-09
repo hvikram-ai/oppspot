@@ -3,6 +3,8 @@
  * Real data collection from UK Companies House REST API
  */
 
+import { getErrorMessage } from '@/lib/utils/error-handler'
+
 interface CompaniesHouseConfig {
   apiKey: string
   baseUrl: string
@@ -167,7 +169,7 @@ export class CompaniesHouseAPI {
       return response as CompaniesHouseSearchResponse
     } catch (error) {
       console.error('Companies House search failed:', error)
-      throw new Error(`Companies House API search failed: ${error.message}`)
+      throw new Error(`Companies House API search failed: ${getErrorMessage(error)}`)
     }
   }
 
@@ -186,7 +188,7 @@ export class CompaniesHouseAPI {
       return response as CompaniesHouseCompany
     } catch (error) {
       console.error(`Failed to get company details for ${companyNumber}:`, error)
-      throw new Error(`Failed to get company details: ${error.message}`)
+      throw new Error(`Failed to get company details: ${getErrorMessage(error)}`)
     }
   }
 
@@ -211,7 +213,7 @@ export class CompaniesHouseAPI {
       }
     } catch (error) {
       console.error(`Failed to get officers for ${companyNumber}:`, error)
-      throw new Error(`Failed to get company officers: ${error.message}`)
+      throw new Error(`Failed to get company officers: ${getErrorMessage(error)}`)
     }
   }
 
@@ -236,7 +238,7 @@ export class CompaniesHouseAPI {
       }
     } catch (error) {
       console.error(`Failed to get filings for ${companyNumber}:`, error)
-      throw new Error(`Failed to get company filings: ${error.message}`)
+      throw new Error(`Failed to get company filings: ${getErrorMessage(error)}`)
     }
   }
 
@@ -502,7 +504,7 @@ export class CompaniesHouseAPI {
     } catch (error) {
       return {
         success: false,
-        message: `Connection failed: ${error.message}`
+        message: `Connection failed: ${getErrorMessage(error)}`
       }
     }
   }

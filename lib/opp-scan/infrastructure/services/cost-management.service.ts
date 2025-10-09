@@ -3,13 +3,23 @@
  * Tracks and manages costs across different data sources with budget controls
  */
 
-import { 
+import {
   ICostManagementService,
   CostBreakdown,
   CostEstimate,
-  BudgetAlert,
+  BudgetAlert as BaseBudgetAlert,
   ScanConfiguration
 } from '../../core/interfaces'
+
+// Extended BudgetAlert with additional tracking properties
+interface BudgetAlert extends BaseBudgetAlert {
+  scanId: string
+  budgetLimit: number
+  alertThreshold: number
+  triggered: boolean
+  triggeredAt?: Date
+  createdAt: Date
+}
 
 export class CostManagementService implements ICostManagementService {
   private scanCosts = new Map<string, ScanCostTracker>()

@@ -14,6 +14,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface EmbeddingOptions {
   model?: 'text-embedding-3-small' | 'text-embedding-3-large'
@@ -155,6 +156,7 @@ export class EmbeddingService {
 
     const { error } = await supabase
       .from('businesses')
+      // @ts-ignore - Type inference issue
       .update({
         embedding: JSON.stringify(embeddingResult.embedding),
         embedding_model: embeddingResult.model,
@@ -215,7 +217,7 @@ export class EmbeddingService {
       .from('businesses')
       .select('embedding')
       .eq('id', companyId)
-      .single()
+      .single() as { data: (Row<'businesses'> & { embedding?: number[] }) | null; error: any }
 
     if (fetchError || !company?.embedding) {
       throw new Error(`Company embedding not found for ${companyId}`)
@@ -279,7 +281,7 @@ export class EmbeddingService {
       .from('businesses')
       .select('embedding')
       .eq('id', companyId)
-      .single()
+      .single() as { data: (Row<'businesses'> & { embedding?: number[] }) | null; error: any }
 
     return !!data?.embedding
   }
@@ -299,7 +301,10 @@ export class EmbeddingService {
 
     const { data } = await supabase
       .from('businesses_with_embeddings')
-      .select('has_embedding, embedding_token_count')
+      .select('has_embedding, embedding_token_count') as {
+        data: Array<{ has_embedding?: boolean; embedding_token_count?: number }> | null
+        error: any
+      }
 
     if (!data) {
       return {

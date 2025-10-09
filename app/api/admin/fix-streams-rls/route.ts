@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * POST /api/admin/fix-streams-rls
@@ -34,6 +36,7 @@ export async function POST(_request: NextRequest) {
       END $$;
     `
 
+    // @ts-ignore - Type inference issue
     const { error: dropError } = await supabase.rpc('exec_sql', { sql: dropPoliciesSQL })
 
     if (dropError) {
@@ -75,7 +78,7 @@ export async function POST(_request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Failed to apply RLS fix',
-        message: error.message,
+        message: getErrorMessage(error),
         suggestion: 'Please run the migration SQL directly in Supabase Dashboard'
       },
       { status: 500 }
@@ -106,6 +109,7 @@ export async function GET(_request: NextRequest) {
     // Try to insert a test stream (will rollback)
     const { error: insertError } = await supabase
       .from('streams')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         name: 'RLS_TEST_STREAM_DELETE_ME',
         org_id: 'test',
@@ -129,7 +133,7 @@ export async function GET(_request: NextRequest) {
 
   } catch (error: unknown) {
     return NextResponse.json(
-      { error: 'Failed to check RLS status', message: error.message },
+      { error: 'Failed to check RLS status', message: getErrorMessage(error) },
       { status: 500 }
     )
   }

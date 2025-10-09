@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 /**
  * ADMIN ONLY: Apply database migration
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
         results.push({
           statement: statement.substring(0, 100),
           status: 'error',
-          error: error.message
+          error: getErrorMessage(error)
         })
       }
     }
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('[Migration] Error:', error)
     return NextResponse.json(
-      { error: error.message },
+      { error: getErrorMessage(error) },
       { status: 500 }
     )
   }

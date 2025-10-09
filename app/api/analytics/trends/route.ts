@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { TrendAnalyzer } from '@/lib/analytics/trend-analyzer'
+import type { Row } from '@/lib/supabase/helpers'
 
 // GET: Fetch trend analysis
 export async function GET(request: NextRequest) {
@@ -142,7 +143,7 @@ export async function DELETE(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
     
     if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })

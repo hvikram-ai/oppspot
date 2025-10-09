@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
+type ScanAccess = Pick<Database['public']['Tables']['acquisition_scans']['Row'], 'user_id' | 'org_id'>
+type ScanAccessWithStatus = Pick<Database['public']['Tables']['acquisition_scans']['Row'], 'user_id' | 'org_id' | 'status'>
+type TargetStats = Pick<Database['public']['Tables']['target_companies']['Row'], 'analysis_status' | 'overall_score'>
+type TargetInsert = Database['public']['Tables']['target_companies']['Insert']
+type AuditLogInsert = Database['public']['Tables']['scan_audit_log']['Insert']
+type ProfileOrgId = Pick<Database['public']['Tables']['profiles']['Row'], 'org_id'>
 
 export async function GET(
   request: NextRequest,
@@ -36,9 +43,9 @@ export async function GET(
       .from('acquisition_scans')
       .select('user_id, org_id')
       .eq('id', scanId)
-      .single()
+      .single<ScanAccess>()
 
-    if (scanError) {
+    if (scanError || !scan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
@@ -113,6 +120,7 @@ export async function GET(
       .from('target_companies')
       .select('analysis_status, overall_score')
       .eq('scan_id', scanId)
+      .returns<TargetStats[]>()
 
     const summary = {
       total: count || 0,
@@ -121,7 +129,7 @@ export async function GET(
       completed: stats?.filter(t => t.analysis_status === 'completed').length || 0,
       shortlisted: stats?.filter(t => t.analysis_status === 'shortlisted').length || 0,
       excluded: stats?.filter(t => t.analysis_status === 'excluded').length || 0,
-      average_score: stats && stats.length > 0 
+      average_score: stats && stats.length > 0
         ? stats.reduce((sum, t) => sum + (t.overall_score || 0), 0) / stats.length
         : 0
     }
@@ -169,9 +177,9 @@ export async function POST(
       .from('acquisition_scans')
       .select('user_id, org_id, status')
       .eq('id', scanId)
-      .single()
+      .single<ScanAccessWithStatus>()
 
-    if (scanError) {
+    if (scanError || !scan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
@@ -224,33 +232,35 @@ export async function POST(
     }
 
     // Create target company
-    const { data: target, error: insertError } = await supabase
+    const targetData = {
+      scan_id: scanId,
+      company_name: companyName,
+      companies_house_number: companiesHouseNumber,
+      registration_country: registrationCountry,
+      website,
+      industry_codes: industryCodes || [],
+      business_description: businessDescription,
+      year_incorporated: yearIncorporated,
+      employee_count_range: employeeCountRange,
+      registered_address: registeredAddress,
+      trading_address: tradingAddress,
+      phone,
+      email,
+      discovery_source: discoverySource,
+      discovery_method: discoveryMethod,
+      discovery_confidence: discoveryConfidence,
+      overall_score: 0.0,
+      strategic_fit_score: 0.0,
+      financial_health_score: 0.0,
+      risk_score: 0.0,
+      analysis_status: 'pending' as const
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: target, error: insertError } = await (supabase
       .from('target_companies')
-      .insert({
-        scan_id: scanId,
-        company_name: companyName,
-        companies_house_number: companiesHouseNumber,
-        registration_country: registrationCountry,
-        website,
-        industry_codes: industryCodes || [],
-        business_description: businessDescription,
-        year_incorporated: yearIncorporated,
-        employee_count_range: employeeCountRange,
-        registered_address: registeredAddress,
-        trading_address: tradingAddress,
-        phone,
-        email,
-        discovery_source: discoverySource,
-        discovery_method: discoveryMethod,
-        discovery_confidence: discoveryConfidence,
-        overall_score: 0.0,
-        strategic_fit_score: 0.0,
-        financial_health_score: 0.0,
-        risk_score: 0.0,
-        analysis_status: 'pending'
-      })
+      .insert(targetData as any)
       .select()
-      .single()
+      .single() as any)
 
     if (insertError) {
       console.error('Error creating target company:', insertError)
@@ -261,28 +271,39 @@ export async function POST(
     }
 
     // Update scan targets count
-    await supabase.rpc('increment_scan_targets', { 
-      scan_id: scanId, 
-      increment: 1 
-    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabase.rpc('increment_scan_targets', {
+      scan_id: scanId,
+      increment: 1
+    } as any) as any)
+
+    if (rpcError) {
+      console.error('Failed to increment scan targets:', rpcError)
+    }
 
     // Create audit log entry
-    await supabase
+    const auditLogData = {
+      scan_id: scanId,
+      target_company_id: target?.id,
+      user_id: user.id,
+      action_type: 'target_added',
+      action_description: `Added target company: ${companyName}`,
+      after_state: target,
+      ip_address: request.headers.get('x-forwarded-for') ||
+                 request.headers.get('x-real-ip') ||
+                 'unknown',
+      user_agent: request.headers.get('user-agent') || 'unknown',
+      legal_basis: 'legitimate_interest',
+      retention_period: 365
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: auditError } = await (supabase
       .from('scan_audit_log')
-      .insert({
-        scan_id: scanId,
-        target_company_id: target.id,
-        user_id: user.id,
-        action_type: 'target_added',
-        action_description: `Added target company: ${companyName}`,
-        after_state: target,
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
-                   'unknown',
-        user_agent: request.headers.get('user-agent') || 'unknown',
-        legal_basis: 'legitimate_interest',
-        retention_period: 365
-      })
+      .insert(auditLogData as any) as any)
+
+    if (auditError) {
+      console.error('Failed to create audit log:', auditError)
+    }
 
     return NextResponse.json({ target }, { status: 201 })
   } catch (error) {
@@ -301,7 +322,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single<ProfileOrgId>()
 
     return profile?.org_id === orgId
   } catch (error) {

@@ -381,17 +381,20 @@ export class SimilarityScoringService {
   // Financial similarity calculation methods
 
   private calculateRevenueSimilarity(target: MnAFinancialProfile, candidate: MnAFinancialProfile): number {
-    if (!target.estimatedRevenue || !candidate.estimatedRevenue) return 0.5
+    const targetExtended = target as MnAFinancialProfile & { estimatedRevenue?: number }
+    const candidateExtended = candidate as MnAFinancialProfile & { estimatedRevenue?: number }
 
-    const targetRev = target.estimatedRevenue
-    const candidateRev = candidate.estimatedRevenue
-    
+    if (!targetExtended.estimatedRevenue || !candidateExtended.estimatedRevenue) return 0.5
+
+    const targetRev = targetExtended.estimatedRevenue
+    const candidateRev = candidateExtended.estimatedRevenue
+
     // Calculate similarity based on revenue ratio (closer to 1.0 = more similar)
     const ratio = Math.min(targetRev, candidateRev) / Math.max(targetRev, candidateRev)
-    
+
     // Apply logarithmic scaling to handle large differences
     const logSimilarity = 1 - Math.abs(Math.log10(targetRev) - Math.log10(candidateRev)) / 3
-    
+
     return Math.max(0, Math.min(1, (ratio + logSimilarity) / 2))
   }
 
@@ -852,7 +855,10 @@ export class SimilarityScoringService {
     let dataPoints = 0
     const totalPoints = 8 // Maximum possible data points
 
-    if (target.estimatedRevenue && candidate.estimatedRevenue) dataPoints++
+    const targetExtended = target as MnAFinancialProfile & { estimatedRevenue?: number }
+    const candidateExtended = candidate as MnAFinancialProfile & { estimatedRevenue?: number }
+
+    if (targetExtended.estimatedRevenue && candidateExtended.estimatedRevenue) dataPoints++
     if (target.profitabilityMetrics && candidate.profitabilityMetrics) dataPoints++
     if (target.growthTrajectory && candidate.growthTrajectory) dataPoints++
     if (target.debtProfile && candidate.debtProfile) dataPoints++

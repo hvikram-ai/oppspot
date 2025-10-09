@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import CostManagementService from '@/lib/opp-scan/cost-management'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,10 +65,10 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         )
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Cost management API error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch cost management data', details: error.message },
+      { error: 'Failed to fetch cost management data', details: getErrorMessage(error) },
       { status: 500 }
     )
   }
@@ -125,10 +126,10 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Cost management API error:', error)
     return NextResponse.json(
-      { error: 'Failed to process cost management request', details: error.message },
+      { error: 'Failed to process cost management request', details: getErrorMessage(error) },
       { status: 500 }
     )
   }

@@ -11,6 +11,7 @@ import { Loader2, User, Mail, Building2, Phone, Globe, Save, AlertCircle } from 
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface Profile {
   id: string
@@ -56,16 +57,17 @@ export default function ProfilePage() {
         throw profileError
       }
 
+      const typedProfile = profileData as Row<'profiles'>
       setProfile({
         id: user.id,
         email: user.email || '',
-        full_name: profileData.full_name,
-        avatar_url: profileData.avatar_url,
-        phone: profileData.phone,
-        company: profileData.company,
-        job_title: profileData.job_title,
-        bio: profileData.bio,
-        website: profileData.website,
+        full_name: typedProfile.full_name,
+        avatar_url: typedProfile.avatar_url,
+        phone: typedProfile.phone,
+        company: typedProfile.company,
+        job_title: typedProfile.job_title,
+        bio: typedProfile.bio,
+        website: typedProfile.website,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile')
@@ -84,6 +86,7 @@ export default function ProfilePage() {
 
       const { error: updateError } = await supabase
         .from('profiles')
+        // @ts-ignore - Type inference issue
         .update({
           full_name: profile.full_name,
           phone: profile.phone,

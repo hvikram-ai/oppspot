@@ -6,6 +6,7 @@ import { LeadRoutingEngine } from '../routing/lead-routing-engine'
 import { ThresholdAlertSystem } from '../alerts/threshold-alert-system'
 import { ChecklistEngine } from '../checklists/checklist-engine'
 import { LeadRecyclingEngine } from '../recycling/lead-recycling-engine'
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   BANTQualification,
   MEDDICQualification,
@@ -207,7 +208,7 @@ export class QualificationService {
         }
 
         // Create or update checklist
-        checklist = await this.checklistEngine.createOrUpdateChecklist(
+        checklist = await this.checklistEngine.generateChecklist(
           leadId,
           framework,
           qualification
@@ -219,7 +220,11 @@ export class QualificationService {
                                (qualification as MEDDICQualification).forecast_category === 'omitted')
 
         if (needsRecycling) {
-          await this.recyclingEngine.evaluateLead(leadId, qualification)
+          await this.recyclingEngine.recycleLead({
+            lead_id: leadId,
+            disqualification_reason: qualification.qualification_status,
+            previous_score: qualification.overall_score
+          })
         }
       }
 
@@ -252,7 +257,7 @@ export class QualificationService {
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       if (!company) {
         return 'BANT' // Default to BANT
@@ -265,19 +270,25 @@ export class QualificationService {
         transactional: 0
       }
 
+      // Extract metadata fields
+      const metadata = company.metadata as Record<string, any> || {}
+      const employeeCount = typeof metadata.employee_count === 'number' ? metadata.employee_count : 0
+      const revenue = typeof metadata.revenue === 'number' ? metadata.revenue : 0
+      const industry = typeof metadata.industry === 'string' ? metadata.industry : ''
+
       // Company size indicator
-      if (company.employee_count > 500) {
+      if (employeeCount > 500) {
         indicators.enterprise += 2
-      } else if (company.employee_count > 100) {
+      } else if (employeeCount > 100) {
         indicators.enterprise += 1
       } else {
         indicators.transactional += 1
       }
 
       // Revenue indicator
-      if (company.revenue > 50000000) {
+      if (revenue > 50000000) {
         indicators.enterprise += 2
-      } else if (company.revenue > 10000000) {
+      } else if (revenue > 10000000) {
         indicators.enterprise += 1
       } else {
         indicators.transactional += 1
@@ -285,7 +296,7 @@ export class QualificationService {
 
       // Industry complexity
       const complexIndustries = ['financial', 'healthcare', 'government', 'enterprise_software']
-      if (complexIndustries.includes(company.industry?.toLowerCase())) {
+      if (complexIndustries.includes(industry.toLowerCase())) {
         indicators.enterprise += 1
       }
 
@@ -345,14 +356,14 @@ export class QualificationService {
         .from('bant_qualifications')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(100) as { data: Row<'bant_qualifications'>[] | null; error: any }
 
       // Get MEDDIC qualifications
       const { data: meddicQualifications } = await supabase
         .from('meddic_qualifications')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(100) as { data: Row<'meddic_qualifications'>[] | null; error: any }
 
       // Get active assignments
       const { data: assignments } = await supabase
@@ -360,14 +371,14 @@ export class QualificationService {
         .select('*')
         .in('status', ['assigned', 'accepted', 'working'])
         .order('created_at', { ascending: false })
-        .limit(50)
+        .limit(50) as { data: Row<'lead_assignments'>[] | null; error: any }
 
       // Get recent alerts
       const { data: recentAlerts } = await supabase
         .from('alert_history')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(20)
+        .limit(20) as { data: Row<'alert_history'>[] | null; error: any }
 
       // Calculate statistics
       const allQualifications = [...(bantQualifications || []), ...(meddicQualifications || [])]
@@ -496,10 +507,11 @@ export class QualificationService {
       if (criteria.maxScore !== undefined) {
         query = query.lte('overall_score', criteria.maxScore)
       }
-      if (criteria.daysOld !== undefined) {
-        const cutoffDate = new Date()
-        cutoffDate.setDate(cutoffDate.getDate() - criteria.daysOld)
-        query = query.lte('created_at', cutoffDate.toISOString())
+      if (criteria.dateFrom) {
+        query = query.gte('created_at', criteria.dateFrom.toISOString())
+      }
+      if (criteria.dateTo) {
+        query = query.lte('created_at', criteria.dateTo.toISOString())
       }
 
       const { data: leads } = await query
@@ -510,7 +522,7 @@ export class QualificationService {
 
       // Re-qualify each lead
       const results = []
-      for (const lead of leads) {
+      for (const lead of leads as Array<{ id: string; company_id: string }>) {
         // Get existing qualification data
         const { data: bantData } = await supabase
           .from('bant_qualifications')
@@ -518,17 +530,19 @@ export class QualificationService {
           .eq('lead_id', lead.id)
           .single()
 
-        if (bantData) {
+        const typedBantData = bantData as BANTQualification | null
+
+        if (typedBantData) {
           // Recalculate with existing data
           const result = await this.qualifyLead(
             lead.id,
             lead.company_id,
             'AUTO',
             {
-              budget: bantData.budget_details,
-              authority: bantData.authority_details,
-              need: bantData.need_details,
-              timeline: bantData.timeline_details
+              budget: typedBantData.budget_details,
+              authority: typedBantData.authority_details,
+              need: typedBantData.need_details,
+              timeline: typedBantData.timeline_details
             }
           )
           results.push(result)
@@ -631,6 +645,7 @@ export class QualificationService {
       if (history.assignments.length > 0) {
         const latestAssignment = history.assignments[0]
         const daysSinceAssignment = Math.floor(
+          // @ts-ignore - Supabase type inference issue
           (Date.now() - new Date(latestAssignment.created_at).getTime()) / (1000 * 60 * 60 * 24)
         )
 

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 import { format, addDays } from 'date-fns'
@@ -25,6 +26,46 @@ interface MarketGap {
   type: string
   severity: number
   evidence: string[]
+}
+
+interface BusinessForAnalysis {
+  id: string
+  name: string
+  rating: number
+  review_count: number
+  website?: string | null
+}
+
+interface MarketMetricData {
+  metric_type: string
+  value: number
+  metric_date?: string
+  category?: string
+}
+
+interface TrendAnalysisData {
+  trend_direction: string
+  trend_strength: number
+  confidence_score: number
+  metrics?: Record<string, unknown>
+  insights?: Record<string, unknown>
+}
+
+interface DemandForecastData {
+  factors?: {
+    seasonality?: {
+      hasSeasonality?: boolean
+      [key: string]: unknown
+    }
+    [key: string]: unknown
+  }
+}
+
+interface OpportunityData {
+  category: string
+  location_id?: string | null
+  opportunity_score: number
+  time_window_end: string
 }
 
 export class OpportunityIdentifier {
@@ -84,31 +125,31 @@ export class OpportunityIdentifier {
     const opportunities: Opportunity[] = []
     
     // Get market saturation
-    const { data: metrics } = await this.supabase
+    const { data: metrics } = await this.supabase!
       .from('market_metrics')
       .select('*')
       .eq('category', category)
       .eq('metric_type', 'market_saturation')
       .order('metric_date', { ascending: false })
-      .limit(1)
-    
+      .limit(1) as { data: MarketMetricData[] | null; error: unknown }
+
     const saturation = metrics?.[0]?.value || 0.5
-    
+
     // Get demand index
-    const { data: demandData } = await this.supabase
+    const { data: demandData } = await this.supabase!
       .from('market_metrics')
       .select('*')
       .eq('category', category)
       .eq('metric_type', 'demand_index')
       .order('metric_date', { ascending: false })
-      .limit(1)
-    
+      .limit(1) as { data: MarketMetricData[] | null; error: unknown }
+
     const demand = demandData?.[0]?.value || 0.5
     
     // Low saturation + high demand = underserved market
     if (saturation < 0.3 && demand > 0.6) {
       const score = (1 - saturation) * demand
-      const value = this.estimatePotentialValue(category, locationId, 'underserved')
+      const value = this.estimatePotentialValue(category, 'underserved', locationId)
       
       opportunities.push({
         type: 'underserved_market',
@@ -150,11 +191,11 @@ export class OpportunityIdentifier {
     const opportunities: Opportunity[] = []
     
     // Analyze review sentiment for common complaints
-    const { data: businesses } = await this.supabase
+    const { data: businesses } = await this.supabase!
       .from('businesses')
       .select('id, name, rating, review_count')
       .eq('category', category)
-      .lt('rating', 4) // Focus on lower-rated businesses
+      .lt('rating', 4) as { data: BusinessForAnalysis[] | null; error: unknown } // Focus on lower-rated businesses
     
     if (!businesses || businesses.length === 0) {
       return opportunities
@@ -168,7 +209,7 @@ export class OpportunityIdentifier {
       
       for (const gap of gaps) {
         const score = gap.severity * 0.7
-        const value = this.estimatePotentialValue(category, locationId, 'service_gap')
+        const value = this.estimatePotentialValue(category, 'service_gap', locationId)
         
         opportunities.push({
           type: 'gap_in_service',
@@ -204,13 +245,13 @@ export class OpportunityIdentifier {
     return opportunities
   }
 
-  private analyzeServiceGaps(businesses: Record<string, unknown>[]): MarketGap[] {
+  private analyzeServiceGaps(businesses: BusinessForAnalysis[]): MarketGap[] {
     const gaps: MarketGap[] = []
-    
+
     // Simplified gap analysis based on rating distribution
     const lowRatedCount = businesses.filter(b => b.rating < 3).length
     const percentage = lowRatedCount / businesses.length
-    
+
     if (percentage > 0.3) {
       gaps.push({
         type: 'Customer Service',
@@ -218,7 +259,7 @@ export class OpportunityIdentifier {
         evidence: [`${(percentage * 100).toFixed(0)}% of businesses have ratings below 3`]
       })
     }
-    
+
     if (businesses.some(b => b.review_count < 10)) {
       gaps.push({
         type: 'Customer Engagement',
@@ -226,7 +267,7 @@ export class OpportunityIdentifier {
         evidence: ['Low review counts indicate poor customer engagement']
       })
     }
-    
+
     return gaps
   }
 
@@ -237,14 +278,14 @@ export class OpportunityIdentifier {
     const opportunities: Opportunity[] = []
     
     // Get trend analysis
-    const { data: trends } = await this.supabase
+    const { data: trends } = await this.supabase!
       .from('trend_analysis')
       .select('*')
       .eq('entity_type', 'category')
       .eq('entity_id', category)
       .eq('trend_direction', 'rising')
       .order('trend_strength', { ascending: false })
-      .limit(3)
+      .limit(3) as { data: TrendAnalysisData[] | null; error: unknown }
     
     if (!trends || trends.length === 0) {
       return opportunities
@@ -252,7 +293,7 @@ export class OpportunityIdentifier {
     
     for (const trend of trends) {
       if (trend.trend_strength > 0.6 && trend.confidence_score > 0.7) {
-        const value = this.estimatePotentialValue(category, locationId, 'trend')
+        const value = this.estimatePotentialValue(category, 'trend', locationId)
         
         opportunities.push({
           type: 'emerging_trend',
@@ -295,31 +336,42 @@ export class OpportunityIdentifier {
     const opportunities: Opportunity[] = []
     
     // Find poorly performing competitors
-    const query = this.supabase
+    const query = this.supabase!
       .from('businesses')
       .select('*')
       .eq('category', category)
       .lt('rating', 3.5)
       .order('review_count', { ascending: false })
       .limit(5)
-    
+
     if (locationId) {
       query.eq('location_id', locationId)
     }
-    
-    const { data: weakCompetitors } = await query
-    
+
+    const { data: weakCompetitors } = await query as { data: Row<'businesses'>[] | null; error: unknown }
+
     if (!weakCompetitors || weakCompetitors.length === 0) {
       return opportunities
     }
-    
+
     // Analyze weaknesses
     const commonWeaknesses = this.analyzeCompetitorWeaknesses(weakCompetitors)
-    
+
     if (commonWeaknesses.length > 0) {
       const score = 0.7
-      const value = this.estimatePotentialValue(category, locationId, 'competitor_weakness')
-      
+      const value = this.estimatePotentialValue(category, 'competitor_weakness', locationId)
+
+      // Calculate metrics with type safety
+      const avgRating = weakCompetitors.reduce((sum, c) => {
+        const rating = typeof (c as any).rating === 'number' ? (c as any).rating : 0
+        return sum + rating
+      }, 0) / weakCompetitors.length
+
+      const totalReviews = weakCompetitors.reduce((sum, c) => {
+        const reviews = typeof (c as any).review_count === 'number' ? (c as any).review_count : 0
+        return sum + reviews
+      }, 0)
+
       opportunities.push({
         type: 'competitor_weakness',
         category,
@@ -332,9 +384,9 @@ export class OpportunityIdentifier {
         description: `Multiple competitors showing weaknesses in ${category}, opportunity to capture market share`,
         evidence: {
           weakCompetitorCount: weakCompetitors.length,
-          avgCompetitorRating: weakCompetitors.reduce((sum, c) => sum + c.rating, 0) / weakCompetitors.length,
+          avgCompetitorRating: avgRating,
           weaknesses: commonWeaknesses,
-          totalReviewVolume: weakCompetitors.reduce((sum, c) => sum + c.review_count, 0)
+          totalReviewVolume: totalReviews
         },
         recommendedActions: [
           'Target dissatisfied customers',
@@ -353,26 +405,32 @@ export class OpportunityIdentifier {
     return opportunities
   }
 
-  private analyzeCompetitorWeaknesses(competitors: Record<string, unknown>[]): string[] {
+  private analyzeCompetitorWeaknesses(competitors: Row<'businesses'>[]): string[] {
     const weaknesses: string[] = []
-    
+
     // Analyze common patterns
-    const avgRating = competitors.reduce((sum, c) => sum + c.rating, 0) / competitors.length
-    
+    const avgRating = competitors.reduce((sum, c) => {
+      const rating = typeof (c as any).rating === 'number' ? (c as any).rating : 0
+      return sum + rating
+    }, 0) / competitors.length
+
     if (avgRating < 3) {
       weaknesses.push('Poor overall service quality')
     }
-    
-    const lowReviewCount = competitors.filter(c => c.review_count < 50).length
+
+    const lowReviewCount = competitors.filter(c => {
+      const reviewCount = typeof (c as any).review_count === 'number' ? (c as any).review_count : 0
+      return reviewCount < 50
+    }).length
     if (lowReviewCount > competitors.length / 2) {
       weaknesses.push('Low customer engagement')
     }
-    
+
     // Check for specific category weaknesses
     if (competitors.some(c => !c.website)) {
       weaknesses.push('Limited digital presence')
     }
-    
+
     return weaknesses
   }
 
@@ -383,12 +441,12 @@ export class OpportunityIdentifier {
     const opportunities: Opportunity[] = []
     
     // Get seasonal patterns from demand forecasts
-    const { data: forecasts } = await this.supabase
+    const { data: forecasts } = await this.supabase!
       .from('demand_forecasts')
       .select('*')
       .eq('category', category)
       .order('forecast_date', { ascending: false })
-      .limit(1)
+      .limit(1) as { data: DemandForecastData[] | null; error: unknown }
     
     if (!forecasts || forecasts.length === 0) {
       return opportunities
@@ -404,7 +462,7 @@ export class OpportunityIdentifier {
       if (peakMonths.includes((currentMonth + 2) % 12)) {
         // Opportunity coming in 2 months
         const score = 0.6
-        const value = this.estimatePotentialValue(category, locationId, 'seasonal')
+        const value = this.estimatePotentialValue(category, 'seasonal', locationId)
         
         opportunities.push({
           type: 'seasonal_opportunity',
@@ -446,40 +504,43 @@ export class OpportunityIdentifier {
   }
 
   private async getBusinessCount(category: string, locationId?: string): Promise<number> {
-    const query = this.supabase
+    const query = this.supabase!
       .from('businesses')
       .select('id', { count: 'exact', head: true })
       .eq('category', category)
-    
+
     if (locationId) {
       query.eq('location_id', locationId)
     }
-    
+
     const { count } = await query
     return count || 0
   }
 
   private async getAverageRating(category: string, locationId?: string): Promise<number> {
-    const query = this.supabase
+    const query = this.supabase!
       .from('businesses')
-      .select('rating')
+      .select('ai_insights')
       .eq('category', category)
-    
+
     if (locationId) {
       query.eq('location_id', locationId)
     }
-    
-    const { data } = await query
-    
+
+    const { data } = await query as { data: any[] | null; error: unknown }
+
     if (!data || data.length === 0) return 0
-    
-    return data.reduce((sum, b) => sum + (b.rating || 0), 0) / data.length
+
+    return data.reduce((sum, b) => {
+      const rating = typeof (b as any).rating === 'number' ? (b as any).rating : 0
+      return sum + rating
+    }, 0) / data.length
   }
 
   private estimatePotentialValue(
     category: string,
-    locationId?: string,
-    opportunityType: string
+    opportunityType: string,
+    locationId?: string
   ): number {
     // Simplified value estimation
     // In production, would use market size, revenue data, etc.
@@ -498,7 +559,7 @@ export class OpportunityIdentifier {
 
   private async storeOpportunities(opportunities: Opportunity[]) {
     if (opportunities.length === 0) return
-    
+
     const records = opportunities.map(opp => ({
       type: opp.type,
       category: opp.category,
@@ -515,34 +576,34 @@ export class OpportunityIdentifier {
       status: 'active',
       expires_at: opp.timeWindowEnd
     }))
-    
-    await this.supabase
+
+    await (this.supabase! as any)
       .from('opportunities')
       .insert(records)
   }
 
   // Score a specific opportunity
   async scoreOpportunity(opportunityId: string): Promise<number> {
-    const { data: opportunity } = await this.supabase
+    const { data: opportunity } = await this.supabase!
       .from('opportunities')
       .select('*')
       .eq('id', opportunityId)
-      .single()
-    
+      .single() as { data: OpportunityData | null; error: unknown }
+
     if (!opportunity) return 0
-    
+
     // Recalculate score based on current conditions
     const timeRemaining = this.calculateTimeRemaining(opportunity.time_window_end)
     const marketConditions = await this.assessMarketConditions(
       opportunity.category,
-      opportunity.location_id
+      opportunity.location_id || undefined
     )
-    
+
     // Weighted scoring
     const baseScore = opportunity.opportunity_score
     const timeScore = timeRemaining > 0.5 ? 1 : timeRemaining
     const marketScore = marketConditions
-    
+
     return (baseScore * 0.5 + timeScore * 0.2 + marketScore * 0.3)
   }
 
@@ -562,13 +623,13 @@ export class OpportunityIdentifier {
     locationId?: string
   ): Promise<number> {
     // Get recent market metrics
-    const { data: metrics } = await this.supabase
+    const { data: metrics } = await this.supabase!
       .from('market_metrics')
       .select('*')
       .eq('category', category)
       .in('metric_type', ['growth_rate', 'demand_index'])
       .order('metric_date', { ascending: false })
-      .limit(2)
+      .limit(2) as { data: MarketMetricData[] | null; error: unknown }
     
     if (!metrics || metrics.length === 0) return 0.5
     

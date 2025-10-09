@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateHTMLPageAsPDF } from '@/lib/pdf/services/html-to-pdf-generator'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 // POST: Generate HTML page as PDF export
 export async function POST(
@@ -89,11 +90,11 @@ export async function POST(
 
     } catch (error) {
       console.error('HTML-to-PDF generation error:', error)
-      
+
       return NextResponse.json({
         error: 'PDF generation failed',
         message: 'Unable to generate PDF from HTML page. Please try again.',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       }, { status: 500 })
     }
 

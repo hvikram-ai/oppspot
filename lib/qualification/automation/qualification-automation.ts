@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@/lib/utils/error-handler'
 import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { QualificationService } from '../services/qualification-service'
@@ -673,7 +674,7 @@ export class QualificationAutomation {
         type: 'qualification',
         context,
         success,
-        error: error ? String(error) : null,
+        error: error ? getErrorMessage(error) : null,
         executed_at: new Date().toISOString()
       })
     } catch (logError) {

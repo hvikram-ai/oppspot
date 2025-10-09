@@ -77,7 +77,7 @@ export function SignalCard({ signal, onAction, compact = false }: SignalCardProp
   };
 
   const getSignalDetails = () => {
-    const data = signal.signal_data || {};
+    const data = (signal.signal_data || {}) as Record<string, any>;
 
     switch (signal.signal_type) {
       case 'funding_round':

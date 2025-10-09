@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
+import type { Row } from '@/lib/supabase/helpers'
+
+// Define api_keys table structure
+interface ApiKey {
+  id: string
+  user_id: string
+  provider: string
+  key_name: string
+  encrypted_key: string
+  is_active: boolean
+  last_used: string | null
+  created_at: string
+}
+
+// Sanitized API key response (without encrypted_key)
+interface SanitizedApiKey {
+  id: string
+  provider: string
+  key_name: string
+  is_active: boolean
+  last_used: string | null
+  created_at: string
+}
 
 // Simple encryption for API keys (in production, use a proper key management service)
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-change-in-production'
@@ -51,11 +74,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from('api_keys')
       .select('*')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false })) as { data: ApiKey[] | null; error: any }
 
     if (error) {
       console.error('Error fetching API keys:', error)
@@ -63,14 +86,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Don't send encrypted keys to client, only metadata
-    const sanitizedKeys = data?.map(key => ({
+    const sanitizedKeys: SanitizedApiKey[] = data?.map(key => ({
       id: key.id,
       provider: key.provider,
       key_name: key.key_name,
       is_active: key.is_active,
       last_used: key.last_used,
       created_at: key.created_at
-    }))
+    })) || []
 
     return NextResponse.json({ keys: sanitizedKeys })
   } catch (error) {
@@ -99,17 +122,19 @@ export async function POST(request: NextRequest) {
     // Encrypt the API key before storing
     const encryptedKey = encrypt(apiKey)
 
-    const { data, error } = await supabase
+    const insertData = {
+      user_id: user.id,
+      provider,
+      key_name: keyName,
+      encrypted_key: encryptedKey,
+      is_active: true
+    }
+
+    const { data, error } = (await supabase
       .from('api_keys')
-      .insert({
-        user_id: user.id,
-        provider,
-        key_name: keyName,
-        encrypted_key: encryptedKey,
-        is_active: true
-      })
+      .insert(insertData as any)
       .select()
-      .single()
+      .single()) as { data: ApiKey | null; error: any }
 
     if (error) {
       if (error.code === '23505') { // Unique violation
@@ -119,16 +144,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save API key' }, { status: 500 })
     }
 
+    if (!data) {
+      return NextResponse.json({ error: 'Failed to create API key' }, { status: 500 })
+    }
+
     // Return sanitized response
-    return NextResponse.json({ 
+    const sanitizedKey: SanitizedApiKey = {
+      id: data.id,
+      provider: data.provider,
+      key_name: data.key_name,
+      is_active: data.is_active,
+      last_used: data.last_used,
+      created_at: data.created_at
+    }
+
+    return NextResponse.json({
       success: true,
-      key: {
-        id: data.id,
-        provider: data.provider,
-        key_name: data.key_name,
-        is_active: data.is_active,
-        created_at: data.created_at
-      }
+      key: sanitizedKey
     })
   } catch (error) {
     console.error('Unexpected error:', error)

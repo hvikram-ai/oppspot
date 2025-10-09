@@ -24,6 +24,11 @@ import type {
   Source,
 } from '@/types/research-gpt';
 
+import type { CompaniesHouseData } from './companies-house-source';
+import type { NewsData } from './news-source';
+import type { JobsData } from './jobs-source';
+import type { WebsiteData } from './website-scraper';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -75,7 +80,12 @@ export class DataSourceFactory {
       this.fetchNewsData(options),
       this.fetchJobsData(options),
       this.fetchWebsiteData(options),
-    ]);
+    ]) as [
+      PromiseSettledResult<CompaniesHouseData>,
+      PromiseSettledResult<NewsData>,
+      PromiseSettledResult<JobsData>,
+      PromiseSettledResult<WebsiteData>
+    ];
 
     // Process results
     let snapshot: Partial<CompanySnapshot> = {};
@@ -129,9 +139,9 @@ export class DataSourceFactory {
       }
       if (data.technology_stack) {
         snapshot.tech_stack = data.technology_stack.map((tech) => ({
-          name: tech,
+          technology: tech,
           category: 'Unknown',
-          confidence: 'medium',
+          detected_at: new Date().toISOString(),
         }));
       }
       decision_makers.push(...data.decision_makers);

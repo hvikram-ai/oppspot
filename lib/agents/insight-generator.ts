@@ -6,6 +6,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAIClient } from '@/lib/ai/openrouter'
 import { Stream, StreamInsight, InsightType, InsightSeverity, GoalStatus } from '@/types/streams'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface StreamAnalysis {
   stream: Stream
@@ -78,7 +79,10 @@ export class InsightGenerator {
       .from('streams')
       .select('*')
       .eq('id', streamId)
-      .single()
+      .single() as { data: (Row<'streams'> & {
+        target_metrics?: { companies_to_find?: number }
+        goal_deadline?: string
+      }) | null; error: any }
 
     if (!stream) {
       throw new Error(`Stream not found: ${streamId}`)
@@ -88,7 +92,7 @@ export class InsightGenerator {
     const { data: items = [] } = await supabase
       .from('stream_items')
       .select('id, status, stage_id, metadata')
-      .eq('stream_id', streamId)
+      .eq('stream_id', streamId) as { data: (Row<'stream_items'> & { status?: string })[] | null; error: any }
 
     // Calculate progress
     const total = stream.target_metrics?.companies_to_find || items.length
@@ -122,7 +126,7 @@ export class InsightGenerator {
       .from('stream_agent_assignments')
       .select(`
         *,
-        agent:agent_id(id, name, agent_type)
+        agent:agent_id(id, name, agent_type) as { data: Row<'stream_agent_assignments'>[] | null; error: any }
       `)
       .eq('stream_id', streamId)
 
@@ -446,6 +450,7 @@ export class InsightGenerator {
 
     const { data, error } = await supabase
       .from('stream_insights')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         stream_id: streamId,
         insight_type: insight.insight_type,
@@ -458,14 +463,14 @@ export class InsightGenerator {
         agent_execution_id: executionId || null
       })
       .select('id')
-      .single()
+      .single() as { data: { id: string } | null; error: any }
 
     if (error) {
       console.error('[InsightGenerator] Error saving insight:', error)
       throw error
     }
 
-    return data.id
+    return data!.id
   }
 
   /**

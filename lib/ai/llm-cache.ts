@@ -1,11 +1,11 @@
 /**
  * LLM Response Cache System
- * 
+ *
  * Provides caching layer for LLM responses to improve performance
  * and reduce costs, especially important for local models that need warm-up time
  */
 
-import { LLMCache } from './llm-interface'
+import { LLMCache, LLMProvider } from './llm-interface'
 import crypto from 'crypto'
 
 interface CacheEntry {
@@ -166,7 +166,7 @@ export class MemoryLLMCache implements LLMCache {
   /**
    * Get cache key for prompt and options
    */
-  getCacheKey(prompt: string, options: any = {}): string {
+  getCacheKey(prompt: string, options: Record<string, unknown> = {}): string {
     return this.generateCacheKey(prompt, options)
   }
 
@@ -184,13 +184,26 @@ export class MemoryLLMCache implements LLMCache {
 }
 
 /**
+ * Interface for LLM providers with optional methods
+ * Extends LLMProvider but makes certain methods optional for caching compatibility
+ */
+interface ProviderWithOptionalMethods {
+  complete: (prompt: string, options?: Record<string, unknown>) => Promise<string>
+  estimateTokens?: (text: string) => number
+  calculateCost?: (tokens: number) => number
+  fastComplete?: (prompt: string, options?: Record<string, unknown>) => Promise<string>
+  listModels?: () => Promise<unknown[]>
+  constructor: { name: string }
+}
+
+/**
  * Cached LLM Provider wrapper
- * 
+ *
  * Wraps any LLM provider with caching functionality
  */
-export class CachedLLMProvider<T extends any> {
+export class CachedLLMProvider<T extends ProviderWithOptionalMethods> {
   private cache: MemoryLLMCache
-  private provider: T
+  public provider: T
 
   constructor(provider: T, cache?: MemoryLLMCache) {
     this.provider = provider
@@ -200,9 +213,9 @@ export class CachedLLMProvider<T extends any> {
   /**
    * Complete with caching
    */
-  async complete(prompt: string, options: any = {}): Promise<string> {
+  async complete(prompt: string, options: Record<string, unknown> = {}): Promise<string> {
     const cacheKey = this.cache.getCacheKey(prompt, options)
-    
+
     // Try cache first
     const cachedResponse = await this.cache.get(cacheKey)
     if (cachedResponse) {
@@ -211,24 +224,24 @@ export class CachedLLMProvider<T extends any> {
     }
 
     console.log('[LLM Cache] Cache miss, calling provider')
-    
+
     // Call provider
     const response = await this.provider.complete(prompt, options)
-    
+
     // Cache the response with metadata
     const tokens = this.provider.estimateTokens ? this.provider.estimateTokens(response) : 0
     const cost = this.provider.calculateCost ? this.provider.calculateCost(tokens) : 0
-    const model = options.model || 'default'
-    
+    const model = (typeof options.model === 'string' ? options.model : 'default')
+
     await this.cache.setWithMetadata(cacheKey, response, model, tokens, cost)
-    
+
     return response
   }
 
   /**
    * Fast complete with caching
    */
-  async fastComplete(prompt: string, options: any = {}): Promise<string> {
+  async fastComplete(prompt: string, options: Record<string, unknown> = {}): Promise<string> {
     if (this.provider.fastComplete) {
       return this.fastCompleteWithCache(prompt, options)
     } else {
@@ -236,23 +249,23 @@ export class CachedLLMProvider<T extends any> {
     }
   }
 
-  private async fastCompleteWithCache(prompt: string, options: any = {}): Promise<string> {
+  private async fastCompleteWithCache(prompt: string, options: Record<string, unknown> = {}): Promise<string> {
     const cacheKey = this.cache.getCacheKey(prompt, { ...options, fast: true })
-    
+
     const cachedResponse = await this.cache.get(cacheKey)
     if (cachedResponse) {
       console.log('[LLM Cache] Fast cache hit')
       return cachedResponse
     }
 
-    const response = await this.provider.fastComplete(prompt, options)
-    
+    const response = this.provider.fastComplete ? await this.provider.fastComplete(prompt, options) : await this.provider.complete(prompt, options)
+
     const tokens = this.provider.estimateTokens ? this.provider.estimateTokens(response) : 0
     const cost = this.provider.calculateCost ? this.provider.calculateCost(tokens) : 0
-    const model = options.model || 'fast'
-    
+    const model = (typeof options.model === 'string' ? options.model : 'fast')
+
     await this.cache.setWithMetadata(cacheKey, response, model, tokens, cost)
-    
+
     return response
   }
 
@@ -281,36 +294,37 @@ export class CachedLLMProvider<T extends any> {
    * Proxy all other methods to the underlying provider
    */
   get [Symbol.toStringTag]() {
-    return this.provider.constructor.name + 'Cached'
+    return (this.provider.constructor as { name: string }).name + 'Cached'
   }
 }
 
 // Create a proxy to forward all other method calls to the provider
-export function createCachedProvider<T extends any>(
-  provider: T, 
+export function createCachedProvider<T extends ProviderWithOptionalMethods>(
+  provider: T,
   cache?: MemoryLLMCache
 ): T & CachedLLMProvider<T> {
   const cachedProvider = new CachedLLMProvider(provider, cache)
-  
+
   return new Proxy(cachedProvider, {
     get(target, prop, receiver) {
       // If the property exists on the cached provider, use it
       if (prop in target) {
         return Reflect.get(target, prop, receiver)
       }
-      
+
       // If the property exists on the underlying provider, proxy it
-      if (prop in target.provider) {
-        const value = Reflect.get(target.provider, prop, receiver)
-        
+      const providerObj = target.provider as Record<string, unknown>
+      if (prop in providerObj) {
+        const value = Reflect.get(providerObj, prop, receiver)
+
         // If it's a method, bind it to the provider
         if (typeof value === 'function') {
           return value.bind(target.provider)
         }
-        
+
         return value
       }
-      
+
       return undefined
     }
   }) as T & CachedLLMProvider<T>
@@ -321,7 +335,7 @@ export const defaultCache = new MemoryLLMCache()
 
 /**
  * Model warming service
- * 
+ *
  * Pre-warms models for faster response times
  */
 export class ModelWarmer {
@@ -334,7 +348,7 @@ export class ModelWarmer {
     'Create a professional response.'
   ]
 
-  constructor(private provider: any) {}
+  constructor(private provider: ProviderWithOptionalMethods) {}
 
   /**
    * Warm up a specific model
@@ -374,7 +388,7 @@ export class ModelWarmer {
     try {
       const models = await this.provider.listModels()
       for (const model of models) {
-        const modelName = typeof model === 'string' ? model : model.name
+        const modelName = typeof model === 'string' ? model : (model as { name: string }).name
         await this.warmModel(modelName)
       }
     } catch (error) {

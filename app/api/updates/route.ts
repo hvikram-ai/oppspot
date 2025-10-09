@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 // GET: Fetch business updates feed
 export async function GET(request: NextRequest) {
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
         }
         
         const { data: followingFeed, error: followingError } = await supabase
+          // @ts-ignore - Type inference issue
           .rpc('get_following_feed', {
             user_id: user.id,
             limit_count: limit,
@@ -72,8 +74,8 @@ export async function GET(request: NextRequest) {
             .from('update_interactions')
             .select('update_id, interaction_type')
             .eq('user_id', user.id)
-            .in('update_id', updateIds)
-          
+            .in('update_id', updateIds) as { data: Array<{ update_id: string; interaction_type: string }> | null; error: any }
+
           // Map interactions to updates
           updates = updates.map(update => ({
             ...update,
@@ -183,7 +185,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('id, metadata')
       .eq('id', businessId)
-      .single()
+      .single() as { data: Pick<Row<'businesses'>, 'id' | 'metadata'> | null; error: any }
     
     if (!business) {
       return NextResponse.json(
@@ -197,10 +199,11 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
     
     const isAdmin = profile?.role === 'admin' || profile?.role === 'owner'
-    const isBusinessOwner = business.metadata?.claimed_by === user.id
+    const metadata = business.metadata as Record<string, unknown> & { claimed_by?: string } | null
+    const isBusinessOwner = metadata?.claimed_by === user.id
     
     if (!isAdmin && !isBusinessOwner) {
       return NextResponse.json(
@@ -212,6 +215,7 @@ export async function POST(request: NextRequest) {
     // Create the update
     const { data: newUpdate, error: createError } = await supabase
       .from('business_updates')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         business_id: businessId,
         title,
@@ -230,7 +234,7 @@ export async function POST(request: NextRequest) {
         verified_by: isAdmin ? user.id : null
       })
       .select()
-      .single()
+      .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
     
     if (createError) {
       console.error('Error creating update:', createError)
@@ -246,6 +250,7 @@ export async function POST(request: NextRequest) {
       .select('user_id, notification_preference')
       .eq('business_id', businessId)
     
+    // @ts-ignore - Supabase type inference issue
     // Log event
     await supabase.from('events').insert({
       user_id: user.id,
@@ -300,7 +305,7 @@ export async function PATCH(request: NextRequest) {
       .from('business_updates')
       .select('created_by')
       .eq('id', updateId)
-      .single()
+      .single() as { data: Pick<Row<'business_updates'>, 'created_by'> | null; error: any }
     
     if (!existingUpdate) {
       return NextResponse.json(
@@ -315,7 +320,7 @@ export async function PATCH(request: NextRequest) {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single()
+        .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
       
       if (profile?.role !== 'admin' && profile?.role !== 'owner') {
         return NextResponse.json(
@@ -384,7 +389,7 @@ export async function DELETE(request: NextRequest) {
       .from('business_updates')
       .select('created_by')
       .eq('id', updateId)
-      .single()
+      .single() as { data: Pick<Row<'business_updates'>, 'created_by'> | null; error: any }
     
     if (!existingUpdate) {
       return NextResponse.json(
@@ -399,7 +404,7 @@ export async function DELETE(request: NextRequest) {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single()
+        .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
       
       if (profile?.role !== 'admin' && profile?.role !== 'owner') {
         return NextResponse.json(

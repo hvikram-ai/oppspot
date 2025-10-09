@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   LeadRoutingRule,
   LeadAssignment,
@@ -11,11 +12,15 @@ interface LeadData {
   total_score?: number;
   qualification_stage?: string;
   engagement_level?: string;
+  engagement_score?: number;
+  technology_score?: number;
+  company_id?: string;
   businesses?: {
     industry?: string;
     region?: string;
     city?: string;
     revenue?: number;
+    employee_count?: number;
   };
 }
 
@@ -29,6 +34,21 @@ interface TeamMember {
   territories?: string[];
   availability_status: 'available' | 'busy' | 'unavailable';
   performance_score?: number;
+}
+
+interface AssignmentTarget {
+  user_id?: string;
+  team_ids?: string[];
+}
+
+interface EscalationTarget {
+  user_id?: string;
+}
+
+interface LeadAssignmentResult {
+  assigned_to?: string;
+  status?: string;
+  response_time_minutes?: number;
 }
 
 export class LeadRoutingEngine {
@@ -57,7 +77,7 @@ export class LeadRoutingEngine {
         .from('lead_scores')
         .select(`
           *,
-          businesses!inner(*)
+          businesses!inner(*) as { data: Row<'lead_scores'>[] | null; error: any }
         `)
         .eq('id', request.lead_id)
         .single();
@@ -108,14 +128,14 @@ export class LeadRoutingEngine {
       .from('profiles')
       .select('org_id')
       .eq('id', user?.id)
-      .single();
+      .single() as { data: Row<'profiles'> | null; error: any };
 
     const { data: rules } = await supabase
       .from('lead_routing_rules')
       .select('*')
       .eq('org_id', profile?.org_id)
       .eq('is_active', true)
-      .order('priority', { ascending: false });
+      .order('priority', { ascending: false }) as { data: Row<'lead_routing_rules'>[] | null; error: any };
 
     return (rules || []).map(r => this.mapRuleFromDatabase(r));
   }
@@ -243,19 +263,22 @@ export class LeadRoutingEngine {
     const supabase = await this.getSupabase();
 
     // Get last assignment
-    const { data: lastAssignment } = await supabase
+    const result = await supabase
       .from('lead_assignments')
       .select('assigned_to')
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
 
-    if (!lastAssignment) {
+    const lastAssignment = result.data as LeadAssignmentResult | null;
+
+    if (!lastAssignment || !lastAssignment.assigned_to) {
       return teamMembers[0];
     }
 
     // Find next team member in rotation
-    const lastIndex = teamMembers.findIndex(m => m.id === lastAssignment.assigned_to);
+    const assignedTo = lastAssignment.assigned_to;
+    const lastIndex = teamMembers.findIndex(m => m.id === assignedTo);
     const nextIndex = (lastIndex + 1) % teamMembers.length;
 
     return teamMembers[nextIndex];
@@ -368,7 +391,7 @@ export class LeadRoutingEngine {
     const supabase = await this.getSupabase();
 
     // Check if company has existing assigned rep
-    const { data: existingAssignment } = await supabase
+    const assignmentResult = await supabase
       .from('lead_assignments')
       .select('assigned_to')
       .eq('company_id', lead.company_id)
@@ -377,8 +400,11 @@ export class LeadRoutingEngine {
       .limit(1)
       .single();
 
-    if (existingAssignment) {
-      const existingRep = teamMembers.find(m => m.id === existingAssignment.assigned_to);
+    const existingAssignment = assignmentResult.data as LeadAssignmentResult | null;
+
+    if (existingAssignment && existingAssignment.assigned_to) {
+      const assignedToId = existingAssignment.assigned_to;
+      const existingRep = teamMembers.find(m => m.id === assignedToId);
       if (existingRep && existingRep.availability_status === 'available') {
         return existingRep;
       }
@@ -390,7 +416,7 @@ export class LeadRoutingEngine {
       .select('id')
       .eq('industry', lead.businesses?.industry)
       .neq('id', lead.company_id)
-      .limit(10);
+      .limit(10) as { data: Row<'businesses'>[] | null; error: any };
 
     if (similarCompanies && similarCompanies.length > 0) {
       const { data: similarAssignments } = await supabase
@@ -468,7 +494,7 @@ export class LeadRoutingEngine {
       .from('lead_assignments')
       .select('status')
       .eq('assigned_to', memberId)
-      .in('status', ['completed', 'reassigned']);
+      .in('status', ['completed', 'reassigned']) as { data: Row<'lead_assignments'>[] | null; error: any };
 
     if (!assignments || assignments.length === 0) {
       return 0.5; // Default 50% if no history
@@ -534,9 +560,10 @@ export class LeadRoutingEngine {
       `);
 
     // Filter based on assignment type
-    if (rule.assignment_type === 'individual' && rule.assignment_target?.user_id) {
-      query = query.eq('id', rule.assignment_target.user_id);
-    } else if (rule.assignment_type === 'team' && rule.assignment_target?.team_ids) {
+    const target = rule.assignment_target as AssignmentTarget | undefined;
+    if (rule.assignment_type === 'individual' && target?.user_id) {
+      query = query.eq('id', target.user_id);
+    } else if (rule.assignment_type === 'team' && target?.team_ids) {
       // This would need a team membership table
       // For now, we'll get all sales reps
       query = query.in('role', ['sales_rep', 'account_executive', 'sales_manager']);
@@ -552,7 +579,7 @@ export class LeadRoutingEngine {
         .from('lead_assignments')
         .select('*', { count: 'exact', head: true })
         .eq('assigned_to', member.id)
-        .in('status', ['assigned', 'accepted', 'working']);
+        .in('status', ['assigned', 'accepted', 'working']) as { data: Row<'lead_assignments'>[] | null; count: number | null; error: any };
 
       // Get performance metrics
       const { data: completedAssignments } = await supabase
@@ -560,7 +587,7 @@ export class LeadRoutingEngine {
         .select('response_time_minutes')
         .eq('assigned_to', member.id)
         .eq('status', 'completed')
-        .limit(10);
+        .limit(10) as { data: Row<'lead_assignments'>[] | null; error: any };
 
       let performanceScore = 70; // Default
       if (completedAssignments && completedAssignments.length > 0) {
@@ -615,15 +642,16 @@ export class LeadRoutingEngine {
       .from('profiles')
       .select('id, full_name, role')
       .in('role', ['sales_manager', 'sales_director', 'vp_sales'])
-      .order('role');
+      .order('role') as { data: Row<'profiles'>[] | null; error: any };
 
     if (managers) {
       path.push(...managers.map(m => m.id));
     }
 
     // Add configured escalation target
-    if (rule.escalation_target?.user_id) {
-      path.push(rule.escalation_target.user_id);
+    const escalationTarget = rule.escalation_target as EscalationTarget | undefined;
+    if (escalationTarget?.user_id) {
+      path.push(escalationTarget.user_id);
     }
 
     return path;
@@ -653,7 +681,7 @@ export class LeadRoutingEngine {
       .from('profiles')
       .select('id, full_name')
       .in('role', ['sales_rep', 'account_executive'])
-      .limit(5);
+      .limit(5) as { data: Row<'profiles'>[] | null; error: any };
 
     if (!reps || reps.length === 0) {
       throw new Error('No sales representatives available');

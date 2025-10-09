@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { UpdateStreamItemRequest } from '@/types/streams'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 export async function PATCH(
   request: NextRequest,
@@ -30,14 +31,15 @@ export async function PATCH(
   } catch (error: unknown) {
     console.error('Error updating item:', error)
 
-    if (error.message === 'Insufficient permissions') {
+    const errorMsg = getErrorMessage(error)
+    if (errorMsg === 'Insufficient permissions') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
       )
     }
 
-    if (error.message === 'Item not found') {
+    if (errorMsg === 'Item not found') {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 })
     }
 
@@ -67,14 +69,15 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error('Error deleting item:', error)
 
-    if (error.message === 'Insufficient permissions') {
+    const errorMsg = getErrorMessage(error)
+    if (errorMsg === 'Insufficient permissions') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
       )
     }
 
-    if (error.message === 'Item not found') {
+    if (errorMsg === 'Item not found') {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 })
     }
 

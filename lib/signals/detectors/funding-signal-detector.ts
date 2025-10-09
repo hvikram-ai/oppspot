@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Row } from '@/lib/supabase/helpers'
 import {
   FundingSignal,
   BuyingSignal,
@@ -47,6 +48,9 @@ export interface FundingInsights {
   buyer_readiness_score: number
   competitive_window: number
   likely_tech_investments: string[]
+  expansion_plans?: string[]
+  hiring_intentions?: string[]
+  technology_upgrade_likely?: boolean
 }
 
 export class FundingSignalDetector {
@@ -77,7 +81,7 @@ export class FundingSignalDetector {
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single();
+        .single() as { data: Row<'businesses'> | null; error: any };
 
       if (!company) {
         throw new Error('Company not found');
@@ -149,6 +153,7 @@ export class FundingSignalDetector {
       // Store the signal in database
       const { data: signal, error } = await supabase
         .from('buying_signals')
+        // @ts-ignore - Supabase type inference issue
         .insert({
           ...fundingSignal,
           signal_data: fundingSignal.funding_data,
@@ -159,9 +164,12 @@ export class FundingSignalDetector {
 
       if (error) throw error;
 
+      const typedSignal = signal as Row<'buying_signals'>
+
+      // @ts-ignore - Supabase type inference issue
       // Store funding-specific details
       await supabase.from('funding_signals').insert({
-        signal_id: signal.id,
+        signal_id: typedSignal.id,
         company_id: companyId,
         round_type: fundingData.round_type,
         amount: fundingData.amount,
@@ -413,7 +421,7 @@ export class FundingSignalDetector {
       .eq('company_id', companyId)
       .eq('round_type', fundingData.round_type)
       .eq('amount', fundingData.amount)
-      .gte('created_at', thirtyDaysAgo.toISOString());
+      .gte('created_at', thirtyDaysAgo.toISOString() as { data: Row<'funding_signals'>[] | null; error: any });
 
     return existing && existing.length > 0;
   }
@@ -426,7 +434,7 @@ export class FundingSignalDetector {
       .select('round_type, amount, announcement_date')
       .eq('company_id', companyId)
       .order('announcement_date', { ascending: false })
-      .limit(5);
+      .limit(5) as { data: Row<'funding_signals'>[] | null; error: any };
 
     if (!previousRounds) return [];
 
@@ -443,7 +451,7 @@ export class FundingSignalDetector {
     const { data: rounds } = await supabase
       .from('funding_signals')
       .select('amount')
-      .eq('company_id', companyId);
+      .eq('company_id', companyId) as { data: Row<'funding_signals'>[] | null; error: any };
 
     const previousTotal = rounds?.reduce((sum, round) => sum + (round.amount || 0), 0) || 0;
     return previousTotal + currentAmount;

@@ -3,6 +3,8 @@
  * Uses Redis-based job processing for scalable scan execution
  */
 
+import { getErrorMessage } from '@/lib/utils/error-handler'
+
 interface JobData {
   scanId: string
   userId: string
@@ -228,7 +230,7 @@ export class JobQueue {
         this.workers.delete(jobId)
       }
       
-      await this.updateJobProgress(jobId, 0, 'failed', 'failed', error.message)
+      await this.updateJobProgress(jobId, 0, 'failed', 'failed', getErrorMessage(error))
       console.error(`Scan job ${jobId} failed:`, error)
     }
   }

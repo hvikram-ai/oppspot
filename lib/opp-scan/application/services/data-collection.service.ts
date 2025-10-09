@@ -3,7 +3,7 @@
  * Orchestrates data collection from multiple sources with parallel processing
  */
 
-import { 
+import {
   IDataCollectionService,
   IDataSourceProvider,
   ICompanyRepository,
@@ -11,10 +11,10 @@ import {
   ICacheService,
   IEventBus,
   ScanConfiguration,
-  CompanyEntity,
   SearchCriteria,
   SearchOptions
 } from '../../core/interfaces'
+import { CompanyEntity } from '../../domain/entities/company.entity'
 import { CompanyEventFactory } from '../../domain/events/company.events'
 
 export class DataCollectionService implements IDataCollectionService {
@@ -131,17 +131,10 @@ export class DataCollectionService implements IDataCollectionService {
 
   private buildSearchCriteria(configuration: ScanConfiguration): SearchCriteria {
     return {
-      industries: configuration.selectedIndustries.map(i => i.code),
-      regions: configuration.selectedRegions.map(r => r.code),
-      scanDepth: configuration.scanDepth,
-      filters: {
-        minEmployees: configuration.filters?.minEmployees,
-        maxEmployees: configuration.filters?.maxEmployees,
-        minRevenue: configuration.filters?.minRevenue,
-        maxRevenue: configuration.filters?.maxRevenue,
-        foundingYear: configuration.filters?.foundingYear,
-        excludeIndustries: configuration.filters?.excludeIndustries
-      }
+      industries: configuration.selectedIndustries,
+      regions: configuration.selectedRegions,
+      minEmployeeCount: configuration.filters?.minEmployees,
+      maxEmployeeCount: configuration.filters?.maxEmployees
     }
   }
 

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { Database } from '@/types/database'
+import type { Row } from '@/lib/supabase/helpers'
+
+type ProfileOrgId = Pick<Database['public']['Tables']['profiles']['Row'], 'org_id'>
+type ScanInsert = Database['public']['Tables']['acquisition_scans']['Insert']
+type AuditLogInsert = Database['public']['Tables']['scan_audit_log']['Insert']
 
 export async function GET() {
   try {
@@ -18,7 +24,7 @@ export async function GET() {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single<ProfileOrgId>()
 
     // Get acquisition scans for the user and their organization
     let query = supabase
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single<ProfileOrgId>()
 
     const body = await request.json()
     const {
@@ -114,44 +120,46 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the acquisition scan
-    const { data: scan, error } = await supabase
+    const scanData = {
+      user_id: user.id,
+      org_id: profile?.org_id,
+      name,
+      description,
+      status: 'configuring' as const,
+      selected_industries: selectedIndustries,
+      market_maturity: marketMaturity || [],
+      selected_regions: selectedRegions,
+      regulatory_requirements: regulatoryRequirements || {},
+      cross_border_considerations: crossBorderConsiderations || {},
+      required_capabilities: requiredCapabilities || [],
+      strategic_objectives: strategicObjectives || {},
+      synergy_requirements: synergyRequirements || {},
+      data_sources: dataSources,
+      scan_depth: scanDepth || 'comprehensive',
+      current_step: 'industry_selection',
+      config: {
+        ...config,
+        selectedIndustries,
+        marketMaturity,
+        selectedRegions,
+        regulatoryRequirements,
+        crossBorderConsiderations,
+        requiredCapabilities,
+        strategicObjectives,
+        synergyRequirements,
+        dataSources,
+        scanDepth
+      },
+      progress_percentage: 0,
+      targets_identified: 0,
+      targets_analyzed: 0
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: scan, error } = await (supabase
       .from('acquisition_scans')
-      .insert({
-        user_id: user.id,
-        org_id: profile?.org_id,
-        name,
-        description,
-        status: 'configuring',
-        selected_industries: selectedIndustries,
-        market_maturity: marketMaturity || [],
-        selected_regions: selectedRegions,
-        regulatory_requirements: regulatoryRequirements || {},
-        cross_border_considerations: crossBorderConsiderations || {},
-        required_capabilities: requiredCapabilities || [],
-        strategic_objectives: strategicObjectives || {},
-        synergy_requirements: synergyRequirements || {},
-        data_sources: dataSources,
-        scan_depth: scanDepth || 'comprehensive',
-        current_step: 'industry_selection',
-        config: {
-          ...config,
-          selectedIndustries,
-          marketMaturity,
-          selectedRegions,
-          regulatoryRequirements,
-          crossBorderConsiderations,
-          requiredCapabilities,
-          strategicObjectives,
-          synergyRequirements,
-          dataSources,
-          scanDepth
-        },
-        progress_percentage: 0,
-        targets_identified: 0,
-        targets_analyzed: 0
-      })
+      .insert(scanData as any)
       .select()
-      .single()
+      .single() as any)
 
     if (error) {
       console.error('Error creating acquisition scan:', error)
@@ -162,21 +170,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Create audit log entry
-    await supabase
+    const auditLogData = {
+      scan_id: scan?.id,
+      user_id: user.id,
+      action_type: 'scan_created',
+      action_description: `Created acquisition scan: ${name}`,
+      after_state: scan,
+      ip_address: request.headers.get('x-forwarded-for') ||
+                 request.headers.get('x-real-ip') ||
+                 'unknown',
+      user_agent: request.headers.get('user-agent') || 'unknown',
+      legal_basis: 'legitimate_interest',
+      retention_period: 365
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: auditError } = await (supabase
       .from('scan_audit_log')
-      .insert({
-        scan_id: scan.id,
-        user_id: user.id,
-        action_type: 'scan_created',
-        action_description: `Created acquisition scan: ${name}`,
-        after_state: scan,
-        ip_address: request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 
-                   'unknown',
-        user_agent: request.headers.get('user-agent') || 'unknown',
-        legal_basis: 'legitimate_interest',
-        retention_period: 365
-      })
+      .insert(auditLogData as any) as any)
+
+    if (auditError) {
+      console.error('Failed to create audit log:', auditError)
+    }
 
     return NextResponse.json({ scan }, { status: 201 })
   } catch (error) {

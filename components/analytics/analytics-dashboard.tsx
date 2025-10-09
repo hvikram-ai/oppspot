@@ -38,17 +38,79 @@ interface AnalyticsDashboardProps {
   locationId?: string
 }
 
+interface TrendAnalysis {
+  trendDirection: string
+  trendStrength: number
+  confidenceScore: number
+  insights: string[]
+  metrics?: {
+    volatility: number
+    momentum: number
+  }
+  predictions?: {
+    [key: string]: {
+      value: number
+      confidence: number
+    }
+  }
+}
+
+interface Forecast {
+  id: string
+  forecast_horizon_days: number
+  forecast_date: string
+  predicted_demand: number
+  lower_bound: number
+  upper_bound: number
+  model_accuracy: number
+  model_type: string
+  factors?: {
+    topFactors: Array<{
+      name: string
+      impact: string
+    }>
+  }
+}
+
+interface Opportunity {
+  id: string
+  type: string
+  description: string
+  opportunity_score: number
+  potential_value: number
+  time_window_end: string
+  confidence_score: number
+  location_id?: string
+  recommended_actions?: string[]
+  status: string
+}
+
+interface MarketMetrics {
+  features: {
+    market_saturation: {
+      mean: number
+    }
+    growth_rate: {
+      trend: number
+      mean: number
+    }
+    business_count: {
+      max: number
+    }
+  }
+}
+
 export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardProps) {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState('30')
   const [activeTab, setActiveTab] = useState('overview')
-  
+
   // Analytics data
-  const [trendAnalysis, setTrendAnalysis] = useState<unknown>(null)
-  const [forecasts, setForecasts] = useState<any[]>([])
-  const [opportunities, setOpportunities] = useState<any[]>([])
-  const [marketMetrics, setMarketMetrics] = useState<unknown>(null)
+  const [trendAnalysis, setTrendAnalysis] = useState<TrendAnalysis | null>(null)
+  const [forecasts, setForecasts] = useState<Forecast[]>([])
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([])
+  const [marketMetrics, setMarketMetrics] = useState<MarketMetrics | null>(null)
 
   useEffect(() => {
     if (category) {
@@ -236,7 +298,7 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Market Trend</CardTitle>
-            {getTrendIcon(trendAnalysis?.trendDirection)}
+            {getTrendIcon(trendAnalysis?.trendDirection || 'stable')}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold capitalize">
@@ -369,14 +431,14 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Saturation Level</span>
-                    <Badge variant={marketMetrics?.features?.market_saturation?.mean > 0.7 ? 'destructive' : 'secondary'}>
+                    <Badge variant={(marketMetrics?.features?.market_saturation?.mean ?? 0) > 0.7 ? 'destructive' : 'secondary'}>
                       {((marketMetrics?.features?.market_saturation?.mean || 0) * 100).toFixed(0)}%
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Growth Rate</span>
                     <div className="flex items-center gap-1">
-                      {marketMetrics?.features?.growth_rate?.trend > 0 ? (
+                      {(marketMetrics?.features?.growth_rate?.trend ?? 0) > 0 ? (
                         <ArrowUp className="h-3 w-3 text-green-500" />
                       ) : (
                         <ArrowDown className="h-3 w-3 text-red-500" />
@@ -428,11 +490,11 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Volatility</span>
-                          <span>{(trendAnalysis.metrics?.volatility * 100).toFixed(1)}%</span>
+                          <span>{((trendAnalysis.metrics?.volatility ?? 0) * 100).toFixed(1)}%</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Momentum</span>
-                          <span>{(trendAnalysis.metrics?.momentum * 100).toFixed(1)}%</span>
+                          <span>{((trendAnalysis.metrics?.momentum ?? 0) * 100).toFixed(1)}%</span>
                         </div>
                       </div>
                     </div>

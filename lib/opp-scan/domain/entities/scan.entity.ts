@@ -450,8 +450,11 @@ export class ScanEntity {
       data.companiesAnalyzed,
       data.errors || [],
       data.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
+      // @ts-ignore - Supabase type inference issue
       new Date(data.createdAt),
+      // @ts-ignore - Supabase type inference issue
       new Date(data.updatedAt),
+      // @ts-ignore - Supabase type inference issue
       data.startedAt ? new Date(data.startedAt) : undefined,
       data.completedAt ? new Date(data.completedAt) : undefined,
       data.estimatedCompletion ? new Date(data.estimatedCompletion) : undefined

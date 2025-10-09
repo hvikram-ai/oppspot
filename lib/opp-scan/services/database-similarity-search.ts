@@ -7,6 +7,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { CompanyEntity } from '../core/interfaces'
 import { CompanySearchResult, EnrichedCompanyData } from '../core/similarity-interfaces'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface DatabaseSearchOptions {
   targetCompany: string
@@ -136,7 +137,7 @@ export class DatabaseSimilaritySearch {
         .select('*')
         .ilike('name', `%${companyName}%`)
         .limit(1)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       if (error || !data) {
         console.log(`[DatabaseSearch] Target company "${companyName}" not found in database`)

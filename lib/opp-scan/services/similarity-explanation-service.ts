@@ -4,6 +4,7 @@
  * Built for sophisticated MnA directors requiring detailed rationale
  */
 
+import { getErrorMessage } from '@/lib/utils/error-handler'
 import { getLLMProvider } from '@/lib/ai/llm-factory'
 import { LLMProvider, LLMService } from '@/lib/ai/llm-interface'
 import {
@@ -87,7 +88,7 @@ export class SimilarityExplanationService {
       return { explanation, metrics }
     } catch (error) {
       console.error('Error generating similarity explanation:', error)
-      throw new Error(`Failed to generate similarity explanation: ${error.message}`)
+      throw new Error(`Failed to generate similarity explanation: ${getErrorMessage(error)}`)
     }
   }
 
@@ -126,7 +127,7 @@ export class SimilarityExplanationService {
       return { insights, metrics }
     } catch (error) {
       console.error('Error generating MnA insights:', error)
-      throw new Error(`Failed to generate MnA insights: ${error.message}`)
+      throw new Error(`Failed to generate MnA insights: ${getErrorMessage(error)}`)
     }
   }
 

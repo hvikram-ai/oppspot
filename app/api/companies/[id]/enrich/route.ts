@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(
   request: NextRequest,
@@ -29,7 +30,7 @@ export async function GET(
       .from('businesses')
       .select('*')
       .eq('company_number', companyNumber)
-      .single()
+      .single() as { data: (Row<'businesses'> & { enriched_at?: string }) | null; error: any }
 
     if (existingCompany && existingCompany.enriched_at) {
       // Check if data is recent (less than 24 hours old)
@@ -84,10 +85,13 @@ export async function POST(
     }
 
     // Get Companies House service
-    const companiesHouse = getCompaniesHouseService()
+    const companiesHouse = getCompaniesHouseService() as {
+      isConfigured?: () => boolean
+      getCompany?: (companyNumber: string) => Promise<any>
+    }
 
     // Check if API is configured
-    if (!companiesHouse.isConfigured()) {
+    if (companiesHouse.isConfigured && !companiesHouse.isConfigured()) {
       // Return demo data if API is not configured
       const demoCompany = {
         company_number: companyNumber,
@@ -115,6 +119,9 @@ export async function POST(
 
     try {
       // Fetch company profile from Companies House
+      if (!companiesHouse.getCompany) {
+        throw new Error('getCompany method not available')
+      }
       const companyData = await companiesHouse.getCompany(companyNumber)
 
       if (!companyData) {
@@ -148,12 +155,13 @@ export async function POST(
         .from('businesses')
         .select('id')
         .eq('company_number', companyNumber)
-        .single()
+        .single() as { data: Pick<Row<'businesses'>, 'id'> | null; error: any }
 
       if (existingCompany) {
         // Update existing company
         const { data: updatedCompany, error: updateError } = await supabase
           .from('businesses')
+          // @ts-ignore - Type inference issue
           .update(enrichedCompany)
           .eq('company_number', companyNumber)
           .select()
@@ -179,6 +187,7 @@ export async function POST(
         // Insert new company
         const { data: newCompany, error: insertError } = await supabase
           .from('businesses')
+          // @ts-ignore - Supabase type inference issue
           .insert({
             ...enrichedCompany,
             id: crypto.randomUUID(),

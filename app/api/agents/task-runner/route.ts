@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getTaskRunner, startTaskRunner, stopTaskRunner } from '@/lib/agents/agent-task-runner'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/agents/task-runner
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id' | 'role'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
     const { data: tasks } = await supabase
       .from('agent_tasks')
       .select('status')
-      .eq('org_id', profile.org_id)
+      .eq('org_id', profile.org_id) as { data: Pick<Row<'agent_tasks'>, 'status'>[] | null; error: any }
 
     const stats = {
       pending: tasks?.filter(t => t.status === 'pending').length || 0,
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('[Task Runner API] Error:', error)
     return NextResponse.json(
-      { error: 'Failed to get task runner status', message: error.message },
+      { error: 'Failed to get task runner status', message: getErrorMessage(error) },
       { status: 500 }
     )
   }
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id' | 'role'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('[Task Runner API] Error:', error)
     return NextResponse.json(
-      { error: 'Failed to control task runner', message: error.message },
+      { error: 'Failed to control task runner', message: getErrorMessage(error) },
       { status: 500 }
     )
   }

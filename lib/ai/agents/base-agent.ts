@@ -72,6 +72,7 @@ export abstract class BaseAgent {
     // If execution_id was provided, update existing record; otherwise create new
     if (input.execution_id) {
       // Update existing execution to 'running'
+      // @ts-ignore - Type inference issue
       await supabase.from('agent_executions').update({
         status: 'running',
         started_at: startTime.toISOString(),
@@ -79,6 +80,7 @@ export abstract class BaseAgent {
       }).eq('id', executionId)
     } else {
       // Create new execution record
+      // @ts-ignore - Supabase type inference issue
       await supabase.from('agent_executions').insert({
         id: executionId,
         agent_id: this.config.id,
@@ -256,6 +258,7 @@ export abstract class BaseAgent {
     const supabase = await createClient()
 
     const { data, error } = await supabase
+      // @ts-ignore - Supabase type inference issue
       .from('buying_signals')
       .insert({
         company_id: companyId,

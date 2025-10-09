@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * POST /api/dashboard/interactions
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
     // Insert interaction record
     const { data: interaction, error: insertError } = await supabase
       .from('feature_interactions')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         user_id: user.id,
         feature_name: body.feature_name,

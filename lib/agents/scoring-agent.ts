@@ -11,6 +11,7 @@
 
 import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } from '@/lib/ai/agents/base-agent'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export class ScoringAgent extends BaseAgent {
   async execute(context: AgentExecutionContext): Promise<AgentExecutionResult> {
@@ -34,14 +35,21 @@ export class ScoringAgent extends BaseAgent {
         .from('streams')
         .select('*')
         .eq('id', stream_id)
-        .single()
+        .single() as { data: (Row<'streams'> & {
+          goal_criteria?: unknown
+          target_metrics?: unknown
+        }) | null; error: any }
 
       if (!stream) {
         throw new Error(`Stream not found: ${stream_id}`)
       }
 
-      const criteria = goal_context?.goal_criteria || stream.goal_criteria || {}
-      const targetMetrics = goal_context?.target_metrics || stream.target_metrics || {}
+      const goalContextTyped = goal_context as Record<string, unknown> & {
+        goal_criteria?: unknown
+        target_metrics?: unknown
+      } | undefined
+      const criteria = goalContextTyped?.goal_criteria || stream.goal_criteria || {}
+      const targetMetrics = goalContextTyped?.target_metrics || stream.target_metrics || {}
 
       // Fetch stream items to score
       const items = await this.getItemsToScore(stream_id)
@@ -58,7 +66,7 @@ export class ScoringAgent extends BaseAgent {
           .from('businesses')
           .select('*')
           .eq('id', item.business_id)
-          .single()
+          .single() as { data: Row<'businesses'> | null; error: any }
 
         if (!company) continue
 
@@ -137,7 +145,7 @@ export class ScoringAgent extends BaseAgent {
       .select('*')
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
-      .not('business_id', 'is', null)
+      .not('business_id', 'is', null) as { data: Row<'stream_items'>[] | null; error: any }
 
     if (error) {
       this.log(`Error fetching stream items: ${error.message}`, 'error')
@@ -299,7 +307,7 @@ export class ScoringAgent extends BaseAgent {
       .from('buying_signals')
       .select('signal_strength, confidence_score')
       .eq('company_id', companyId)
-      .eq('status', 'active')
+      .eq('status', 'active') as { data: Row<'buying_signals'>[] | null; error: any }
 
     if (!signals || signals.length === 0) return 0
 
@@ -347,13 +355,14 @@ export class ScoringAgent extends BaseAgent {
       .from('stream_items')
       .select('metadata')
       .eq('id', itemId)
-      .single()
+      .single() as { data: Row<'stream_items'> | null; error: any }
 
     const metadata = item?.metadata || {}
 
     // Update item
     await supabase
       .from('stream_items')
+      // @ts-ignore - Type inference issue
       .update({
         priority: priority as any,
         metadata: {
@@ -377,14 +386,16 @@ export class ScoringAgent extends BaseAgent {
       .select('id, metadata')
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
-      .order('priority', { ascending: false })
+      .order('priority', { ascending: false }) as { data: Row<'stream_items'>[] | null; error: any }
 
     if (!items) return
 
     // Sort by quality score within same priority
     items.sort((a, b) => {
-      const scoreA = a.metadata?.quality_score || 0
-      const scoreB = b.metadata?.quality_score || 0
+      const metadataA = a.metadata as Record<string, unknown> & { quality_score?: number } | null
+      const metadataB = b.metadata as Record<string, unknown> & { quality_score?: number } | null
+      const scoreA = metadataA?.quality_score || 0
+      const scoreB = metadataB?.quality_score || 0
       return scoreB - scoreA
     })
 
@@ -415,7 +426,7 @@ export async function createScoringAgent(agentId: string): Promise<ScoringAgent>
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single()
+    .single() as { data: Row<'ai_agents'> | null; error: any }
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)

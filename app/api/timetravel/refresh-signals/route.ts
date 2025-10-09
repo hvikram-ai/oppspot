@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Refresh signal aggregates for a company or all companies
 export async function POST(request: NextRequest) {
@@ -20,6 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (company_id) {
       // Refresh single company
+      // @ts-ignore - Type inference issue
       const { error } = await supabase.rpc('refresh_signal_aggregates', {
         p_company_id: company_id
       })
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('Refresh signals error:', error)
     return NextResponse.json({
-      error: error.message || 'Failed to refresh signals'
+      error: getErrorMessage(error) || 'Failed to refresh signals'
     }, { status: 500 })
   }
 }

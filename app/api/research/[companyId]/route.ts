@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getResearchGPTService } from '@/lib/research-gpt/research-gpt-service';
 import { z } from 'zod';
+import type { Row } from '@/lib/supabase/helpers'
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -60,7 +61,7 @@ export async function POST(
       .from('businesses')
       .select('id, name, company_number, website')
       .eq('id', companyId)
-      .single();
+      .single() as { data: Pick<Row<'businesses'>, 'id' | 'name' | 'company_number' | 'website'> | null; error: any };
 
     if (companyError || !company) {
       return NextResponse.json(

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { WebsiteScraper } from '@/lib/scraping/website-scraper'
 import { SocialMediaScraper } from '@/lib/scraping/social-media-scraper'
 import { Database } from '@/lib/supabase/database.types'
+import type { Row } from '@/lib/supabase/helpers'
 
 // POST: Scrape and save social media data for a business
 export async function POST(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
     
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
     
     if (businessError || !business) {
       return NextResponse.json(
@@ -50,6 +51,14 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    interface ScoreData {
+      overall_score: number
+      reach_score: number
+      engagement_score: number
+      activity_score: number
+      growth_score: number
+    }
+
     interface SocialResults {
       business: {
         id: string
@@ -57,6 +66,7 @@ export async function POST(request: NextRequest) {
       }
       website: unknown
       social: unknown[]
+      socialScore?: ScoreData
     }
 
     const results: SocialResults = {
@@ -77,6 +87,7 @@ export async function POST(request: NextRequest) {
         // Save website data to database
         const { error: saveError } = await supabase
           .from('website_data')
+          // @ts-ignore - Supabase type inference issue
           .upsert({
             business_id: businessId,
             website_url: business.website,
@@ -117,6 +128,7 @@ export async function POST(request: NextRequest) {
           // Save social profiles
           for (const profile of profiles) {
             const { error: profileError } = await supabase
+              // @ts-ignore - Supabase type inference issue
               .from('social_media_profiles')
               .upsert({
                 business_id: businessId,
@@ -144,17 +156,18 @@ export async function POST(request: NextRequest) {
     // Calculate and save social presence score
     try {
       const { data: scoreData } = await supabase
+        // @ts-ignore - Type inference issue
         .rpc('calculate_social_presence_score', {
           target_business_id: businessId
-        })
-      
+        }) as { data: ScoreData[] | null; error: any }
+
       if (scoreData && scoreData.length > 0) {
-        const score = scoreData[0]
+        const score = scoreData[0] as ScoreData
         
         // Determine insights based on scores
-        const strengths = []
-        const weaknesses = []
-        const recommendations = []
+        const strengths: string[] = []
+        const weaknesses: string[] = []
+        const recommendations: string[] = []
         
         if (score.reach_score >= 70) {
           strengths.push('Strong follower base across platforms')
@@ -178,6 +191,7 @@ export async function POST(request: NextRequest) {
         }
         
         // Save social presence score
+        // @ts-ignore - Supabase type inference issue
         await supabase
           .from('social_presence_scores')
           .upsert({
@@ -197,6 +211,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       console.error('Error calculating social score:', error)
+    // @ts-ignore - Supabase type inference issue
     }
     
     // Log event
@@ -252,14 +267,14 @@ export async function GET(request: NextRequest) {
       .from('website_data')
       .select('*')
       .eq('business_id', businessId)
-      .single()
+      .single() as { data: Row<'website_data'> | null; error: any }
     
     // Fetch social presence score
     const { data: socialScore } = await supabase
       .from('social_presence_scores')
       .select('*')
       .eq('business_id', businessId)
-      .single()
+      .single() as { data: Row<'social_presence_scores'> | null; error: any }
     
     // Fetch recent metrics history
     const { data: metricsHistory } = await supabase

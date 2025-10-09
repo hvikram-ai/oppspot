@@ -385,6 +385,7 @@ export class NotificationTriggers {
   // Check triggers for a specific subscription
   private async checkSubscriptionTriggers(subscription: Record<string, unknown>) {
     const now = new Date()
+    // @ts-ignore - Supabase type inference issue
     const lastCheck = new Date(subscription.last_checked_at)
     
     // Skip if checked recently (within frequency period)

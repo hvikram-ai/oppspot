@@ -18,6 +18,7 @@ import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } f
 import { createClient } from '@/lib/supabase/server'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface WebsiteAnalyzerConfig {
   companyIds?: string[] // Specific companies to analyze
@@ -474,11 +475,13 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
     if (Object.keys(updateData).length > 0) {
       await supabase
         .from('businesses')
+        // @ts-ignore - Type inference issue
         .update(updateData)
         .eq('id', data.companyId)
     }
 
     // Store enrichment metadata
+    // @ts-ignore - Supabase type inference issue
     await supabase.from('enrichment_data').insert({
       company_id: data.companyId,
       source: 'website_analysis',
@@ -579,7 +582,7 @@ export async function createWebsiteAnalyzerAgent(agentId: string): Promise<Websi
     .select('*')
     .eq('id', agentId)
     .eq('agent_type', 'website_analyzer_agent')
-    .single()
+    .single() as { data: Row<'ai_agents'> | null; error: any }
 
   if (error || !data) {
     throw new Error(`Website analyzer agent not found: ${agentId}`)

@@ -7,6 +7,8 @@ import { OllamaClient } from './ollama'
 import { WebSearchService } from '../opp-scan/services/web-search-service'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { getErrorMessage, getErrorStack } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Types and Interfaces
 export interface ChatMessage {
@@ -160,10 +162,11 @@ export class ChatOrchestrator {
         for (const tool of toolsNeeded) {
           const result = await this.executeTool(tool, onStream)
           toolResults.push(result)
-          
+
           // Extract citations from tool results
-          if (result.result?.citations) {
-            citations.push(...result.result.citations)
+          const typedResult = result.result as { citations?: unknown[] } | undefined
+          if (typedResult?.citations) {
+            citations.push(...typedResult.citations)
           }
         }
       }
@@ -263,7 +266,7 @@ Response (JSON only):`;
       
       return []
     } catch (error) {
-      console.warn('[ChatOrchestrator] Intent analysis failed, using rule-based fallback:', error)
+      console.warn('[ChatOrchestrator] Intent analysis failed, using rule-based fallback:', getErrorMessage(error))
       
       // Rule-based fallback for common intents
       const lowerMessage = message.toLowerCase()
@@ -341,8 +344,8 @@ Response (JSON only):`;
           toolCall.result = { error: 'Unknown tool' }
       }
     } catch (error) {
-      toolCall.result = { 
-        error: error instanceof Error ? error.message : 'Tool execution failed' 
+      toolCall.result = {
+        error: getErrorMessage(error)
       }
     }
     
@@ -357,8 +360,8 @@ Response (JSON only):`;
       query: args.query,
       filters: {},
       limit: args.num_results || 5
-    })
-    
+    }) as unknown as { companies: any[]; total: number }
+
     // Convert to citations
     const citations: Citation[] = results.companies.map((company, index) => ({
       id: `web_${index}`,
@@ -397,13 +400,14 @@ Response (JSON only):`;
     
     // Add search filter
     if (args.query) {
+      // @ts-ignore - Supabase type inference issue
       query = query.textSearch('name', args.query)
     }
     
     const { data, error } = await query.limit(10)
     
     if (error) {
-      return { error: error.message }
+      return { error: getErrorMessage(error) }
     }
     
     return {
@@ -516,7 +520,7 @@ Response:`;
       tokens_used: response.length // Approximate
     }
     } catch (error) {
-      console.error('[ChatOrchestrator] Error generating response:', error)
+      console.error('[ChatOrchestrator] Error generating response:', getErrorMessage(error))
       
       // Fallback response when Ollama is not available
       const fallbackResponse = this.generateFallbackResponse(userMessage, toolResults)
@@ -557,7 +561,8 @@ Response:`;
     // If we have tool results, try to provide a basic response
     if (toolResults.length > 0) {
       const toolResult = toolResults[0]
-      if (toolResult.result && !toolResult.result.error) {
+      const typedResult = toolResult.result as { error?: unknown } | undefined
+      if (toolResult.result && !typedResult?.error) {
         return `Based on the search results, I found relevant information. ${JSON.stringify(toolResult.result).substring(0, 500)}...`
       }
     }
@@ -597,7 +602,7 @@ Response:`;
       .select('*')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true })
-      .limit(50)
+      .limit(50) as { data: Row<'chat_messages'>[] | null; error: any }
     
     if (!error && data) {
       this.conversationHistory = data.map(msg => ({
@@ -643,8 +648,8 @@ Response:`;
       .eq('session_id', this.context?.session_id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
-    
+      .single() as { data: (Row<'chat_messages'> & { id: string }) | null; error: any }
+
     if (messageData) {
       const citationRecords = citations.map(citation => ({
         message_id: messageData.id,
@@ -687,7 +692,7 @@ Response:`;
       
       return data
     } catch (error) {
-      console.warn('[ChatOrchestrator] Could not connect to database:', error)
+      console.warn('[ChatOrchestrator] Could not connect to database:', getErrorMessage(error))
       // Return a temporary session ID as fallback
       return `temp_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     }

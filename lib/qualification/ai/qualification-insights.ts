@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { OpenRouter } from '@/lib/ai/openrouter'
 import type { BANTQualification, MEDDICQualification } from '@/types/qualification'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Company data interface
 export interface CompanyData {
@@ -16,11 +17,10 @@ export interface CompanyData {
 
 // Qualification comparison data
 export interface QualificationComparison {
-  lead_id: string
-  framework: string
-  overall_score: number
-  created_at: string
-  [key: string]: unknown
+  leadId: string
+  bant: BANTQualification | null
+  meddic: MEDDICQualification | null
+  prediction: QualificationPrediction | null
 }
 
 // Deal size factors
@@ -113,7 +113,7 @@ export class QualificationInsightsEngine {
         .from('businesses')
         .select('*')
         .eq('id', qualification.company_id)
-        .single()
+        .single() as { data: Row<'businesses'> | null; error: any }
 
       // Analyze based on framework
       if (framework === 'BANT') {
@@ -502,6 +502,7 @@ export class QualificationInsightsEngine {
 
     // Recent engagement (last 7 days)
     const recentEvents = events.filter(e => {
+      // @ts-ignore - Supabase type inference issue
       const eventDate = new Date(e.created_at)
       const daysSince = (Date.now() - eventDate.getTime()) / (1000 * 60 * 60 * 24)
       return daysSince <= 7
@@ -701,22 +702,28 @@ export class QualificationInsightsEngine {
    */
   private extractScores(qualification: BANTQualification | MEDDICQualification, framework: string): QualificationScores {
     if (framework === 'BANT') {
+      const bant = qualification as BANTQualification
       return {
-        budget: qualification.budget_score,
-        authority: qualification.authority_score,
-        need: qualification.need_score,
-        timeline: qualification.timeline_score,
-        overall: qualification.overall_score
+        overall: bant.overall_score,
+        components: {
+          budget: bant.budget_score,
+          authority: bant.authority_score,
+          need: bant.need_score,
+          timeline: bant.timeline_score
+        }
       }
     } else {
+      const meddic = qualification as MEDDICQualification
       return {
-        metrics: qualification.metrics_score,
-        economic_buyer: qualification.economic_buyer_score,
-        decision_criteria: qualification.decision_criteria_score,
-        decision_process: qualification.decision_process_score,
-        identify_pain: qualification.identify_pain_score,
-        champion: qualification.champion_score,
-        overall: qualification.overall_score
+        overall: meddic.overall_score,
+        components: {
+          metrics: meddic.metrics_score,
+          economic_buyer: meddic.economic_buyer_score,
+          decision_criteria: meddic.decision_criteria_score,
+          decision_process: meddic.decision_process_score,
+          identify_pain: meddic.identify_pain_score,
+          champion: meddic.champion_score
+        }
       }
     }
   }
@@ -795,15 +802,21 @@ export class QualificationInsightsEngine {
 
     if (comparisons.length < 2) return insights
 
-    // Find patterns
-    const avgProbability = comparisons.reduce((sum, c) =>
-      sum + (c.prediction?.conversionProbability || 0), 0) / comparisons.length
+    // Find patterns - with proper type handling
+    const validPredictions = comparisons
+      .map(c => c.prediction)
+      .filter((p): p is QualificationPrediction => p !== null)
+
+    if (validPredictions.length === 0) return insights
+
+    const avgProbability = validPredictions.reduce((sum, p) =>
+      sum + p.conversionProbability, 0) / validPredictions.length
 
     insights.push(`Average conversion probability across leads: ${Math.round(avgProbability)}%`)
 
     // Identify outliers
     const highPerformers = comparisons.filter(c =>
-      (c.prediction?.conversionProbability || 0) > avgProbability + 20
+      c.prediction && c.prediction.conversionProbability > avgProbability + 20
     )
     if (highPerformers.length > 0) {
       insights.push(`${highPerformers.length} leads significantly outperform the average`)
@@ -811,8 +824,8 @@ export class QualificationInsightsEngine {
 
     // Common weaknesses
     const weaknesses = new Map<string, number>()
-    comparisons.forEach(c => {
-      c.prediction?.riskFactors?.forEach((risk: string) => {
+    validPredictions.forEach(prediction => {
+      prediction.riskFactors.forEach((risk: string) => {
         weaknesses.set(risk, (weaknesses.get(risk) || 0) + 1)
       })
     })

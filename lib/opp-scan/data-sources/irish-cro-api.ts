@@ -3,6 +3,8 @@
  * Real data collection from Irish company registry
  */
 
+import { getErrorMessage } from '@/lib/utils/error-handler'
+
 interface IrishCROConfig {
   apiKey?: string
   baseUrl: string
@@ -199,7 +201,7 @@ export class IrishCROAPI {
       }
     } catch (error) {
       console.error('Irish CRO search failed:', error)
-      throw new Error(`Irish CRO API search failed: ${error.message}`)
+      throw new Error(`Irish CRO API search failed: ${getErrorMessage(error)}`)
     }
   }
 
@@ -317,7 +319,7 @@ export class IrishCROAPI {
     } catch (error) {
       return {
         success: false,
-        message: `Irish CRO connection failed: ${error.message}`
+        message: `Irish CRO connection failed: ${getErrorMessage(error)}`
       }
     }
   }

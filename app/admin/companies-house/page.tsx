@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import type { ImportProgress, ImportStats } from '@/types/companies-house'
 import {
   Download,
   Play,
@@ -23,22 +24,6 @@ import {
   Info,
   AlertTriangle
 } from 'lucide-react'
-
-interface ImportProgress {
-  status: 'idle' | 'downloading' | 'processing' | 'completed' | 'failed'
-  current?: number
-  total?: number
-  startedAt?: string
-  completedAt?: string
-  error?: string
-}
-
-interface ImportStats {
-  totalRecords?: number
-  imported?: number
-  skipped?: number
-  failed?: number
-}
 
 export default function CompaniesHouseImportPage() {
   const [progress, setProgress] = useState<ImportProgress | null>(null)
@@ -79,7 +64,14 @@ export default function CompaniesHouseImportPage() {
         .select('*', { count: 'exact', head: true })
         .eq('data_source', 'companies_house')
 
-      setStats({ totalImported: count || 0 })
+      const total = count || 0
+      setStats({
+        totalRecords: total,
+        totalImported: total,
+        imported: total,
+        skipped: 0,
+        failed: 0
+      })
     } catch (error) {
       console.error('Error fetching stats:', error)
     }
@@ -142,7 +134,7 @@ export default function CompaniesHouseImportPage() {
     return variants[status] || <Badge>{status}</Badge>
   }
 
-  const progressPercent = progress?.totalRows > 0
+  const progressPercent = progress && progress.totalRows && progress.totalRows > 0
     ? Math.round((progress.processedRows / progress.totalRows) * 100)
     : 0
 

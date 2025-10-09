@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SimilarCompanyUseCase } from '@/lib/opp-scan/services/similar-company-use-case'
 import { SimilarityConfiguration } from '@/lib/opp-scan/core/similarity-interfaces'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Initialize services
 let similarCompanyUseCase: SimilarCompanyUseCase
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
         .from('profiles')
         .select('org_id, role')
         .eq('id', user.id)
-        .single()
+        .single() as { data: Pick<Row<'profiles'>, 'org_id' | 'role'> | null; error: any }
       
       orgId = profile?.org_id
     } else {
@@ -167,9 +169,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Similarity analysis error:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to start similarity analysis',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       },
       { status: 500 }
     )
@@ -202,13 +204,20 @@ export async function GET(request: NextRequest) {
 
     if (analysisId) {
       // Get specific analysis status or results
-      const analysisStatus = await useCase.getAnalysisStatus(analysisId, effectiveUserId)
-      
-      if (!analysisStatus) {
+      const rawAnalysisStatus = await useCase.getAnalysisStatus(analysisId, effectiveUserId)
+
+      if (!rawAnalysisStatus) {
         return NextResponse.json(
           { error: 'Analysis not found or access denied' },
           { status: 404 }
         )
+      }
+
+      const analysisStatus = rawAnalysisStatus as typeof rawAnalysisStatus & {
+        status?: string
+        progress_percentage?: number
+        current_step?: string
+        error_message?: string
       }
 
       // If analysis is completed, return full results
@@ -224,8 +233,8 @@ export async function GET(request: NextRequest) {
             )
           `)
           .eq('id', analysisId)
-          .eq('user_id', effectiveUserId)
-          .single()
+          .eq('user_id', effectiveUserId!)
+          .single() as { data: Record<string, unknown> & { similar_company_matches?: unknown[] } | null; error: any }
 
         if (error || !fullAnalysis) {
           return NextResponse.json(
@@ -277,9 +286,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error retrieving similarity analyses:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to retrieve analyses',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       },
       { status: 500 }
     )
@@ -324,9 +333,9 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('Error cancelling analysis:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to cancel analysis',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
       },
       { status: 500 }
     )

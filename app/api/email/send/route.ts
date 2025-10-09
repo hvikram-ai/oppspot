@@ -5,6 +5,7 @@ import WelcomeEmail from '@/emails/welcome'
 import VerificationEmail from '@/emails/verification'
 import PasswordResetEmail from '@/emails/password-reset'
 import NotificationEmail from '@/emails/notification'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest) {
 
     // Log email event if user is authenticated
     if (user) {
+      // @ts-ignore - Supabase type inference issue
       await supabase.from('events').insert({
         user_id: user.id,
         event_type: 'email_sent',

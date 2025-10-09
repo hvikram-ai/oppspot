@@ -550,6 +550,7 @@ export class UnifiedDataLayer {
 
     if (source === 'supabase-primary') {
       const supabase = await createClient()
+      // @ts-ignore - Supabase type inference issue
       await supabase.from(entity).insert(data)
     } else {
       console.warn(`Destination ${destination} not implemented`)

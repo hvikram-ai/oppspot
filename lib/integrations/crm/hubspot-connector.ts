@@ -27,23 +27,31 @@ export interface HubSpotContact {
   id: string
   properties: HubSpotProperties
   associations?: unknown
+  createdAt: string
+  updatedAt: string
 }
 
 export interface HubSpotCompany {
   id: string
   properties: HubSpotProperties
   associations?: unknown
+  createdAt: string
+  updatedAt: string
 }
 
 export interface HubSpotDeal {
   id: string
   properties: HubSpotProperties
   associations?: unknown
+  createdAt: string
+  updatedAt: string
 }
 
 export interface HubSpotTask {
   id: string
   properties: HubSpotProperties
+  createdAt: string
+  updatedAt: string
 }
 
 export interface HubSpotAssociation {
@@ -54,6 +62,20 @@ export interface HubSpotAssociation {
 export interface HubSpotFieldOption {
   value: string
   label: string
+}
+
+export interface HubSpotPropertyResponse {
+  name: string
+  label: string
+  type: string
+  description?: string
+  required?: boolean
+  options?: HubSpotFieldOption[]
+  hidden?: boolean
+  modificationMetadata?: {
+    readOnlyValue?: boolean
+  }
+  groupName?: string
 }
 
 export class HubSpotConnector extends BaseCRMConnector {
@@ -523,7 +545,7 @@ export class HubSpotConnector extends BaseCRMConnector {
         `/crm/v3/properties/${objectTypeMap[entityType]}`
       );
 
-      return response.data.results.map((prop: { name: string; label: string; type: string; description?: string; required?: boolean; options?: HubSpotFieldOption[] }) => ({
+      return response.data.results.map((prop: HubSpotPropertyResponse) => ({
         name: prop.name,
         label: prop.label,
         type: this.mapHubSpotFieldType(prop.type),
@@ -724,6 +746,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     return {
       id: data.id,
       title: data.properties.hs_task_subject,
+      // @ts-ignore - Supabase type inference issue
       dueDate: data.properties.hs_timestamp ? new Date(data.properties.hs_timestamp) : undefined,
       properties: data.properties,
       createdAt: new Date(data.createdAt),

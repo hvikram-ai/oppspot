@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { UpdateStreamRequest } from '@/types/streams'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 export async function GET(
   request: NextRequest,
@@ -29,7 +30,7 @@ export async function GET(
   } catch (error: unknown) {
     console.error('Error fetching stream:', error)
 
-    if (error.message === 'Access denied') {
+    if (getErrorMessage(error) === 'Access denied') {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -61,7 +62,7 @@ export async function PATCH(
   } catch (error: unknown) {
     console.error('Error updating stream:', error)
 
-    if (error.message === 'Insufficient permissions') {
+    if (getErrorMessage(error) === 'Insufficient permissions') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -102,7 +103,7 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error('Error deleting stream:', error)
 
-    if (error.message === 'Insufficient permissions') {
+    if (getErrorMessage(error) === 'Insufficient permissions') {
       return NextResponse.json(
         { error: 'Only owners can delete streams' },
         { status: 403 }

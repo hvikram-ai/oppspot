@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getSmartSyncOrchestrator } from '@/lib/integrations/crm/smartsync-orchestrator';
 import { z } from 'zod';
+import type { Row } from '@/lib/supabase/helpers'
 
 const SyncContactSchema = z.object({
   integration_id: z.string().uuid().optional(),
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: Pick<Row<'profiles'>, 'organization_id'> | null; error: any };
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         .eq('organization_id', profile.organization_id)
         .eq('is_active', true)
         .limit(1)
-        .single();
+        .single() as { data: Pick<Row<'crm_integrations'>, 'id'> | null; error: any };
 
       if (!integration) {
         return NextResponse.json(
@@ -145,7 +146,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: Pick<Row<'profiles'>, 'organization_id'> | null; error: any };
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });

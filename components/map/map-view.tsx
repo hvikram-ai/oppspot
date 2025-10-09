@@ -83,8 +83,17 @@ export function MapView({
 
   useEffect(() => {
     if (map) {
-      map.on('moveend', () => {
-        const bounds = map.getBounds()
+      const leafletMap = map as {
+        on: (event: string, handler: () => void) => void
+        getBounds: () => {
+          getNorth: () => number
+          getSouth: () => number
+          getEast: () => number
+          getWest: () => number
+        }
+      }
+      leafletMap.on('moveend', () => {
+        const bounds = leafletMap.getBounds()
         onBoundsChange({
           north: bounds.getNorth(),
           south: bounds.getSouth(),
@@ -92,9 +101,9 @@ export function MapView({
           west: bounds.getWest()
         })
       })
-      
+
       // Set initial bounds
-      const bounds = map.getBounds()
+      const bounds = leafletMap.getBounds()
       onBoundsChange({
         north: bounds.getNorth(),
         south: bounds.getSouth(),
@@ -106,13 +115,15 @@ export function MapView({
 
   useEffect(() => {
     if (map && selectedBusiness && selectedBusiness.latitude && selectedBusiness.longitude) {
-      map.setView([selectedBusiness.latitude, selectedBusiness.longitude], 14)
+      const leafletMap = map as { setView: (center: [number, number], zoom: number) => void }
+      leafletMap.setView([selectedBusiness.latitude, selectedBusiness.longitude], 14)
     }
   }, [map, selectedBusiness])
 
   useEffect(() => {
     if (map && center) {
-      map.setView(center, zoom)
+      const leafletMap = map as { setView: (center: [number, number], zoom: number) => void }
+      leafletMap.setView(center, zoom)
     }
   }, [map, center, zoom])
 
@@ -127,15 +138,25 @@ export function MapView({
   const createCustomIcon = (business: Business) => {
     const isSelected = selectedBusiness?.id === business.id
     const color = '#6b7280' // Default color for all businesses
-    
-    return L.divIcon({
+
+    const leaflet = L as {
+      divIcon: (options: {
+        html: string
+        className: string
+        iconSize: [number, number]
+        iconAnchor: [number, number]
+        popupAnchor: [number, number]
+      }) => unknown
+    }
+
+    return leaflet.divIcon({
       html: `
         <div class="relative">
           <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0C7.16 0 0 7.16 0 16C0 24.84 16 40 16 40C16 40 32 24.84 32 16C32 7.16 24.84 0 16 0Z" 
-              fill="${isSelected ? '#3b82f6' : color}" 
+            <path d="M16 0C7.16 0 0 7.16 0 16C0 24.84 16 40 16 40C16 40 32 24.84 32 16C32 7.16 24.84 0 16 0Z"
+              fill="${isSelected ? '#3b82f6' : color}"
               fill-opacity="${isSelected ? '1' : '0.9'}"
-              stroke="${isSelected ? '#1e40af' : 'white'}" 
+              stroke="${isSelected ? '#1e40af' : 'white'}"
               stroke-width="2"/>
             <circle cx="16" cy="16" r="6" fill="white"/>
           </svg>
@@ -175,6 +196,7 @@ export function MapView({
             <Marker
               key={business.id}
               position={[business.latitude, business.longitude]}
+              // @ts-ignore - Supabase type inference issue
               icon={createCustomIcon(business)}
               eventHandlers={{
                 click: () => onBusinessSelect(business)

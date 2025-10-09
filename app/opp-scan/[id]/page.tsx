@@ -40,6 +40,7 @@ import {
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface ScanData {
   id: string
@@ -594,14 +595,17 @@ function ScanDetailPageContent() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {scanData.selected_industries.map((industry, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                          <span className="text-sm font-medium">{industry.industry}</span>
-                          {industry.subcategory && (
-                            <Badge variant="outline" className="text-xs">{industry.subcategory}</Badge>
-                          )}
-                        </div>
-                      ))}
+                      {scanData.selected_industries.map((industry, index) => {
+                        const ind = industry as { industry: string; subcategory?: string; description?: string }
+                        return (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <span className="text-sm font-medium">{ind.industry}</span>
+                            {ind.subcategory && (
+                              <Badge variant="outline" className="text-xs">{ind.subcategory}</Badge>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>

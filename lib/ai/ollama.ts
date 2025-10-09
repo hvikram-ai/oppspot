@@ -518,10 +518,11 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   }
 
   async generateTagline(business: Record<string, unknown>): Promise<string> {
+    const categories = business.categories as string[] | undefined
     const prompt = `Create a memorable tagline (max 10 words) for:
-    ${business.name} - ${business.categories?.join(', ')}
+    ${business.name} - ${categories?.join(', ')}
     ${business.description ? `Current description: ${business.description}` : ''}
-    
+
     Return only the tagline, no quotes or additional text.`
 
     const response = await this.complete(prompt, {
@@ -533,9 +534,10 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   }
 
   async suggestCategories(business: Record<string, unknown>): Promise<string[]> {
+    const categories = business.categories as string[] | undefined
     const prompt = `Suggest 3-5 relevant business categories for:
     Name: ${business.name}
-    Current categories: ${business.categories?.join(', ') || 'None'}
+    Current categories: ${categories?.join(', ') || 'None'}
     Description: ${business.description || 'No description'}
     
     Choose from these categories: Technology, Finance, Healthcare, Retail, Food & Beverage, 
@@ -556,9 +558,10 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   // Helper methods for business prompts
   private buildDescriptionPrompt(business: Record<string, unknown>): string {
     const parts = [`Generate a compelling business description for ${business.name}.`]
-    
-    if (business.categories && business.categories.length > 0) {
-      parts.push(`Industry/Categories: ${business.categories.join(', ')}`)
+
+    const categories = business.categories as string[] | undefined
+    if (categories && categories.length > 0) {
+      parts.push(`Industry/Categories: ${categories.join(', ')}`)
     }
     
     if (business.address) {
@@ -595,10 +598,11 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
   }
 
   private buildInsightsPrompt(business: Record<string, unknown>): string {
+    const categories = business.categories as string[] | undefined
     return `Analyze this business and provide strategic insights in JSON format:
-    
+
     Business: ${business.name}
-    Categories: ${business.categories?.join(', ')}
+    Categories: ${categories?.join(', ')}
     Location: ${JSON.stringify(business.address)}
     Rating: ${business.rating || 'Not available'}
     Verified: ${business.verified ? 'Yes' : 'No'}

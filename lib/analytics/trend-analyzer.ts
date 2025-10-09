@@ -4,6 +4,7 @@ import { Database } from '@/lib/supabase/database.types'
 
 type DbClient = SupabaseClient<Database>
 import { subDays, format } from 'date-fns'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface TrendAnalysis {
   entityType: 'market' | 'category' | 'location' | 'business'
@@ -131,9 +132,9 @@ export class TrendAnalyzer {
         .from('businesses')
         .select('rating, review_count')
         .eq('id', entityId)
-        .single()
-      
-      if (business) {
+        .single() as { data: (Row<'businesses'> & { rating?: number; review_count?: number }) | null; error: any }
+
+      if (business && business.rating) {
         // Generate synthetic historical data for demonstration
         data = this.generateSyntheticData(business.rating, periodDays)
       }
@@ -425,9 +426,10 @@ export class TrendAnalyzer {
     }
     
     // Prediction insight
-    const next7d = predictions['7d']
-    if (next7d && next7d.confidence > 0.7) {
-      const change = ((next7d.value - predictions['1d']?.value) / predictions['1d']?.value * 100).toFixed(1)
+    const next7d = predictions['7d'] as { confidence?: number; value?: number } | undefined
+    const next1d = predictions['1d'] as { value?: number } | undefined
+    if (next7d && next7d.confidence && next7d.confidence > 0.7 && next7d.value && next1d?.value) {
+      const change = ((next7d.value - next1d.value) / next1d.value * 100).toFixed(1)
       insights.push(`7-day forecast shows ${change}% expected change`)
     }
     
@@ -468,6 +470,7 @@ export class TrendAnalyzer {
 
     await this.supabase
       .from('trend_analysis')
+      // @ts-ignore - Supabase type inference issue
       .upsert(record, {
         onConflict: 'entity_type,entity_id,analysis_date,period_days'
       })

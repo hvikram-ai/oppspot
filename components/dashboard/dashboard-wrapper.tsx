@@ -6,11 +6,14 @@ import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { User } from '@supabase/supabase-js'
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface Profile {
   onboarding_completed?: boolean
   org_id?: string | null
   email?: string
+  subscription_tier?: string
+  preferences?: unknown
 }
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
@@ -67,9 +70,9 @@ export function DashboardWrapper() {
       // Get user profile with error handling
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('onboarding_completed, org_id, email')
+        .select('onboarding_completed, org_id, preferences')
         .eq('id', user.id)
-        .single()
+        .single() as { data: Row<'profiles'> | null; error: any }
 
       // Handle RLS policy errors gracefully
       if (profileError) {
@@ -78,10 +81,9 @@ export function DashboardWrapper() {
         // Special handling for demo account
         if (user.email === 'demo@oppspot.com') {
           console.log('Demo account detected, bypassing onboarding check')
-          setProfile({ 
-            onboarding_completed: true, 
-            org_id: 'demo-org',
-            email: 'demo@oppspot.com'
+          setProfile({
+            onboarding_completed: true,
+            org_id: 'demo-org'
           })
           setLoading(false)
           return
@@ -108,13 +110,13 @@ export function DashboardWrapper() {
           .from('organizations')
           .select('subscription_tier')
           .eq('id', profile.org_id)
-          .single()
-        
+          .single() as { data: Row<'organizations'> | null; error: any }
+
         isPremium = org?.subscription_tier === 'premium' || org?.subscription_tier === 'enterprise'
       }
 
       // Special bypass for demo account
-      const isDemoAccount = user.email === 'demo@oppspot.com' || profile?.email === 'demo@oppspot.com'
+      const isDemoAccount = user.email === 'demo@oppspot.com'
       
       // Don't auto-redirect to onboarding anymore - it's optional
       // Show prompt instead if onboarding not completed

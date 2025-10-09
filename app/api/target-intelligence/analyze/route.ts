@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { TargetIntelligenceService, type TargetCompanyInput } from '@/lib/target-intelligence/target-intelligence-service'
 import { CompanyEnrichmentService, type CompanyEnrichmentRequest } from '@/lib/target-intelligence/company-enrichment-service'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface AnalyzeRequest {
   company_name: string
@@ -149,6 +150,7 @@ export async function POST(request: NextRequest) {
       try {
         const { error: storageError } = await supabase
           .from('target_intelligence_profiles')
+          // @ts-ignore - Supabase type inference issue
           .upsert({
             user_id: user.id,
             company_name: body.company_name,

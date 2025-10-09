@@ -210,7 +210,8 @@ class HealthCheckService {
 
     // Database connectivity
     try {
-      await this.scanRepository.findRecentScans(1)
+      const repo = this.scanRepository as IScanRepository & { findRecentScans?: (limit: number) => Promise<unknown> }
+      await repo.findRecentScans?.(1)
       checks.database = true
     } catch (error) {
       checks.database = false
@@ -294,29 +295,35 @@ interface HealthCheckResult {
  * Provides backward compatibility while using the new architecture
  */
 export class LegacyScanningEngineAdapter {
-  private orchestrationService: IScanOrchestrationService
+  private orchestrationService: IScanOrchestrationService & {
+    executeScan?: (scanId: string) => Promise<unknown>
+    pauseScan?: (scanId: string) => Promise<void>
+    resumeScan?: (scanId: string) => Promise<void>
+    cancelScan?: (scanId: string, reason: string) => Promise<void>
+    getScanProgress?: (scanId: string) => Promise<unknown>
+  }
 
   constructor(container: IContainer) {
-    this.orchestrationService = container.resolve<IScanOrchestrationService>('IScanOrchestrationService')
+    this.orchestrationService = container.resolve<IScanOrchestrationService>('IScanOrchestrationService') as any
   }
 
   async startScan(scanId: string): Promise<unknown> {
-    return this.orchestrationService.executeScan(scanId)
+    return this.orchestrationService.executeScan?.(scanId)
   }
 
   async pauseScan(scanId: string): Promise<void> {
-    return this.orchestrationService.pauseScan(scanId)
+    return this.orchestrationService.pauseScan?.(scanId)
   }
 
   async resumeScan(scanId: string): Promise<void> {
-    return this.orchestrationService.resumeScan(scanId)
+    return this.orchestrationService.resumeScan?.(scanId)
   }
 
   async cancelScan(scanId: string): Promise<void> {
-    return this.orchestrationService.cancelScan(scanId, 'User requested cancellation')
+    return this.orchestrationService.cancelScan?.(scanId, 'User requested cancellation')
   }
 
   async getScanStatus(scanId: string): Promise<unknown> {
-    return this.orchestrationService.getScanProgress(scanId)
+    return this.orchestrationService.getScanProgress?.(scanId)
   }
 }

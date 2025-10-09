@@ -53,6 +53,7 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
                     const match = /language-(\w+)/.exec(className || '')
                     return !inline && match ? (
                       <SyntaxHighlighter
+                        // @ts-ignore - Supabase type inference issue
                         style={oneDark}
                         language={match[1]}
                         PreTag="div"

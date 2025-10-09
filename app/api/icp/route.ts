@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { icpLearningEngine } from '@/lib/ai/icp/learning-engine'
+import { getErrorMessage } from '@/lib/utils/error-handler'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('[ICP API] Error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch ICP profiles', message: error.message },
+      { error: 'Failed to fetch ICP profiles', message: getErrorMessage(error) },
       { status: 500 }
     )
   }
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -107,7 +109,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('[ICP API] Error:', error)
     return NextResponse.json(
-      { error: 'Failed to process ICP request', message: error.message },
+      { error: 'Failed to process ICP request', message: getErrorMessage(error) },
       { status: 500 }
     )
   }

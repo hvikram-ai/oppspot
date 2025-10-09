@@ -15,6 +15,7 @@ import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } f
 import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { ollamaEmbeddingService } from '@/lib/ai/embedding/ollama-embedding-service'
+import type { Row } from '@/lib/supabase/helpers'
 
 export interface OpportunityBotConfig {
   criteria: {
@@ -261,7 +262,7 @@ export class OpportunityBot extends BaseAgent {
       .select('*')
       .eq('company_id', companyId)
       .eq('status', 'active')
-      .gte('detected_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
+      .gte('detected_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) as { data: Row<'buying_signals'>[] | null; error: any } // Last 30 days
 
     return data || []
   }
@@ -293,7 +294,7 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
     .select('*')
     .eq('id', agentId)
     .eq('agent_type', 'opportunity_bot')
-    .single()
+    .single() as { data: Row<'ai_agents'> | null; error: any }
 
   if (error || !data) {
     throw new Error(`OpportunityBot not found: ${agentId}`)

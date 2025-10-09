@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
+import type { Row } from '@/lib/supabase/helpers'
 
 // Helper function to generate URL-safe slug
 function generateSlug(name: string): string {
@@ -36,7 +37,10 @@ export async function POST(
       .from('businesses')
       .select('id, company_number, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
-      .single()
+      .single() as { data: (Row<'businesses'> & {
+        cache_expires_at?: string
+        companies_house_last_updated?: string
+      }) | null; error: any }
 
     // Check if cache is still valid
     if (existing?.cache_expires_at) {
@@ -49,7 +53,7 @@ export async function POST(
           .from('businesses')
           .select('*')
           .eq('id', existing.id)
-          .single()
+          .single() as { data: Row<'businesses'> | null; error: any }
 
         return NextResponse.json({
           success: true,
@@ -82,6 +86,7 @@ export async function POST(
         console.log(`Updating existing record for ${companyNumber}`)
         const { data: updated, error: updateError } = await supabase
           .from('businesses')
+          // @ts-ignore - Type inference issue
           .update(businessData)
           .eq('id', existing.id)
           .select()
@@ -98,6 +103,7 @@ export async function POST(
         console.log(`Creating new record for ${companyNumber}`)
         const { data: created, error: createError } = await supabase
           .from('businesses')
+          // @ts-ignore - Supabase type inference issue
           .insert(businessData)
           .select()
           .single()
@@ -143,7 +149,7 @@ export async function POST(
           .from('businesses')
           .select('*')
           .eq('id', existing.id)
-          .single()
+          .single() as { data: Row<'businesses'> | null; error: any }
 
         return NextResponse.json({
           success: true,
@@ -195,7 +201,10 @@ export async function GET(
       .from('businesses')
       .select('id, company_number, name, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
-      .single()
+      .single() as { data: (Row<'businesses'> & {
+        cache_expires_at?: string
+        companies_house_last_updated?: string
+      }) | null; error: any }
 
     if (error || !company) {
       return NextResponse.json({

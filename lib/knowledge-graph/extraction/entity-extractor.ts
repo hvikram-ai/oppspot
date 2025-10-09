@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 import type {
   ExtractKnowledgeRequest,
   ExtractKnowledgeResponse,
@@ -56,7 +57,7 @@ export class EntityExtractor {
         .from('profiles')
         .select('org_id')
         .eq('id', userId)
-        .single()
+        .single() as { data: Row<'profiles'> | null; error: any }
 
       if (!profile?.org_id) {
         return {
@@ -301,6 +302,7 @@ Guidelines:
     for (const entityData of extracted.entities) {
       const { data: entity } = await supabase
         .from('knowledge_entities')
+        // @ts-ignore - Supabase type inference issue
         .insert({
           org_id: orgId,
           entity_type: entityData.entity_type,
@@ -327,6 +329,7 @@ Guidelines:
 
       if (sourceId && targetId) {
         const { error } = await supabase
+          // @ts-ignore - Supabase type inference issue
           .from('entity_relationships')
           .insert({
             org_id: orgId,
@@ -349,6 +352,7 @@ Guidelines:
       const entityId = entityMap.get(factData.entity_name)
 
       if (entityId) {
+        // @ts-ignore - Supabase type inference issue
         const { error } = await supabase
           .from('knowledge_facts')
           .insert({

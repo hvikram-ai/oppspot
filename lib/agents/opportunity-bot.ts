@@ -12,6 +12,7 @@
 import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } from '@/lib/ai/agents/base-agent'
 import { createClient } from '@/lib/supabase/server'
 import { createProgressBroadcaster } from './progress-broadcaster'
+import type { Row } from '@/lib/supabase/helpers'
 
 export class OpportunityBot extends BaseAgent {
   async execute(context: AgentExecutionContext): Promise<AgentExecutionResult> {
@@ -45,7 +46,7 @@ export class OpportunityBot extends BaseAgent {
         .from('streams')
         .select('*')
         .eq('id', stream_id)
-        .single()
+        .single() as { data: Row<'streams'> | null; error: any }
 
       if (!stream) {
         throw new Error(`Stream not found: ${stream_id}`)
@@ -352,7 +353,7 @@ export class OpportunityBot extends BaseAgent {
       .select('id')
       .eq('stream_id', streamId)
       .eq('business_id', company.id)
-      .single()
+      .single() as { data: Row<'stream_items'> | null; error: any }
 
     if (existing) {
       this.log(`Company ${company.name} already in stream, skipping`)
@@ -364,13 +365,14 @@ export class OpportunityBot extends BaseAgent {
       .from('streams')
       .select('stages')
       .eq('id', streamId)
-      .single()
+      .single() as { data: Row<'streams'> | null; error: any }
 
     const firstStage = stream?.stages?.[0]
 
     // Add to stream
     await supabase
       .from('stream_items')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         stream_id: streamId,
         item_type: 'company',
@@ -464,7 +466,7 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single()
+    .single() as { data: Row<'ai_agents'> | null; error: any }
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)

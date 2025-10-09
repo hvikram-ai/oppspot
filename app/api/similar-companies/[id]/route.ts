@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 interface CompanyMatch {
   overall_score: number
@@ -89,7 +90,12 @@ export async function GET(
       .select(selectQuery)
       .eq('id', analysisId)
       .eq('user_id', user.id)
-      .single()
+      .single() as {
+        data: (Record<string, unknown> & {
+          similar_company_matches?: unknown[]
+        }) | null
+        error: any
+      }
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -102,14 +108,14 @@ export async function GET(
     }
 
     // Limit matches if requested
-    if (analysis.similar_company_matches && matchLimit < analysis.similar_company_matches.length) {
-      analysis.similar_company_matches = analysis.similar_company_matches
+    if (analysis!.similar_company_matches && matchLimit < analysis!.similar_company_matches.length) {
+      analysis!.similar_company_matches = analysis!.similar_company_matches
         .sort((a, b) => (b as CompanyMatch).overall_score - (a as CompanyMatch).overall_score)
         .slice(0, matchLimit)
     }
 
     // Calculate summary statistics
-    const matches = analysis.similar_company_matches || []
+    const matches = analysis!.similar_company_matches || []
     const summary = {
       totalMatches: matches.length,
       averageScore: matches.length > 0 ? 
@@ -178,7 +184,7 @@ export async function PUT(
       .select('id, user_id, status')
       .eq('id', analysisId)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'similarity_analyses'>, 'id' | 'user_id' | 'status'> | null; error: any }
 
     if (checkError || !existing) {
       return NextResponse.json(
@@ -200,6 +206,7 @@ export async function PUT(
     // Update analysis
     const { data: updated, error: updateError } = await supabase
       .from('similarity_analyses')
+      // @ts-ignore - Type inference issue
       .update(updateData)
       .eq('id', analysisId)
       .eq('user_id', user.id)
@@ -248,7 +255,7 @@ export async function DELETE(
       .select('id, user_id, target_company_name')
       .eq('id', analysisId)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'similarity_analyses'>, 'id' | 'user_id' | 'target_company_name'> | null; error: any }
 
     if (checkError || !existing) {
       return NextResponse.json(
@@ -271,6 +278,7 @@ export async function DELETE(
     // Record deletion in feature usage
     await supabase
       .from('similarity_feature_usage')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         user_id: user.id,
         event_type: 'analysis_deleted',

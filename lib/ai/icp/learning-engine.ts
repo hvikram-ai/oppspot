@@ -8,6 +8,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getLLMProvider } from '@/lib/ai/llm-factory'
+import type { Row } from '@/lib/supabase/helpers'
+import type { Address } from '@/lib/opp-scan/core/interfaces'
 
 export interface ICPCriteria {
   industries?: string[]
@@ -53,6 +55,13 @@ export interface DealOutcome {
   outcome_reason?: string
   outcome_date?: string
   company_snapshot: Record<string, any>
+  org_id?: string
+}
+
+// Extended business type with ICP-specific fields
+interface BusinessWithICPFields extends Omit<Row<'businesses'>, 'address'> {
+  employee_count?: number
+  address: Address | null
 }
 
 export class ICPLearningEngine {
@@ -83,7 +92,7 @@ export class ICPLearningEngine {
     const supabase = await createClient()
 
     // Step 1: Get all won and lost deals
-    const { data: deals, error } = await supabase
+    const { data: dealsData, error } = await supabase
       .from('deal_outcomes')
       .select('*')
       .eq('org_id', orgId)
@@ -91,9 +100,12 @@ export class ICPLearningEngine {
       .order('outcome_date', { ascending: false })
       .limit(100) // Use last 100 deals
 
-    if (error || !deals || deals.length === 0) {
+    if (error || !dealsData || dealsData.length === 0) {
       throw new Error('No deal data available for training')
     }
+
+    // Type assertion for deal outcomes
+    const deals = dealsData as unknown as DealOutcome[]
 
     // Step 2: Separate won vs lost deals
     const wonDeals = deals.filter(d => d.outcome === 'won')
@@ -118,27 +130,30 @@ export class ICPLearningEngine {
     const newVersion = currentICP ? currentICP.version + 1 : 1
 
     // Step 8: Create new ICP version
-    const { data: newICP, error: createError } = await supabase
+    const { data: newICPData, error: createError } = await supabase
       .from('icp_profiles')
       .insert({
         org_id: orgId,
         version: newVersion,
         name: `ICP v${newVersion} (Auto-learned)`,
         description: `Automatically learned from ${wonDeals.length} won deals and ${lostDeals.length} lost deals`,
-        criteria,
-        confidence_scores: confidenceScores,
-        metrics,
-        learned_from: deals.map(d => d.id),
+        criteria: criteria as any,
+        confidence_scores: confidenceScores as any,
+        metrics: metrics as any,
+        learned_from: deals.map(d => d.id) as any,
         training_data_count: deals.length,
         last_trained_at: new Date().toISOString(),
         is_active: true // Will auto-deactivate others via trigger
-      })
+      } as any)
       .select()
       .single()
 
-    if (createError || !newICP) {
+    if (createError || !newICPData) {
       throw new Error(`Failed to create ICP: ${createError?.message}`)
     }
+
+    // Type assertion for the new ICP
+    const newICP = newICPData as unknown as ICPProfile
 
     // Step 9: Log evolution
     await this.logEvolution(orgId, newICP.id, 'created', currentICP?.criteria, criteria, {
@@ -147,7 +162,7 @@ export class ICPLearningEngine {
       improvement: metrics.win_rate - (currentICP?.metrics.win_rate || 0)
     })
 
-    return newICP as ICPProfile
+    return newICP
   }
 
   /**
@@ -260,9 +275,9 @@ Return ONLY valid JSON:
 Focus on patterns that appear in >30% of won deals.`
 
     try {
-      const response = await llm.generateText(prompt, {
+      const response = await llm.complete(prompt, {
         temperature: 0.3,
-        maxTokens: 1500
+        max_tokens: 1500
       })
 
       // Parse JSON from response
@@ -423,12 +438,12 @@ Focus on patterns that appear in >30% of won deals.`
       org_id: orgId,
       icp_profile_id: icpId,
       change_type: changeType,
-      before_data: beforeData,
-      after_data: afterData,
+      before_data: beforeData as any,
+      after_data: afterData as any,
       trigger_type: 'auto_learning',
-      trigger_data: triggerData,
+      trigger_data: triggerData as any,
       insights
-    })
+    } as any)
   }
 
   /**
@@ -438,35 +453,41 @@ Focus on patterns that appear in >30% of won deals.`
     const supabase = await createClient()
 
     // Get ICP
-    const { data: icp } = await supabase
+    const { data: icpData } = await supabase
       .from('icp_profiles')
       .select('*')
       .eq('id', icpId)
       .single()
 
-    if (!icp) {
+    if (!icpData) {
       throw new Error('ICP not found')
     }
 
+    // Type assertion for ICP
+    const icp = icpData as unknown as ICPProfile
+
     // Get company
-    const { data: company } = await supabase
+    const { data: companyData } = await supabase
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single()
+      .single() as { data: Row<'businesses'> | null; error: any }
 
-    if (!company) {
+    if (!companyData) {
       throw new Error('Company not found')
     }
 
-    const criteria = icp.criteria as ICPCriteria
+    // Type assertion for company with ICP fields
+    const company = companyData as unknown as BusinessWithICPFields
+
+    const criteria = icp.criteria
     let totalScore = 0
     let totalWeight = 0
 
     // Industry match (weight: 30)
-    if (criteria.industries && company.sic_codes) {
+    if (criteria.industries && company.sic_codes && company.sic_codes.length > 0) {
       const match = criteria.industries.some((ind: string) =>
-        company.sic_codes.includes(ind)
+        company.sic_codes!.includes(ind)
       )
       totalScore += match ? 30 : 0
       totalWeight += 30
@@ -483,9 +504,10 @@ Focus on patterns that appear in >30% of won deals.`
 
     // Location match (weight: 15)
     if (criteria.locations && company.address) {
+      const address = company.address as Address
       const match = criteria.locations.some((loc: string) =>
-        company.address.city?.toLowerCase().includes(loc.toLowerCase()) ||
-        company.address.region?.toLowerCase().includes(loc.toLowerCase())
+        address.city?.toLowerCase().includes(loc.toLowerCase()) ||
+        address.region?.toLowerCase().includes(loc.toLowerCase())
       )
       totalScore += match ? 15 : 0
       totalWeight += 15
@@ -505,7 +527,7 @@ Focus on patterns that appear in >30% of won deals.`
       mismatch_reasons: [],
       calculated_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h cache
-    })
+    } as any)
 
     return finalScore
   }

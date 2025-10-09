@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(
   request: NextRequest,
@@ -28,7 +29,7 @@ export async function GET(
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
 
     if (!profile?.org_id) {
       return NextResponse.json(
@@ -43,7 +44,7 @@ export async function GET(
       .select('*')
       .eq('id', id)
       .eq('org_id', profile.org_id)
-      .single()
+      .single() as { data: Row<'knowledge_entities'> | null; error: any }
 
     if (entityError || !entity) {
       return NextResponse.json(
@@ -53,6 +54,7 @@ export async function GET(
     }
 
     // Get relationships
+    // @ts-ignore - Type inference issue
     const { data: relationships } = await supabase.rpc('find_related_entities', {
       p_entity_id: id,
       p_relationship_type: null,

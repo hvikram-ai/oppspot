@@ -1,5 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Row } from '@/lib/supabase/helpers'
+
+// Interfaces for extended types
+interface StreamWithCreator extends Row<'streams'> {
+  creator: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  } | null
+  target_metrics?: {
+    companies_to_find?: number
+  }
+  goal_status?: string
+  goal_deadline?: string
+}
+
+interface StreamItemWithMetadata extends Row<'stream_items'> {
+  status?: string
+  metadata?: {
+    quality_score?: number
+    signals?: unknown[]
+  }
+}
+
+interface InsightWithAgent {
+  id: string
+  stream_id: string
+  insight_type: string
+  title: string
+  description: string | null
+  data: unknown
+  priority: string
+  status: string
+  generated_by: string | null
+  generated_at: string | null
+  dismissed_at: string | null
+  dismissed_by: string | null
+  created_at: string
+  agent: {
+    id: string
+    name: string | null
+    agent_type: string | null
+  } | null
+}
+
+interface AgentAssignment {
+  id: string
+  stream_id: string
+  agent_id: string
+  is_active: boolean
+  schedule: unknown
+  config: unknown
+  last_executed_at: string | null
+  next_scheduled_at: string | null
+  successful_executions: number
+  failed_executions: number
+  avg_execution_time_ms: number | null
+  created_by: string
+  created_at: string
+  updated_at: string
+  agent: {
+    id: string
+    name: string | null
+    agent_type: string | null
+  } | null
+}
 
 /**
  * GET /api/streams/[id]/dashboard
@@ -30,7 +96,7 @@ export async function GET(
         creator:profiles!streams_created_by_fkey(id, full_name, avatar_url)
       `)
       .eq('id', streamId)
-      .single()
+      .single() as { data: StreamWithCreator | null; error: any }
 
     if (streamError || !stream) {
       console.error('Error fetching stream:', streamError)
@@ -46,7 +112,7 @@ export async function GET(
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
 
     if (!membership) {
       return NextResponse.json(
@@ -59,7 +125,7 @@ export async function GET(
     const { data: items = [] } = await supabase
       .from('stream_items')
       .select('id, status, stage_id, metadata')
-      .eq('stream_id', streamId)
+      .eq('stream_id', streamId) as { data: StreamItemWithMetadata[] | null; error: any }
 
     // Calculate progress metrics
     const total = stream.target_metrics?.companies_to_find || items.length
@@ -81,17 +147,16 @@ export async function GET(
     let signalsDetected = 0
 
     items.forEach(item => {
-      if (item.metadata && typeof item.metadata === 'object') {
-        const metadata = item.metadata as Record<string, unknown>
-        if (typeof metadata.quality_score === 'number') {
-          totalQualityScore += metadata.quality_score
+      if (item.metadata) {
+        if (typeof item.metadata.quality_score === 'number') {
+          totalQualityScore += item.metadata.quality_score
           qualityCount++
-          if (metadata.quality_score >= 4.0) {
+          if (item.metadata.quality_score >= 4.0) {
             highQualityCount++
           }
         }
-        if (Array.isArray(metadata.signals)) {
-          signalsDetected += metadata.signals.length
+        if (Array.isArray(item.metadata.signals)) {
+          signalsDetected += item.metadata.signals.length
         }
       }
     })
@@ -108,7 +173,7 @@ export async function GET(
       `)
       .eq('stream_id', streamId)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(20) as { data: InsightWithAgent[] | null; error: any }
 
     // Fetch recent agent executions (mock data for now - replace with actual table when available)
     // TODO: Replace with actual agent_executions table query
@@ -138,10 +203,10 @@ export async function GET(
       `)
       .eq('stream_id', streamId)
       .order('last_executed_at', { ascending: false })
-      .limit(10)
+      .limit(10) as { data: AgentAssignment[] | null; error: any }
 
     // Transform agent assignments into execution summaries
-    agentAssignments.forEach((assignment: any) => {
+    agentAssignments.forEach((assignment) => {
       if (assignment.last_executed_at && assignment.agent) {
         recent_agent_executions.push({
           id: assignment.id,

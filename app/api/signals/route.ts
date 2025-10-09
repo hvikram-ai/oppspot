@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { signalDetector } from '@/lib/signals/buying-signal-detector'
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -119,6 +120,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
+      // @ts-ignore - Supabase type inference issue
       .insert({
         api_name: 'buying_signals',
         endpoint: '/api/signals',

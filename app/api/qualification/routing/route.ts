@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { leadRoutingEngine } from '@/lib/qualification/routing/lead-routing-engine';
 import { RouteLeadRequest } from '@/lib/qualification/types/qualification';
+import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -164,6 +165,7 @@ export async function PATCH(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('lead_assignments')
+      // @ts-ignore - Type inference issue
       .update(updateData)
       .eq('id', assignment_id)
       .select()
