@@ -4,11 +4,86 @@ demo@oppspot.com
 Demo123456!
 -----------------------
 
+-----------------start of 8 October 2025
+
+
+
+Technical Debt Summary
+
+  Critical Issues (Blocking Build Quality)
+
+  - 3,409 TypeScript errors (builds only work because ignoreBuildErrors: 
+  true)
+  - 1,443 ESLint problems (709 errors, 734 warnings)
+  - 574 explicit any types
+  - 676 unused variables
+  - 41 TODO/FIXME comments
+
+  Most Common TypeScript Errors
+
+  1. Type mismatches - ImportProgress, ImportStats missing properties
+  2. never type issues - Database types resolving to never
+  3. Null safety - Properties accessed without null checks
+  4. JSON type assertions - Improper handling of JSON fields
+
+  Breakdown by Category
+
+  1. Type Safety (574 any types)
+    - Replace with proper interfaces/types
+    - Fix database type generation issues
+  2. Unused Code (676 instances)
+    - Remove unused imports
+    - Clean up unused variables (e.g., _request, testMode)
+  3. Database Types (Major issue)
+    - Many tables resolve to never type
+    - lib/supabase/database.types.ts needs regeneration
+    - Missing properties in scan/import types
+  4. Null Safety (Hundreds of issues)
+    - Missing null checks (property is possibly 'null')
+    - Optional chaining needed
+
+  Files Needing Most Attention
+
+  - app/admin/companies-house/page.tsx - ImportStats/ImportProgress types
+  - app/api/acquisition-scans/** - Database type issues (never types)
+  - app/admin/import/page.tsx - Event data type safety
+
+  Current Workaround
+
+  // next.config.ts
+  eslint.ignoreDuringBuilds: true
+  typescript.ignoreBuildErrors: true
+
+  Would you like me to start fixing any specific category? I'd recommend
+  tackling them in this order:
+  1. Fix database types (fixes ~40% of errors)
+  2. Replace any types with proper interfaces
+  3. Add null safety checks
+  4. Clean up unused variables
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------
+
+
+
 INNGEST
 npx inngest-cli@latest dev
 
 ------------------------------
-
+-----------------------------
 
 
   Immediate (This Week)

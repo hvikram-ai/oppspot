@@ -245,7 +245,6 @@ function NewOppScanPageContent() {
       // Create the acquisition scan
       const { data: scan, error } = await supabase
         .from('acquisition_scans')
-        // @ts-ignore - Supabase type inference issue
         .insert({
           user_id: user.id,
           org_id: (profile as Row<'profiles'>)?.org_id,
@@ -409,7 +408,6 @@ function NewOppScanPageContent() {
                             : isCompleted
                             ? 'bg-green-500 text-white'
                             : 'bg-background text-muted-foreground'
-                        // @ts-ignore - Supabase type inference issue
                         }`}>
                           {isCompleted ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                         </div>
@@ -452,7 +450,6 @@ function NewOppScanPageContent() {
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                // @ts-ignore - Supabase type inference issue
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-primary text-primary-foreground">
                     <currentStep.icon className="h-4 w-4" />
@@ -463,7 +460,6 @@ function NewOppScanPageContent() {
                   </div>
                 </div>
               </CardHeader>
-              // @ts-ignore - Supabase type inference issue
               <CardContent>
                 <StepComponent
                   config={scanConfig}

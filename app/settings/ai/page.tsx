@@ -316,7 +316,7 @@ export default function AISettingsPage() {
 
       const { error } = await supabase
         .from('user_settings')
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         .upsert({
           user_id: user.id,
           default_ai_provider: selectedProvider,

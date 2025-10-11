@@ -86,7 +86,7 @@ export default function ProfilePage() {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({
           full_name: profile.full_name,
           phone: profile.phone,

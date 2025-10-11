@@ -213,7 +213,7 @@ export default function CreateDataRoomPage() {
 
             {/* Feature Highlights */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <h4 className="font-semibold text-sm">What you'll get:</h4>
+              <h4 className="font-semibold text-sm">What you&rsquo;ll get:</h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
                 <li>✅ Secure document storage with encryption</li>
                 <li>✅ AI-powered document classification</li>

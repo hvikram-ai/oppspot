@@ -102,8 +102,8 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
 
 export default async function BusinessPage({ params: paramsPromise }: BusinessPageProps) {
   const params = await paramsPromise
-  let business: Business | Record<string, unknown> | null = null
-  let relatedBusinesses: (Business | Record<string, unknown>)[] | null = null
+  let business: Business | null = null
+  let relatedBusinesses: Business[] | null = null
 
   // Check if it's a mock/demo company first
   if (params.id.startsWith('mock-') || params.id.startsWith('demo-')) {
@@ -206,7 +206,7 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         await supabase.from('events').insert({
           user_id: user.id,
           event_type: 'business_view',
@@ -238,8 +238,8 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Left Side */}
           <div className="lg:col-span-2 space-y-6">
-            <BusinessHeader business={business} />
-            <BusinessInfo business={business} />
+            <BusinessHeader business={business as any} />
+            <BusinessInfo business={business as any} />
             <LinkedInInfo
               businessId={business.id}
               businessName={business.name}
@@ -253,7 +253,7 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
               })()}
               isAdmin={false}
             />
-            <BusinessUpdates 
+            <BusinessUpdates
               businessId={business.id}
               businessName={business.name}
             />
@@ -263,11 +263,11 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
               websiteUrl={business.website}
               isAdmin={false}
             />
-            <BusinessLocation business={business} />
-            
+            <BusinessLocation business={business as any} />
+
             {relatedBusinesses && relatedBusinesses.length > 0 && (
-              <RelatedBusinesses 
-                businesses={relatedBusinesses}
+              <RelatedBusinesses
+                businesses={relatedBusinesses as any}
                 currentBusinessId={params.id}
               />
             )}
@@ -275,8 +275,8 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
 
           {/* Sidebar - Right Side */}
           <div className="space-y-6">
-            <BusinessContact business={business} />
-            <BusinessActions business={business} />
+            <BusinessContact business={business as any} />
+            <BusinessActions business={business as any} />
             {!params.id.startsWith('mock-') && (
               <>
                 <BusinessStakeholders

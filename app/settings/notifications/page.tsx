@@ -91,7 +91,7 @@ export default function NotificationSettingsPage() {
 
       const { error } = await supabase
         .from('profiles')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({ 
           preferences: settings,
           updated_at: new Date().toISOString()
