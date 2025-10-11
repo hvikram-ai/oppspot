@@ -153,7 +153,7 @@ export class FundingSignalDetector {
       // Store the signal in database
       const { data: signal, error } = await supabase
         .from('buying_signals')
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         .insert({
           ...fundingSignal,
           signal_data: fundingSignal.funding_data,
@@ -166,7 +166,7 @@ export class FundingSignalDetector {
 
       const typedSignal = signal as Row<'buying_signals'>
 
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       // Store funding-specific details
       await supabase.from('funding_signals').insert({
         signal_id: typedSignal.id,

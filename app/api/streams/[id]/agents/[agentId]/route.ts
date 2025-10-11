@@ -24,12 +24,12 @@ export async function PATCH(
     }
 
     // Verify user has editor/owner access
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single();
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(
@@ -43,7 +43,7 @@ export async function PATCH(
     // Update the assignment
     const { data: assignment, error: updateError } = await supabase
       .from('stream_agent_assignments')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update(body)
       .eq('stream_id', streamId)
       .eq('agent_id', agentId)
@@ -100,12 +100,12 @@ export async function DELETE(
     }
 
     // Verify user has editor/owner access
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single();
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(
@@ -132,7 +132,7 @@ export async function DELETE(
     // Create activity
     await supabase
       .from('stream_activities')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         user_id: user.id,

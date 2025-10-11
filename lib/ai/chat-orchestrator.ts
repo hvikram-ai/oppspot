@@ -400,7 +400,7 @@ Response (JSON only):`;
     
     // Add search filter
     if (args.query) {
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       query = query.textSearch('name', args.query)
     }
     

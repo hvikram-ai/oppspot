@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Save comparison
     const { data: comparison, error: saveError } = await supabase
       .from('business_comparisons')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         business_ids: businessIds,
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       }
       
       // Fetch business details
-      const { data: businesses } = await supabase
+      const { data: businesses, error: businessesError } = await supabase
         .from('businesses')
         .select('*')
         .in('id', comparison.business_ids)

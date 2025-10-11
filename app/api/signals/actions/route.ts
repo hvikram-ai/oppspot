@@ -28,13 +28,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify signal exists
-    const { data: signal } = await supabase
+    const { data: signal, error: signalError } = await supabase
       .from('buying_signals')
       .select('*')
       .eq('id', signal_id)
-      .single() as { data: Row<'buying_signals'> | null; error: any };
+      .single();
 
-    if (!signal) {
+    if (signalError || !signal) {
       return NextResponse.json(
         { error: 'Signal not found' },
         { status: 404 }
@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
     if (result.success) {
       await supabase
         .from('signal_actions')
-        // @ts-ignore - Type inference issue
         .update({
           action_status: 'completed',
           executed_at: new Date().toISOString(),
@@ -239,7 +238,6 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
       // Create a task in the task management system
       const { data: task, error: taskError } = await supabase
         .from('tasks')
-        // @ts-ignore - Supabase type inference issue
         .insert({
           title: `Follow up on ${signal.signal_type} signal`,
           description: `Company has a ${signal.signal_strength} ${signal.signal_type} signal`,
@@ -259,7 +257,6 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
     case 'alert_sent':
       // Create an in-app notification
       const { data: notification, error: notifError } = await supabase
-        // @ts-ignore - Supabase type inference issue
         .from('notifications')
         .insert({
           user_id: userId,
@@ -281,7 +278,6 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
 
     case 'opportunity_created':
       // Create an opportunity in the CRM
-      // @ts-ignore - Supabase type inference issue
       const { data: opportunity, error: oppError } = await supabase
         .from('opportunities')
         .insert({
@@ -301,7 +297,6 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
         { success: true, data: opportunity };
 
     case 'campaign_enrolled':
-      // @ts-ignore - Supabase type inference issue
       // Enroll in a nurture campaign
       const { data: enrollment, error: enrollError } = await supabase
         .from('campaign_enrollments')

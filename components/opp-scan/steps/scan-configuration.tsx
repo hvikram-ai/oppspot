@@ -466,7 +466,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                         <CardHeader>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <Checkbox checked={isSourceSelected(source.id)} readOnly />
+                              <Checkbox checked={isSourceSelected(source.id)} onCheckedChange={() => {}} />
                               <Icon className="h-5 w-5 text-primary" />
                               <div>
                                 <CardTitle className="text-base">{source.name}</CardTitle>
@@ -579,7 +579,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           checked={config.companySizeFilter?.includes(size.id) || false}
-                          readOnly
+                          onCheckedChange={() => {}}
                         />
                         <div className="text-sm">
                           <div className="font-medium">{size.label}</div>
@@ -598,12 +598,12 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                     type="range"
                     min="0"
                     max="100"
-                    value={config.minFinancialHealth || 50}
+                    value={(config.minFinancialHealth as number | undefined) || 50}
                     onChange={(e) => onChange('minFinancialHealth', parseInt(e.target.value))}
                     className="flex-1"
                   />
                   <span className="text-sm font-medium w-12">
-                    {config.minFinancialHealth || 50}%
+                    {(config.minFinancialHealth as number | undefined) || 50}%
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -622,7 +622,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       type="number"
                       min="0"
                       max="100"
-                      value={config.minCompanyAge || 0}
+                      value={(config.minCompanyAge as number | undefined) || 0}
                       onChange={(e) => onChange('minCompanyAge', parseInt(e.target.value))}
                     />
                   </div>
@@ -633,7 +633,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       type="number"
                       min="0"
                       max="100"
-                      value={config.maxCompanyAge || 50}
+                      value={(config.maxCompanyAge as number | undefined) || 50}
                       onChange={(e) => onChange('maxCompanyAge', parseInt(e.target.value))}
                     />
                   </div>
@@ -651,7 +651,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       <p className="text-sm text-muted-foreground">Include companies marked as dormant</p>
                     </div>
                     <Switch
-                      checked={config.includeDormant || false}
+                      checked={(config.includeDormant as boolean | undefined) || false}
                       onCheckedChange={(checked) => onChange('includeDormant', checked)}
                     />
                   </div>
@@ -662,7 +662,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       <p className="text-sm text-muted-foreground">Include companies dissolved in last 2 years</p>
                     </div>
                     <Switch
-                      checked={config.includeRecentlyDissolved || false}
+                      checked={(config.includeRecentlyDissolved as boolean | undefined) || false}
                       onCheckedChange={(checked) => onChange('includeRecentlyDissolved', checked)}
                     />
                   </div>
@@ -684,7 +684,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       <p className="text-sm text-muted-foreground">Monitor targets for changes during scan</p>
                     </div>
                     <Switch
-                      checked={config.realtimeMonitoring || false}
+                      checked={(config.realtimeMonitoring as boolean | undefined) || false}
                       onCheckedChange={(checked) => onChange('realtimeMonitoring', checked)}
                     />
                   </div>

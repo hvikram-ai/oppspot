@@ -24,12 +24,12 @@ export async function GET(
     }
 
     // Verify user has access
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single();
 
     if (!membership) {
       return NextResponse.json(
@@ -132,12 +132,12 @@ export async function PATCH(
     }
 
     // Verify user has access
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single();
 
     if (!membership) {
       return NextResponse.json(
@@ -157,7 +157,7 @@ export async function PATCH(
     }
 
     // Build update object
-    const updates: any = {}
+    const updates: Record<string, unknown> = {}
     if (is_read !== undefined) {
       updates.is_read = is_read
     }
@@ -171,7 +171,7 @@ export async function PATCH(
     // Update insight
     const { data: insight, error } = await supabase
       .from('stream_insights')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update(updates)
       .eq('id', insight_id)
       .eq('stream_id', streamId)

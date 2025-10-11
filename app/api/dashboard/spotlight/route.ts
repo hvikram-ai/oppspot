@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     // Use the database function to get personalized spotlight items
     const { data: spotlightItems, error: fetchError } = await supabase
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .rpc('get_user_spotlight_items', {
         p_user_id: user.id,
         p_limit: limit

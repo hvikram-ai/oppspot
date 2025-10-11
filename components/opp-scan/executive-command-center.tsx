@@ -415,11 +415,11 @@ export function ExecutiveCommandCenter({
                       <div className="flex-1">
                         <p className="text-sm font-medium">{action}</p>
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" size="sm">
+                          <Badge variant="outline" className="text-xs">
                             <Clock className="h-3 w-3 mr-1" />
                             Priority {index < 2 ? 'High' : 'Medium'}
                           </Badge>
-                          <Badge variant="outline" size="sm">
+                          <Badge variant="outline" className="text-xs">
                             <Users className="h-3 w-3 mr-1" />
                             {index % 2 === 0 ? 'M&A Team' : 'Due Diligence'}
                           </Badge>

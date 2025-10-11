@@ -7,9 +7,15 @@ import type {
   UseCase,
   QualificationAction
 } from '../types/qualification';
+import type {
+  BusinessWithMetrics,
+  StakeholderWithEngagement,
+  EngagementEvent,
+  QualificationActivity
+} from '../types/database-helpers';
 
 export class BANTFramework {
-  private supabase;
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   constructor() {
     // Initialize in methods to handle async
@@ -416,23 +422,26 @@ export class BANTFramework {
         .single();
 
       if (company) {
+        const companyData = company as unknown as BusinessWithMetrics;
+
         // Populate budget indicators from company data
         if (!qualification.budget.financial_indicators) {
           qualification.budget.financial_indicators = {};
         }
 
-        if (company.annual_revenue) {
-          qualification.budget.financial_indicators.revenue = company.annual_revenue;
+        const revenue = companyData.annual_revenue || companyData.revenue;
+        if (revenue) {
+          qualification.budget.financial_indicators.revenue = revenue;
 
           // Estimate budget range based on revenue
           if (!qualification.budget.budget_range) {
-            if (company.annual_revenue > 50000000) {
+            if (revenue > 50000000) {
               qualification.budget.budget_range = 'over_500k';
-            } else if (company.annual_revenue > 10000000) {
+            } else if (revenue > 10000000) {
               qualification.budget.budget_range = '100k_500k';
-            } else if (company.annual_revenue > 5000000) {
+            } else if (revenue > 5000000) {
               qualification.budget.budget_range = '50k_100k';
-            } else if (company.annual_revenue > 1000000) {
+            } else if (revenue > 1000000) {
               qualification.budget.budget_range = '10k_50k';
             } else {
               qualification.budget.budget_range = 'under_10k';
@@ -440,16 +449,16 @@ export class BANTFramework {
           }
         }
 
-        if (company.employee_count) {
+        if (companyData.employee_count) {
           // Estimate buying committee size based on company size
           if (!qualification.authority.buying_committee_size) {
-            if (company.employee_count > 1000) {
+            if (companyData.employee_count > 1000) {
               qualification.authority.buying_committee_size = 7;
-            } else if (company.employee_count > 500) {
+            } else if (companyData.employee_count > 500) {
               qualification.authority.buying_committee_size = 5;
-            } else if (company.employee_count > 100) {
+            } else if (companyData.employee_count > 100) {
               qualification.authority.buying_committee_size = 4;
-            } else if (company.employee_count > 50) {
+            } else if (companyData.employee_count > 50) {
               qualification.authority.buying_committee_size = 3;
             } else {
               qualification.authority.buying_committee_size = 2;
@@ -467,8 +476,10 @@ export class BANTFramework {
         .limit(10);
 
       if (engagements && engagements.length > 0) {
+        const typedEngagements = engagements as unknown as EngagementEvent[];
+
         // Analyze engagement patterns for urgency indicators
-        const recentEngagements = engagements.filter(e => {
+        const recentEngagements = typedEngagements.filter((e) => {
           const daysSince = this.getDaysSinceDate(e.event_date);
           return daysSince <= 7;
         });
@@ -478,8 +489,8 @@ export class BANTFramework {
         }
 
         // Determine buying stage based on engagement types
-        const hasDemo = engagements.some(e => e.event_type === 'demo_scheduled');
-        const hasProposal = engagements.some(e => e.event_type === 'proposal_sent');
+        const hasDemo = typedEngagements.some((e) => e.event_type === 'demo_scheduled');
+        const hasProposal = typedEngagements.some((e) => e.event_type === 'proposal_sent');
 
         if (hasProposal) {
           qualification.timeline.buying_stage = 'decision';
@@ -495,25 +506,27 @@ export class BANTFramework {
         .eq('company_id', qualification.company_id);
 
       if (stakeholders && stakeholders.length > 0) {
+        const typedStakeholders = stakeholders as unknown as StakeholderWithEngagement[];
+
         // Map stakeholders to decision makers
-        qualification.authority.decision_makers = stakeholders.map(s => ({
+        qualification.authority.decision_makers = typedStakeholders.map((s) => ({
           name: s.name,
           title: s.title || 'Unknown',
-          department: s.department,
+          department: s.department || undefined,
           authority_level: this.mapTitleToAuthority(s.title),
-          engagement_status: s.engagement_score > 50 ? 'engaged' :
-                           s.engagement_score > 20 ? 'aware' : 'unaware',
+          engagement_status: (s.engagement_score || 0) > 50 ? 'engaged' :
+                           (s.engagement_score || 0) > 20 ? 'aware' : 'unaware',
           contact_info: {
-            email: s.email,
-            phone: s.phone
+            email: s.email || undefined,
+            phone: s.phone || undefined
           }
         }));
 
         // Calculate engagement levels
-        const executives = stakeholders.filter(s =>
+        const executives = typedStakeholders.filter((s) =>
           this.mapTitleToAuthority(s.title) === 'executive'
         );
-        const managers = stakeholders.filter(s =>
+        const managers = typedStakeholders.filter((s) =>
           this.mapTitleToAuthority(s.title) === 'manager'
         );
 
@@ -574,25 +587,27 @@ export class BANTFramework {
       }
 
       // Log activity
+      const activityData: Partial<QualificationActivity> = {
+        lead_id: qualification.lead_id,
+        company_id: qualification.company_id,
+        activity_type: 'bant_calculated',
+        activity_description: `BANT score calculated: ${qualification.overall_score}`,
+        activity_data: {
+          scores: {
+            budget: qualification.budget.score,
+            authority: qualification.authority.score,
+            need: qualification.need.score,
+            timeline: qualification.timeline.score
+          },
+          status: qualification.qualification_status
+        },
+        score_impact: qualification.overall_score,
+        framework_affected: 'BANT'
+      };
+
       await supabase
         .from('qualification_activities')
-        .insert({
-          lead_id: qualification.lead_id,
-          company_id: qualification.company_id,
-          activity_type: 'bant_calculated',
-          activity_description: `BANT score calculated: ${qualification.overall_score}`,
-          activity_data: {
-            scores: {
-              budget: qualification.budget.score,
-              authority: qualification.authority.score,
-              need: qualification.need.score,
-              timeline: qualification.timeline.score
-            },
-            status: qualification.qualification_status
-          },
-          score_impact: qualification.overall_score,
-          framework_affected: 'BANT'
-        });
+        .insert(activityData);
 
       return this.mapFromDatabase(data);
 
@@ -629,19 +644,19 @@ export class BANTFramework {
    */
   private mapFromDatabase(data: Record<string, unknown>): BANTQualification {
     return {
-      id: data.id,
-      lead_id: data.lead_id,
-      company_id: data.company_id,
-      budget: data.budget_details || this.createEmptyBudget(),
-      authority: data.authority_details || this.createEmptyAuthority(),
-      need: data.need_details || this.createEmptyNeed(),
-      timeline: data.timeline_details || this.createEmptyTimeline(),
-      overall_score: data.overall_score || 0,
-      qualification_status: data.qualification_status || 'disqualified',
+      id: data.id as string | undefined,
+      lead_id: data.lead_id as string,
+      company_id: data.company_id as string,
+      budget: (data.budget_details as BANTQualification['budget']) || this.createEmptyBudget(),
+      authority: (data.authority_details as BANTQualification['authority']) || this.createEmptyAuthority(),
+      need: (data.need_details as BANTQualification['need']) || this.createEmptyNeed(),
+      timeline: (data.timeline_details as BANTQualification['timeline']) || this.createEmptyTimeline(),
+      overall_score: (data.overall_score as number) || 0,
+      qualification_status: (data.qualification_status as 'qualified' | 'nurture' | 'disqualified') || 'disqualified',
       next_actions: [],
-      calculated_at: data.calculated_at,
-      calculated_by: data.calculated_by,
-      notes: data.notes
+      calculated_at: data.calculated_at as string | undefined,
+      calculated_by: data.calculated_by as string | undefined,
+      notes: data.notes as string | undefined
     };
   }
 

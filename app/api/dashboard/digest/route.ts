@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('user_id', user.id)
       .eq('digest_date', targetDate)
-      .single() as { data: Row<'ai_digest'> | null; error: any }
+      .single()
 
     if (fetchError && fetchError.code === 'PGRST116') {
       return NextResponse.json(
@@ -126,12 +126,12 @@ export async function POST(request: NextRequest) {
 
     // Check if digest already exists for today
     if (!forceRefresh) {
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('ai_digest')
         .select('id')
         .eq('user_id', user.id)
         .eq('digest_date', today)
-        .single() as { data: Pick<Row<'ai_digest'>, 'id'> | null; error: any }
+        .single()
 
       if (existing) {
         return NextResponse.json(
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
 
     const { data: digest, error: upsertError } = await supabase
       .from('ai_digest')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .upsert(digestPayload, {
         onConflict: 'user_id,digest_date',
         ignoreDuplicates: false
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
  */
 async function generateDigestData(supabase: SupabaseClient, userId: string): Promise<DigestData> {
   // Fetch overnight discoveries (searches, matches)
-  const { data: recentSearches } = await supabase
+  const { data: recentSearches, error: recentSearchesError } = await supabase
     .from('saved_businesses')
     .select('business_id, created_at')
     .eq('user_id', userId)
@@ -199,7 +199,7 @@ async function generateDigestData(supabase: SupabaseClient, userId: string): Pro
     .limit(10)
 
   // Fetch completed research reports
-  const { data: completedReports } = await supabase
+  const { data: completedReports, error: completedReportsError } = await supabase
     .from('research_reports')
     .select('id, company_name, status')
     .eq('user_id', userId)
@@ -208,7 +208,7 @@ async function generateDigestData(supabase: SupabaseClient, userId: string): Pro
     .limit(5)
 
   // Fetch stale leads (urgent alerts)
-  const { data: staleLeads } = await supabase
+  const { data: staleLeads, error: staleLeadsError } = await supabase
     .from('saved_businesses')
     .select('business_id, updated_at')
     .eq('user_id', userId)

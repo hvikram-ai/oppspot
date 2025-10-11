@@ -486,7 +486,7 @@ Frame recommendations in terms of:
 
   private parseOpportunityInsights(text: string): OpportunityInsight[] {
     const opportunities = this.extractBulletPoints(text)
-    
+
     return opportunities.slice(0, 5).map(opp => ({
       category: this.categorizeOpportunity(opp),
       title: this.extractTitle(opp),
@@ -494,12 +494,12 @@ Frame recommendations in terms of:
       impact: this.assessImpact(opp),
       timeframe: this.assessTimeframe(opp),
       confidence: 'medium' as ConfidenceLevel
-    }))
+    })) as OpportunityInsight[]
   }
 
   private parseRiskInsights(text: string): RiskInsight[] {
     const risks = this.extractBulletPoints(text)
-    
+
     return risks.slice(0, 4).map(risk => ({
       category: this.categorizeRisk(risk),
       title: this.extractTitle(risk),
@@ -507,7 +507,7 @@ Frame recommendations in terms of:
       severity: this.assessRiskSeverity(risk),
       probability: this.assessRiskProbability(risk),
       mitigation: this.extractMitigationStrategies(risk)
-    }))
+    })) as RiskInsight[]
   }
 
   private parseStrategyRecommendations(text: string): StrategyRecommendation[] {

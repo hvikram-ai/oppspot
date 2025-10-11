@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has a search with this name
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('saved_searches')
       .select('id')
       .eq('user_id', user.id)
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     // Create saved search
     const { data: search, error } = await supabase
       .from('saved_searches')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         name: name.trim(),

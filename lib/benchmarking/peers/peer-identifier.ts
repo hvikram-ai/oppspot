@@ -129,10 +129,11 @@ export class PeerIdentifier {
     criteria?: PeerSelectionCriteria
   ): Promise<PeerGroup> {
     try {
+      if (!this.supabase) await this.initializeClient()
+
       // Create peer group
-      const result = await this.supabase
-        .from('peer_groups')
-        // @ts-expect-error - Supabase type inference issue with insert() method
+      const result = await (this.supabase!
+        .from('peer_groups') as any)
         .insert({
           name,
           description,
@@ -141,30 +142,31 @@ export class PeerIdentifier {
           created_at: new Date().toISOString()
         })
         .select()
-        .single() as { data: Row<'peer_groups'> | null; error: any }
+        .single()
 
       const { data: peerGroup, error: groupError } = result
 
       if (groupError || !peerGroup) throw groupError || new Error('Failed to create peer group')
 
       // Type assertion for peer group
-      const typedPeerGroup = peerGroup as Row<'peer_groups'>
+      const typedPeerGroup = peerGroup as any
 
       // Add members
       const members = companyIds.map(companyId => ({
-        peer_group_id: (typedPeerGroup as any).id,
+        peer_group_id: typedPeerGroup.id,
         company_id: companyId,
         is_active: true
       }))
 
-      const { error: memberError } = await this.supabase
-        .from('peer_group_members')
-        // @ts-expect-error - Supabase type inference issue with insert() method
+      if (!this.supabase) await this.initializeClient()
+
+      const { error: memberError } = await (this.supabase!
+        .from('peer_group_members') as any)
         .insert(members)
 
       if (memberError) throw memberError
 
-      return typedPeerGroup
+      return typedPeerGroup as PeerGroup
 
     } catch (error) {
       console.error('[PeerIdentifier] Error creating peer group:', error)
@@ -176,7 +178,9 @@ export class PeerIdentifier {
    * Get company features for similarity calculation
    */
   private async getCompanyFeatures(companyId: string): Promise<CompanyFeatures | null> {
-    const { data: company } = await this.supabase
+    if (!this.supabase) await this.initializeClient()
+
+    const { data: company } = await this.supabase!
       .from('businesses')
       .select('*')
       .eq('id', companyId)
@@ -187,7 +191,9 @@ export class PeerIdentifier {
     // Get latest metrics - table may not exist, handle gracefully
     let metrics: CompanyMetricsRow | null = null
     try {
-      const result = await this.supabase
+      if (!this.supabase) await this.initializeClient()
+
+      const result = await this.supabase!
         .from('company_metrics')
         .select('*')
         .eq('company_id', companyId)
@@ -212,7 +218,7 @@ export class PeerIdentifier {
       revenue_growth: metrics?.revenue_growth_yoy,
       location: address?.city || registeredOffice?.locality,
       business_model: this.inferBusinessModel(company),
-      incorporation_date: company.incorporation_date,
+      incorporation_date: company.incorporation_date || undefined,
       metrics: metrics as any
     }
   }
@@ -224,7 +230,9 @@ export class PeerIdentifier {
     targetCompany: CompanyFeatures,
     criteria?: PeerSelectionCriteria
   ): Promise<CompanyFeatures[]> {
-    let query = this.supabase.from('businesses').select('*')
+    if (!this.supabase) await this.initializeClient()
+
+    let query = this.supabase!.from('businesses').select('*')
 
     // Apply criteria filters
     if (criteria?.industry_codes && criteria.industry_codes.length > 0) {
@@ -259,7 +267,9 @@ export class PeerIdentifier {
         // Note: company_metrics table may not exist, gracefully handle
         let metrics: CompanyMetricsRow | null = null
         try {
-          const result = await this.supabase
+          if (!this.supabase) await this.initializeClient()
+
+          const result = await this.supabase!
             .from('company_metrics')
             .select('*')
             .eq('company_id', company.id)
@@ -284,7 +294,7 @@ export class PeerIdentifier {
           revenue_growth: metrics?.revenue_growth_yoy,
           location: address?.city || registeredOffice?.locality,
           business_model: this.inferBusinessModel(company),
-          incorporation_date: company.incorporation_date,
+          incorporation_date: company.incorporation_date || undefined,
           metrics: metrics as any
         }
       })
@@ -517,12 +527,12 @@ export class PeerIdentifier {
     ]
 
     for (const metric of metricsToCompare) {
-      const targetValue = (targetMetrics as Record<string, unknown>)[metric]
-      const candidateValue = (candidateMetrics as Record<string, unknown>)[metric]
+      const targetValue = (targetMetrics as unknown as Record<string, unknown>)[metric]
+      const candidateValue = (candidateMetrics as unknown as Record<string, unknown>)[metric]
 
-      if (targetValue !== undefined && candidateValue !== undefined && targetValue !== 0) {
-        const ratio = Math.min(Math.abs(targetValue), Math.abs(candidateValue)) /
-                     Math.max(Math.abs(targetValue), Math.abs(candidateValue))
+      if (targetValue !== undefined && candidateValue !== undefined && targetValue !== 0 && targetValue !== null && candidateValue !== null) {
+        const ratio = Math.min(Math.abs(targetValue as number), Math.abs(candidateValue as number)) /
+                     Math.max(Math.abs(targetValue as number), Math.abs(candidateValue as number))
         scores.push(ratio)
       }
     }
@@ -647,9 +657,9 @@ export class PeerIdentifier {
       const is_competitor = peer.similarity_features.industry_match >= 0.8 &&
                            peer.similarity_features.geography_match >= 0.5
 
-      const is_aspirational = peer.revenue && targetCompany.revenue &&
+      const is_aspirational = !!(peer.revenue && targetCompany.revenue &&
                              peer.revenue > targetCompany.revenue * 1.5 &&
-                             peer.similarity_features.performance_similarity >= 0.6
+                             peer.similarity_features.performance_similarity >= 0.6)
 
       return {
         company_id: peer.company_id,
@@ -686,10 +696,11 @@ export class PeerIdentifier {
     companyIds: string[]
   ): Promise<void> {
     try {
+      if (!this.supabase) await this.initializeClient()
+
       // Deactivate existing members
-      await this.supabase
-        .from('peer_group_members')
-        // @ts-ignore - Type inference issue
+      await (this.supabase!
+        .from('peer_group_members') as any)
         .update({ is_active: false })
         .eq('peer_group_id', peerGroupId)
 
@@ -701,16 +712,19 @@ export class PeerIdentifier {
         added_at: new Date().toISOString()
       }))
 
-      await this.supabase
-        .from('peer_group_members')
-        // @ts-ignore - Supabase type inference issue
+      if (!this.supabase) await this.initializeClient()
+
+      await (this.supabase!
+        .from('peer_group_members') as any)
         .upsert(members, {
           onConflict: 'peer_group_id,company_id'
         })
 
       // Update peer group count
-      await this.supabase
-        .from('peer_groups')
+      if (!this.supabase) await this.initializeClient()
+
+      await (this.supabase!
+        .from('peer_groups') as any)
         .update({
           member_count: companyIds.length,
           updated_at: new Date().toISOString()
@@ -727,26 +741,30 @@ export class PeerIdentifier {
    * Get peer group details
    */
   async getPeerGroup(peerGroupId: string): Promise<PeerGroup | null> {
-    const { data } = await this.supabase
-      .from('peer_groups')
+    if (!this.supabase) await this.initializeClient()
+
+    const { data } = await (this.supabase!
+      .from('peer_groups') as any)
       .select('*')
       .eq('id', peerGroupId)
-      .single() as { data: Row<'peer_groups'> | null; error: any }
+      .single()
 
-    return data
+    return data as PeerGroup | null
   }
 
   /**
    * Get peer group members
    */
   async getPeerGroupMembers(peerGroupId: string): Promise<PeerGroupMember[]> {
-    const { data } = await this.supabase
-      .from('peer_group_members')
+    if (!this.supabase) await this.initializeClient()
+
+    const { data } = await (this.supabase!
+      .from('peer_group_members') as any)
       .select('*')
       .eq('peer_group_id', peerGroupId)
-      .eq('is_active', true) as { data: Row<'peer_group_members'>[] | null; error: any }
+      .eq('is_active', true)
 
-    return data || []
+    return (data || []) as PeerGroupMember[]
   }
 }
 

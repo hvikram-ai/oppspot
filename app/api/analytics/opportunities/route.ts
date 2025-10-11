@@ -149,7 +149,7 @@ export async function PATCH(request: NextRequest) {
     
     const { error } = await supabase
       .from('opportunities')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update(updateData)
       .eq('id', opportunityId)
     
@@ -157,16 +157,16 @@ export async function PATCH(request: NextRequest) {
     
     // If capturing opportunity, create a notification
     if (action === 'capture') {
-      const { data: opportunity } = await supabase
+      const { data: opportunity, error: opportunityError } = await supabase
         .from('opportunities')
         .select('*')
         .eq('id', opportunityId)
-        .single() as { data: Row<'opportunities'> | null; error: any }
+        .single()
       
       if (opportunity) {
         await supabase
           .from('notifications')
-          // @ts-ignore - Supabase type inference issue
+          // @ts-expect-error - Supabase type inference issue
           .insert({
             user_id: user.id,
             type: 'opportunity_captured',
@@ -206,11 +206,11 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single()
     
     if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })

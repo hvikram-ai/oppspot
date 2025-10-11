@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     // Log email event if user is authenticated
     if (user) {
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       await supabase.from('events').insert({
         user_id: user.id,
         event_type: 'email_sent',

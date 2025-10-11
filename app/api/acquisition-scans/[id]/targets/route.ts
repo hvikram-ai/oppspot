@@ -116,7 +116,7 @@ export async function GET(
     }
 
     // Calculate summary statistics
-    const { data: stats } = await supabase
+    const { data: stats, error: statsError } = await supabase
       .from('target_companies')
       .select('analysis_status, overall_score')
       .eq('scan_id', scanId)
@@ -255,12 +255,12 @@ export async function POST(
       risk_score: 0.0,
       analysis_status: 'pending' as const
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: target, error: insertError } = await (supabase
+     
+    const { data: target, error: insertError } = await supabase
       .from('target_companies')
-      .insert(targetData as any)
+      .insert(targetData)
       .select()
-      .single() as any)
+      .single();
 
     if (insertError) {
       console.error('Error creating target company:', insertError)
@@ -271,11 +271,10 @@ export async function POST(
     }
 
     // Update scan targets count
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: rpcError } = await (supabase.rpc('increment_scan_targets', {
+    const { error: rpcError } = await supabase.rpc('increment_scan_targets', {
       scan_id: scanId,
       increment: 1
-    } as any) as any)
+    });
 
     if (rpcError) {
       console.error('Failed to increment scan targets:', rpcError)
@@ -296,10 +295,10 @@ export async function POST(
       legal_basis: 'legitimate_interest',
       retention_period: 365
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: auditError } = await (supabase
+     
+    const { error: auditError } = await supabase
       .from('scan_audit_log')
-      .insert(auditLogData as any) as any)
+      .insert(auditLogData);
 
     if (auditError) {
       console.error('Failed to create audit log:', auditError)
@@ -318,7 +317,7 @@ export async function POST(
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

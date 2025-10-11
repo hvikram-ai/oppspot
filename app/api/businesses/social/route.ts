@@ -17,11 +17,15 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if user is admin
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single();
+
+    if (profileError) {
+      console.error('[Social API] Error fetching profile:', profileError);
+    }
     
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single();
     
     if (businessError || !business) {
       return NextResponse.json(
@@ -87,7 +91,6 @@ export async function POST(request: NextRequest) {
         // Save website data to database
         const { error: saveError } = await supabase
           .from('website_data')
-          // @ts-ignore - Supabase type inference issue
           .upsert({
             business_id: businessId,
             website_url: business.website,
@@ -128,7 +131,6 @@ export async function POST(request: NextRequest) {
           // Save social profiles
           for (const profile of profiles) {
             const { error: profileError } = await supabase
-              // @ts-ignore - Supabase type inference issue
               .from('social_media_profiles')
               .upsert({
                 business_id: businessId,
@@ -155,11 +157,14 @@ export async function POST(request: NextRequest) {
     
     // Calculate and save social presence score
     try {
-      const { data: scoreData } = await supabase
-        // @ts-ignore - Type inference issue
+      const { data: scoreData, error: scoreError } = await supabase
         .rpc('calculate_social_presence_score', {
           target_business_id: businessId
-        }) as { data: ScoreData[] | null; error: any }
+        });
+
+      if (scoreError) {
+        console.error('[Social API] Error calculating social score:', scoreError);
+      }
 
       if (scoreData && scoreData.length > 0) {
         const score = scoreData[0] as ScoreData
@@ -191,7 +196,6 @@ export async function POST(request: NextRequest) {
         }
         
         // Save social presence score
-        // @ts-ignore - Supabase type inference issue
         await supabase
           .from('social_presence_scores')
           .upsert({
@@ -211,7 +215,6 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       console.error('Error calculating social score:', error)
-    // @ts-ignore - Supabase type inference issue
     }
     
     // Log event
@@ -263,21 +266,29 @@ export async function GET(request: NextRequest) {
     if (profilesError) throw profilesError
     
     // Fetch website data
-    const { data: websiteData } = await supabase
+    const { data: websiteData, error: websiteDataError } = await supabase
       .from('website_data')
       .select('*')
       .eq('business_id', businessId)
-      .single() as { data: Row<'website_data'> | null; error: any }
-    
+      .single();
+
+    if (websiteDataError) {
+      console.error('[Social API GET] Error fetching website data:', websiteDataError);
+    }
+
     // Fetch social presence score
-    const { data: socialScore } = await supabase
+    const { data: socialScore, error: socialScoreError } = await supabase
       .from('social_presence_scores')
       .select('*')
       .eq('business_id', businessId)
-      .single() as { data: Row<'social_presence_scores'> | null; error: any }
+      .single();
+
+    if (socialScoreError) {
+      console.error('[Social API GET] Error fetching social score:', socialScoreError);
+    }
     
     // Fetch recent metrics history
-    const { data: metricsHistory } = await supabase
+    const { data: metricsHistory, error: metricsHistoryError } = await supabase
       .from('social_metrics_history')
       .select('*')
       .eq('business_id', businessId)

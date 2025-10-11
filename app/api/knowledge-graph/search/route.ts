@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     const searchRequest: SemanticSearchRequest = {
       query,
-      entity_type: searchParams.get('entity_type') as any,
+      entity_type: (searchParams.get('entity_type') as 'company' | 'person' | 'product' | 'event' | null) || undefined,
       similarity_threshold: searchParams.get('threshold')
         ? parseFloat(searchParams.get('threshold')!)
         : undefined,

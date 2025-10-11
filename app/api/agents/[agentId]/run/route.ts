@@ -33,18 +33,18 @@ export async function POST(
       .from('ai_agents')
       .select('*')
       .eq('id', agentId)
-      .single() as { data: Row<'ai_agents'> | null; error: any }
+      .single()
 
     if (fetchError || !agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
     }
 
     // Check user has access to this agent
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
     if (profile?.org_id !== agent.org_id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

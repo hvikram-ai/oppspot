@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
 
     if (!isAdmin) {
       // Check if user is admin via database
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+        .single()
 
       if (profile?.role !== 'admin') {
         return NextResponse.json(
@@ -50,17 +50,17 @@ export async function POST(request: NextRequest) {
     for (const template of ALL_TEMPLATES) {
       try {
         // Check if template exists
-        const { data: existing } = await supabase
+        const { data: existing, error: existingError } = await supabase
           .from('goal_templates')
           .select('id')
           .eq('id', template.id)
-          .single() as { data: Pick<Row<'goal_templates'>, 'id'> | null; error: any }
+          .single()
 
         if (existing) {
           // Update existing template
           const { error } = await supabase
             .from('goal_templates')
-            // @ts-ignore - Type inference issue
+            // @ts-expect-error - Type inference issue
             .update({
               name: template.name,
               description: template.description,
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           // Insert new template
           const { error } = await supabase
             .from('goal_templates')
-            // @ts-ignore - Supabase type inference issue
+            // @ts-expect-error - Supabase type inference issue
             .insert({
               id: template.id,
               name: template.name,

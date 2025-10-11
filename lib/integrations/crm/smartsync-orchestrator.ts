@@ -487,7 +487,7 @@ export class SmartSyncOrchestrator {
   ): Promise<void> {
     const supabase = await createClient();
 
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     await supabase.from('crm_entity_mappings').insert({
       integration_id: integrationId,
       oppspot_entity_id: oppspotEntityId,
@@ -508,7 +508,7 @@ export class SmartSyncOrchestrator {
 
     await supabase
       .from('crm_entity_mappings')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update({
         last_synced_at: new Date().toISOString(),
         sync_count: supabase.rpc('increment', { row_id: mappingId }),
@@ -525,7 +525,7 @@ export class SmartSyncOrchestrator {
     logData: Partial<SyncLog>
   ): Promise<void> {
     const supabase = await createClient();
-// @ts-ignore - Supabase type inference issue
+// @ts-expect-error - Supabase type inference issue
 
     await supabase.from('crm_sync_logs').insert({
       integration_id: integrationId,

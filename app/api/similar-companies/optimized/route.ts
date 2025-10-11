@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     // Create analysis record in database (non-blocking)
     if (user) {
       // Store analysis metadata in database
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       supabase.from('similarity_analyses').insert({
         id: analysisId,
         user_id: user.id,

@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           .from('acquisition_scans')
           .select('*')
           .eq('id', scanId)
-          .single() as { data: Row<'acquisition_scans'> | null; error: any }
+          .single()
 
         if (scanError || !scan) {
           return NextResponse.json(
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         // Update scan status to queued
         await supabase
           .from('acquisition_scans')
-          // @ts-ignore - Type inference issue
+          // @ts-expect-error - Type inference issue
           .update({
             status: 'scanning',
             current_step: 'queued_for_processing',
@@ -187,11 +187,11 @@ export async function POST(request: NextRequest) {
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
     return profile?.org_id === orgId
   } catch (error) {

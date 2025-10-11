@@ -165,7 +165,7 @@ export async function PATCH(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('lead_assignments')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update(updateData)
       .eq('id', assignment_id)
       .select()

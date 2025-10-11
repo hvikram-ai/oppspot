@@ -28,13 +28,13 @@ export async function GET(
     }
 
     // Get user's org
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -69,7 +69,7 @@ export async function GET(
       }
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching enrichment job:', error)
 
     return NextResponse.json(
@@ -98,13 +98,13 @@ export async function DELETE(
     }
 
     // Get user's org
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -129,7 +129,7 @@ export async function DELETE(
       message: 'Job cancelled successfully'
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error cancelling enrichment job:', error)
 
     return NextResponse.json(

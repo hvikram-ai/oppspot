@@ -36,15 +36,17 @@ interface BusinessLocationProps {
   business: {
     id: string
     name: string
-    latitude?: number
-    longitude?: number
+    latitude?: number | null
+    longitude?: number | null
     address?: {
       street?: string
       city?: string
       state?: string
       country?: string
       postal_code?: string
-    }
+      [key: string]: unknown
+    } | null
+    [key: string]: unknown
   }
 }
 

@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single();
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -61,18 +61,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch the business
-    const { data: business, error: fetchError } = await supabase
+    const { data: businessData, error: fetchError } = await supabase
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single();
 
-    if (fetchError || !business) {
+    if (fetchError || !businessData) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       )
     }
+
+    const business = businessData as Row<'businesses'>
 
     let finalLinkedInUrl = linkedinUrl
 
@@ -220,7 +222,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the enrichment event
-    // @ts-ignore - Supabase query builder typing issue
+    // @ts-expect-error - Supabase query builder typing issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'linkedin_enrichment',
@@ -261,11 +263,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single();
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -290,7 +292,7 @@ export async function PUT(request: NextRequest) {
 
     query = query.limit(limit)
 
-    const { data: businesses, error: fetchError } = await query as { data: Row<'businesses'>[] | null; error: any }
+    const { data: businesses, error: fetchError } = await query
 
     if (fetchError || !businesses || businesses.length === 0) {
       return NextResponse.json({
@@ -380,7 +382,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Log the bulk enrichment event
-    // @ts-ignore - Supabase query builder typing issue
+    // @ts-expect-error - Supabase query builder typing issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'bulk_linkedin_enrichment',

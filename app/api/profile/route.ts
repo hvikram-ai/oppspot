@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest) {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single() as { data: Row<'profiles'> | null; error: any }
+      .single()
 
     if (profileError) {
       console.error('Error fetching profile:', profileError)
@@ -91,7 +91,7 @@ export async function PUT(request: NextRequest) {
     // Update profile
     const { data: profile, error: updateError } = await supabase
       .from('profiles')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update({
         ...updateData,
         updated_at: new Date().toISOString()

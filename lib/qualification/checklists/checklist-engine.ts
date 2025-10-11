@@ -133,14 +133,18 @@ export class ChecklistEngine {
   async getChecklist(checklistId: string): Promise<QualificationChecklist | null> {
     const supabase = await this.getSupabase();
 
-    const { data: checklist } = await supabase
+    const { data: checklist, error: checklistError } = await supabase
       .from('qualification_checklists')
       .select(`
         *,
-        checklist_items(*) as { data: Row<'qualification_checklists'>[] | null; error: any }
+        checklist_items(*)
       `)
       .eq('id', checklistId)
       .single();
+
+    if (checklistError) {
+      console.error('Error fetching checklist:', checklistError);
+    }
 
     if (!checklist) return null;
 
@@ -453,8 +457,15 @@ export class ChecklistEngine {
 
     if (!items) return;
 
-    const totalItems = items.length;
-    const completedItems = items.filter((i: any) => i.status === 'completed').length;
+    interface ChecklistItemData {
+      status: string;
+      is_required: boolean;
+    }
+
+    const typedItems = items as unknown as ChecklistItemData[];
+
+    const totalItems = typedItems.length;
+    const completedItems = typedItems.filter((i) => i.status === 'completed').length;
     const completionPercentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
     // Determine status
@@ -466,8 +477,8 @@ export class ChecklistEngine {
     }
 
     // Check if all required items are complete
-    const requiredItems = items.filter((i: any) => i.is_required);
-    const requiredComplete = requiredItems.filter((i: any) => i.status === 'completed').length;
+    const requiredItems = typedItems.filter((i) => i.is_required);
+    const requiredComplete = requiredItems.filter((i) => i.status === 'completed').length;
     const requiredCompletion = requiredItems.length > 0
       ? (requiredComplete / requiredItems.length) * 100
       : 100;

@@ -362,7 +362,7 @@ export class ScoringAgent extends BaseAgent {
     // Update item
     await supabase
       .from('stream_items')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update({
         priority: priority as any,
         metadata: {

@@ -433,13 +433,13 @@ export class CompanyAnalysisCompletedIntegrationEvent extends IntegrationEvent<C
         scanId,
         overallScore: analysis.overallScore,
         riskLevel: analysis.riskAssessment.riskLevel,
-        recommendedAction: this.determineRecommendedAction(analysis)
+        recommendedAction: CompanyAnalysisCompletedIntegrationEvent.determineRecommendedAction(analysis)
       },
       correlationId
     )
   }
 
-  private determineRecommendedAction(analysis: CompanyAnalysisResult): RecommendedAction {
+  private static determineRecommendedAction(analysis: CompanyAnalysisResult): RecommendedAction {
     if (analysis.overallScore >= 80 && analysis.riskAssessment.riskLevel !== 'critical') {
       return 'proceed'
     }

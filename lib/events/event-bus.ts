@@ -318,7 +318,6 @@ export class EventBus {
 
       // Update lead score in database
       const supabase = await createClient()
-      // @ts-ignore - Supabase type inference issue
       await supabase.from('lead_scores').upsert({
         company_id: companyId,
         score: (prediction.output as any).score,
@@ -365,7 +364,6 @@ export class EventBus {
         read: false,
         created_at: new Date().toISOString()
       }
-// @ts-ignore - Supabase type inference issue
 
       await supabase.from('notifications').insert(notification)
     } catch (error) {
@@ -455,7 +453,6 @@ export class EventBus {
   }
 
   private async logEvent(event: SystemEvent): Promise<void> {
-    // @ts-ignore - Supabase type inference issue
     try {
       const supabase = await createClient()
       await supabase.from('event_log').insert({

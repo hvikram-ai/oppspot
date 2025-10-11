@@ -27,11 +27,11 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams
 
     const filters: StreamItemFilters = {
-      item_type: searchParams.get('type') as any || undefined,
-      status: searchParams.get('status') as any || undefined,
+      item_type: (searchParams.get('type') as 'company' | 'contact' | 'task' | 'note' | null) || undefined,
+      status: (searchParams.get('status') as 'active' | 'completed' | 'cancelled' | null) || undefined,
       stage_id: searchParams.get('stage') || undefined,
       assigned_to: searchParams.get('assigned_to') || undefined,
-      priority: searchParams.get('priority') as any || undefined,
+      priority: (searchParams.get('priority') as 'low' | 'medium' | 'high' | 'urgent' | null) || undefined,
       search: searchParams.get('search') || undefined,
       tags: searchParams.get('tags')?.split(',') || undefined
     }

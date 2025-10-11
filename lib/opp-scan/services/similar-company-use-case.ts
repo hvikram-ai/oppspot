@@ -138,11 +138,11 @@ export class SimilarCompanyUseCase {
         maxResults: request.configuration.maxResults
       }
 
-      let searchResults: CompanySearchResult[] = []
-      
+      let searchResults: any[] = []
+
       try {
         searchResults = await this.webSearchService.searchCompanies(searchQuery)
-        metrics.apiCallsMade += this.webSearchService.getProviderStats()?.totalRequests || 0
+        metrics.apiCallsMade += (this.webSearchService.getProviderStats() as any)?.totalRequests || 0
         metrics.totalCost += this.webSearchService.getTotalCost()
         
         console.log(`[SimilarCompanyUseCase] Search returned ${searchResults.length} results for "${request.targetCompanyName}"`)
@@ -243,7 +243,7 @@ export class SimilarCompanyUseCase {
             riskFactors: [],
             opportunities: [],
             rank: i + 1,
-            marketPosition: this.determineMarketPosition(candidate.company, scoringResult.scores)
+            marketPosition: this.determineMarketPosition(candidate.company, scoringResult.scores as any) as any
           }
 
           scoredMatches.push(match)
@@ -257,7 +257,7 @@ export class SimilarCompanyUseCase {
 
       // Sort by similarity score and update ranks
       scoredMatches.sort((a, b) => b.overallScore - a.overallScore)
-      scoredMatches.forEach((match, index) => {
+      scoredMatches.forEach((match: any, index) => {
         match.rank = index + 1
       })
 
@@ -294,7 +294,7 @@ export class SimilarCompanyUseCase {
       })
 
       const similarityAnalysis = await this.storeAnalysisResults(
-        analysisRecord,
+        analysisRecord as any,
         targetCompany,
         scoredMatches,
         request.configuration,
@@ -333,7 +333,7 @@ export class SimilarCompanyUseCase {
       await this.updateAnalysisStatus(analysisId, 'failed', getErrorMessage(error))
 
       return {
-        similarityAnalysis: null as unknown,
+        similarityAnalysis: null as unknown as SimilarityEntity,
         metrics: {
           ...metrics,
           totalProcessingTime: Date.now() - startTime
@@ -360,13 +360,13 @@ export class SimilarCompanyUseCase {
       const cacheKey = this.generateCacheKey(targetCompanyName, configuration)
       
       const supabase = await this.getSupabase()
-      const { data: analysis, error } = await supabase
-        .from('similarity_analyses')
+      const { data: analysis, error } = await (supabase
+        .from('similarity_analyses') as any)
         .select(`
           *,
           similar_company_matches (
             *,
-            similarity_explanations (*) as { data: Row<'similarity_analyses'>[] | null; error: any }
+            similarity_explanations (*)
           )
         `)
         .eq('user_id', userId)
@@ -382,7 +382,7 @@ export class SimilarCompanyUseCase {
         return null
       }
 
-      return this.mapDatabaseToSimilarityEntity(analysis)
+      return this.mapDatabaseToSimilarityEntity(analysis as any)
     } catch (error) {
       console.error('Error retrieving cached analysis:', error)
       return null
@@ -529,30 +529,34 @@ export class SimilarCompanyUseCase {
   private async createOrGetBenchmarkProfile(company: CompanyEntity): Promise<MnABenchmarkEntity> {
     // Check if benchmark profile already exists
     const supabase = await this.getSupabase()
-    const { data: existing } = await supabase
-      .from('mna_benchmark_profiles')
+    const { data: existing } = await (supabase
+      .from('mna_benchmark_profiles') as any)
       .select('*')
       .eq('company_id', company.id)
-      .single() as { data: Row<'mna_benchmark_profiles'> | null; error: any }
+      .single()
 
     if (existing) {
-      return this.mapDatabaseToBenchmark(existing)
+      return this.mapDatabaseToBenchmark(existing as any)
     }
 
     // Create new benchmark profile
-    const benchmarkProfile: Partial<MnABenchmarkEntity> = {
+    const benchmarkProfile: any = {
       companyId: company.id,
       // Add default/estimated values based on available data
-      dataQualityScore: 0.5,
-      dataCompleteness: 0.3,
+      dataQuality: {
+        completeness: 0.3,
+        accuracy: 0.5,
+        freshness: 0.7,
+        overall: 0.5
+      },
       sourceReliability: 0.7,
       lastFinancialUpdate: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     }
 
-    const { data: created, error } = await supabase
-      .from('mna_benchmark_profiles')
+    const { data: created, error } = await (supabase
+      .from('mna_benchmark_profiles') as any)
       .insert(benchmarkProfile)
       .select()
       .single()
@@ -561,7 +565,7 @@ export class SimilarCompanyUseCase {
       throw new Error(`Failed to create benchmark profile: ${getErrorMessage(error)}`)
     }
 
-    return this.mapDatabaseToBenchmark(created)
+    return this.mapDatabaseToBenchmark(created as any)
   }
 
   private async createBenchmarkProfiles(
@@ -575,7 +579,7 @@ export class SimilarCompanyUseCase {
         benchmarks.push(benchmark)
       } catch (error) {
         console.error(`Error creating benchmark for ${enrichedCandidate.company.name}:`, error)
-        benchmarks.push(null as unknown) // Push null to maintain array alignment
+        benchmarks.push(null as any) // Push null to maintain array alignment
       }
     }
 
@@ -595,11 +599,11 @@ export class SimilarCompanyUseCase {
           benchmarkScores: match.benchmarkScores
         }
 
-        const explanationResult = await this.explanationService.generateSimilarityExplanation(explanationContext)
-        
-        match.explanation = explanationResult.explanation
-        metrics.llmTokensUsed += explanationResult.metrics.tokensUsed
-        metrics.totalCost += explanationResult.metrics.cost
+        const explanationResult = await this.explanationService.generateSimilarityExplanation(explanationContext);
+
+        (match as any).explanation = explanationResult.explanation;
+        metrics.llmTokensUsed += explanationResult.metrics.tokensUsed;
+        metrics.totalCost += explanationResult.metrics.cost;
       } catch (error) {
         console.error(`Error generating explanation for ${match.company.name}:`, error)
         metrics.errorCount++
@@ -617,7 +621,7 @@ export class SimilarCompanyUseCase {
       const insightsContext = {
         targetCompany,
         matches,
-        analysisConfiguration: configuration
+        analysisConfiguration: configuration as any
       }
 
       const insightsResult = await this.explanationService.generateMnAInsights(insightsContext)
@@ -713,8 +717,8 @@ export class SimilarCompanyUseCase {
       }))
 
       const supabase = await this.getSupabase()
-      const { error: matchError } = await supabase
-        .from('similar_company_matches')
+      const { error: matchError } = await (supabase
+        .from('similar_company_matches') as any)
         .insert(matchRecords)
 
       if (matchError) {
@@ -726,9 +730,8 @@ export class SimilarCompanyUseCase {
       const explanationRecords = matches
         .filter(match => match.explanation && match.explanation.summary)
         .map(match => {
-          const matchRecord = matchRecords.find(r => r.company_name === match.company.name)
           return {
-            similar_company_match_id: matchRecord?.id, // Will be populated after insert
+            // Note: similar_company_match_id would need to be set after match insertion with RETURNING clause
             summary: match.explanation.summary,
             key_reasons: match.explanation.keyReasons,
             financial_rationale: match.explanation.financialRationale,
@@ -900,6 +903,11 @@ export class SimilarCompanyUseCase {
     return {
       id: dbRecord.id,
       companyId: dbRecord.company_id,
+      financialProfile: {} as any,
+      strategicProfile: {} as any,
+      operationalProfile: {} as any,
+      marketProfile: {} as any,
+      riskProfile: {} as any,
       benchmarkScores: {
         financial: { score: 0, confidence: 0.5, contributingFactors: [], dataPoints: 0 },
         strategic: { score: 0, confidence: 0.5, contributingFactors: [], dataPoints: 0 },
@@ -909,48 +917,45 @@ export class SimilarCompanyUseCase {
         overall: 0
       },
       dataQuality: {
-        completeness: dbRecord.data_completeness || 0,
+        completeness: (dbRecord.data_completeness as number) || 0,
         accuracy: 0.7,
         freshness: 0.8,
-        overall: dbRecord.data_quality_score || 0.5
+        overall: (dbRecord.data_quality_score as number) || 0.5
       },
-      // @ts-ignore - Supabase type inference issue
-      lastUpdated: new Date(dbRecord.updated_at),
-      sourceReliability: dbRecord.source_reliability || 0.7
+      lastUpdated: new Date((dbRecord.updated_at as string) || Date.now()),
+      sourceReliability: (dbRecord.source_reliability as number) || 0.7
     } as MnABenchmarkEntity
   }
 
   private mapDatabaseToSimilarityEntity(dbRecord: Record<string, unknown>): SimilarityEntity {
     return {
-      id: dbRecord.id,
-      targetCompany: dbRecord.target_company_data,
-      similarCompanies: dbRecord.similar_company_matches || [],
-      analysisConfiguration: dbRecord.analysis_configuration,
+      id: dbRecord.id as string,
+      targetCompany: dbRecord.target_company_data as CompanyEntity,
+      similarCompanies: dbRecord.similar_company_matches as any[] || [],
+      analysisConfiguration: dbRecord.analysis_configuration as SimilarityConfiguration,
       overallSummary: {
-        totalCompaniesAnalyzed: dbRecord.total_companies_analyzed || 0,
-        averageSimilarityScore: dbRecord.average_similarity_score || 0,
-        topSimilarityScore: dbRecord.top_similarity_score || 0,
-        distributionByIndustry: dbRecord.distribution_by_industry || {},
-        distributionByRegion: dbRecord.distribution_by_region || {},
-        analysisCompleteness: dbRecord.analysis_completeness || 0,
-        dataQualityScore: dbRecord.data_quality_score || 0
+        totalCompaniesAnalyzed: (dbRecord.total_companies_analyzed as number) || 0,
+        averageSimilarityScore: (dbRecord.average_similarity_score as number) || 0,
+        topSimilarityScore: (dbRecord.top_similarity_score as number) || 0,
+        distributionByIndustry: (dbRecord.distribution_by_industry as Record<string, number>) || {},
+        distributionByRegion: (dbRecord.distribution_by_region as Record<string, number>) || {},
+        analysisCompleteness: (dbRecord.analysis_completeness as number) || 0,
+        dataQualityScore: (dbRecord.data_quality_score as number) || 0
       },
       mnaInsights: {
-        executiveSummary: dbRecord.executive_summary || '',
-        keyOpportunities: dbRecord.key_opportunities || [],
-        riskHighlights: dbRecord.risk_highlights || [],
-        strategicRecommendations: dbRecord.strategic_recommendations || [],
+        executiveSummary: (dbRecord.executive_summary as string) || '',
+        keyOpportunities: (dbRecord.key_opportunities as any) || [],
+        riskHighlights: (dbRecord.risk_highlights as any) || [],
+        strategicRecommendations: (dbRecord.strategic_recommendations as any) || [],
         valuationConsiderations: [],
         integrationConsiderations: []
-      // @ts-ignore - Supabase type inference issue
       },
-      generatedAt: new Date(dbRecord.created_at),
-      userId: dbRecord.user_id,
-      orgId: dbRecord.org_id,
-      // @ts-ignore - Supabase type inference issue
-      status: dbRecord.status,
-      cached: dbRecord.cached || false,
-      expiresAt: dbRecord.expires_at ? new Date(dbRecord.expires_at) : undefined
+      generatedAt: new Date(dbRecord.created_at as string),
+      userId: dbRecord.user_id as string,
+      orgId: dbRecord.org_id as string | undefined,
+      status: dbRecord.status as any,
+      cached: (dbRecord.cached as boolean) || false,
+      expiresAt: dbRecord.expires_at ? new Date(dbRecord.expires_at as string) : undefined
     }
   }
 
@@ -961,12 +966,12 @@ export class SimilarCompanyUseCase {
    */
   async getAnalysisStatus(analysisId: string, userId: string): Promise<unknown> {
     const supabase = await this.getSupabase()
-    const { data, error } = await supabase
-      .from('similarity_analyses')
+    const { data, error } = await (supabase
+      .from('similarity_analyses') as any)
       .select('id, status, progress_percentage, current_step, error_message')
       .eq('id', analysisId)
       .eq('user_id', userId)
-      .single() as { data: Row<'similarity_analyses'> | null; error: any }
+      .single()
 
     if (error) return null
     return data
@@ -977,16 +982,16 @@ export class SimilarCompanyUseCase {
    */
   async getUserAnalyses(userId: string, limit = 10): Promise<SimilarityEntity[]> {
     const supabase = await this.getSupabase()
-    const { data, error } = await supabase
-      .from('similarity_analyses')
+    const { data, error } = await (supabase
+      .from('similarity_analyses') as any)
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(limit) as { data: Row<'similarity_analyses'>[] | null; error: any }
+      .limit(limit)
 
     if (error || !data) return []
-    
-    return data.map(record => this.mapDatabaseToSimilarityEntity(record))
+
+    return data.map((record: any) => this.mapDatabaseToSimilarityEntity(record))
   }
 
   /**
@@ -994,7 +999,7 @@ export class SimilarCompanyUseCase {
    */
   async getServiceHealth(): Promise<Record<string, unknown>> {
     const health = {
-      webSearch: await this.webSearchService.validateAPIAccess?.() || false,
+      webSearch: await (this.webSearchService as any).validateAPIAccess?.() || false,
       llmService: await this.explanationService.validateAPIAccess() || false,
       database: true, // Would check DB connection
       overall: 'healthy'

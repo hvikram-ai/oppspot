@@ -20,11 +20,11 @@ export async function POST(request: NextRequest) {
     const body: IdentifyDetractorsRequest = await request.json();
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
 
     // Add org_id to request if not provided
     if (!body.org_id && profile?.org_id) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'stakeholder_tracking',
         endpoint: '/api/stakeholders/detractors',
@@ -93,11 +93,11 @@ export async function GET(request: NextRequest) {
     const business_impact = searchParams.get('business_impact');
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
 
     // Build query
     let query = supabase

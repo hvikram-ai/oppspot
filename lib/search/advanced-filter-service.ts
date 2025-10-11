@@ -29,7 +29,7 @@ export class AdvancedFilterService {
 
       // Get total count
       const { count } = await supabase
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .rpc('count_filtered_businesses', { filter_params: params })
         .single();
 

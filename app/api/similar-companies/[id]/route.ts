@@ -94,7 +94,6 @@ export async function GET(
         data: (Record<string, unknown> & {
           similar_company_matches?: unknown[]
         }) | null
-        error: any
       }
 
     if (error) {
@@ -184,7 +183,7 @@ export async function PUT(
       .select('id, user_id, status')
       .eq('id', analysisId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'similarity_analyses'>, 'id' | 'user_id' | 'status'> | null; error: any }
+      .single();
 
     if (checkError || !existing) {
       return NextResponse.json(
@@ -206,7 +205,7 @@ export async function PUT(
     // Update analysis
     const { data: updated, error: updateError } = await supabase
       .from('similarity_analyses')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update(updateData)
       .eq('id', analysisId)
       .eq('user_id', user.id)
@@ -255,7 +254,7 @@ export async function DELETE(
       .select('id, user_id, target_company_name')
       .eq('id', analysisId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'similarity_analyses'>, 'id' | 'user_id' | 'target_company_name'> | null; error: any }
+      .single();
 
     if (checkError || !existing) {
       return NextResponse.json(
@@ -278,7 +277,7 @@ export async function DELETE(
     // Record deletion in feature usage
     await supabase
       .from('similarity_feature_usage')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         event_type: 'analysis_deleted',

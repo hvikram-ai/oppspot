@@ -20,12 +20,14 @@ export interface ServiceDescriptor<T = unknown> {
 
 export interface IContainer {
   register<T>(descriptor: ServiceDescriptor<T>): void
-  registerSingleton<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void
+  registerSingleton<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T | ((c: IContainer) => T)): void
   registerTransient<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void
-  registerScoped<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T): void
-  registerFactory<T>(token: string | symbol | Function, factory: (...args: unknown[]) => T | Promise<T>, lifetime?: ServiceLifetime): void
+  registerScoped<T>(token: string | symbol | Function, implementation: new (...args: unknown[]) => T | ((c: IContainer) => T)): void
+  registerFactory<T>(token: string | symbol | Function, factory: ((c: IContainer) => T | Promise<T>) | (() => T | Promise<T>), lifetime?: ServiceLifetime): void
+  registerInstance<T>(token: string | symbol | Function, instance: T): void
   resolve<T>(token: string | symbol | Function): T
   resolveAsync<T>(token: string | symbol | Function): Promise<T>
+  tryResolve<T>(token: string | symbol | Function): T | undefined
   createScope(): IContainer
 }
 
@@ -105,12 +107,12 @@ export class Container implements IContainer {
     switch (descriptor.lifetime) {
       case ServiceLifetime.SINGLETON:
         if (this.instances.has(token)) {
-          return this.instances.get(token)
+          return this.instances.get(token) as T
         }
         break
       case ServiceLifetime.SCOPED:
         if (this.scopedInstances.has(token)) {
-          return this.scopedInstances.get(token)
+          return this.scopedInstances.get(token) as T
         }
         break
       case ServiceLifetime.TRANSIENT:
@@ -118,7 +120,7 @@ export class Container implements IContainer {
         break
     }
 
-    const instance = this.createInstance<T>(descriptor)
+    const instance = this.createInstance<T>(descriptor as ServiceDescriptor<T>)
     
     // Store instance based on lifetime
     switch (descriptor.lifetime) {
@@ -143,17 +145,17 @@ export class Container implements IContainer {
     switch (descriptor.lifetime) {
       case ServiceLifetime.SINGLETON:
         if (this.instances.has(token)) {
-          return this.instances.get(token)
+          return this.instances.get(token) as T
         }
         break
       case ServiceLifetime.SCOPED:
         if (this.scopedInstances.has(token)) {
-          return this.scopedInstances.get(token)
+          return this.scopedInstances.get(token) as T
         }
         break
     }
 
-    const instance = await this.createInstanceAsync<T>(descriptor)
+    const instance = await this.createInstanceAsync<T>(descriptor as ServiceDescriptor<T>)
     
     // Store instance
     switch (descriptor.lifetime) {
@@ -235,9 +237,9 @@ export class Container implements IContainer {
   dispose(): void {
     // Dispose scoped instances that implement IDisposable
     for (const [token, instance] of this.scopedInstances) {
-      if (instance && typeof instance.dispose === 'function') {
+      if (instance && typeof (instance as any).dispose === 'function') {
         try {
-          instance.dispose()
+          (instance as any).dispose()
         } catch (error) {
           console.error(`Error disposing service ${String(token)}:`, error)
         }

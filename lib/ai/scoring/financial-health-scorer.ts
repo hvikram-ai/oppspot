@@ -48,10 +48,15 @@ export class FinancialHealthScorer {
     const metrics = await this.fetchFinancialMetrics(company)
 
     // Calculate individual metric scores
-    const factors = []
+    const factors: Array<{
+      name: string
+      value: number
+      impact: 'positive' | 'negative' | 'neutral'
+      explanation: string
+    }> = []
     let totalScore = 0
     let totalWeight = 0
-    const missingData = []
+    const missingData: string[] = []
 
     // Revenue and Growth Analysis
     if (metrics.revenue !== undefined && metrics.revenue_growth_rate !== undefined) {
@@ -187,21 +192,21 @@ export class FinancialHealthScorer {
    */
   private mapStoredMetrics(data: Record<string, unknown>): FinancialMetrics {
     return {
-      revenue: data.revenue,
-      revenue_growth_rate: data.revenue_growth_rate,
-      ebitda: data.ebitda,
-      ebitda_margin: data.ebitda_margin,
-      net_income: data.net_income,
-      total_assets: data.total_assets,
-      total_liabilities: data.total_liabilities,
-      current_ratio: data.current_ratio,
-      debt_to_equity_ratio: data.debt_to_equity_ratio,
-      return_on_assets: data.return_on_assets,
-      return_on_equity: data.return_on_equity,
-      cash_flow: data.cash_flow,
-      working_capital: data.working_capital,
-      employee_count: data.employee_count,
-      employee_growth_rate: data.employee_growth_rate
+      revenue: data.revenue as number | undefined,
+      revenue_growth_rate: data.revenue_growth_rate as number | undefined,
+      ebitda: data.ebitda as number | undefined,
+      ebitda_margin: data.ebitda_margin as number | undefined,
+      net_income: data.net_income as number | undefined,
+      total_assets: data.total_assets as number | undefined,
+      total_liabilities: data.total_liabilities as number | undefined,
+      current_ratio: data.current_ratio as number | undefined,
+      debt_to_equity_ratio: data.debt_to_equity_ratio as number | undefined,
+      return_on_assets: data.return_on_assets as number | undefined,
+      return_on_equity: data.return_on_equity as number | undefined,
+      cash_flow: data.cash_flow as number | undefined,
+      working_capital: data.working_capital as number | undefined,
+      employee_count: data.employee_count as number | undefined,
+      employee_growth_rate: data.employee_growth_rate as number | undefined
     }
   }
 

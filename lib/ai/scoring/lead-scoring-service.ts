@@ -250,7 +250,7 @@ export class LeadScoringService {
       // Create lead score object
       const leadScore: LeadScore = {
         company_id: company.id,
-        company_number: company.company_number,
+        company_number: company.company_number as string | undefined,
         company_name: company.name,
         overall_score: overallScore,
         financial_health_score: financialScore.score,
@@ -338,7 +338,7 @@ export class LeadScoringService {
         explanation += `#### ${this.capitalizeFirst(component)} (Weight: ${breakdown.weight * 100}%)\n`
 
         const topFactors = breakdown.factors
-          .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+          .sort((a: any, b: any) => Math.abs(b.value) - Math.abs(a.value))
           .slice(0, 3)
 
         for (const factor of topFactors) {
@@ -379,7 +379,7 @@ export class LeadScoringService {
     for (const [type, weight] of Object.entries(newWeights)) {
       await supabase
         .from('scoring_criteria')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({ weight, updated_at: new Date().toISOString() })
         .eq('org_id', orgId)
         .eq('criteria_type', type)
@@ -425,7 +425,7 @@ export class LeadScoringService {
       const { data } = await supabase
         .from('businesses')
         .select('*')
-        .eq('company_number', identifier.company_number.toUpperCase())
+        .eq('company_number', (identifier.company_number as string).toUpperCase())
         .single() as { data: Row<'businesses'> | null; error: any }
       return data
     }
@@ -443,13 +443,13 @@ export class LeadScoringService {
 
   private async getCachedScore(companyId: string): Promise<LeadScore | null> {
     const supabase = await createClient()
-    const { data } = await supabase
-      .from('lead_scores')
+    const { data } = await (supabase
+      .from('lead_scores') as any)
       .select('*')
       .eq('company_id', companyId)
-      .single() as { data: Row<'lead_scores'> | null; error: any }
+      .single()
 
-    return data
+    return data as LeadScore | null
   }
 
   private isCacheValid(score: LeadScore): boolean {
@@ -466,11 +466,11 @@ export class LeadScoringService {
 
     if (options.org_id) {
       const supabase = await createClient()
-      const { data } = await supabase
-        .from('scoring_criteria')
+      const { data } = await (supabase
+        .from('scoring_criteria') as any)
         .select('criteria_type, weight')
         .eq('org_id', options.org_id)
-        .eq('is_active', true) as { data: Row<'scoring_criteria'>[] | null; error: any }
+        .eq('is_active', true)
 
       if (data && data.length > 0) {
         const weights: any = {}
@@ -515,7 +515,7 @@ export class LeadScoringService {
     const sources = new Set<string>()
 
     for (const component of Object.values(breakdown)) {
-      component.factors.forEach(factor => {
+      component.factors.forEach((factor: any) => {
         // Extract data source from factor name or use default
         if (factor.name.includes('Companies House')) sources.add('companies_house')
         if (factor.name.includes('Website')) sources.add('website_analysis')
@@ -531,9 +531,8 @@ export class LeadScoringService {
   private async saveScore(score: LeadScore): Promise<void> {
     const supabase = await createClient()
 
-    const { error } = await supabase
-      .from('lead_scores')
-      // @ts-ignore - Supabase type inference issue
+    const { error } = await (supabase
+      .from('lead_scores') as any)
       .upsert({
         company_id: score.company_id,
         company_number: score.company_number,
@@ -555,7 +554,7 @@ export class LeadScoringService {
         last_calculated_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
-      .eq('company_id', score.company_id)
+      .eq('company_id', score.company_id || '')
 
     if (error) {
       console.error('[LeadScoring] Error saving score:', error)
@@ -567,11 +566,11 @@ export class LeadScoringService {
     if (!orgId) return
 
     const supabase = await createClient()
-    const { data: alerts } = await supabase
-      .from('scoring_alerts')
+    const { data: alerts } = await (supabase
+      .from('scoring_alerts') as any)
       .select('*')
       .eq('org_id', orgId)
-      .eq('is_active', true) as { data: Row<'scoring_alerts'>[] | null; error: any }
+      .eq('is_active', true)
 
     if (!alerts) return
 
@@ -755,9 +754,8 @@ export class LeadScoringService {
   private async saveAIScore(score: LeadScore, aiAnalysis: any): Promise<void> {
     const supabase = await createClient()
 
-    await supabase
-      // @ts-ignore - Supabase type inference issue
-      .from('lead_scores')
+    await (supabase
+      .from('lead_scores') as any)
       .upsert({
         ...score,
         ai_analysis: aiAnalysis,
@@ -768,7 +766,7 @@ export class LeadScoringService {
         last_calculated_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
-      .eq('company_id', score.company_id)
+      .eq('company_id', score.company_id || '')
 
     console.log('[LeadScoring] AI-enhanced score saved')
   }

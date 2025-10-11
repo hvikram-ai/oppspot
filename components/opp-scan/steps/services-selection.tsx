@@ -544,7 +544,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <Checkbox checked={isCapabilitySelected(capability)} readOnly />
+                            <Checkbox checked={isCapabilitySelected(capability)} onCheckedChange={() => {}} />
                             <div>
                               <CardTitle className="text-base">{capability.name}</CardTitle>
                               <CardDescription>{capability.description}</CardDescription>
@@ -638,7 +638,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Checkbox checked={isObjectiveSelected(objective)} readOnly />
+                      <Checkbox checked={isObjectiveSelected(objective)} onCheckedChange={() => {}} />
                       <div>
                         <CardTitle className="text-base">{objective.name}</CardTitle>
                         <CardDescription>{objective.description}</CardDescription>
@@ -726,7 +726,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                   <Textarea
                     id="revenue-synergies"
                     placeholder="Describe expected revenue synergies (cross-selling, new markets, pricing power, etc.)"
-                    value={config.synergyRequirements?.revenue_synergies || ''}
+                    value={(config.synergyRequirements as any)?.revenue_synergies || ''}
                     onChange={(e) => onChange('synergyRequirements', {
                       ...config.synergyRequirements,
                       revenue_synergies: e.target.value
@@ -739,7 +739,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                   <Textarea
                     id="cost-synergies"
                     placeholder="Describe expected cost synergies (economies of scale, operational efficiencies, shared services, etc.)"
-                    value={config.synergyRequirements?.cost_synergies || ''}
+                    value={(config.synergyRequirements as any)?.cost_synergies || ''}
                     onChange={(e) => onChange('synergyRequirements', {
                       ...config.synergyRequirements,
                       cost_synergies: e.target.value
@@ -752,7 +752,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                   <Textarea
                     id="strategic-synergies"
                     placeholder="Describe expected strategic synergies (capabilities, market position, competitive advantages, etc.)"
-                    value={config.synergyRequirements?.strategic_synergies || ''}
+                    value={(config.synergyRequirements as any)?.strategic_synergies || ''}
                     onChange={(e) => onChange('synergyRequirements', {
                       ...config.synergyRequirements,
                       strategic_synergies: e.target.value
@@ -765,7 +765,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                   <Textarea
                     id="integration-requirements"
                     placeholder="Describe integration requirements and potential challenges"
-                    value={config.synergyRequirements?.integration_requirements || ''}
+                    value={(config.synergyRequirements as any)?.integration_requirements || ''}
                     onChange={(e) => onChange('synergyRequirements', {
                       ...config.synergyRequirements,
                       integration_requirements: e.target.value

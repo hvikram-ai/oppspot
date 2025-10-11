@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     const analysis = await industryComparisonEngine.analyzeIndustry(code)
 
     // Get industry benchmarks
-    const { data: benchmarks } = await supabase
+    const { data: benchmarks, error: benchmarksError } = await supabase
       .from('industry_benchmarks')
       .select('*')
       .eq('industry_code', code)

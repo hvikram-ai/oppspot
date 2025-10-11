@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Insert interaction record
     const { data: interaction, error: insertError } = await supabase
       .from('feature_interactions')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         feature_name: body.feature_name,

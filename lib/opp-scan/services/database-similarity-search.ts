@@ -42,7 +42,7 @@ export class DatabaseSimilaritySearch {
   
   private async getSupabase() {
     if (!this.supabase) {
-      this.supabase = await createClient()
+      this.supabase = createClient()
     }
     return this.supabase
   }
@@ -64,10 +64,11 @@ export class DatabaseSimilaritySearch {
     try {
       // Get supabase client
       const supabase = await this.getSupabase()
-      
+      if (!supabase) throw new Error('Failed to initialize Supabase client')
+
       // Step 1: Try to find the target company first
       const targetResult = await this.findTargetCompany(targetCompany)
-      
+
       // Step 2: Build search query based on target company characteristics
       let query = supabase
         .from('businesses')
@@ -132,6 +133,8 @@ export class DatabaseSimilaritySearch {
   private async findTargetCompany(companyName: string): Promise<BusinessRecord | null> {
     try {
       const supabase = await this.getSupabase()
+      if (!supabase) return null
+
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
@@ -145,7 +148,7 @@ export class DatabaseSimilaritySearch {
       }
 
       console.log(`[DatabaseSearch] Found target company: ${data.name}`)
-      return data
+      return data as unknown as BusinessRecord
     } catch (error) {
       console.error('[DatabaseSearch] Error finding target company:', error)
       return null
@@ -272,8 +275,8 @@ export class DatabaseSimilaritySearch {
       name: business.name,
       country: this.extractCountryFromAddress(business.address),
       industryCodes: business.categories || [],
-      website: business.website,
-      description: business.description,
+      website: business.website ?? undefined,
+      description: business.description ?? undefined,
       confidenceScore: similarityScore,
       sourceMetadata: {
         source: 'database',
@@ -288,12 +291,11 @@ export class DatabaseSimilaritySearch {
     return {
       company,
       relevanceScore: similarityScore,
-      matchType: matchFactors.join(',') || 'partial',
       source: 'database',
       snippet: business.description?.substring(0, 200) || '',
       matchedKeywords: matchFactors,
       discoveredAt: new Date()
-    }
+    } as unknown as CompanySearchResult
   }
 
   /**
@@ -376,7 +378,7 @@ export class DatabaseSimilaritySearch {
       if (irelandPattern.test(address)) return 'Ireland'
       return 'Unknown'
     }
-    return address.country || 'Unknown'
+    return (address.country as string) || 'Unknown'
   }
 
   /**
@@ -390,9 +392,8 @@ export class DatabaseSimilaritySearch {
       financialData: undefined, // Would need separate financial tables
       socialPresence: undefined, // Would need social media data
       newsAnalysis: undefined, // Would need news data
-      competitorInfo: undefined, // Would need competitor analysis
       enrichmentQuality: 0.5, // Database data is moderate quality
       lastEnriched: new Date()
-    }
+    } as EnrichedCompanyData
   }
 }

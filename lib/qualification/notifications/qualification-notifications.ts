@@ -247,7 +247,7 @@ export class QualificationNotificationService {
           <div class="container">
             <div class="header">
               <div class="icon">${template.icon}</div>
-              // @ts-ignore - Supabase type inference issue
+              // @ts-expect-error - Supabase type inference issue
               <div class="title">${template.title.replace(template.icon, '').trim()}</div>
             </div>
             <div class="content">

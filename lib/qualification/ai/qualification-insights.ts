@@ -109,11 +109,15 @@ export class QualificationInsightsEngine {
       }
 
       // Get company data
-      const { data: company } = await supabase
+      const { data: company, error: companyError } = await supabase
         .from('businesses')
         .select('*')
         .eq('id', qualification.company_id)
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single();
+
+      if (companyError) {
+        console.error('Error fetching company for insights:', companyError);
+      }
 
       // Analyze based on framework
       if (framework === 'BANT') {
@@ -502,7 +506,7 @@ export class QualificationInsightsEngine {
 
     // Recent engagement (last 7 days)
     const recentEvents = events.filter(e => {
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       const eventDate = new Date(e.created_at)
       const daysSince = (Date.now() - eventDate.getTime()) / (1000 * 60 * 60 * 24)
       return daysSince <= 7

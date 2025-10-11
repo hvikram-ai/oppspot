@@ -89,16 +89,16 @@ export async function GET(
     }
 
     // Fetch stream with all related data
-    const { data: stream, error: streamError } = await supabase
+    const { data: streamData, error: streamError } = await supabase
       .from('streams')
       .select(`
         *,
         creator:profiles!streams_created_by_fkey(id, full_name, avatar_url)
       `)
       .eq('id', streamId)
-      .single() as { data: StreamWithCreator | null; error: any }
+      .single()
 
-    if (streamError || !stream) {
+    if (streamError || !streamData) {
       console.error('Error fetching stream:', streamError)
       return NextResponse.json(
         { error: 'Stream not found' },
@@ -106,13 +106,15 @@ export async function GET(
       )
     }
 
+    const stream = streamData as StreamWithCreator
+
     // Verify user has access to this stream
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single();
 
     if (!membership) {
       return NextResponse.json(
@@ -122,10 +124,17 @@ export async function GET(
     }
 
     // Fetch stream items to calculate progress
-    const { data: items = [] } = await supabase
+    const { data: itemsData = [], error: itemsError } = await supabase
       .from('stream_items')
       .select('id, status, stage_id, metadata')
-      .eq('stream_id', streamId) as { data: StreamItemWithMetadata[] | null; error: any }
+      .eq('stream_id', streamId)
+
+    const items = itemsData as Array<{
+      id: string
+      status?: string
+      stage_id: string | null
+      metadata: { quality_score?: number; signals?: unknown[] } | null
+    }>
 
     // Calculate progress metrics
     const total = stream.target_metrics?.companies_to_find || items.length
@@ -165,7 +174,7 @@ export async function GET(
     const quality_score = avg_quality_score
 
     // Fetch insights
-    const { data: insights = [] } = await supabase
+    const { data: insights = [], error: insightsError } = await supabase
       .from('stream_insights')
       .select(`
         *,
@@ -173,7 +182,7 @@ export async function GET(
       `)
       .eq('stream_id', streamId)
       .order('created_at', { ascending: false })
-      .limit(20) as { data: InsightWithAgent[] | null; error: any }
+      .limit(20)
 
     // Fetch recent agent executions (mock data for now - replace with actual table when available)
     // TODO: Replace with actual agent_executions table query
@@ -195,7 +204,7 @@ export async function GET(
     }> = []
 
     // Fetch agent assignments and their execution history
-    const { data: agentAssignments = [] } = await supabase
+    const { data: agentAssignmentsData = [], error: agentAssignmentsError } = await supabase
       .from('stream_agent_assignments')
       .select(`
         *,
@@ -203,7 +212,9 @@ export async function GET(
       `)
       .eq('stream_id', streamId)
       .order('last_executed_at', { ascending: false })
-      .limit(10) as { data: AgentAssignment[] | null; error: any }
+      .limit(10)
+
+    const agentAssignments = agentAssignmentsData as AgentAssignment[]
 
     // Transform agent assignments into execution summaries
     agentAssignments.forEach((assignment) => {

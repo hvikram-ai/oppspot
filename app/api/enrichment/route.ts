@@ -24,13 +24,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single();
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error starting enrichment:', error)
 
     return NextResponse.json(
@@ -103,13 +103,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's org
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single();
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
       }))
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching enrichment jobs:', error)
 
     return NextResponse.json(

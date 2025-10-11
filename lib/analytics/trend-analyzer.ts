@@ -470,7 +470,7 @@ export class TrendAnalyzer {
 
     await this.supabase
       .from('trend_analysis')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .upsert(record, {
         onConflict: 'entity_type,entity_id,analysis_date,period_days'
       })

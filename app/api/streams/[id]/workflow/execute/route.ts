@@ -13,7 +13,7 @@ export async function POST(
     const supabase = await createClient()
 
     // Verify user has access to stream
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)

@@ -98,7 +98,14 @@ async function searchGooglePlaces(query: string): Promise<LocationSuggestion[]> 
     }
 
     // Map Google Places predictions to our format
-    const suggestions: LocationSuggestion[] = data.predictions.map((prediction: any) => {
+    interface GooglePlacesPrediction {
+      place_id: string;
+      description: string;
+      terms?: Array<{ value: string }>;
+      types?: string[];
+    }
+
+    const suggestions: LocationSuggestion[] = (data.predictions as GooglePlacesPrediction[]).map((prediction) => {
       const terms = prediction.terms || []
       const name = terms[0]?.value || prediction.description
       const region = terms[1]?.value

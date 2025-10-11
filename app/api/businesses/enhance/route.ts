@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single()
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single()
 
     if (fetchError || !business) {
       return NextResponse.json(
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     if (Object.keys(updates).length > 0) {
       const { error: updateError } = await supabase
         .from('businesses')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update(updates)
         .eq('id', businessId)
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the enhancement event
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'business_enhanced',
@@ -167,11 +167,11 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single()
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -309,7 +309,7 @@ export async function PUT(request: NextRequest) {
       results.push(businessResult)
     }
 
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     // Log the bulk enhancement event
     await supabase.from('events').insert({
       user_id: user.id,

@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
 
     const body = await request.json();
     const { company_id, include_recommendations = true, use_ai = true } = body;
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'ai_predictive_scoring',
         endpoint: '/api/ai-scoring/predictive',
@@ -88,11 +88,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
 
     const searchParams = request.nextUrl.searchParams;
     const company_id = searchParams.get('company_id');

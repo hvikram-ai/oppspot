@@ -91,11 +91,11 @@ export async function GET(request: NextRequest) {
     enrichedResults.sort((a, b) => b.similarity - a.similarity)
 
     // Get the source company info
-    const { data: sourceCompany } = await supabase
+    const { data: sourceCompany, error: sourceCompanyError } = await supabase
       .from('businesses')
       .select('id, name, description, categories, sic_codes')
       .eq('id', params.companyId)
-      .single() as { data: Pick<Row<'businesses'>, 'id' | 'name' | 'description' | 'categories' | 'sic_codes'> | null; error: any }
+      .single()
 
     return NextResponse.json({
       success: true,

@@ -51,7 +51,7 @@ export async function GET() {
           process.env.SUPABASE_SERVICE_ROLE_KEY
         )
         
-        const { data: profile } = await adminClient
+        const { data: profile, error: profileError } = await adminClient
           .from('profiles')
           .select('id, email, org_id')
           .eq('email', 'demo@oppspot.com')

@@ -156,7 +156,7 @@ export class EmbeddingService {
 
     const { error } = await supabase
       .from('businesses')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update({
         embedding: JSON.stringify(embeddingResult.embedding),
         embedding_model: embeddingResult.model,

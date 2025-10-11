@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     // Step 1: Search local database first (if cache enabled)
     if (useCache) {
       // Search by company number (exact match)
-      const { data: exactMatch } = await supabase
+      const { data: exactMatch, error: exactMatchError } = await supabase
         .from('businesses')
         .select('*')
         .eq('company_number', searchTerm.toUpperCase())
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
 
       // Search by name (partial match)
       if (results.length === 0) {
-        const { data: nameMatches } = await supabase
+        const { data: nameMatches, error: nameMatchesError } = await supabase
           .from('businesses')
           .select('*')
           .ilike('name', `%${searchTerm}%`)
@@ -292,7 +292,6 @@ export async function POST(request: NextRequest) {
         // Log API call for auditing (only if user is authenticated)
         if (user && !demo) {
           try {
-            // @ts-ignore - Supabase type inference issue
             await supabase.from('api_audit_log').insert({
               api_name: 'companies_house',
               endpoint: '/search/companies',
@@ -342,25 +341,30 @@ export async function POST(request: NextRequest) {
           console.log(`Triggering background enrichment for ${results.length} companies`)
 
           // Use Promise.allSettled to enrich all companies in parallel without blocking
-          const enrichmentPromises = results
-            .filter((company: any) => company.company_number) // Only companies with numbers
-            .map((company: any) => {
+          interface SearchCompany {
+            company_number?: string;
+            [key: string]: unknown;
+          }
+
+          const enrichmentPromises = (results as SearchCompany[])
+            .filter((company) => company.company_number) // Only companies with numbers
+            .map((company) => {
               // Call the enrich endpoint for each company
               const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
                               `https://${process.env.VERCEL_URL}` ||
                               'http://localhost:3000'
 
-              return fetch(`${baseUrl}/api/companies/${(company as any).company_number}/enrich`, {
+              return fetch(`${baseUrl}/api/companies/${company.company_number}/enrich`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
               })
               .then(res => res.json())
               .then(data => {
-                console.log(`Enriched ${(company as any).company_number}:`, data.source)
+                console.log(`Enriched ${company.company_number}:`, data.source)
                 return data
               })
               .catch(err => {
-                console.error(`Failed to enrich ${(company as any).company_number}:`, err)
+                console.error(`Failed to enrich ${company.company_number}:`, err)
                 return null
               })
             })
@@ -395,7 +399,6 @@ export async function POST(request: NextRequest) {
         
         // Log failed API call (only if user is authenticated)
         if (user && !demo) {
-          // @ts-ignore - Supabase type inference issue
           try {
             await supabase.from('api_audit_log').insert({
               api_name: 'companies_house',

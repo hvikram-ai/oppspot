@@ -475,13 +475,13 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
     if (Object.keys(updateData).length > 0) {
       await supabase
         .from('businesses')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update(updateData)
         .eq('id', data.companyId)
     }
 
     // Store enrichment metadata
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     await supabase.from('enrichment_data').insert({
       company_id: data.companyId,
       source: 'website_analysis',

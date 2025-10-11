@@ -55,12 +55,13 @@ export async function POST(request: NextRequest) {
     for (const place of placesToImport) {
       try {
         // Check if business already exists
-        const { data: existing } = await supabase
+        const { data: existing, error: existingError } = await supabase
           .from('businesses')
           .select('id')
           .eq('google_place_id', place.place_id)
-          .single() as { data: Pick<Row<'businesses'>, 'id'> | null; error: any }
+          .single()
 
+        // Ignore error if business doesn't exist (that's what we want)
         if (existing) {
           console.log(`Business already exists: ${place.name}`)
           continue
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (businessesToInsert.length > 0) {
       const { data, error } = await supabase
         .from('businesses')
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         .insert(businessesToInsert as Database['public']['Tables']['businesses']['Insert'][])
         .select()
 
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
       insertedCount = data?.length || 0
     }
 
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     // Log the import event
     await supabase.from('events').insert({
       user_id: user.id,
@@ -158,7 +159,7 @@ export async function GET() {
       .eq('verified', true)
 
     // Get recent imports by this user
-    const { data: recentImports } = await supabase
+    const { data: recentImports, error: recentImportsError } = await supabase
       .from('events')
       .select('*')
       .eq('user_id', user.id)

@@ -17,16 +17,18 @@ interface BusinessHeaderProps {
   business: {
     id: string
     name: string
-    description?: string
-    categories?: string[]
-    rating?: number
-    verified?: boolean
-    website?: string
+    description?: string | null
+    categories?: string[] | null
+    rating?: number | null
+    verified?: boolean | null
+    website?: string | null
     address?: {
       city?: string
       state?: string
       country?: string
-    }
+      [key: string]: unknown
+    } | null
+    [key: string]: unknown
   }
 }
 

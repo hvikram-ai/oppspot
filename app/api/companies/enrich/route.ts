@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         if (Object.keys(merged).length > 0) {
           const { error: updateError } = await supabase
             .from('businesses')
-            // @ts-ignore - Type inference issue
+            // @ts-expect-error - Type inference issue
             .update(merged)
             .eq('id', businessId)
           
@@ -70,11 +70,11 @@ export async function POST(request: NextRequest) {
       }
       
       // Get updated business and stats
-      const { data: updatedBusiness } = await supabase
+      const { data: updatedBusiness, error: updatedBusinessError } = await supabase
         .from('businesses')
         .select('*')
         .eq('id', businessId)
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single()
       
       const stats = updatedBusiness 
         ? enrichmentService.getEnrichmentStats(updatedBusiness)
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       const results = await enrichmentService.batchEnrich(businessIds, sources)
       
       // Get stats for all businesses
-      const { data: businesses } = await supabase
+      const { data: businesses, error: businessesError } = await supabase
         .from('businesses')
         .select('*')
         .in('id', businessIds)

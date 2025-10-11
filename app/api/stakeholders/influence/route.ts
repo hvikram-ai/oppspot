@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'stakeholder_tracking',
         endpoint: '/api/stakeholders/influence',
@@ -88,11 +88,11 @@ export async function GET(request: NextRequest) {
     const min_influence = searchParams.get('min_influence');
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
 
     // Build query
     let query = supabase

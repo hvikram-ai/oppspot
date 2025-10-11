@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
           profiles?: { name?: string; email?: string }
           data_room_access?: Array<{ permission_level?: string }>
         }> | null
-        error: any
       }
 
     if (error) {
@@ -90,7 +89,7 @@ export async function POST(request: NextRequest) {
     // Create data room
     const { data: dataRoom, error } = await supabase
       .from('data_rooms')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         name: body.name.trim(),
@@ -103,14 +102,14 @@ export async function POST(request: NextRequest) {
         metadata: body.metadata || {}
       })
       .select()
-      .single() as { data: (Row<'data_rooms'> & { id: string; name: string }) | null; error: any }
+      .single()
 
     if (error) {
       console.error('[Data Rooms API] Create error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     // Log activity
     await supabase.from('activity_logs').insert({
       data_room_id: dataRoom!.id,

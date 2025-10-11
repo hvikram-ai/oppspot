@@ -12,13 +12,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'No organization' }, { status: 400 })
     }
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Insert command log
     const { error } = await supabase
       .from('voice_commands')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         org_id: profile.org_id,

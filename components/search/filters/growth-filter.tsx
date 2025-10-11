@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import type { AdvancedFilters } from '@/types/filters'
+import type { AdvancedFilters, GrowthFilter } from '@/types/filters'
 import { FilterSection } from './filter-section'
 
 interface GrowthFilterSectionProps {
@@ -35,8 +35,8 @@ export function GrowthFilterSection({ filters, onChange }: GrowthFilterSectionPr
   }: {
     label: string
     tooltip: string
-    minKey: keyof typeof filters.growth
-    maxKey: keyof typeof filters.growth
+    minKey: keyof GrowthFilter
+    maxKey: keyof GrowthFilter
   }) => (
     <div className="space-y-2">
       <div className="flex items-center gap-1">

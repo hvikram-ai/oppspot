@@ -18,7 +18,7 @@ import type { Row } from '@/lib/supabase/helpers'
 import type {
   ResearchReport,
   ResearchSection,
-  ResearchSource,
+  Source,
   UserResearchQuota,
   ReportStatus,
   SectionType,
@@ -42,19 +42,20 @@ export class ResearchRepository {
   ): Promise<ResearchReport> {
     const supabase = await createClient();
 
+    const insertData: Record<string, unknown> = {
+      user_id: userId,
+      company_id: companyId,
+      company_name: companyName,
+      company_number: companyNumber,
+      status: 'pending' as ReportStatus,
+      sections_complete: 0,
+      total_sources: 0,
+      metadata: {},
+    };
+
     const { data, error } = await supabase
       .from('research_reports')
-      // @ts-ignore - Supabase type inference issue
-      .insert({
-        user_id: userId,
-        company_id: companyId,
-        company_name: companyName,
-        company_number: companyNumber,
-        status: 'pending',
-        sections_complete: 0,
-        total_sources: 0,
-        metadata: {},
-      })
+      .insert(insertData as any)
       .select()
       .single();
 
@@ -141,14 +142,16 @@ export class ResearchRepository {
   ): Promise<void> {
     const supabase = await createClient();
 
+    const updateData: Record<string, unknown> = {
+      status,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    // @ts-ignore - Supabase typing issue with dynamic update fields
     const { error } = await supabase
       .from('research_reports')
-      // @ts-ignore - Type inference issue
-      .update({
-        status,
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', reportId);
 
     if (error) {
@@ -173,7 +176,6 @@ export class ResearchRepository {
     const expiresAt = SmartCacheManager.calculateCacheExpiration(sectionType);
 
     const { data, error } = await supabase
-      // @ts-ignore - Supabase type inference issue
       .from('research_sections')
       .upsert({
         report_id: reportId,
@@ -184,7 +186,7 @@ export class ResearchRepository {
         expires_at: expiresAt,
         cached_at: new Date().toISOString(),
         generation_time_ms: generationTimeMs,
-      })
+      } as any)
       .select()
       .single();
 
@@ -213,7 +215,7 @@ export class ResearchRepository {
       throw new Error(`Failed to get sections: ${error.message}`);
     }
 
-    return data as ResearchSection[];
+    return (data || []) as unknown as ResearchSection[];
   }
 
   /**
@@ -237,7 +239,7 @@ export class ResearchRepository {
       throw new Error(`Failed to get section: ${error.message}`);
     }
 
-    return data as ResearchSection;
+    return data as unknown as ResearchSection;
   }
 
   /**
@@ -267,13 +269,12 @@ export class ResearchRepository {
     const supabase = await createClient();
 
     const { error } = await supabase
-      // @ts-ignore - Supabase type inference issue
       .from('research_sources')
       .insert(
         sources.map((source) => ({
           report_id: reportId,
           ...source,
-        }))
+        })) as any
       );
 
     if (error) {
@@ -285,7 +286,7 @@ export class ResearchRepository {
   /**
    * Get sources for a report
    */
-  async getSources(reportId: string): Promise<ResearchSource[]> {
+  async getSources(reportId: string): Promise<Source[]> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -299,7 +300,7 @@ export class ResearchRepository {
       throw new Error(`Failed to get sources: ${error.message}`);
     }
 
-    return data as ResearchSource[];
+    return (data || []) as unknown as Source[];
   }
 
   // ============================================================================
@@ -324,7 +325,6 @@ export class ResearchRepository {
       const now = new Date();
       const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
-// @ts-ignore - Supabase type inference issue
 
       const { data: newData, error: createError } = await supabase
         .from('user_research_quotas')
@@ -334,8 +334,8 @@ export class ResearchRepository {
           period_end: periodEnd,
           researches_used: 0,
           researches_limit: 100,
-          tier: 'standard',
-        })
+          tier: 'standard' as const,
+        } as any)
         .select()
         .single();
 
@@ -359,15 +359,18 @@ export class ResearchRepository {
       const newPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const newPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
 
-      const { data: updatedData, error: updateError } = await supabase
+      const quotaUpdateData: Record<string, unknown> = {
+        period_start: newPeriodStart,
+        period_end: newPeriodEnd,
+        researches_used: 0,
+        notification_90_percent_sent: false,
+        notification_100_percent_sent: false,
+      };
+
+      // @ts-ignore - Supabase typing issue with dynamic update fields
+      const { data: updatedData, error: updateError} = await supabase
         .from('user_research_quotas')
-        .update({
-          period_start: newPeriodStart,
-          period_end: newPeriodEnd,
-          researches_used: 0,
-          notification_90_percent_sent: false,
-          notification_100_percent_sent: false,
-        })
+        .update(quotaUpdateData)
         .eq('user_id', userId)
         .select()
         .single();
@@ -399,7 +402,7 @@ export class ResearchRepository {
     // Use database function for atomic increment
     const { error } = await supabase.rpc('increment_research_quota', {
       p_user_id: userId,
-    });
+    } as any);
 
     if (error) {
       console.error('Failed to increment quota:', error);
@@ -418,10 +421,10 @@ export class ResearchRepository {
     const supabase = await createClient();
 
     // Get count
-    const { count } = await supabase
+    const { count } = (await supabase
       .from('research_reports')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId) as { data: Row<'research_reports'>[] | null; error: any };
+      .eq('user_id', userId)) as { count: number | null; data: null; error: any };
 
     // Get reports
     const { data, error } = await supabase
@@ -478,26 +481,30 @@ export class ResearchRepository {
     }
 
     // Anonymize decision makers (remove contact info)
-    const reportIds = oldReports.map((r) => r.id);
+    const reportIds = oldReports.map((r) => (r as any).id);
 
     for (const reportId of reportIds) {
       const sections = await this.getSections(reportId);
 
       for (const section of sections) {
-        if (section.section_type === 'decision_makers' && section.content.key_people) {
+        const content = section.content as any;
+        if (section.section_type === 'decision_makers' && Array.isArray(content)) {
           // Remove personal contact info
-          const anonymized = section.content.key_people.map((person: any) => ({
+          const anonymized = content.map((person: any) => ({
             ...person,
             business_email: null,
             phone_number: null,
             linkedin_url: null,
           }));
 
+          const sectionUpdateData: Record<string, unknown> = {
+            content: anonymized,
+          };
+
+          // @ts-ignore - Supabase typing issue with dynamic update fields
           await supabase
             .from('research_sections')
-            .update({
-              content: { ...section.content, key_people: anonymized },
-            })
+            .update(sectionUpdateData)
             .eq('id', section.id);
         }
       }
@@ -512,7 +519,7 @@ export class ResearchRepository {
   async getCompleteReport(reportId: string, userId?: string): Promise<{
     report: ResearchReport;
     sections: ResearchSection[];
-    sources: ResearchSource[];
+    sources: Source[];
   } | null> {
     const report = await this.getReportById(reportId, userId);
 

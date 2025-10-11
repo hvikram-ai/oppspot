@@ -141,7 +141,7 @@ export class ThresholdAlertSystem {
 
       // Execute configured actions
       const actions = config.actions
-      const actionResults: Record<string, unknown> = {}
+      const actionResults: Record<string, string | number | boolean | unknown> = {}
 
       // Send notifications
       if (actions.notify && actions.notify.length > 0) {
@@ -366,7 +366,7 @@ export class ThresholdAlertSystem {
   /**
    * Call webhook
    */
-  private async callWebhook(webhookConfig: { url: string; method?: string; headers?: Record<string, string> }, payload: Record<string, unknown>): Promise<{ success: boolean; response?: unknown; error?: unknown }> {
+  private async callWebhook(webhookConfig: { url: string; method?: string; headers?: Record<string, string> }, payload: Record<string, string | number | boolean | unknown>): Promise<{ success: boolean; response?: unknown; error?: unknown }> {
     try {
       const response = await fetch(webhookConfig.url, {
         method: webhookConfig.method || 'POST',

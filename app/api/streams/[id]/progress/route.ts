@@ -18,7 +18,7 @@ interface StreamRow {
   target_metrics?: {
     companies_to_find?: number
     min_quality_score?: number
-    [key: string]: any
+    [key: string]: unknown
   }
   current_progress?: {
     completed?: number
@@ -28,11 +28,10 @@ interface StreamRow {
     items_by_stage?: Record<string, number>
     quality_score?: number
     signals_detected?: number
-    [key: string]: any
+    [key: string]: unknown
   }
   goal_status?: string
   goal_deadline?: string | null
-  [key: string]: any
 }
 
 interface StreamItemRow {
@@ -46,7 +45,7 @@ interface StreamItemRow {
   metadata: {
     quality_score?: number
     signals?: string[]
-    [key: string]: any
+    [key: string]: unknown
   } | null
   created_by: string
   created_at: string
@@ -111,12 +110,16 @@ export async function GET(
     }
 
     // Verify user has access
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<StreamMemberRow, 'role'> | null; error: any }
+      .single();
+
+    if (membershipError) {
+      console.error('Error fetching membership:', membershipError);
+    }
 
     if (!membership) {
       return NextResponse.json(
@@ -126,24 +129,36 @@ export async function GET(
     }
 
     // Get stream details
-    const { data: stream } = await supabase
+    const { data: streamData, error: streamError } = await supabase
       .from('streams')
       .select('*')
       .eq('id', streamId)
-      .single() as { data: StreamRow | null; error: any }
+      .single();
 
-    if (!stream) {
+    if (streamError) {
+      console.error('Error fetching stream:', streamError);
+    }
+
+    if (!streamData) {
       return NextResponse.json(
         { error: 'Stream not found' },
         { status: 404 }
       )
     }
 
+    const stream = streamData as StreamRow
+
     // Get all stream items
-    const { data: items } = await supabase
+    const { data: itemsData, error: itemsError } = await supabase
       .from('stream_items')
       .select('*')
-      .eq('stream_id', streamId) as { data: StreamItemRow[] | null; error: any }
+      .eq('stream_id', streamId);
+
+    if (itemsError) {
+      console.error('Error fetching items:', itemsError);
+    }
+
+    const items = (itemsData || []) as StreamItemRow[]
 
     const targetMetrics = stream.target_metrics as { companies_to_find?: number; min_quality_score?: number } | null
     const totalItems = items?.length || 0
@@ -180,8 +195,9 @@ export async function GET(
     }, 0) || 0
 
     // Update stream progress in database
-    const updateProgressResult = await (supabase
-      .from('streams') as any)
+    const updateProgressResult = await supabase
+      .from('streams')
+      // @ts-expect-error - Complex JSONB type
       .update({
         current_progress: {
           completed: totalItems,
@@ -196,7 +212,7 @@ export async function GET(
       .eq('id', streamId)
 
     // Get recent agent executions
-    const { data: executions } = await supabase
+    const { data: executionsData, error: executionsError } = await supabase
       .from('agent_executions')
       .select(`
         id,
@@ -213,7 +229,13 @@ export async function GET(
       `)
       .eq('stream_id', streamId)
       .order('created_at', { ascending: false })
-      .limit(10) as { data: AgentExecutionRow[] | null; error: any }
+      .limit(10);
+
+    if (executionsError) {
+      console.error('Error fetching executions:', executionsError);
+    }
+
+    const executions = (executionsData || []) as AgentExecutionRow[]
 
     const recentAgentExecutions = executions?.map(exec => ({
       id: exec.id,
@@ -228,12 +250,18 @@ export async function GET(
     })) || []
 
     // Get unread insights
-    const { data: insights } = await supabase
+    const { data: insightsData, error: insightsError } = await supabase
       .from('stream_insights')
       .select('*')
       .eq('stream_id', streamId)
       .order('created_at', { ascending: false })
-      .limit(20) as { data: StreamInsightRow[] | null; error: any }
+      .limit(20);
+
+    if (insightsError) {
+      console.error('Error fetching insights:', insightsError);
+    }
+
+    const insights = (insightsData || []) as StreamInsightRow[]
 
     // Determine goal status
     let goalStatus = stream.goal_status
@@ -254,14 +282,16 @@ export async function GET(
 
     // Update goal status if changed
     if (goalStatus !== stream.goal_status) {
-      const updateStatusResult = await (supabase
-        .from('streams') as any)
+      const updateStatusResult = await supabase
+        .from('streams')
+        // @ts-expect-error - JSONB field type
         .update({ goal_status: goalStatus })
         .eq('id', streamId)
 
       // Create insight for status change
-      const insertInsightResult = await (supabase
-        .from('stream_insights') as any)
+      const insertInsightResult = await supabase
+        .from('stream_insights')
+        // @ts-expect-error - Complex insert type
         .insert({
           stream_id: streamId,
           insight_type: 'progress_update',

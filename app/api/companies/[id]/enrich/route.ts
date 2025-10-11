@@ -26,11 +26,11 @@ export async function GET(
     }
 
     // Check if enriched data already exists in database
-    const { data: existingCompany } = await supabase
+    const { data: existingCompany, error: existingCompanyError } = await supabase
       .from('businesses')
       .select('*')
       .eq('company_number', companyNumber)
-      .single() as { data: (Row<'businesses'> & { enriched_at?: string }) | null; error: any }
+      .single()
 
     if (existingCompany && existingCompany.enriched_at) {
       // Check if data is recent (less than 24 hours old)
@@ -151,17 +151,17 @@ export async function POST(
       }
 
       // Check if company exists in database
-      const { data: existingCompany } = await supabase
+      const { data: existingCompany, error: existingCompanyError } = await supabase
         .from('businesses')
         .select('id')
         .eq('company_number', companyNumber)
-        .single() as { data: Pick<Row<'businesses'>, 'id'> | null; error: any }
+        .single();
 
       if (existingCompany) {
         // Update existing company
         const { data: updatedCompany, error: updateError } = await supabase
           .from('businesses')
-          // @ts-ignore - Type inference issue
+          // @ts-expect-error - Type inference issue
           .update(enrichedCompany)
           .eq('company_number', companyNumber)
           .select()
@@ -187,7 +187,7 @@ export async function POST(
         // Insert new company
         const { data: newCompany, error: insertError } = await supabase
           .from('businesses')
-          // @ts-ignore - Supabase type inference issue
+          // @ts-expect-error - Supabase type inference issue
           .insert({
             ...enrichedCompany,
             id: crypto.randomUUID(),

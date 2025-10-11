@@ -313,7 +313,6 @@ export class BuyingSignalDetector {
 
       // Save job postings to database
       for (const job of jobPostings.slice(0, 10)) {
-        // @ts-ignore - Supabase type inference issue
         await supabase.from('job_posting_signals').insert({
           company_id: companyId,
           job_title: job.title,
@@ -377,7 +376,6 @@ export class BuyingSignalDetector {
             metadata: tech
           })
 
-          // @ts-ignore - Supabase type inference issue
           // Save to database
           await supabase.from('tech_adoption_signals').insert({
             company_id: companyId,
@@ -616,7 +614,6 @@ export class BuyingSignalDetector {
     if (signals.length === 0) return
 
     const supabase = await createClient()
-// @ts-ignore - Supabase type inference issue
 
     for (const signal of signals) {
       await supabase.from('buying_signals').insert({
@@ -638,7 +635,6 @@ export class BuyingSignalDetector {
   }
 
   private async updateIntentScore(companyId: string): Promise<void> {
-    // @ts-ignore - Supabase type inference issue
     const intentScore = await this.calculateIntentScore(companyId)
     const supabase = await createClient()
 

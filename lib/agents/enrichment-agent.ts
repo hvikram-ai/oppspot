@@ -256,7 +256,7 @@ export class EnrichmentAgent extends BaseAgent {
     // Update item
     await supabase
       .from('stream_items')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update({
         metadata: updatedMetadata
       })

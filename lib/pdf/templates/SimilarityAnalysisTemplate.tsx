@@ -179,33 +179,33 @@ export const SimilarityAnalysisTemplate: React.FC<SimilarityAnalysisTemplateProp
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={pdfStyles.scoreLabel}>Country</Text>
               <Text style={pdfStyles.paragraph}>
-                // @ts-ignore - Supabase type inference issue
+                // @ts-expect-error - Supabase type inference issue
                 {analysis.targetCompanyData?.country || 'N/A'}
               </Text>
             </View>
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={pdfStyles.scoreLabel}>Industry</Text>
-              // @ts-ignore - Supabase type inference issue
+              // @ts-expect-error - Supabase type inference issue
               <Text style={pdfStyles.paragraph}>
                 {analysis.targetCompanyData?.industry || 'N/A'}
               </Text>
             </View>
             <View style={{ flex: 1, marginRight: 10 }}>
-              // @ts-ignore - Supabase type inference issue
+              // @ts-expect-error - Supabase type inference issue
               <Text style={pdfStyles.scoreLabel}>Employees</Text>
               <Text style={pdfStyles.paragraph}>
                 {analysis.targetCompanyData?.employees || 'N/A'}
               </Text>
             </View>
-            // @ts-ignore - Supabase type inference issue
+            // @ts-expect-error - Supabase type inference issue
             <View style={{ flex: 1 }}>
               <Text style={pdfStyles.scoreLabel}>Revenue</Text>
               <Text style={pdfStyles.paragraph}>
-                // @ts-ignore - Supabase type inference issue
+                // @ts-expect-error - Supabase type inference issue
                 {analysis.targetCompanyData?.revenue || 'N/A'}
               </Text>
             </View>
-          // @ts-ignore - Supabase type inference issue
+          // @ts-expect-error - Supabase type inference issue
           </View>
           {analysis.targetCompanyData?.description && (
             <View style={{ marginTop: 10 }}>

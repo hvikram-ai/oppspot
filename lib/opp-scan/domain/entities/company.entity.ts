@@ -298,23 +298,22 @@ export class CompanyEntity {
 
   static fromJSON(data: Record<string, unknown>): CompanyEntity {
     return new CompanyEntity(
-      data.id,
-      data.name,
-      data.registrationNumber,
-      data.country,
-      data.industryCodes || [],
-      data.website,
-      data.description,
-      data.employeeCount,
-      data.revenueEstimate,
-      data.foundingYear,
-      data.address,
-      data.contactInfo,
-      data.confidenceScore,
-      data.sourceMetadata,
-      // @ts-ignore - Supabase type inference issue
-      new Date(data.createdAt),
-      new Date(data.updatedAt)
+      data.id as string,
+      data.name as string,
+      data.registrationNumber as string | null,
+      data.country as string,
+      (data.registrationNumber || null) as string | null,
+      data.website as string | undefined,
+      data.description as string | undefined,
+      data.employeeCount as string | number | undefined,
+      data.revenueEstimate as number | undefined,
+      data.foundingYear as number | undefined,
+      data.address as Record<string, unknown> | undefined,
+      data.contactInfo as Record<string, unknown> | undefined,
+      data.confidenceScore as number | undefined,
+      data.sourceMetadata as Record<string, unknown> | undefined,
+      new Date((data.createdAt || new Date()) as string | Date),
+      new Date((data.updatedAt || new Date()) as string | Date)
     )
   }
 }

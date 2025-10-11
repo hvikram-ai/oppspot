@@ -16,12 +16,12 @@ export class ScanCreatedEvent extends DomainEvent<ScanCreatedEventPayload> {
       'scan.created',
       {
         scanId: scan.id,
-        userId: scan.configuration.userId,
-        name: scan.configuration.name,
-        industries: scan.configuration.selectedIndustries,
-        regions: scan.configuration.selectedRegions,
-        dataSources: scan.configuration.dataSources,
-        scanDepth: scan.configuration.scanDepth
+        userId: (scan.configuration.userId || '') as string,
+        name: (scan.configuration.name || '') as string,
+        industries: (scan.configuration.selectedIndustries || []) as readonly unknown[],
+        regions: (scan.configuration.selectedRegions || []) as readonly unknown[],
+        dataSources: (scan.configuration.dataSources || []) as readonly string[],
+        scanDepth: (scan.configuration.scanDepth || 'standard') as string
       },
       correlationId
     )
@@ -186,6 +186,7 @@ export class ScanFailedEvent extends DomainEvent<ScanFailedEventPayload> {
     companiesDiscovered: number,
     correlationId?: string
   ) {
+    const failureStage = ScanFailedEvent.determineFailureStage(progressAtFailure)
     super(
       'scan.failed',
       {
@@ -195,13 +196,13 @@ export class ScanFailedEvent extends DomainEvent<ScanFailedEventPayload> {
         progressAtFailure,
         companiesDiscovered,
         isRetryable: error.isRetryable,
-        failureStage: this.determineFailureStage(progressAtFailure)
+        failureStage
       },
       correlationId
     )
   }
 
-  private determineFailureStage(progress: number): string {
+  private static determineFailureStage(progress: number): string {
     if (progress < 10) return 'initialization'
     if (progress < 30) return 'data_collection'
     if (progress < 60) return 'data_processing'
@@ -237,6 +238,7 @@ export class ScanCancelledEvent extends DomainEvent<ScanCancelledEventPayload> {
     companiesDiscovered: number,
     correlationId?: string
   ) {
+    const cancellationStage = ScanCancelledEvent.determineCancellationStage(progressAtCancellation)
     super(
       'scan.cancelled',
       {
@@ -245,13 +247,13 @@ export class ScanCancelledEvent extends DomainEvent<ScanCancelledEventPayload> {
         duration,
         progressAtCancellation,
         companiesDiscovered,
-        cancellationStage: this.determineCancellationStage(progressAtCancellation)
+        cancellationStage
       },
       correlationId
     )
   }
 
-  private determineCancellationStage(progress: number): string {
+  private static determineCancellationStage(progress: number): string {
     if (progress < 10) return 'initialization'
     if (progress < 30) return 'data_collection'
     if (progress < 60) return 'data_processing'
@@ -325,6 +327,7 @@ export class ScanStageCompletedEvent extends DomainEvent<ScanStageCompletedEvent
     errors: readonly ScanError[],
     correlationId?: string
   ) {
+    const successRate = ScanStageCompletedEvent.calculateSuccessRate(itemsProcessed, errors.length)
     super(
       'scan.stage.completed',
       {
@@ -333,13 +336,13 @@ export class ScanStageCompletedEvent extends DomainEvent<ScanStageCompletedEvent
         duration,
         itemsProcessed,
         errorCount: errors.length,
-        successRate: this.calculateSuccessRate(itemsProcessed, errors.length)
+        successRate
       },
       correlationId
     )
   }
 
-  private calculateSuccessRate(itemsProcessed: number, errorCount: number): number {
+  private static calculateSuccessRate(itemsProcessed: number, errorCount: number): number {
     const totalItems = itemsProcessed + errorCount
     return totalItems > 0 ? (itemsProcessed / totalItems) * 100 : 100
   }
@@ -373,6 +376,7 @@ export class ScanCostUpdatedEvent extends DomainEvent<ScanCostUpdatedEventPayloa
     newCosts: CostBreakdown,
     correlationId?: string
   ) {
+    const updatedSources = ScanCostUpdatedEvent.getUpdatedSources(oldCosts, newCosts)
     super(
       'scan.cost.updated',
       {
@@ -381,22 +385,22 @@ export class ScanCostUpdatedEvent extends DomainEvent<ScanCostUpdatedEventPayloa
         newTotalCost: newCosts.totalCost,
         costIncrease: newCosts.totalCost - oldCosts.totalCost,
         currency: newCosts.currency,
-        updatedSources: this.getUpdatedSources(oldCosts, newCosts)
+        updatedSources
       },
       correlationId
     )
   }
 
-  private getUpdatedSources(oldCosts: CostBreakdown, newCosts: CostBreakdown): string[] {
+  private static getUpdatedSources(oldCosts: CostBreakdown, newCosts: CostBreakdown): string[] {
     const updated: string[] = []
-    
+
     for (const [source, newCost] of Object.entries(newCosts.costBySource)) {
-      const oldCost = oldCosts.costBySource[source] || 0
-      if (newCost !== oldCost) {
+      const oldCost = (oldCosts.costBySource as Record<string, number>)[source] || 0
+      if ((newCost as number) !== (oldCost as number)) {
         updated.push(source)
       }
     }
-    
+
     return updated
   }
 
@@ -510,33 +514,34 @@ export class ScanCompletedIntegrationEvent extends IntegrationEvent<ScanComplete
     results: ScanResults,
     correlationId?: string
   ) {
+    const recommendations = ScanCompletedIntegrationEvent.generateRecommendations(results)
     super(
       'integration.scan.completed',
       {
         scanId,
         userId,
         results,
-        recommendations: this.generateRecommendations(results)
+        recommendations
       },
       correlationId
     )
   }
 
-  private generateRecommendations(results: ScanResults): readonly string[] {
+  private static generateRecommendations(results: ScanResults): readonly string[] {
     const recommendations: string[] = []
-    
+
     if (results.highQualityTargets > 0) {
       recommendations.push(`${results.highQualityTargets} high-quality targets identified for immediate follow-up`)
     }
-    
+
     if (results.costEfficiency < 0.5) {
       recommendations.push('Consider optimizing data source selection to improve cost efficiency')
     }
-    
+
     if (results.errorRate > 10) {
       recommendations.push('High error rate detected - review data source configurations')
     }
-    
+
     return recommendations
   }
 

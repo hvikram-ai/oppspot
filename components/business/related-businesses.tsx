@@ -16,14 +16,16 @@ interface RelatedBusinessesProps {
   businesses: Array<{
     id: string
     name: string
-    description?: string
-    categories?: string[]
-    rating?: number
-    verified?: boolean
+    description?: string | null
+    categories?: string[] | null
+    rating?: number | null
+    verified?: boolean | null
     address?: {
       city?: string
       state?: string
-    }
+      [key: string]: unknown
+    } | null
+    [key: string]: unknown
   }>
   currentBusinessId: string
 }

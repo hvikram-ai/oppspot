@@ -75,7 +75,7 @@ export interface ActionRecommendation {
   priority: 'critical' | 'high' | 'medium' | 'low';
   action: string;
   reason: string;
-  expected_impact: string;
+  expected_impact: 'neutral' | 'positive' | 'negative';
   success_probability: number;
 }
 
@@ -376,7 +376,7 @@ export class PredictiveLeadScorer {
       priority: string;
       action: string;
       reason: string;
-      expected_impact: string;
+      expected_impact: 'neutral' | 'positive' | 'negative';
       success_probability: number;
     }>;
     competitive_position: CompetitivePosition;
@@ -389,7 +389,7 @@ export class PredictiveLeadScorer {
         priority: string;
         action: string;
         reason: string;
-        expected_impact: string;
+        expected_impact: 'neutral' | 'positive' | 'negative';
         success_probability: number;
       }>,
       competitive_position: 'unknown' as CompetitivePosition
@@ -424,7 +424,7 @@ export class PredictiveLeadScorer {
         priority: 'high',
         action: 'Schedule product demonstration',
         reason: 'High buying intent detected',
-        expected_impact: 'Accelerate decision process',
+        expected_impact: 'positive',
         success_probability: 75
       });
     }
@@ -435,7 +435,7 @@ export class PredictiveLeadScorer {
         priority: 'critical',
         action: 'Map and engage key stakeholders',
         reason: 'Limited stakeholder coverage',
-        expected_impact: 'Improve decision influence',
+        expected_impact: 'positive',
         success_probability: 60
       });
     }

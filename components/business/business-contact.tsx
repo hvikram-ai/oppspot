@@ -24,16 +24,18 @@ interface BusinessContactProps {
     phone_numbers?: string[] | any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     emails?: string[] | any
-    website?: string
+    website?: string | null
     address?: {
       street?: string
       city?: string
       state?: string
       country?: string
       postal_code?: string
-    }
-    latitude?: number
-    longitude?: number
+      [key: string]: unknown
+    } | null
+    latitude?: number | null
+    longitude?: number | null
+    [key: string]: unknown
   }
 }
 

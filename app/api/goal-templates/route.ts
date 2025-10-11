@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     // Insert template
     const { data: template, error } = await supabase
       .from('goal_templates')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         id,
         name,

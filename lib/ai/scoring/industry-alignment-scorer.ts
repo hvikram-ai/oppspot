@@ -28,7 +28,12 @@ export class IndustryAlignmentScorer {
   async calculateScore(company: Record<string, unknown>): Promise<IndustryScore> {
     console.log(`[IndustryScorer] Calculating score for ${company.name}`)
 
-    const factors = []
+    const factors: Array<{
+      name: string
+      value: number
+      impact: 'positive' | 'negative' | 'neutral'
+      explanation: string
+    }> = []
     const missingData = []
     let score = 50 // Base score
 
@@ -61,7 +66,7 @@ export class IndustryAlignmentScorer {
       factors.push({
         name: 'B2B Alignment',
         value: b2bScore,
-        impact: b2bScore > 60 ? 'positive' : 'neutral',
+        impact: (b2bScore > 60 ? 'positive' : 'neutral') as const,
         explanation: this.explainB2BAlignment(company.company_type)
       })
       score = (score + b2bScore) / 2
@@ -75,7 +80,7 @@ export class IndustryAlignmentScorer {
       factors.push({
         name: 'Company Maturity',
         value: maturityScore,
-        impact: maturityScore > 60 ? 'positive' : 'neutral',
+        impact: (maturityScore > 60 ? 'positive' : 'neutral') as const,
         explanation: this.explainMaturity(maturityScore)
       })
       score = (score * 0.8) + (maturityScore * 0.2)

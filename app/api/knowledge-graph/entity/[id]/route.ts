@@ -25,13 +25,13 @@ export async function GET(
     }
 
     // Get user's org
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json(
         { error: 'User org not found' },
         { status: 404 }
@@ -44,7 +44,7 @@ export async function GET(
       .select('*')
       .eq('id', id)
       .eq('org_id', profile.org_id)
-      .single() as { data: Row<'knowledge_entities'> | null; error: any }
+      .single()
 
     if (entityError || !entity) {
       return NextResponse.json(
@@ -54,15 +54,15 @@ export async function GET(
     }
 
     // Get relationships
-    // @ts-ignore - Type inference issue
-    const { data: relationships } = await supabase.rpc('find_related_entities', {
+    // @ts-expect-error - Type inference issue
+    const { data: relationships, error: relationshipsError } = await supabase.rpc('find_related_entities', {
       p_entity_id: id,
       p_relationship_type: null,
       p_limit: 100
     })
 
     // Get facts
-    const { data: facts } = await supabase.rpc('get_entity_facts', {
+    const { data: facts, error: factsError } = await supabase.rpc('get_entity_facts', {
       p_entity_id: id,
       p_include_historical: false
     })

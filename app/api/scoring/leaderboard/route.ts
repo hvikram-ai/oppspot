@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 async function calculateLeaderboardStats(supabase: SupabaseClient) {
   try {
     // Get score distribution
-    const { data: allScores } = await supabase
+    const { data: allScores, error: allScoresError } = await supabase
       .from('lead_scores')
       .select('overall_score')
 

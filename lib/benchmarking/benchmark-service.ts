@@ -390,7 +390,7 @@ export class BenchmarkingService {
 
     const { error } = await supabase
       .from('company_benchmark_comparisons')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .upsert({
         company_id: comparison.company_id,
         comparison_date: comparison.comparison_date.toISOString(),

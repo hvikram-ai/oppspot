@@ -431,7 +431,6 @@ Keep responses under 200 words unless detailed explanation needed.`
 
     const { data } = await supabase
       .from('chat_conversations')
-      // @ts-ignore - Supabase type inference issue
       .insert({
         org_id: profile.org_id,
         user_id: userId,
@@ -467,7 +466,6 @@ Keep responses under 200 words unless detailed explanation needed.`
     const supabase = await createClient()
 
     const { data } = await supabase
-      // @ts-ignore - Supabase type inference issue
       .from('chat_messages')
       .insert({
         conversation_id: conversationId,

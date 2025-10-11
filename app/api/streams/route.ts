@@ -20,14 +20,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
     // If user doesn't have org_id, return empty streams
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({
         streams: [],
         total: 0,
@@ -80,12 +80,12 @@ export async function POST(request: NextRequest) {
       .single()
 
     // If user doesn't have org_id, create one
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       // Use admin client to bypass RLS for organization creation
       const adminClient = createAdminClient()
       const { data: newOrg, error: orgError } = await adminClient
         .from('organizations')
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         .insert({
           name: 'My Organization',
           slug: `org-${user.id.substring(0, 8)}`
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       // Update profile with new org_id
       const { error: updateError } = await supabase
         .from('profiles')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({ org_id: newOrg.id })
         .eq('id', user.id)
 

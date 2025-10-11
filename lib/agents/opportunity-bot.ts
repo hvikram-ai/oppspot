@@ -372,7 +372,7 @@ export class OpportunityBot extends BaseAgent {
     // Add to stream
     await supabase
       .from('stream_items')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         item_type: 'company',

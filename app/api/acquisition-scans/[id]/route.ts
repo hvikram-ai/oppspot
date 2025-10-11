@@ -25,7 +25,7 @@ export async function GET(
     const scanId = awaitedParams.id
 
     // Get the scan with access control
-    const { data: scan, error: scanError } = await supabase
+    const { data: scanData, error: scanError } = await supabase
       .from('acquisition_scans')
       .select(`
         *,
@@ -38,14 +38,25 @@ export async function GET(
         )
       `)
       .eq('id', scanId)
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] & { target_companies: Array<{ id: string; company_name: string; overall_score: number; analysis_status: string; created_at: string }> } | null; error: any }
+      .single();
 
-    if (scanError || !scan) {
+    if (scanError || !scanData) {
       console.error('Error fetching scan:', scanError)
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
       )
+    }
+
+    // Type the scan result explicitly
+    const scan = scanData as Row<'acquisition_scans'> & {
+      target_companies?: Array<{
+        id: string
+        company_name: string | null
+        overall_score: number | null
+        analysis_status: string | null
+        created_at: string
+      }>
     }
 
     // Check access permissions
@@ -60,13 +71,13 @@ export async function GET(
     }
 
     // Get market intelligence data
-    const { data: marketIntelligence } = await supabase
+    const { data: marketIntelligence, error: marketIntelligenceError } = await supabase
       .from('market_intelligence')
       .select('*')
       .eq('scan_id', scanId)
 
     // Get scan reports
-    const { data: reports } = await supabase
+    const { data: reports, error: reportsError } = await supabase
       .from('scan_reports')
       .select('id, report_type, report_title, generation_status, created_at, file_size')
       .eq('scan_id', scanId)
@@ -108,18 +119,20 @@ export async function PATCH(
     const body = await request.json()
 
     // Get the existing scan
-    const { data: existingScan, error: fetchError } = await supabase
+    const { data: existingScanData, error: fetchError } = await supabase
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Row<'acquisition_scans'> | null; error: any }
+      .single();
 
-    if (fetchError || !existingScan) {
+    if (fetchError || !existingScanData) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
       )
     }
+
+    const existingScan = existingScanData as Row<'acquisition_scans'>
 
     // Check access permissions
     const hasAccess = existingScan.user_id === user.id ||
@@ -143,7 +156,7 @@ export async function PATCH(
       .update(updateData)
       .eq('id', scanId)
       .select()
-      .single() as { data: Database['public']['Tables']['acquisition_scans']['Row'] | null; error: any }
+      .single();
 
     if (updateError) {
       console.error('Error updating scan:', updateError)
@@ -202,18 +215,20 @@ export async function DELETE(
     const scanId = awaitedParams.id
 
     // Get the existing scan
-    const { data: existingScan, error: fetchError } = await supabase
+    const { data: existingScanData, error: fetchError } = await supabase
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Row<'acquisition_scans'> | null; error: any }
+      .single();
 
-    if (fetchError || !existingScan) {
+    if (fetchError || !existingScanData) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
       )
     }
+
+    const existingScan = existingScanData as Row<'acquisition_scans'>
 
     // Check access permissions
     const hasAccess = existingScan.user_id === user.id ||
@@ -272,11 +287,11 @@ export async function DELETE(
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any } 
+      .single()
 
     return profile?.org_id === orgId
   } catch (error) {

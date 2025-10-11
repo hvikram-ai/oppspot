@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/lib/utils/error-handler'
 import { getOllamaClient, isOllamaEnabled } from '@/lib/ai/ollama'
 import { WebsiteScraper } from '@/lib/scraping/website-scraper'
 import { WebSearchService } from '@/lib/opp-scan/services/web-search-service'
+import type { CompanySearchResult } from '@/lib/opp-scan/core/similarity-interfaces'
 
 export interface TargetCompanyInput {
   company_name: string
@@ -259,9 +260,10 @@ export class TargetIntelligenceService {
   /**
    * Analyze company website for detailed information
    */
-  private async analyzeWebsite(url: string): Promise<unknown> {
+  private async analyzeWebsite(url: string): Promise<Record<string, unknown>> {
     try {
-      return await this.websiteScraper.scrapeWebsite(url)
+      const result = await this.websiteScraper.scrapeWebsite(url)
+      return result as Record<string, unknown>
     } catch (error) {
       console.warn('[TargetIntelligence] Website analysis failed:', error)
       return {
@@ -278,7 +280,7 @@ export class TargetIntelligenceService {
   /**
    * Gather intelligence from web search
    */
-  private async gatherWebIntelligence(companyName: string, industry?: string): Promise<unknown> {
+  private async gatherWebIntelligence(companyName: string, industry?: string): Promise<Record<string, unknown>> {
     try {
       const searchQueries = [
         `"${companyName}" company profile revenue employees`,
@@ -289,24 +291,25 @@ export class TargetIntelligenceService {
       ]
 
       const searchResults = await Promise.allSettled(
-        searchQueries.map(query => 
+        searchQueries.map(query =>
           this.webSearchService.searchCompanies({
             query,
-            filters: { regions: [], industries: industry ? [industry] : [] },
-            limit: 10
+            industry: industry,
+            maxResults: 10
           })
         )
       )
 
-      type FulfilledResult = PromiseFulfilledResult<unknown[]>
-      return searchResults
-        .filter((result): result is FulfilledResult => result.status === 'fulfilled')
-        .map((result: FulfilledResult) => result.value)
+      const results = searchResults
+        .filter((result): result is PromiseFulfilledResult<CompanySearchResult[]> => result.status === 'fulfilled')
+        .map(result => result.value)
         .flat()
+
+      return { results } as Record<string, unknown>
 
     } catch (error) {
       console.warn('[TargetIntelligence] Web intelligence gathering failed:', error)
-      return []
+      return { results: [] }
     }
   }
 
@@ -314,10 +317,10 @@ export class TargetIntelligenceService {
    * Analyze financial profile using LLM
    */
   private async analyzeFinancialProfile(
-    input: TargetCompanyInput, 
-    websiteData: Record<string, unknown>, 
+    input: TargetCompanyInput,
+    websiteData: Record<string, unknown>,
     webIntelligence: Record<string, unknown>
-  ): Promise<unknown> {
+  ): Promise<Record<string, unknown>> {
     const prompt = `Analyze the financial profile for ${input.company_name} based on available data:
 
 Company Information:
@@ -365,7 +368,7 @@ Return the analysis in JSON format with specific numerical estimates where possi
   /**
    * Analyze market position and competitive landscape using LLM
    */
-  private async analyzeMarketPosition(input: TargetCompanyInput, webIntelligence: Record<string, unknown>): Promise<unknown> {
+  private async analyzeMarketPosition(input: TargetCompanyInput, webIntelligence: Record<string, unknown>): Promise<Record<string, unknown>> {
     const prompt = `Conduct a comprehensive competitive analysis for ${input.company_name}:
 
 Company: ${input.company_name}
@@ -400,10 +403,10 @@ Structure the response as detailed JSON with confidence scores.`
    * Generate ESG assessment using LLM
    */
   private async generateESGAssessment(
-    input: TargetCompanyInput, 
-    websiteData: Record<string, unknown>, 
+    input: TargetCompanyInput,
+    websiteData: Record<string, unknown>,
     webIntelligence: Record<string, unknown>
-  ): Promise<unknown> {
+  ): Promise<Record<string, unknown>> {
     const prompt = `Conduct comprehensive ESG (Environmental, Social, Governance) assessment for ${input.company_name}:
 
 Available Data:
@@ -438,7 +441,7 @@ Return as structured JSON with detailed explanations.`
   /**
    * Analyze market sentiment using LLM
    */
-  private async analyzeMarketSentiment(companyName: string): Promise<unknown> {
+  private async analyzeMarketSentiment(companyName: string): Promise<Record<string, unknown>> {
     const prompt = `Analyze current market sentiment and recent developments for ${companyName}:
 
 Provide analysis of:
@@ -469,7 +472,7 @@ Return as structured JSON with specific sentiment scores.`
   /**
    * Generate comprehensive AI insights using LLM
    */
-  private async generateAIInsights(input: TargetCompanyInput, analysisData: Record<string, unknown>): Promise<unknown> {
+  private async generateAIInsights(input: TargetCompanyInput, analysisData: Record<string, unknown>): Promise<Record<string, unknown>> {
     const prompt = `Generate comprehensive M&A intelligence insights for ${input.company_name}:
 
 Complete Analysis Data:
@@ -518,10 +521,10 @@ Return as detailed JSON with specific scores and recommendations.`
     startTime: number
   ): Promise<EnhancedCompanyProfile> {
     const processingTime = Date.now() - startTime
-    
+
     return {
       company_name: input.company_name,
-      legal_name: websiteData?.title || input.company_name,
+      legal_name: (websiteData?.title as string) || input.company_name,
       website: input.website || `https://${input.company_name.toLowerCase().replace(/\s+/g, '')}.com`,
       headquarters: {
         address: 'TBD - Address extraction needed',
@@ -533,27 +536,31 @@ Return as detailed JSON with specific scores and recommendations.`
       sub_industries: ['TBD - Industry analysis needed'],
       business_model: 'TBD - Business model analysis needed',
       founded_year: undefined,
-      employee_count: financialProfile?.employee_count,
-      financial_profile: financialProfile,
-      leadership_team: websiteData?.teamMembers || [],
+      employee_count: (financialProfile?.employee_count as { estimate: number; range: string; confidence: number }) || {
+        estimate: 10,
+        range: '1-10',
+        confidence: 20
+      },
+      financial_profile: financialProfile as EnhancedCompanyProfile['financial_profile'],
+      leadership_team: (websiteData?.teamMembers as Array<{ name: string; title: string; background?: string; linkedin_url?: string; experience_years?: number }>) || [],
       technology_profile: {
-        tech_stack: websiteData?.technologies || [],
+        tech_stack: (websiteData?.technologies as string[]) || [],
         digital_maturity_score: this.calculateDigitalMaturityScore(websiteData),
         website_analysis: {
-          seo_score: websiteData?.seoScore || 50,
-          mobile_friendly: websiteData?.mobileFriendly || false,
+          seo_score: (websiteData?.seoScore as number) || 50,
+          mobile_friendly: (websiteData?.mobileFriendly as boolean) || false,
           load_speed_score: 75,
-          security_score: websiteData?.hasSsl ? 90 : 30
+          security_score: (websiteData?.hasSsl as boolean) ? 90 : 30
         },
         social_media_presence: {
-          platforms: websiteData?.socialLinks || {},
+          platforms: (websiteData?.socialLinks as Record<string, { url: string; followers?: number; engagement_rate?: number }>) || {},
           social_activity_score: 50
         }
       },
-      market_position: marketPosition,
-      esg_assessment: esgAssessment,
-      market_sentiment: marketSentiment,
-      ai_insights: aiInsights,
+      market_position: marketPosition as EnhancedCompanyProfile['market_position'],
+      esg_assessment: esgAssessment as EnhancedCompanyProfile['esg_assessment'],
+      market_sentiment: marketSentiment as EnhancedCompanyProfile['market_sentiment'],
+      ai_insights: aiInsights as EnhancedCompanyProfile['ai_insights'],
       analysis_metadata: {
         generated_at: new Date().toISOString(),
         confidence_score: this.calculateOverallConfidence(financialProfile, marketPosition, esgAssessment),
@@ -630,7 +637,8 @@ Return as detailed JSON with specific scores and recommendations.`
   private generateFallbackFinancialProfile(input: TargetCompanyInput, websiteData: Record<string, unknown>, webIntelligence: Record<string, unknown>): Record<string, unknown> {
     // Generate intelligent fallback based on available data
     const hasWebsite = !!websiteData?.title
-    const hasWebData = webIntelligence && webIntelligence.length > 0
+    const resultsArray = (webIntelligence?.results as unknown[]) || []
+    const hasWebData = resultsArray.length > 0
     
     return {
       revenue_estimate: {

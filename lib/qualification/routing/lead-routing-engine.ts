@@ -52,7 +52,7 @@ interface LeadAssignmentResult {
 }
 
 export class LeadRoutingEngine {
-  private supabase;
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   constructor() {
     // Initialize in methods to handle async
@@ -73,14 +73,18 @@ export class LeadRoutingEngine {
       const supabase = await this.getSupabase();
 
       // Get lead and company data
-      const { data: lead } = await supabase
+      const { data: lead, error: leadError } = await supabase
         .from('lead_scores')
         .select(`
           *,
-          businesses!inner(*) as { data: Row<'lead_scores'>[] | null; error: any }
+          businesses!inner(*)
         `)
         .eq('id', request.lead_id)
         .single();
+
+      if (leadError) {
+        console.error('Error fetching lead data:', leadError);
+      }
 
       if (!lead) {
         console.error('Lead not found');
@@ -124,20 +128,24 @@ export class LeadRoutingEngine {
 
     // Get organization ID
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
-      .eq('id', user?.id)
-      .single() as { data: Row<'profiles'> | null; error: any };
+      .eq('id', user?.id || '')
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
 
     const { data: rules } = await supabase
       .from('lead_routing_rules')
       .select('*')
-      .eq('org_id', profile?.org_id)
+      .eq('org_id', profile?.org_id || '')
       .eq('is_active', true)
-      .order('priority', { ascending: false }) as { data: Row<'lead_routing_rules'>[] | null; error: any };
+      .order('priority', { ascending: false });
 
-    return (rules || []).map(r => this.mapRuleFromDatabase(r));
+    return (rules || []).map((r) => this.mapRuleFromDatabase(r as Record<string, unknown>));
   }
 
   /**
@@ -332,9 +340,10 @@ export class LeadRoutingEngine {
       requiredSkills.push(lead.businesses.industry.toLowerCase());
     }
 
-    if (lead.total_score >= 80) {
+    const leadScore = lead.total_score || 0;
+    if (leadScore >= 80) {
       requiredSkills.push('enterprise');
-    } else if (lead.total_score >= 60) {
+    } else if (leadScore >= 60) {
       requiredSkills.push('mid-market');
     } else {
       requiredSkills.push('smb');
@@ -387,7 +396,7 @@ export class LeadRoutingEngine {
   /**
    * Account-based assignment
    */
-  private async accountBasedAssignment(teamMembers: TeamMember[], lead: any): Promise<TeamMember> {
+  private async accountBasedAssignment(teamMembers: TeamMember[], lead: LeadData): Promise<TeamMember> {
     const supabase = await this.getSupabase();
 
     // Check if company has existing assigned rep
@@ -411,28 +420,53 @@ export class LeadRoutingEngine {
     }
 
     // Check for similar companies
-    const { data: similarCompanies } = await supabase
+    const { data: similarCompanies, error: companiesError } = await supabase
       .from('businesses')
       .select('id')
       .eq('industry', lead.businesses?.industry)
       .neq('id', lead.company_id)
-      .limit(10) as { data: Row<'businesses'>[] | null; error: any };
+      .limit(10);
+
+    if (companiesError) {
+      console.error('Error fetching similar companies:', companiesError);
+    }
 
     if (similarCompanies && similarCompanies.length > 0) {
-      const { data: similarAssignments } = await supabase
+      // Get all assignments for similar companies
+      const { data: allAssignments } = await supabase
         .from('lead_assignments')
-        .select('assigned_to, COUNT(*) as count')
-        .in('company_id', similarCompanies.map(c => c.id))
-        .group('assigned_to');
+        .select('assigned_to')
+        .in('company_id', similarCompanies.map((c) => c.id));
+
+      // Group and count manually
+      type AssignmentCounts = Record<string, number>;
+      const assignmentCounts = (allAssignments || []).reduce<AssignmentCounts>((acc, a) => {
+        const assignedTo = a.assigned_to || '';
+        acc[assignedTo] = (acc[assignedTo] || 0) + 1;
+        return acc;
+      }, {});
+
+      interface SimilarAssignment {
+        assigned_to: string;
+        count: number;
+        member?: TeamMember;
+      }
+
+      const similarAssignments: SimilarAssignment[] = Object.entries(assignmentCounts).map(([assigned_to, count]) => ({
+        assigned_to,
+        count: count as number
+      }));
 
       if (similarAssignments && similarAssignments.length > 0) {
         // Assign to rep with most experience in this industry
         const bestRep = similarAssignments
-          .map(a => ({
+          .map((a) => ({
             ...a,
-            member: teamMembers.find(m => m.id === a.assigned_to)
+            member: teamMembers.find((m: TeamMember) => m.id === a.assigned_to)
           }))
-          .filter(a => a.member && a.member.availability_status === 'available')
+          .filter((a): a is SimilarAssignment & { member: TeamMember } =>
+            a.member !== undefined && a.member.availability_status === 'available'
+          )
           .sort((a, b) => b.count - a.count)[0];
 
         if (bestRep?.member) {
@@ -448,7 +482,7 @@ export class LeadRoutingEngine {
   /**
    * AI-optimized assignment
    */
-  private async aiOptimizedAssignment(teamMembers: TeamMember[], lead: any): Promise<TeamMember> {
+  private async aiOptimizedAssignment(teamMembers: TeamMember[], lead: LeadData): Promise<TeamMember> {
     // Score each team member based on multiple factors
     const scores = await Promise.all(teamMembers.map(async (member) => {
       let score = 0;
@@ -491,23 +525,23 @@ export class LeadRoutingEngine {
 
     // Get similar leads assigned to this member
     const { data: assignments } = await supabase
-      .from('lead_assignments')
+      .from('lead_assignments' as any)
       .select('status')
       .eq('assigned_to', memberId)
-      .in('status', ['completed', 'reassigned']) as { data: Row<'lead_assignments'>[] | null; error: any };
+      .in('status', ['completed', 'reassigned']);
 
     if (!assignments || assignments.length === 0) {
       return 0.5; // Default 50% if no history
     }
 
-    const completed = assignments.filter((a: any) => a.status === 'completed').length;
+    const completed = assignments.filter((a) => a.status === 'completed').length;
     return completed / assignments.length;
   }
 
   /**
    * Extract required skills from lead data
    */
-  private extractRequiredSkills(lead: any): string[] {
+  private extractRequiredSkills(lead: LeadData): string[] {
     const skills: string[] = [];
 
     if (lead.businesses?.industry) {
@@ -573,26 +607,39 @@ export class LeadRoutingEngine {
 
     if (!members) return [];
 
+    interface ProfileData {
+      id: string;
+      full_name: string | null;
+      email: string | null;
+      role: string;
+      skills?: string[] | null;
+      territories?: string[] | null;
+    }
+
     // Get current load for each member
     const memberData = await Promise.all(members.map(async (member) => {
+      const typedMember = member as unknown as ProfileData;
       const { count } = await supabase
         .from('lead_assignments')
         .select('*', { count: 'exact', head: true })
-        .eq('assigned_to', member.id)
-        .in('status', ['assigned', 'accepted', 'working']) as { data: Row<'lead_assignments'>[] | null; count: number | null; error: any };
+        .eq('assigned_to', typedMember.id)
+        .in('status', ['assigned', 'accepted', 'working']);
 
       // Get performance metrics
       const { data: completedAssignments } = await supabase
         .from('lead_assignments')
         .select('response_time_minutes')
-        .eq('assigned_to', member.id)
+        .eq('assigned_to', typedMember.id)
         .eq('status', 'completed')
-        .limit(10) as { data: Row<'lead_assignments'>[] | null; error: any };
+        .limit(10);
 
       let performanceScore = 70; // Default
       if (completedAssignments && completedAssignments.length > 0) {
-        const avgResponseTime = completedAssignments.reduce((sum, a) =>
-          sum + ((a as any).response_time_minutes || 0), 0
+        interface AssignmentWithResponseTime {
+          response_time_minutes: number | null;
+        }
+        const avgResponseTime = completedAssignments.reduce((sum: number, a) =>
+          sum + ((a as unknown as AssignmentWithResponseTime).response_time_minutes || 0), 0
         ) / completedAssignments.length;
 
         // Better response time = higher score
@@ -604,14 +651,14 @@ export class LeadRoutingEngine {
       }
 
       return {
-        id: member.id,
-        name: member.full_name || member.email,
-        email: member.email,
+        id: typedMember.id,
+        name: typedMember.full_name || typedMember.email || '',
+        email: typedMember.email || '',
         current_load: count || 0,
         max_capacity: 50, // Default max capacity
-        skills: member.skills || [],
-        territories: member.territories || [],
-        availability_status: count >= 50 ? 'unavailable' : count >= 40 ? 'busy' : 'available',
+        skills: typedMember.skills || [],
+        territories: typedMember.territories || [],
+        availability_status: (count || 0) >= 50 ? 'unavailable' : (count || 0) >= 40 ? 'busy' : 'available',
         performance_score: performanceScore
       } as TeamMember;
     }));
@@ -638,11 +685,15 @@ export class LeadRoutingEngine {
     const path: string[] = [];
 
     // Get management hierarchy
-    const { data: managers } = await supabase
+    const { data: managers, error: managersError } = await supabase
       .from('profiles')
       .select('id, full_name, role')
       .in('role', ['sales_manager', 'sales_director', 'vp_sales'])
-      .order('role') as { data: Row<'profiles'>[] | null; error: any };
+      .order('role');
+
+    if (managersError) {
+      console.error('Error fetching managers for escalation:', managersError);
+    }
 
     if (managers) {
       path.push(...managers.map(m => m.id));
@@ -677,11 +728,15 @@ export class LeadRoutingEngine {
     const supabase = await this.getSupabase();
 
     // Get any available sales rep
-    const { data: reps } = await supabase
+    const { data: reps, error: repsError } = await supabase
       .from('profiles')
       .select('id, full_name')
       .in('role', ['sales_rep', 'account_executive'])
-      .limit(5) as { data: Row<'profiles'>[] | null; error: any };
+      .limit(5);
+
+    if (repsError) {
+      console.error('Error fetching sales reps for fallback routing:', repsError);
+    }
 
     if (!reps || reps.length === 0) {
       throw new Error('No sales representatives available');
@@ -715,8 +770,8 @@ export class LeadRoutingEngine {
     const slaDeadline = new Date();
     slaDeadline.setHours(slaDeadline.getHours() + decision.sla);
 
-    await supabase
-      .from('lead_assignments')
+    await (supabase
+      .from('lead_assignments') as any)
       .insert({
         lead_id: leadId,
         company_id: companyId,
@@ -747,8 +802,8 @@ export class LeadRoutingEngine {
   ): Promise<void> {
     const supabase = await this.getSupabase();
 
-    await supabase
-      .from('notifications')
+    await (supabase
+      .from('notifications') as any)
       .insert({
         user_id: assigneeId,
         type: 'lead_assigned',
@@ -786,20 +841,26 @@ export class LeadRoutingEngine {
    */
   private mapRuleFromDatabase(data: Record<string, unknown>): LeadRoutingRule {
     return {
-      id: data.id,
-      org_id: data.org_id,
-      name: data.name,
-      description: data.description,
-      priority: data.priority,
-      is_active: data.is_active,
-      conditions: data.conditions || {},
-      routing_algorithm: data.routing_algorithm,
-      assignment_type: data.assignment_type,
-      assignment_target: data.assignment_target,
-      sla_hours: data.sla_hours,
-      escalation_hours: data.escalation_hours,
-      escalation_target: data.escalation_target,
-      settings: data.settings
+      id: data.id as string,
+      org_id: data.org_id as string,
+      name: data.name as string,
+      description: data.description as string | undefined,
+      priority: data.priority as number,
+      is_active: data.is_active as boolean,
+      conditions: (data.conditions as Record<string, unknown>) || {},
+      routing_algorithm: data.routing_algorithm as 'round_robin' | 'weighted' | 'skill_based' | 'territory' | 'account_based' | 'ai_optimized',
+      assignment_type: data.assignment_type as 'individual' | 'team' | 'queue',
+      assignment_target: data.assignment_target as string | string[] | Record<string, unknown> | undefined,
+      sla_hours: data.sla_hours as number | undefined,
+      escalation_hours: data.escalation_hours as number | undefined,
+      escalation_target: data.escalation_target as string | string[] | undefined,
+      settings: data.settings as {
+        working_hours_only?: boolean;
+        timezone_aware?: boolean;
+        holiday_handling?: 'queue' | 'next_available' | 'escalate';
+        capacity_planning?: boolean;
+        skill_matching?: Record<string, unknown>;
+      } | undefined
     };
   }
 }

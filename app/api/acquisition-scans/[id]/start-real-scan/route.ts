@@ -28,11 +28,24 @@ export async function POST(
     const scanId = awaitedParams.id
 
     // Get the scan configuration
-    const { data: scan, error: scanError } = await supabase
+    const { data: scanData, error: scanError } = await supabase
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Row<'acquisition_scans'> | null; error: any }
+      .single()
+
+    if (scanError || !scanData) {
+      return NextResponse.json(
+        { error: 'Scan not found' },
+        { status: 404 }
+      )
+    }
+
+    const scan = scanData as Scan;
+
+    if (scanError) {
+      console.error('[Start Real Scan] Error fetching scan:', scanError);
+    }
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -221,12 +234,12 @@ export async function POST(
 // Helper functions
 
 function validateScanConfiguration(scan: Scan): string | null {
-  const industries = scan.selected_industries as any[]
+  const industries = scan.selected_industries as string[] | null;
   if (!industries || industries.length === 0) {
     return 'No industries selected'
   }
 
-  const regions = scan.selected_regions as any[]
+  const regions = scan.selected_regions as string[] | null;
   if (!regions || regions.length === 0) {
     return 'No regions selected'
   }
@@ -252,7 +265,7 @@ function estimateRequestCount(scan: Scan): number {
   let baseRequests = 100 // Base number of API calls
 
   // Multiply by number of industries
-  const industries = scan.selected_industries as any[]
+  const industries = scan.selected_industries as string[] | null;
   baseRequests *= (industries?.length || 1)
 
   // Add requests for each data source
@@ -284,7 +297,7 @@ function estimateRequestCount(scan: Scan): number {
   baseRequests *= depthMultiplier[scan.scan_depth as string] || 1.0
 
   // Adjust for regions (more regions = more API calls)
-  const regions = scan.selected_regions as any[]
+  const regions = scan.selected_regions as string[] | null;
   baseRequests *= Math.sqrt(regions?.length || 1)
 
   return Math.ceil(baseRequests)
@@ -316,11 +329,15 @@ function getEstimatedCompletion(scan: Scan, estimatedRequests: number): string {
 
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any } 
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
 
     return profile?.org_id === orgId
   } catch (error) {

@@ -198,7 +198,6 @@ export class JobPostingAnalyzer {
       // Store the signal in database
       const { data: signal, error } = await supabase
         .from('buying_signals')
-        // @ts-ignore - Supabase type inference issue
         .insert({
           ...jobSignal,
           signal_data: jobSignal.posting_data,
@@ -209,7 +208,6 @@ export class JobPostingAnalyzer {
 
       if (error) throw error;
 
-      // @ts-ignore - Supabase type inference issue
       // Store job posting specific details
       await supabase.from('job_posting_signals').insert({
         signal_id: signal!.id,
@@ -477,7 +475,6 @@ export class JobPostingAnalyzer {
     const postingVelocity = totalOpen / 3; // Over 3 months
 
     // Calculate growth rate
-    // @ts-ignore - Supabase type inference issue
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const recentCount = recentPostings?.filter(p =>
       new Date(p.posted_date) >= thirtyDaysAgo

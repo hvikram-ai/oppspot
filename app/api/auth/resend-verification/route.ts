@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // First check if user exists and needs verification
-    const { data: user } = await supabase.auth.getUser()
+    const { data: user, error: userError } = await supabase.auth.getUser()
     
     if (user?.user?.email === email) {
       // User is logged in, resend verification for current user

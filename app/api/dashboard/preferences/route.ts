@@ -27,14 +27,14 @@ export async function GET(_request: NextRequest) {
       .from('dashboard_preferences')
       .select('*')
       .eq('user_id', user.id)
-      .single() as { data: Row<'dashboard_preferences'> | null; error: any }
+      .single()
 
     // If preferences don't exist, they should be auto-created by trigger
     // But if not, create them now
     if (fetchError && fetchError.code === 'PGRST116') {
       const { data: newPrefs, error: createError } = await supabase
         .from('dashboard_preferences')
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         .insert({
           user_id: user.id
         })
@@ -151,7 +151,7 @@ export async function PUT(request: NextRequest) {
     // Update preferences
     const { data: updatedPrefs, error: updateError } = await supabase
       .from('dashboard_preferences')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update(updateData)
       .eq('user_id', user.id)
       .select()

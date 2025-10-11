@@ -10,6 +10,13 @@ import { createClient } from '@/lib/supabase/server'
 import type { UpdateDataRoomRequest } from '@/lib/data-room/types'
 import type { Row } from '@/lib/supabase/helpers'
 
+interface DataRoomAccess {
+  user_id?: string;
+  permission_level?: string;
+  revoked_at?: string | null;
+  expires_at?: string | null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -49,29 +56,30 @@ export async function GET(
         )
       `)
       .eq('id', id)
-      .single() as {
-        data: (Row<'data_rooms'> & {
-          user_id: string
-          profiles?: { name?: string; email?: string }
-          data_room_access?: Array<{
-            user_id?: string
-            permission_level?: string
-            revoked_at?: string
-            expires_at?: string
-          }>
-        }) | null
-        error: any
-      }
+      .single();
 
     if (error) {
       console.error('[Data Room API] Get error:', error)
       return NextResponse.json({ error: error.message }, { status: 404 })
     }
 
+    interface DataRoomData {
+      user_id: string;
+      profiles?: { name?: string; email?: string };
+      data_room_access?: DataRoomAccess[];
+    }
+
+    const typedDataRoom = dataRoom as unknown as DataRoomData | null;
+
+    if (!typedDataRoom) {
+      return NextResponse.json({ error: 'Data room not found' }, { status: 404 })
+    }
+
     // Check if user has access
-    const hasAccess = dataRoom!.user_id === user.id ||
-      dataRoom!.data_room_access?.some((a: any) =>
-        a.user_id === user.id && !a.revoked_at && new Date(a.expires_at) > new Date()
+    const hasAccess = typedDataRoom.user_id === user.id ||
+      typedDataRoom.data_room_access?.some((a) =>
+        a.user_id === user.id && !a.revoked_at &&
+        (!a.expires_at || new Date(a.expires_at) > new Date())
       )
 
     if (!hasAccess) {
@@ -81,10 +89,10 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: {
-        ...dataRoom,
-        owner_name: dataRoom!.profiles?.name || 'Unknown',
-        my_permission: dataRoom!.user_id === user.id ? 'owner' :
-          dataRoom!.data_room_access?.find((a: any) => a.user_id === user.id)?.permission_level
+        ...typedDataRoom,
+        owner_name: typedDataRoom.profiles?.name || 'Unknown',
+        my_permission: typedDataRoom.user_id === user.id ? 'owner' :
+          typedDataRoom.data_room_access?.find((a) => a.user_id === user.id)?.permission_level
       }
     })
   } catch (error) {
@@ -112,18 +120,28 @@ export async function PATCH(
     const body: UpdateDataRoomRequest = await request.json()
 
     // Check ownership
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('data_rooms')
       .select('user_id')
       .eq('id', id)
-      .single() as { data: Pick<Row<'data_rooms'>, 'user_id'> | null; error: any }
+      .single();
 
-    if (!existing || existing.user_id !== user.id) {
+    if (existingError) {
+      console.error('[Data Room API] Ownership check error:', existingError);
+    }
+
+    interface OwnershipData {
+      user_id: string;
+    }
+
+    const typedExisting = existing as unknown as OwnershipData | null;
+
+    if (!typedExisting || typedExisting.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     // Build update object
-    const updates: any = {}
+    const updates: Record<string, unknown> = {}
     if (body.name !== undefined) updates.name = body.name.trim()
     if (body.description !== undefined) updates.description = body.description?.trim() || null
     if (body.deal_type !== undefined) updates.deal_type = body.deal_type
@@ -133,7 +151,6 @@ export async function PATCH(
     // Update data room
     const { data: dataRoom, error } = await supabase
       .from('data_rooms')
-      // @ts-ignore - Type inference issue
       .update(updates)
       .eq('id', id)
       .select()
@@ -145,7 +162,6 @@ export async function PATCH(
     }
 
     // Log activity
-    // @ts-ignore - Supabase type inference issue
     await supabase.from('activity_logs').insert({
       data_room_id: id,
       actor_id: user.id,
@@ -185,13 +201,24 @@ export async function DELETE(
     const { id } = await params
 
     // Check ownership
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('data_rooms')
       .select('user_id, name')
       .eq('id', id)
-      .single() as { data: Pick<Row<'data_rooms'>, 'user_id' | 'name'> | null; error: any }
+      .single();
 
-    if (!existing || existing.user_id !== user.id) {
+    if (existingError) {
+      console.error('[Data Room API] Ownership check error:', existingError);
+    }
+
+    interface DataRoomOwnerData {
+      user_id: string;
+      name: string;
+    }
+
+    const typedExisting = existing as unknown as DataRoomOwnerData | null;
+
+    if (!typedExisting || typedExisting.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -209,7 +236,6 @@ export async function DELETE(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // @ts-ignore - Supabase type inference issue
     // Log activity
     await supabase.from('activity_logs').insert({
       data_room_id: id,
@@ -217,7 +243,7 @@ export async function DELETE(
       actor_name: user.user_metadata?.name || user.email || 'Unknown',
       actor_email: user.email || '',
       action: 'delete_room',
-      details: { name: existing.name },
+      details: { name: typedExisting.name },
       ip_address: request.headers.get('x-forwarded-for') || '0.0.0.0',
       user_agent: request.headers.get('user-agent') || 'Unknown'
     })

@@ -36,7 +36,7 @@ export async function POST(_request: NextRequest) {
       END $$;
     `
 
-    // @ts-ignore - Type inference issue
+    // @ts-expect-error - Type inference issue
     const { error: dropError } = await supabase.rpc('exec_sql', { sql: dropPoliciesSQL })
 
     if (dropError) {
@@ -109,7 +109,7 @@ export async function GET(_request: NextRequest) {
     // Try to insert a test stream (will rollback)
     const { error: insertError } = await supabase
       .from('streams')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         name: 'RLS_TEST_STREAM_DELETE_ME',
         org_id: 'test',

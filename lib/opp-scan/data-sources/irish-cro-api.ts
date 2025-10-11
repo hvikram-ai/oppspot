@@ -472,7 +472,7 @@ export class IrishCROAPI {
       '500+': 75000000
     }
     
-    const base = baseRevenue[employeeRange] || 500000
+    const base = baseRevenue[(employeeRange as keyof typeof baseRevenue)] || 500000
     return base + (capital * 2) // Add premium based on capitalization
   }
 }

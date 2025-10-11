@@ -25,12 +25,12 @@ export async function POST(
     }
 
     // Verify user has access to this stream
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single()
 
     if (!membership) {
       return NextResponse.json(
@@ -46,7 +46,7 @@ export async function POST(
     // Log activity
     await supabase
       .from('stream_activities')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         user_id: user.id,

@@ -68,9 +68,9 @@ export class CostManagementService {
    * Create a new cost budget
    */
   async createBudget(budget: Omit<CostBudget, 'id' | 'created_at' | 'updated_at'>): Promise<CostBudget> {
+    // @ts-ignore - Supabase type inference issue
     const { data, error } = await this.supabase
       .from('cost_budgets')
-      // @ts-ignore - Supabase type inference issue
       .insert({
         ...budget,
         remaining_budget: budget.total_budget,
@@ -116,7 +116,7 @@ export class CostManagementService {
    */
   async recordTransaction(transaction: Omit<CostTransaction, 'id' | 'created_at'>): Promise<CostTransaction> {
     const { data, error } = await this.supabase
-      // @ts-ignore - Supabase type inference issue
+    // @ts-ignore - Supabase type inference issue
       .from('cost_transactions')
       .insert({
         ...transaction,
@@ -246,13 +246,13 @@ export class CostManagementService {
     critical_threshold: number
     email_notifications: boolean
   }): Promise<void> {
+    // @ts-ignore - Supabase type inference issue
     const { error } = await this.supabase
       .from('cost_budgets')
-      // @ts-ignore - Type inference issue
       .update({
         budget_alerts: alerts,
         updated_at: new Date().toISOString()
-      })
+      } as any)
       .eq('id', budgetId)
 
     if (error) {
@@ -334,7 +334,7 @@ export class CostManagementService {
           title: `Optimize ${source} usage`,
           description: `${source} accounts for ${((cost / summary.total_spent) * 100).toFixed(1)}% of costs. Consider reducing request frequency or using alternative sources.`,
           potential_savings: potentialSavings,
-          implementation_effort: 'moderate'
+          implementation_effort: 'moderate' as "moderate"
         })
         totalPotentialSavings += potentialSavings
       }
@@ -350,7 +350,7 @@ export class CostManagementService {
         title: 'Reduce API failures',
         description: `${(failureRate * 100).toFixed(1)}% of API calls are failing. Improving error handling could reduce costs.`,
         potential_savings: potentialSavings,
-        implementation_effort: 'easy'
+        implementation_effort: 'easy' as "easy"
       })
       totalPotentialSavings += potentialSavings
     }
@@ -363,12 +363,12 @@ export class CostManagementService {
         title: 'Set up budget alerts',
         description: 'Your projected monthly cost is high. Set up automated budget alerts to prevent overspending.',
         potential_savings: summary.projected_monthly_cost * 0.15,
-        implementation_effort: 'easy'
+        implementation_effort: 'easy' as "easy"
       })
     }
 
     return {
-      recommendations,
+      recommendations: recommendations as any,
       total_potential_savings: totalPotentialSavings
     }
   }
@@ -385,13 +385,15 @@ export class CostManagementService {
       }
 
       const newRemainingBudget = Math.max(0, budget.remaining_budget - amount)
-      
+
+
+      // @ts-ignore - Supabase type inference issue
       await this.supabase
         .from('cost_budgets')
         .update({
           remaining_budget: newRemainingBudget,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', budget.id)
 
       // Check for budget alerts after updating

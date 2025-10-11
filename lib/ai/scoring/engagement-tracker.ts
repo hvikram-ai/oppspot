@@ -46,7 +46,7 @@ export class EngagementTracker {
         factors.push({
           name: 'Email Engagement',
           value: emailScore,
-          impact: emailScore > 50 ? 'positive' : 'neutral',
+          impact: (emailScore > 50 ? 'positive' : 'neutral') as const,
           explanation: `${engagementMetrics.emailEngagement} email interactions in last 90 days`
         })
         score += emailScore * 0.3
@@ -58,7 +58,7 @@ export class EngagementTracker {
         factors.push({
           name: 'Web Engagement',
           value: webScore,
-          impact: webScore > 40 ? 'positive' : 'neutral',
+          impact: (webScore > 40 ? 'positive' : 'neutral') as const,
           explanation: `${engagementMetrics.webEngagement} website visits tracked`
         })
         score += webScore * 0.2
@@ -93,7 +93,7 @@ export class EngagementTracker {
         factors.push({
           name: 'Recent Activity',
           value: recencyScore,
-          impact: recencyScore > 60 ? 'positive' : 'neutral',
+          impact: (recencyScore > 60 ? 'positive' : 'neutral') as const,
           explanation: this.explainRecency(events[0].created_at)
         })
         score = score * (1 + recencyScore / 100)
@@ -133,7 +133,7 @@ export class EngagementTracker {
 
     const { error } = await supabase
       .from('engagement_events')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         company_id: companyId,
         event_type: eventType,

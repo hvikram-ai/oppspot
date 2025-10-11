@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import type { AdvancedFilters } from '@/types/filters'
+import type { AdvancedFilters, MarketPresenceFilter } from '@/types/filters'
 import { FilterSection } from './filter-section'
 
 interface MarketPresenceFilterSectionProps {
@@ -39,8 +39,8 @@ export function MarketPresenceFilterSection({
   }: {
     label: string
     tooltip: string
-    minKey: keyof typeof filters.marketPresence
-    maxKey: keyof typeof filters.marketPresence
+    minKey: keyof MarketPresenceFilter
+    maxKey: keyof MarketPresenceFilter
   }) => (
     <div className="space-y-2">
       <div className="flex items-center gap-1">

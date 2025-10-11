@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       .from('api_keys')
       .select('*')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })) as { data: ApiKey[] | null; error: any }
+      .order('created_at', { ascending: false }))
 
     if (error) {
       console.error('Error fetching API keys:', error)
@@ -130,11 +130,12 @@ export async function POST(request: NextRequest) {
       is_active: true
     }
 
-    const { data, error } = (await supabase
+    const { data, error } = await supabase
       .from('api_keys')
-      .insert(insertData as any)
+      // @ts-expect-error - Supabase type inference issue with encryption
+      .insert(insertData)
       .select()
-      .single()) as { data: ApiKey | null; error: any }
+      .single()
 
     if (error) {
       if (error.code === '23505') { // Unique violation

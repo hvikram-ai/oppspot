@@ -96,27 +96,27 @@ class OppScanEngine {
       await this.updateScanStatus(scanId, 'scanning', 'data_collection', 5)
 
       // Execute data collection from all configured sources
-      const results = await this.collectDataFromSources(scan)
-      
+      const results = await this.collectDataFromSources(scan as any)
+
       await this.updateScanStatus(scanId, 'scanning', 'data_processing', 25)
 
       // Process and deduplicate results
-      const processedCompanies = await this.processAndDeduplicateResults(results, scan)
-      
+      const processedCompanies = await this.processAndDeduplicateResults(results, scan as any)
+
       await this.updateScanStatus(scanId, 'scanning', 'target_creation', 50)
 
       // Create target companies
       const targetIds = await this.createTargetCompanies(scanId, processedCompanies)
-      
+
       await this.updateScanStatus(scanId, 'analyzing', 'financial_analysis', 60)
 
       // Run analysis on targets
-      await this.analyzeTargets(scanId, targetIds, scan)
-      
+      await this.analyzeTargets(scanId, targetIds, scan as any)
+
       await this.updateScanStatus(scanId, 'analyzing', 'risk_assessment', 80)
 
       // Generate market intelligence
-      await this.generateMarketIntelligence(scanId, scan, processedCompanies)
+      await this.generateMarketIntelligence(scanId, scan as any, processedCompanies)
       
       await this.updateScanStatus(scanId, 'completed', 'completed', 100)
 
@@ -134,7 +134,7 @@ class OppScanEngine {
     try {
       // Convert scan configuration to search criteria
       const searchCriteria = {
-        industries: scan.selected_industries || [],
+        industries: (scan.selected_industries || []) as any,
         regions: scan.selected_regions?.map((r) => r.country || r.name) || [],
         minIncorporationYear: this.extractMinIncorporationYear(scan),
         maxIncorporationYear: this.extractMaxIncorporationYear(scan),
@@ -440,7 +440,7 @@ class OppScanEngine {
       try {
         const { data: target, error } = await supabase
           .from('target_companies')
-          // @ts-ignore - Supabase type inference issue
+          // @ts-expect-error - Supabase type inference issue
           .insert({
             scan_id: scanId,
             company_name: company.name,
@@ -475,7 +475,7 @@ class OppScanEngine {
     }
 
     // Update scan targets count
-    // @ts-ignore - Type inference issue
+    // @ts-expect-error - Type inference issue
     await supabase.rpc('increment_scan_targets', {
       scan_id: scanId,
       increment: targetIds.length
@@ -503,8 +503,8 @@ class OppScanEngine {
         await this.generateDueDiligence(targetId)
 
         // Update target status
-        await supabase
-          .from('target_companies')
+        await (supabase
+          .from('target_companies') as any)
           .update({
             analysis_status: 'completed',
             analyzed_at: new Date().toISOString()
@@ -527,7 +527,7 @@ class OppScanEngine {
     }
 
     // Update analyzed targets count
-    await supabase.rpc('increment_analyzed_targets', {
+    await (supabase as any).rpc('increment_analyzed_targets', {
       scan_id: scanId,
       increment: processedCount
     })
@@ -577,14 +577,13 @@ class OppScanEngine {
     }
 
     if (existingIntelligence) {
-      await supabase
-        .from('market_intelligence')
+      await (supabase
+        .from('market_intelligence') as any)
         .update(intelligenceData)
         .eq('id', existingIntelligence.id)
     } else {
-      await supabase
-        // @ts-ignore - Supabase type inference issue
-        .from('market_intelligence')
+      await (supabase
+        .from('market_intelligence') as any)
         .insert(intelligenceData)
     }
   }
@@ -595,7 +594,7 @@ class OppScanEngine {
     
     // Industry alignment
     const industryMatch = scan.selected_industries.some((industry) =>
-      company.industry_codes.some((code: string) => code.startsWith(industry.sic_code?.substring(0, 2)))
+      company.industry_codes.some((code: string) => code.startsWith((industry.sic_code || '').substring(0, 2)))
     )
     if (industryMatch) fitScore += 0.2
     
@@ -642,8 +641,8 @@ class OppScanEngine {
       updateData.error_message = error
     }
 
-    await supabase
-      .from('acquisition_scans')
+    await (supabase
+      .from('acquisition_scans') as any)
       .update(updateData)
       .eq('id', scanId)
   }
@@ -676,7 +675,7 @@ class OppScanEngine {
   }
 
   private generateBusinessDescription(industry: string): string {
-    const descriptions = {
+    const descriptions: Record<string, string> = {
       'Technology': 'Provides innovative technology solutions and software development services',
       'Manufacturing': 'Specializes in manufacturing and production of industrial components',
       'Financial Services': 'Offers comprehensive financial services and advisory solutions',
@@ -685,7 +684,7 @@ class OppScanEngine {
       'Retail': 'Operates retail channels and e-commerce platforms',
       'Real Estate': 'Provides property development and real estate investment services'
     }
-    
+
     return descriptions[industry] || `Provides ${industry.toLowerCase()} services and solutions`
   }
 
@@ -729,9 +728,8 @@ class OppScanEngine {
     const scores = [0.8, 0.65, 0.5, 0.3]
     const recIndex = Math.floor(Math.random() * recommendations.length)
 
-    // @ts-ignore - Supabase type inference issue
-    await supabase
-      .from('due_diligence')
+    await (supabase
+      .from('due_diligence') as any)
       .insert({
         target_company_id: targetId,
         document_completeness_score: 0.6 + (Math.random() * 0.3),
@@ -833,7 +831,7 @@ class OppScanEngine {
     return 'declining'
   }
 
-  private identifyTopCompetitors(companies: CompanyData[]): CompanyData[] {
+  private identifyTopCompetitors(companies: CompanyData[]): any[] {
     return companies
       .sort((a, b) => (b.revenue_estimate || 0) - (a.revenue_estimate || 0))
       .slice(0, 10)
@@ -877,21 +875,21 @@ class OppScanEngine {
   }> {
     return [
       {
-        title: 'Digital Services Act Implementation',
-        expected_date: '2024-12-31',
+        regulation: 'Digital Services Act Implementation',
+        timeline: '2024-12-31',
         impact: 'medium'
       },
       {
-        title: 'AI Act Compliance Requirements',
-        expected_date: '2025-08-01',
+        regulation: 'AI Act Compliance Requirements',
+        timeline: '2025-08-01',
         impact: 'high'
       }
     ]
   }
 
-  private analyzeGeographicDistribution(companies: CompanyData[], scan: ScanConfig): Record<string, number> {
+  private analyzeGeographicDistribution(companies: CompanyData[], scan: ScanConfig): any {
     const distribution: { [key: string]: number } = {}
-    
+
     companies.forEach(company => {
       const country = company.country || 'Unknown'
       distribution[country] = (distribution[country] || 0) + 1
@@ -899,7 +897,7 @@ class OppScanEngine {
 
     return {
       countries: distribution,
-      primary_market: Object.keys(distribution).reduce((a, b) => 
+      primary_market: Object.keys(distribution).reduce((a, b) =>
         distribution[a] > distribution[b] ? a : b, 'UK'),
       geographic_diversity: Object.keys(distribution).length
     }
@@ -925,7 +923,7 @@ class OppScanEngine {
       for (const result of searchResult.results) {
         if (result.metadata.cost > 0) {
           await this.costManagementService.recordTransaction({
-            user_id: scan.user_id,
+            user_id: scan.user_id || '',
             org_id: scan.org_id,
             scan_id: scan.id,
             data_source: result.source,
@@ -940,9 +938,8 @@ class OppScanEngine {
               processing_time: result.metadata.processing_time,
               success: !result.metadata.errors || result.metadata.errors.length === 0,
               error_message: result.metadata.errors?.join('; '),
-              search_parameters: result.metadata.search_parameters,
               confidence: result.metadata.confidence
-            }
+            } as any
           })
         }
       }
@@ -962,10 +959,9 @@ class OppScanEngine {
     const grossMargin = 0.2 + (Math.random() * 0.6)
     const ebitdaMargin = 0.05 + (Math.random() * 0.3)
 
-    // @ts-ignore - Supabase type inference issue
     try {
-      await supabase
-        .from('financial_analysis')
+      await (supabase
+        .from('financial_analysis') as any)
         .insert({
           target_company_id: targetId,
           analysis_year: 2024,
@@ -1000,11 +996,10 @@ class OppScanEngine {
     const financialRiskFactors = this.generateFinancialRiskFactors(overallRisk)
     const operationalRiskFactors = this.generateOperationalRiskFactors()
     const regulatoryRiskFactors = this.generateRegulatoryRiskFactors()
-// @ts-ignore - Supabase type inference issue
 
     try {
-      await supabase
-        .from('risk_assessments')
+      await (supabase
+        .from('risk_assessments') as any)
         .insert({
           target_company_id: targetId,
           financial_risk_score: Math.random() * 0.5 + (overallRisk * 0.5),

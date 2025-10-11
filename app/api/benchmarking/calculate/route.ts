@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'benchmarking',
         endpoint: '/api/benchmarking/calculate',

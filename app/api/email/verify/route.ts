@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     if (user) {
       await supabase
         .from('profiles')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({ 
           email_verified_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         .eq('id', user.id)
 
       // Log the verification event
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       await supabase.from('events').insert({
         user_id: user.id,
         event_type: 'email_verified',

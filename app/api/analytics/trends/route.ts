@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Get existing analysis from database
-    const { data: existingAnalysis } = await supabase
+    const { data: existingAnalysis, error: existingAnalysisError } = await supabase
       .from('trend_analysis')
       .select('*')
       .eq('entity_type', entityType)
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     
     // Check for existing recent analysis unless forced
     if (!force) {
-      const { data: existingAnalysis } = await supabase
+      const { data: existingAnalysis, error: existingAnalysisError } = await supabase
         .from('trend_analysis')
         .select('*')
         .eq('entity_type', entityType)
@@ -139,11 +139,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single()
     
     if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })

@@ -77,11 +77,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get aggregation
-    const { data: aggregation } = await supabase
+    const { data: aggregation, error: aggError } = await supabase
       .from('signal_aggregations')
       .select('*')
       .eq('company_id', companyId)
-      .single() as { data: Row<'signal_aggregations'> | null; error: any };
+      .single();
+
+    // Ignore error if no aggregation exists yet (expected case)
 
     // Get signals
     let signalsQuery = supabase
@@ -101,7 +103,7 @@ export async function GET(request: NextRequest) {
       signalsQuery = signalsQuery.eq('signal_type', signalType);
     }
 
-    const { data: signals } = await signalsQuery;
+    const { data: signals, error: signalsError } = await signalsQuery;
 
     return NextResponse.json({
       success: true,

@@ -53,9 +53,9 @@ export class DemoResultsDataGenerator {
       targets_identified: 18,
       targets_analyzed: 18,
       selected_industries: [
-        { key: 'technology:fintech', industry: 'Technology', subcategory: 'FinTech' },
-        { key: 'technology:healthtech', industry: 'Technology', subcategory: 'HealthTech' }
-      ],
+        { code: 'technology:fintech', name: 'Technology - FinTech' },
+        { code: 'technology:healthtech', name: 'Technology - HealthTech' }
+      ] as any,
       selected_regions: [
         { id: 'london', name: 'Greater London', country: 'England' },
         { id: 'manchester', name: 'Manchester', country: 'England' },
@@ -89,8 +89,8 @@ export class DemoResultsDataGenerator {
     }
   }
 
-  private generateDemoTargets(scanId: string, count: number): TargetCompunknown[] {
-    const targets: TargetCompunknown[] = []
+  private generateDemoTargets(scanId: string, count: number): TargetCompany[] {
+    const targets: TargetCompany[] = []
     
     const finTechCompanies = [
       { name: 'PayFlow Solutions Ltd', website: 'payflow.com', description: 'Digital payment processing platform for SMEs' },
@@ -137,11 +137,11 @@ export class DemoResultsDataGenerator {
         year_incorporated: 2015 + Math.floor(Math.random() * 8),
         employee_count_range: this.getRandomEmployeeRange(),
         registered_address: {
-          address_line_1: `${Math.floor(Math.random() * 999) + 1} ${this.getRandomStreetName()}`,
+          street: `${Math.floor(Math.random() * 999) + 1} ${this.getRandomStreetName()}`,
           city: this.getRandomCity(),
-          postcode: this.generateRandomPostcode(),
+          postal_code: this.generateRandomPostcode(),
           country: 'UK'
-        },
+        } as any,
         phone: `+44 ${Math.floor(Math.random() * 9000000000) + 1000000000}`,
         email: `contact@${company.website}`,
         discovery_source: this.getRandomDiscoverySource(),
@@ -161,7 +161,7 @@ export class DemoResultsDataGenerator {
     return targets.sort((a, b) => b.overall_score - a.overall_score)
   }
 
-  private generateDemoFinancialData(targets: TargetCompunknown[]): FinancialAnalysis[] {
+  private generateDemoFinancialData(targets: TargetCompany[]): FinancialAnalysis[] {
     return targets.map((target, index) => {
       const revenue = this.generateRevenueBySize(target.employee_count_range || '11-50')
       const grossProfit = revenue * (Math.random() * 0.4 + 0.3) // 30-70% gross margin
@@ -213,7 +213,7 @@ export class DemoResultsDataGenerator {
     })
   }
 
-  private generateDemoRiskData(targets: TargetCompunknown[]): RiskAssessment[] {
+  private generateDemoRiskData(targets: TargetCompany[]): RiskAssessment[] {
     return targets.map((target, index) => {
       const overallRisk = Math.random() * 0.6 + 0.1 // 0.1-0.7
       const hasRedFlags = Math.random() > 0.85 // 15% chance of red flags
@@ -286,7 +286,7 @@ export class DemoResultsDataGenerator {
           { name: 'Stripe', market_share: 0.15, type: 'international' },
           { name: 'GoCardless', market_share: 0.08, type: 'domestic' },
           { name: 'Wise', market_share: 0.06, type: 'domestic' }
-        ],
+        ] as any,
         barriers_to_entry: 'high',
         key_trends: [
           'Open banking adoption',
@@ -308,7 +308,7 @@ export class DemoResultsDataGenerator {
         recent_transactions: [
           { acquirer: 'JPMorgan', target: 'Nutmeg', value: 700000000, date: '2021-06' },
           { acquirer: 'Visa', target: 'Currencycloud', value: 963000000, date: '2021-12' }
-        ],
+        ] as any,
         average_valuation_multiples: {
           revenue_multiple: { median: 4.5, range: [2.2, 12.8] },
           ebitda_multiple: { median: 18.5, range: [8.2, 45.2] }
@@ -324,7 +324,7 @@ export class DemoResultsDataGenerator {
     ]
   }
 
-  private generateDemoDueDiligence(targets: TargetCompunknown[]): DueDiligence[] {
+  private generateDemoDueDiligence(targets: TargetCompany[]): DueDiligence[] {
     return targets.slice(0, 8).map((target, index) => ({
       id: `demo-dd-${index + 1}`,
       target_company_id: target.id,
@@ -432,10 +432,10 @@ export class DemoResultsDataGenerator {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       last_verification_date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
-    }))
+    })) as unknown as DueDiligence[]
   }
 
-  private generateDemoValuationModels(targets: TargetCompunknown[]): ValuationModel[] {
+  private generateDemoValuationModels(targets: TargetCompany[]): ValuationModel[] {
     return targets.slice(0, 10).map((target, index) => {
       const baseValuation = Math.random() * 20000000 + 5000000 // £5M - £25M
       
@@ -493,7 +493,7 @@ export class DemoResultsDataGenerator {
   }
 
   private generateDemoSummary(
-    targets: TargetCompunknown[],
+    targets: TargetCompany[],
     financialData: FinancialAnalysis[],
     riskData: RiskAssessment[]
   ): ScanSummary {

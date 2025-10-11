@@ -400,9 +400,8 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
             const profile = await companiesService.getCompanyProfile(result.company_number)
             if (profile) {
               const formatted = companiesService.formatForDatabase(profile)
-              const { data: updated } = await supabase
+              const { data: updated, error: updatedError } = await supabase
                 .from('businesses')
-                // @ts-ignore - Type inference issue
                 .update({
                   ...formatted,
                   companies_house_last_updated: new Date().toISOString(),
@@ -431,7 +430,6 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
             // Try to insert into database but don't fail if it doesn't work
             const { data: created, error: insertError } = await supabase
               .from('businesses')
-              // @ts-ignore - Supabase type inference issue
               .insert({
                 ...formatted,
                 companies_house_last_updated: new Date().toISOString(),
@@ -697,7 +695,6 @@ export async function GET(request: Request) {
     // Log search for analytics (only if user is authenticated)
     if (user?.id) {
       await supabase
-        // @ts-ignore - Supabase type inference issue
         .from('searches')
         .insert({
           user_id: user.id,

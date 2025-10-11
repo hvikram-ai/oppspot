@@ -40,11 +40,15 @@ export async function POST(request: NextRequest) {
     console.log(`[API] Batch scoring request for ${identifiers.length} companies`)
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
+
+    if (profileError) {
+      console.error('[API] Failed to fetch profile:', profileError)
+    }
 
     // Initialize scoring service
     const scoringService = new LeadScoringService()
@@ -61,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'lead_scoring',
         endpoint: '/api/scoring/batch',

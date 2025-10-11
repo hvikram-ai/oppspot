@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (company_id) {
       // Refresh single company
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       const { error } = await supabase.rpc('refresh_signal_aggregates', {
         p_company_id: company_id
       })

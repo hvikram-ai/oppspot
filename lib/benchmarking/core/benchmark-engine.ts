@@ -132,7 +132,7 @@ export class BenchmarkEngine {
       const comparison: BenchmarkComparison = {
         company_id: request.company_id,
         comparison_date: new Date().toISOString().split('T')[0],
-        comparison_type: request.comparison_type || 'industry',
+        comparison_type: (request.comparison_type === 'both' ? 'mixed' : request.comparison_type) || 'industry',
         peer_group_id: peerGroup?.id,
         industry_code: request.industry_code,
         overall_score: overallScore,
@@ -181,44 +181,50 @@ export class BenchmarkEngine {
    * Fetch company metrics from database
    */
   private async fetchCompanyMetrics(companyId: string): Promise<CompanyMetrics | null> {
-    const { data, error } = await this.supabase
-      .from('company_metrics')
+    if (!this.supabase) await this.ensureClient()
+
+    const { data, error } = await this.supabase!
+      .from('company_metrics' as any)
       .select('*')
       .eq('company_id', companyId)
       .order('metric_date', { ascending: false })
       .limit(1)
-      .single() as { data: Row<'company_metrics'> | null; error: any }
+      .single()
 
     if (error || !data) {
       // If no metrics exist, try to calculate from existing business data
       return await this.calculateMetricsFromBusinessData(companyId)
     }
 
-    return data
+    return data as CompanyMetrics
   }
 
   /**
    * Calculate metrics from existing business data
    */
   private async calculateMetricsFromBusinessData(companyId: string): Promise<CompanyMetrics | null> {
-    const { data: business } = await this.supabase
+    if (!this.supabase) await this.ensureClient()
+
+    const { data: business } = await this.supabase!
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single()
 
     if (!business) return null
 
+    const bizData = business as any
+
     // Extract available metrics from business data
-    const metrics: CompanyMetrics = {
+    const metrics: Partial<CompanyMetrics> = {
       company_id: companyId,
       metric_date: new Date().toISOString().split('T')[0],
       data_source: 'calculated'
     }
 
     // Try to extract financial data from companies_house_data or accounts
-    if (business.accounts) {
-      const accounts = business.accounts as Record<string, unknown> & {
+    if (bizData.accounts) {
+      const accounts = bizData.accounts as Record<string, unknown> & {
         turnover?: number
         gross_profit?: number
         operating_profit?: number
@@ -247,25 +253,27 @@ export class BenchmarkEngine {
       metrics.debt_to_equity = metrics.total_liabilities / (metrics.total_assets - metrics.total_liabilities)
     }
 
-    return metrics
+    return metrics as CompanyMetrics
   }
 
   /**
    * Fetch industry benchmarks
    */
   private async fetchIndustryBenchmarks(industryCode: string): Promise<IndustryBenchmark[]> {
-    const { data, error } = await this.supabase
-      .from('industry_benchmarks')
+    if (!this.supabase) await this.ensureClient()
+
+    const { data, error } = await this.supabase!
+      .from('industry_benchmarks' as any)
       .select('*')
       .eq('industry_code', industryCode)
-      .order('metric_date', { ascending: false }) as { data: Row<'industry_benchmarks'>[] | null; error: any }
+      .order('metric_date', { ascending: false })
 
     if (error || !data || data.length === 0) {
       // Generate synthetic benchmarks if none exist
       return this.generateSyntheticBenchmarks(industryCode)
     }
 
-    return data
+    return data as IndustryBenchmark[]
   }
 
   /**
@@ -361,7 +369,7 @@ export class BenchmarkEngine {
     industryBenchmarks: IndustryBenchmark[],
     peerMetrics: CompanyMetrics[]
   ): MetricComparison | null {
-    const companyValue = (company as Record<string, unknown>)[metricName]
+    const companyValue = (company as unknown as Record<string, unknown>)[metricName] as number
     if (companyValue === undefined || companyValue === null) return null
 
     // Get benchmark value (prefer industry median, then peer average)
@@ -372,9 +380,11 @@ export class BenchmarkEngine {
       benchmarkValue = industryBenchmark.median_value
     } else if (peerMetrics.length > 0) {
       const peerValues = peerMetrics
-        .map(p => (p as Record<string, unknown>)[metricName])
+        .map(p => (p as unknown as Record<string, unknown>)[metricName] as number)
         .filter(v => v !== undefined && v !== null)
-      benchmarkValue = peerValues.reduce((a, b) => a + b, 0) / peerValues.length
+      benchmarkValue = peerValues.length > 0
+        ? peerValues.reduce((a: number, b: number) => a + b, 0) / peerValues.length
+        : 0
     } else {
       benchmarkValue = this.getTypicalValue(metricName)
     }
@@ -383,7 +393,7 @@ export class BenchmarkEngine {
     const percentile = this.calculateMetricPercentile(
       companyValue,
       industryBenchmark,
-      peerMetrics.map(p => (p as any)[metricName]).filter(v => v !== undefined)
+      peerMetrics.map(p => (p as any)[metricName]).filter(v => v !== undefined) as number[]
     )
 
     return {
@@ -679,15 +689,17 @@ export class BenchmarkEngine {
    * Get cached comparison
    */
   private async getCachedComparison(companyId: string): Promise<BenchmarkComparison | null> {
-    const { data } = await this.supabase
-      .from('benchmark_comparisons')
+    if (!this.supabase) await this.ensureClient()
+
+    const { data } = await this.supabase!
+      .from('benchmark_comparisons' as any)
       .select('*')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single() as { data: Row<'benchmark_comparisons'> | null; error: any }
+      .single()
 
-    return data
+    return data as BenchmarkComparison | null
   }
 
   /**
@@ -704,15 +716,18 @@ export class BenchmarkEngine {
    * Get company industry code
    */
   private async getCompanyIndustryCode(companyId: string): Promise<string> {
-    const { data } = await this.supabase
+    if (!this.supabase) await this.ensureClient()
+
+    const { data } = await this.supabase!
       .from('businesses')
       .select('sic_codes')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single()
 
-    if (data?.sic_codes && data.sic_codes.length > 0) {
+    const sicCodes = (data as any)?.sic_codes
+    if (sicCodes && sicCodes.length > 0) {
       // Return primary SIC code (first two digits)
-      return data.sic_codes[0].substring(0, 2)
+      return sicCodes[0].substring(0, 2)
     }
 
     return '62' // Default to IT services
@@ -722,13 +737,15 @@ export class BenchmarkEngine {
    * Fetch peer group
    */
   private async fetchPeerGroup(peerGroupId: string): Promise<PeerGroup | null> {
-    const { data } = await this.supabase
-      .from('peer_groups')
+    if (!this.supabase) await this.ensureClient()
+
+    const { data } = await this.supabase!
+      .from('peer_groups' as any)
       .select('*')
       .eq('id', peerGroupId)
-      .single() as { data: Row<'peer_groups'> | null; error: any }
+      .single()
 
-    return data
+    return data as PeerGroup | null
   }
 
   /**
@@ -737,15 +754,17 @@ export class BenchmarkEngine {
   private async autoIdentifyPeers(companyId: string): Promise<PeerGroup | null> {
     // For now, return a simple peer group based on industry
     // In production, this would use ML-based similarity matching
+    if (!this.supabase) await this.ensureClient()
+
     const industryCode = await this.getCompanyIndustryCode(companyId)
 
     // Find similar companies
-    const { data: peers } = await this.supabase
+    const { data: peers } = await this.supabase!
       .from('businesses')
       .select('id')
       .contains('sic_codes', [industryCode])
       .neq('id', companyId)
-      .limit(20) as { data: Row<'businesses'>[] | null; error: any }
+      .limit(20)
 
     if (!peers || peers.length === 0) return null
 
@@ -764,41 +783,44 @@ export class BenchmarkEngine {
    * Fetch metrics for peer companies
    */
   private async fetchPeerMetrics(peerGroupId: string): Promise<CompanyMetrics[]> {
-    const { data: members } = await this.supabase
-      .from('peer_group_members')
+    if (!this.supabase) await this.ensureClient()
+
+    const { data: members } = await this.supabase!
+      .from('peer_group_members' as any)
       .select('company_id')
       .eq('peer_group_id', peerGroupId)
-      .eq('is_active', true) as { data: Row<'peer_group_members'>[] | null; error: any }
+      .eq('is_active', true)
 
     if (!members || members.length === 0) return []
 
     const companyIds = members.map((m: any) => m.company_id)
 
-    const { data: metrics } = await this.supabase
-      .from('company_metrics')
+    const { data: metrics } = await this.supabase!
+      .from('company_metrics' as any)
       .select('*')
       .in('company_id', companyIds)
-      .order('metric_date', { ascending: false }) as { data: Row<'company_metrics'>[] | null; error: any }
+      .order('metric_date', { ascending: false })
 
     // Group by company and take latest metric for each
-    const latestMetrics: Record<string, CompanyMetrics> = {}
-    metrics?.forEach(metric => {
-      if (!latestMetrics[(metric as any).company_id]) {
-        latestMetrics[(metric as any).company_id] = metric
+    const latestMetrics: Record<string, unknown> = {}
+    metrics?.forEach((metric: any) => {
+      if (!latestMetrics[metric.company_id]) {
+        latestMetrics[metric.company_id] = metric
       }
     })
 
-    return Object.values(latestMetrics)
+    return Object.values(latestMetrics) as CompanyMetrics[]
   }
 
   /**
    * Save comparison to database
    */
   private async saveComparison(comparison: BenchmarkComparison): Promise<void> {
-    await this.supabase
-      .from('benchmark_comparisons')
-      // @ts-ignore - Supabase type inference issue
-      .upsert(comparison)
+    if (!this.supabase) await this.ensureClient()
+
+    await this.supabase!
+      .from('benchmark_comparisons' as any)
+      .upsert(comparison as any)
   }
 
   /**
@@ -808,7 +830,9 @@ export class BenchmarkEngine {
     comparison: BenchmarkComparison,
     metrics: CompanyMetrics
   ): Promise<any[]> {
-    const alerts = []
+    if (!this.supabase) await this.ensureClient()
+
+    const alerts: any[] = []
 
     // Check for significant underperformance
     Object.entries(comparison.percentile_rankings).forEach(([metric, percentile]) => {

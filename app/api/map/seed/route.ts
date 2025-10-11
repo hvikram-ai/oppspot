@@ -38,7 +38,7 @@ export async function POST() {
     
     const { data, error } = await supabase
       .from('businesses')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert(businessesToInsert)
       .select()
     

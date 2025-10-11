@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     if (testResult.success) {
       await supabase
         .from('api_keys')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({ last_used: new Date().toISOString() })
         .eq('id', keyId)
         .eq('user_id', user.id)

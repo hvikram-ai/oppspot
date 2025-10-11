@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'benchmarking',
         endpoint: '/api/benchmarking/peers',
@@ -103,11 +103,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all peer groups for the user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
     let query = supabase.from('peer_groups').select('*')
 
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('created_by', user.id)
     }
 
-    const { data: peerGroups } = await query.order('created_at', { ascending: false })
+    const { data: peerGroups, error: peerGroupsError } = await query.order('created_at', { ascending: false })
 
     return NextResponse.json({
       success: true,

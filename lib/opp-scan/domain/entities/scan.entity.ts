@@ -44,7 +44,7 @@ export class ScanEntity {
     
     // Raise domain event for new scan creation
     if (this._createdAt.getTime() === this._updatedAt.getTime()) {
-      this.addDomainEvent(new ScanCreatedEvent(this))
+      this.addDomainEvent(new ScanCreatedEvent({ id: this._id, configuration: this._configuration as unknown as Record<string, unknown> }))
     }
   }
 
@@ -441,23 +441,20 @@ export class ScanEntity {
 
   static fromJSON(data: Record<string, unknown>): ScanEntity {
     return ScanEntity.fromSnapshot(
-      data.id,
-      data.configuration,
-      data.status,
-      data.progress,
-      data.currentStage,
-      data.companiesDiscovered,
-      data.companiesAnalyzed,
-      data.errors || [],
-      data.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
-      // @ts-ignore - Supabase type inference issue
-      new Date(data.createdAt),
-      // @ts-ignore - Supabase type inference issue
-      new Date(data.updatedAt),
-      // @ts-ignore - Supabase type inference issue
-      data.startedAt ? new Date(data.startedAt) : undefined,
-      data.completedAt ? new Date(data.completedAt) : undefined,
-      data.estimatedCompletion ? new Date(data.estimatedCompletion) : undefined
+      data.id as string,
+      data.configuration as unknown as ScanConfiguration,
+      data.status as any,
+      data.progress as number,
+      data.currentStage as any,
+      data.companiesDiscovered as number,
+      data.companiesAnalyzed as number,
+      (data.errors || []) as any[],
+      (data.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} }) as any,
+      new Date((data.createdAt || new Date()) as string | Date),
+      new Date((data.updatedAt || new Date()) as string | Date),
+      data.startedAt ? new Date(data.startedAt as string | Date) : undefined,
+      data.completedAt ? new Date(data.completedAt as string | Date) : undefined,
+      data.estimatedCompletion ? new Date(data.estimatedCompletion as string | Date) : undefined
     )
   }
 }

@@ -21,7 +21,12 @@ export class GrowthIndicatorScorer {
   async calculateScore(company: Record<string, unknown>): Promise<GrowthScore> {
     console.log(`[GrowthScorer] Calculating score for ${company.name}`)
 
-    const factors = []
+    const factors: Array<{
+      name: string
+      value: number
+      impact: 'positive' | 'negative' | 'neutral'
+      explanation: string
+    }> = []
     const missingData = []
     let totalScore = 0
     let totalWeight = 0
@@ -60,7 +65,7 @@ export class GrowthIndicatorScorer {
       factors.push({
         name: 'Regulatory Activity',
         value: activityScore,
-        impact: activityScore > 60 ? 'positive' : 'neutral',
+        impact: (activityScore > 60 ? 'positive' : 'neutral') as const,
         explanation: this.explainActivityScore(activityScore)
       })
       totalScore += activityScore * 0.2
@@ -75,7 +80,7 @@ export class GrowthIndicatorScorer {
       factors.push({
         name: 'Innovation Potential',
         value: innovationScore,
-        impact: innovationScore > 60 ? 'positive' : 'neutral',
+        impact: (innovationScore > 60 ? 'positive' : 'neutral') as const,
         explanation: this.explainInnovationScore(innovationScore)
       })
       totalScore += innovationScore * 0.3

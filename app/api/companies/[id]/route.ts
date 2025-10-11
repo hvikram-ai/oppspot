@@ -164,7 +164,7 @@ export async function GET(
 
             if (business) {
               // Update existing record
-              const { data: updated } = await supabase
+              const { data: updated, error: updatedError } = await supabase
                 .from('businesses')
                 .update(enrichedData as never)
                 .eq('id', business.id)
@@ -174,7 +174,7 @@ export async function GET(
               business = updated
             } else {
               // Create new record
-              const { data: created } = await supabase
+              const { data: created, error: createdError } = await supabase
                 .from('businesses')
                 .insert({
                   ...enrichedData,

@@ -61,7 +61,7 @@ export async function POST(
       .from('businesses')
       .select('id, name, company_number, website')
       .eq('id', companyId)
-      .single() as { data: Pick<Row<'businesses'>, 'id' | 'name' | 'company_number' | 'website'> | null; error: any };
+      .single();
 
     if (companyError || !company) {
       return NextResponse.json(

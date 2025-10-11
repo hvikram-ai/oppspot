@@ -11,9 +11,15 @@ import type {
   DetailedPainPoint,
   ChampionProfile
 } from '../types/qualification';
+import type {
+  BusinessWithMetrics,
+  StakeholderWithEngagement,
+  EngagementEvent,
+  QualificationActivity
+} from '../types/database-helpers';
 
 export class MEDDICFramework {
-  private supabase;
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   constructor() {
     // Initialize in methods to handle async
@@ -443,10 +449,13 @@ export class MEDDICFramework {
         .single();
 
       if (company) {
+        const companyData = company as unknown as BusinessWithMetrics;
+
         // Estimate value quantification based on company size
-        if (!qualification.metrics.value_quantification && company.annual_revenue) {
+        const revenue = companyData.annual_revenue || companyData.revenue;
+        if (!qualification.metrics.value_quantification && revenue) {
           // Typical deal size is 1-5% of annual revenue for B2B SaaS
-          qualification.metrics.value_quantification = company.annual_revenue * 0.02;
+          qualification.metrics.value_quantification = revenue * 0.02;
         }
       }
 
@@ -457,8 +466,10 @@ export class MEDDICFramework {
         .eq('company_id', qualification.company_id);
 
       if (stakeholders && stakeholders.length > 0) {
+        const typedStakeholders = stakeholders as unknown as StakeholderWithEngagement[];
+
         // Identify potential champion
-        const champion = stakeholders.find(s =>
+        const champion = typedStakeholders.find((s) =>
           s.champion_status === 'active' || s.champion_status === 'super'
         );
 
@@ -475,7 +486,7 @@ export class MEDDICFramework {
         }
 
         // Identify potential economic buyer
-        const economicBuyer = stakeholders.find(s =>
+        const economicBuyer = typedStakeholders.find((s) =>
           s.budget_authority === true ||
           (s.title && s.title.toLowerCase().includes('cfo')) ||
           (s.title && s.title.toLowerCase().includes('finance'))
@@ -484,14 +495,14 @@ export class MEDDICFramework {
         if (economicBuyer && !qualification.economic_buyer.identified) {
           qualification.economic_buyer.identified = true;
           qualification.economic_buyer.contact_info = {
-            email: economicBuyer.email,
-            phone: economicBuyer.phone
+            email: economicBuyer.email || undefined,
+            phone: economicBuyer.phone || undefined
           };
           qualification.economic_buyer.engagement_level = economicBuyer.engagement_score || 0;
         }
 
         // Map stakeholders for decision process
-        qualification.decision_process.stakeholders = stakeholders.map(s => ({
+        qualification.decision_process.stakeholders = typedStakeholders.map((s) => ({
           name: s.name,
           role: s.role_type || 'influencer',
           influence_level: s.influence_level || 5,
@@ -507,31 +518,33 @@ export class MEDDICFramework {
         .order('event_date', { ascending: false });
 
       if (engagements && engagements.length > 0) {
+        const typedEngagements = engagements as unknown as EngagementEvent[];
+
         // Infer decision stages based on engagement
         const stages: DecisionStage[] = [];
 
-        if (engagements.some(e => e.event_type === 'initial_contact')) {
+        if (typedEngagements.some((e) => e.event_type === 'initial_contact')) {
           stages.push({
             name: 'Initial Contact',
             status: 'completed'
           });
         }
 
-        if (engagements.some(e => e.event_type === 'discovery_call')) {
+        if (typedEngagements.some((e) => e.event_type === 'discovery_call')) {
           stages.push({
             name: 'Discovery',
             status: 'completed'
           });
         }
 
-        if (engagements.some(e => e.event_type === 'demo_scheduled')) {
+        if (typedEngagements.some((e) => e.event_type === 'demo_scheduled')) {
           stages.push({
             name: 'Solution Evaluation',
-            status: engagements.some(e => e.event_type === 'demo_completed') ? 'completed' : 'in_progress'
+            status: typedEngagements.some((e) => e.event_type === 'demo_completed') ? 'completed' : 'in_progress'
           });
         }
 
-        if (engagements.some(e => e.event_type === 'proposal_sent')) {
+        if (typedEngagements.some((e) => e.event_type === 'proposal_sent')) {
           stages.push({
             name: 'Proposal Review',
             status: 'in_progress'
@@ -583,28 +596,30 @@ export class MEDDICFramework {
       }
 
       // Log activity
+      const activityData: Partial<QualificationActivity> = {
+        lead_id: qualification.lead_id,
+        company_id: qualification.company_id,
+        activity_type: 'meddic_calculated',
+        activity_description: `MEDDIC score calculated: ${qualification.overall_score}`,
+        activity_data: {
+          scores: {
+            metrics: qualification.metrics.score,
+            economic_buyer: qualification.economic_buyer.score,
+            decision_criteria: qualification.decision_criteria.score,
+            decision_process: qualification.decision_process.score,
+            identify_pain: qualification.identify_pain.score,
+            champion: qualification.champion.score
+          },
+          confidence: qualification.qualification_confidence,
+          forecast: qualification.forecast_category
+        },
+        score_impact: qualification.overall_score,
+        framework_affected: 'MEDDIC'
+      };
+
       await supabase
         .from('qualification_activities')
-        .insert({
-          lead_id: qualification.lead_id,
-          company_id: qualification.company_id,
-          activity_type: 'meddic_calculated',
-          activity_description: `MEDDIC score calculated: ${qualification.overall_score}`,
-          activity_data: {
-            scores: {
-              metrics: qualification.metrics.score,
-              economic_buyer: qualification.economic_buyer.score,
-              decision_criteria: qualification.decision_criteria.score,
-              decision_process: qualification.decision_process.score,
-              identify_pain: qualification.identify_pain.score,
-              champion: qualification.champion.score
-            },
-            confidence: qualification.qualification_confidence,
-            forecast: qualification.forecast_category
-          },
-          score_impact: qualification.overall_score,
-          framework_affected: 'MEDDIC'
-        });
+        .insert(activityData);
 
       return this.mapFromDatabase(data);
 
@@ -646,21 +661,21 @@ export class MEDDICFramework {
    */
   private mapFromDatabase(data: Record<string, unknown>): MEDDICQualification {
     return {
-      id: data.id,
-      lead_id: data.lead_id,
-      company_id: data.company_id,
-      metrics: data.metrics_details || this.createEmptyMetrics(),
-      economic_buyer: data.economic_buyer_details || this.createEmptyEconomicBuyer(),
-      decision_criteria: data.decision_criteria_details || this.createEmptyDecisionCriteria(),
-      decision_process: data.decision_process_details || this.createEmptyDecisionProcess(),
-      identify_pain: data.identify_pain_details || this.createEmptyIdentifyPain(),
-      champion: data.champion_details || this.createEmptyChampion(),
-      overall_score: data.overall_score || 0,
-      qualification_confidence: data.qualification_confidence || 0,
-      forecast_category: data.forecast_category || 'omitted',
-      calculated_at: data.calculated_at,
-      calculated_by: data.calculated_by,
-      notes: data.notes
+      id: data.id as string | undefined,
+      lead_id: data.lead_id as string,
+      company_id: data.company_id as string,
+      metrics: (data.metrics_details as MEDDICQualification['metrics']) || this.createEmptyMetrics(),
+      economic_buyer: (data.economic_buyer_details as MEDDICQualification['economic_buyer']) || this.createEmptyEconomicBuyer(),
+      decision_criteria: (data.decision_criteria_details as MEDDICQualification['decision_criteria']) || this.createEmptyDecisionCriteria(),
+      decision_process: (data.decision_process_details as MEDDICQualification['decision_process']) || this.createEmptyDecisionProcess(),
+      identify_pain: (data.identify_pain_details as MEDDICQualification['identify_pain']) || this.createEmptyIdentifyPain(),
+      champion: (data.champion_details as MEDDICQualification['champion']) || this.createEmptyChampion(),
+      overall_score: (data.overall_score as number) || 0,
+      qualification_confidence: (data.qualification_confidence as number) || 0,
+      forecast_category: (data.forecast_category as MEDDICQualification['forecast_category']) || 'omitted',
+      calculated_at: data.calculated_at as string | undefined,
+      calculated_by: data.calculated_by as string | undefined,
+      notes: data.notes as string | undefined
     };
   }
 

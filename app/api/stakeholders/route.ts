@@ -22,11 +22,15 @@ export async function GET(request: NextRequest) {
     const champion_status = searchParams.get('champion_status');
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
+
+    if (profileError) {
+      console.error('[API] Error fetching profile:', profileError);
+    }
 
     // Build query
     let query = supabase
@@ -108,11 +112,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
+
+    if (profileError) {
+      console.error('[API] Error fetching profile:', profileError);
+    }
 
     // Add metadata
     const stakeholderData = {
@@ -125,7 +133,6 @@ export async function POST(request: NextRequest) {
     // Create stakeholder
     const { data: stakeholder, error } = await supabase
       .from('stakeholders')
-      // @ts-ignore - Supabase type inference issue
       .insert(stakeholderData)
       .select()
       .single();
@@ -149,7 +156,6 @@ export async function POST(request: NextRequest) {
 
     // Log API usage
     await supabase
-      // @ts-ignore - Supabase type inference issue
       .from('api_audit_log')
       .insert({
         api_name: 'stakeholder_tracking',
@@ -202,11 +208,15 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if user has access to this stakeholder
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('stakeholders')
       .select('org_id')
       .eq('id', body.stakeholder_id)
-      .single() as { data: Pick<Row<'stakeholders'>, 'org_id'> | null; error: any };
+      .single();
+
+    if (existingError) {
+      console.error('[API] Error fetching stakeholder:', existingError);
+    }
 
     if (!existing) {
       return NextResponse.json(
@@ -216,11 +226,15 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
+
+    if (profileError) {
+      console.error('[API] Error fetching profile:', profileError);
+    }
 
     if (existing.org_id && profile?.org_id !== existing.org_id) {
       return NextResponse.json(
@@ -232,7 +246,6 @@ export async function PUT(request: NextRequest) {
     // Update stakeholder
     const { data: stakeholder, error } = await supabase
       .from('stakeholders')
-      // @ts-ignore - Type inference issue
       .update({
         ...body.updates,
         updated_at: new Date().toISOString()
@@ -287,11 +300,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check if user has access to this stakeholder
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('stakeholders')
       .select('org_id')
       .eq('id', stakeholder_id)
-      .single() as { data: Pick<Row<'stakeholders'>, 'org_id'> | null; error: any };
+      .single();
+
+    if (existingError) {
+      console.error('[API] Error fetching stakeholder:', existingError);
+    }
 
     if (!existing) {
       return NextResponse.json(
@@ -301,11 +318,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any };
+      .single();
+
+    if (profileError) {
+      console.error('[API] Error fetching profile:', profileError);
+    }
 
     if (existing.org_id && profile?.org_id !== existing.org_id) {
       return NextResponse.json(

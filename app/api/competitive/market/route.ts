@@ -6,6 +6,26 @@ import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
+// Business data interface for market analysis
+interface BusinessData {
+  id: string;
+  name: string;
+  rating?: number | null;
+  review_count?: number | null;
+  categories?: string[] | null;
+  created_at: string;
+  address?: Record<string, unknown> | null;
+  verified?: boolean | null;
+  website?: string | null;
+  description?: string | null;
+  photos?: unknown[] | null;
+}
+
+interface CompetitorData {
+  rating?: number | null;
+  review_count?: number | null;
+}
+
 // GET: Fetch market analysis
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +48,7 @@ export async function GET(request: NextRequest) {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - parseInt(period))
     
-    const { data: existingAnalysis } = await supabase
+    const { data: existingAnalysis, error: existingAnalysisError } = await supabase
       .from('market_analysis')
       .select('*')
       .eq('category', category)
@@ -95,26 +115,27 @@ export async function POST(request: NextRequest) {
     }
     
     // Fetch business details
-    const { data: business } = await supabase
+    const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('*')
       .eq('id', businessId)
-      .single() as { data: Row<'businesses'> | null; error: any }
-    
-    if (!business) {
+      .single();
+
+    if (businessError || !business) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       )
     }
-    
+
+    const businessData = business as unknown as BusinessData;
+
     // Generate SWOT analysis
-    const swot = await generateSWOTAnalysis(supabase, business)
-    
+    const swot = await generateSWOTAnalysis(supabase, businessData)
+
     // Save SWOT analysis
     const { data: savedSwot, error: saveError } = await supabase
       .from('swot_analysis')
-      // @ts-expect-error - Supabase type inference issue with insert() method
       .insert({
         business_id: businessId,
         user_id: user.id,
@@ -126,8 +147,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (saveError) throw saveError
-
-    const businessData = business as any;
 
     return NextResponse.json({
       swot: savedSwot,
@@ -167,8 +186,8 @@ async function generateMarketAnalysis(
     query = query.ilike('address->city', `%${location}%`)
   }
   
-  const { data: businesses } = await query
-  
+  const { data: businesses, error: businessesError } = await query
+
   if (!businesses || businesses.length === 0) {
     return {
       category,
@@ -181,52 +200,54 @@ async function generateMarketAnalysis(
       threats: []
     }
   }
-  
+
+  const typedBusinesses = businesses as unknown as BusinessData[];
+
   // Calculate metrics
-  const totalBusinesses = businesses.length
-  const averageRating = businesses.reduce((sum, b: any) => sum + (b.rating || 0), 0) / totalBusinesses
-  const averageReviews = businesses.reduce((sum, b: any) => sum + (b.review_count || 0), 0) / totalBusinesses
+  const totalBusinesses = typedBusinesses.length
+  const averageRating = typedBusinesses.reduce((sum, b) => sum + (b.rating || 0), 0) / totalBusinesses
+  const averageReviews = typedBusinesses.reduce((sum, b) => sum + (b.review_count || 0), 0) / totalBusinesses
 
   // Identify top performers
-  const topBusinesses = businesses
-    .sort((a: any, b: any) => {
+  const topBusinesses = typedBusinesses
+    .sort((a, b) => {
       const scoreA = (a.rating || 0) * Math.log10((a.review_count || 0) + 1)
       const scoreB = (b.rating || 0) * Math.log10((b.review_count || 0) + 1)
       return scoreB - scoreA
     })
     .slice(0, 5)
-    .map((b: any) => ({
+    .map((b) => ({
       id: b.id,
       name: b.name,
-      rating: b.rating,
-      review_count: b.review_count,
+      rating: b.rating || null,
+      review_count: b.review_count || null,
       score: (b.rating || 0) * Math.log10((b.review_count || 0) + 1)
     }))
-  
+
   // Identify emerging businesses (created recently with good ratings)
   const recentDate = new Date()
   recentDate.setDate(recentDate.getDate() - 90)
-  
-  const emergingBusinesses = businesses
-    .filter((b: any) => new Date(b.created_at) > recentDate && (b.rating || 0) >= 4.0)
-    .sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0))
+
+  const emergingBusinesses = typedBusinesses
+    .filter((b) => new Date(b.created_at) > recentDate && (b.rating || 0) >= 4.0)
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
     .slice(0, 5)
-    .map((b: any) => ({
+    .map((b) => ({
       id: b.id,
       name: b.name,
-      rating: b.rating,
+      rating: b.rating || null,
       days_old: Math.floor((Date.now() - new Date(b.created_at).getTime()) / (1000 * 60 * 60 * 24))
     }))
 
   // Identify declining businesses (low ratings or few reviews)
-  const decliningBusinesses = businesses
-    .filter((b: any) => (b.rating || 0) < 3.5 || (b.review_count || 0) < 10)
+  const decliningBusinesses = typedBusinesses
+    .filter((b) => (b.rating || 0) < 3.5 || (b.review_count || 0) < 10)
     .slice(0, 5)
-    .map((b: any) => ({
+    .map((b) => ({
       id: b.id,
       name: b.name,
-      rating: b.rating,
-      review_count: b.review_count
+      rating: b.rating || null,
+      review_count: b.review_count || null
     }))
   
   // Generate trends
@@ -272,7 +293,7 @@ async function generateMarketAnalysis(
     total_businesses: totalBusinesses,
     average_rating: parseFloat(averageRating.toFixed(2)),
     average_reviews: Math.round(averageReviews),
-    market_growth_rate: calculateGrowthRate(businesses, periodDays),
+    market_growth_rate: calculateGrowthRate(typedBusinesses, periodDays),
     top_businesses: topBusinesses,
     emerging_businesses: emergingBusinesses,
     declining_businesses: decliningBusinesses,
@@ -283,52 +304,39 @@ async function generateMarketAnalysis(
 }
 
 // Helper function to generate SWOT analysis
-interface BusinessSWOT {
-  id: string
-  rating?: number
-  review_count?: number
-  verified?: boolean
-  website?: string
-  categories?: string[]
-  description?: string
-  photos?: unknown[]
-  created_at: string
-}
+async function generateSWOTAnalysis(supabase: DbClient, business: BusinessData) {
+  const strengths: string[] = []
+  const weaknesses: string[] = []
+  const opportunities: string[] = []
+  const threats: string[] = []
 
-async function generateSWOTAnalysis(supabase: DbClient, business: BusinessSWOT) {
-  const strengths = []
-  const weaknesses = []
-  const opportunities = []
-  const threats = []
-  
   // Analyze strengths
-  const businessData = business as any;
-  if (businessData.rating >= 4.5) {
+  if ((business.rating || 0) >= 4.5) {
     strengths.push('Exceptional customer satisfaction ratings')
   }
-  if (businessData.rating >= 4.0) {
+  if ((business.rating || 0) >= 4.0) {
     strengths.push('Strong customer ratings')
   }
-  if (businessData.review_count > 200) {
+  if ((business.review_count || 0) > 200) {
     strengths.push('Large customer base with high review volume')
-  } else if (businessData.review_count > 100) {
+  } else if ((business.review_count || 0) > 100) {
     strengths.push('Good review volume indicating customer engagement')
   }
-  if (businessData.verified) {
+  if (business.verified) {
     strengths.push('Verified business status builds trust')
   }
-  if (businessData.website) {
+  if (business.website) {
     strengths.push('Established online presence')
   }
-  if (businessData.categories?.length > 2) {
+  if ((business.categories?.length || 0) > 2) {
     strengths.push('Diverse service offerings')
   }
 
   // Analyze weaknesses
-  if (businessData.rating < 3.5) {
+  if ((business.rating || 0) < 3.5) {
     weaknesses.push('Below average customer ratings')
   }
-  if (businessData.review_count < 20) {
+  if ((business.review_count || 0) < 20) {
     weaknesses.push('Limited customer reviews and social proof')
   }
   if (!business.website) {
@@ -342,7 +350,7 @@ async function generateSWOTAnalysis(supabase: DbClient, business: BusinessSWOT) 
   }
   
   // Fetch market context for opportunities and threats
-  const { data: competitors } = await supabase
+  const { data: competitors, error: competitorsError } = await supabase
     .from('businesses')
     .select('rating, review_count')
     .contains('categories', business.categories?.[0] ? [business.categories[0]] : [])
@@ -350,11 +358,12 @@ async function generateSWOTAnalysis(supabase: DbClient, business: BusinessSWOT) 
     .limit(20)
   
   if (competitors && competitors.length > 0) {
-    const avgCompetitorRating = competitors.reduce((sum, c: any) => sum + (c.rating || 0), 0) / competitors.length
-    const avgCompetitorReviews = competitors.reduce((sum, c: any) => sum + (c.review_count || 0), 0) / competitors.length
+    const typedCompetitors = competitors as unknown as CompetitorData[];
+    const avgCompetitorRating = typedCompetitors.reduce((sum, c) => sum + (c.rating || 0), 0) / typedCompetitors.length
+    const avgCompetitorReviews = typedCompetitors.reduce((sum, c) => sum + (c.review_count || 0), 0) / typedCompetitors.length
 
     // Opportunities based on market position
-    if ((businessData.rating || 0) > avgCompetitorRating) {
+    if ((business.rating || 0) > avgCompetitorRating) {
       opportunities.push('Above-average ratings provide competitive advantage')
     }
     if (avgCompetitorRating < 3.8) {
@@ -365,10 +374,10 @@ async function generateSWOTAnalysis(supabase: DbClient, business: BusinessSWOT) 
     }
 
     // Threats based on competition
-    if ((businessData.rating || 0) < avgCompetitorRating) {
+    if ((business.rating || 0) < avgCompetitorRating) {
       threats.push('Below market average in customer satisfaction')
     }
-    if (competitors.some((c: any) => c.rating >= 4.8)) {
+    if (typedCompetitors.some((c) => (c.rating || 0) >= 4.8)) {
       threats.push('Highly-rated competitors in market')
     }
     if (competitors.length > 15) {
@@ -396,7 +405,7 @@ async function generateSWOTAnalysis(supabase: DbClient, business: BusinessSWOT) 
 }
 
 // Helper function to calculate growth rate
-function calculateGrowthRate(businesses: BusinessSWOT[], periodDays: number): number {
+function calculateGrowthRate(businesses: BusinessData[], periodDays: number): number {
   const recentDate = new Date()
   recentDate.setDate(recentDate.getDate() - periodDays)
   

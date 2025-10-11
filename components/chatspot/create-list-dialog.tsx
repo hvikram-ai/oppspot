@@ -63,7 +63,6 @@ export function CreateListDialog({
       // Create the list
       const { data: list, error: listError } = await supabase
         .from('business_lists')
-        // @ts-ignore - Supabase type inference issue
         .insert({
           user_id: user.id,
           name: listName.trim(),
@@ -93,7 +92,6 @@ export function CreateListDialog({
         console.log('📝 Prepared records for upsert:', savedBusinesses)
 
         const { error: saveError, data: savedData } = await supabase
-          // @ts-ignore - Supabase type inference issue
           .from('saved_businesses')
           .upsert(savedBusinesses, {
             onConflict: 'user_id,business_id',

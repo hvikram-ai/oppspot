@@ -115,7 +115,6 @@ export class SignalAggregationEngine {
       // Store or update aggregation
       const { data: savedAggregation, error: saveError } = await supabase
         .from('signal_aggregations')
-        // @ts-ignore - Supabase type inference issue
         .upsert({
           ...aggregation,
           company_id: companyId
@@ -527,7 +526,6 @@ export class SignalAggregationEngine {
       signals_data: signals,
       status: 'triggered'
     };
-// @ts-ignore - Supabase type inference issue
 
     await supabase.from('threshold_alerts').insert(alert);
 
@@ -550,7 +548,6 @@ export class SignalAggregationEngine {
   }
 
   private async createInAppNotification(config: SignalAlertConfig, aggregation: SignalAggregation) {
-    // @ts-ignore - Supabase type inference issue
     const supabase = await createClient();
 
     await supabase.from('notifications').insert({
@@ -614,7 +611,6 @@ export class SignalAggregationEngine {
         executed_by: executedBy,
         created_at: new Date().toISOString()
       };
-// @ts-ignore - Supabase type inference issue
 
       const { data, error } = await supabase
         .from('signal_actions')

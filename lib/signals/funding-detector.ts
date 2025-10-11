@@ -110,7 +110,7 @@ export class FundingDetector {
       // Update last check timestamp
       await supabase
         .from('businesses')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({ last_funding_check: new Date().toISOString() })
         .eq('id', company.id)
 
@@ -370,7 +370,7 @@ export class FundingDetector {
     try {
       const { error } = await supabase
         .from('funding_signals')
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         .upsert({
           ...signal,
           announcement_date: signal.announcement_date.toISOString(),

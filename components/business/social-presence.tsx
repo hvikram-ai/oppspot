@@ -88,7 +88,7 @@ interface SocialScore {
 interface SocialPresenceProps {
   businessId: string
   businessName?: string
-  websiteUrl?: string
+  websiteUrl?: string | null
   isAdmin?: boolean
 }
 

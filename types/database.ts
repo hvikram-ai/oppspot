@@ -1234,6 +1234,963 @@ export interface Database {
           updated_at?: string
         }
       }
+      ai_agents: {
+        Row: {
+          id: string
+          org_id: string | null
+          agent_type: 'opportunity_bot' | 'research_gpt' | 'scout_agent' | 'scoring_agent' | 'writer_agent' | 'relationship_agent' | 'linkedin_scraper_agent' | 'website_analyzer_agent'
+          name: string
+          description: string | null
+          configuration: Json
+          is_active: boolean
+          schedule_cron: string | null
+          last_run_at: string | null
+          next_run_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id?: string | null
+          agent_type: 'opportunity_bot' | 'research_gpt' | 'scout_agent' | 'scoring_agent' | 'writer_agent' | 'relationship_agent' | 'linkedin_scraper_agent' | 'website_analyzer_agent'
+          name: string
+          description?: string | null
+          configuration?: Json
+          is_active?: boolean
+          schedule_cron?: string | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string | null
+          agent_type?: 'opportunity_bot' | 'research_gpt' | 'scout_agent' | 'scoring_agent' | 'writer_agent' | 'relationship_agent' | 'linkedin_scraper_agent' | 'website_analyzer_agent'
+          name?: string
+          description?: string | null
+          configuration?: Json
+          is_active?: boolean
+          schedule_cron?: string | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      agent_executions: {
+        Row: {
+          id: string
+          agent_id: string
+          org_id: string | null
+          status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+          started_at: string | null
+          completed_at: string | null
+          duration_ms: number | null
+          input_data: Json | null
+          output_data: Json | null
+          error_message: string | null
+          error_stack: string | null
+          metrics: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          agent_id: string
+          org_id?: string | null
+          status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          input_data?: Json | null
+          output_data?: Json | null
+          error_message?: string | null
+          error_stack?: string | null
+          metrics?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          agent_id?: string
+          org_id?: string | null
+          status?: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          input_data?: Json | null
+          output_data?: Json | null
+          error_message?: string | null
+          error_stack?: string | null
+          metrics?: Json | null
+          created_at?: string
+        }
+      }
+      agent_tasks: {
+        Row: {
+          id: string
+          agent_id: string | null
+          org_id: string | null
+          task_type: string
+          priority: number
+          payload: Json
+          status: 'pending' | 'processing' | 'completed' | 'failed'
+          retry_count: number
+          max_retries: number
+          scheduled_for: string | null
+          started_at: string | null
+          completed_at: string | null
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          agent_id?: string | null
+          org_id?: string | null
+          task_type: string
+          priority?: number
+          payload?: Json
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          retry_count?: number
+          max_retries?: number
+          scheduled_for?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          agent_id?: string | null
+          org_id?: string | null
+          task_type?: string
+          priority?: number
+          payload?: Json
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          retry_count?: number
+          max_retries?: number
+          scheduled_for?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          created_at?: string
+        }
+      }
+      buying_signals: {
+        Row: {
+          id: string
+          company_id: string
+          org_id: string | null
+          signal_type: 'funding_round' | 'executive_change' | 'job_posting' | 'technology_adoption' | 'expansion' | 'website_activity' | 'competitor_mention' | 'companies_house_filing' | 'news_mention' | 'social_media_activity'
+          signal_strength: 'very_strong' | 'strong' | 'moderate' | 'weak'
+          confidence_score: number
+          signal_data: Json
+          detected_at: string
+          detected_by: string
+          status: 'active' | 'acted_upon' | 'expired' | 'false_positive'
+          acted_upon_at: string | null
+          acted_upon_by: string | null
+          expires_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          org_id?: string | null
+          signal_type: 'funding_round' | 'executive_change' | 'job_posting' | 'technology_adoption' | 'expansion' | 'website_activity' | 'competitor_mention' | 'companies_house_filing' | 'news_mention' | 'social_media_activity'
+          signal_strength: 'very_strong' | 'strong' | 'moderate' | 'weak'
+          confidence_score: number
+          signal_data: Json
+          detected_at?: string
+          detected_by: string
+          status?: 'active' | 'acted_upon' | 'expired' | 'false_positive'
+          acted_upon_at?: string | null
+          acted_upon_by?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          org_id?: string | null
+          signal_type?: 'funding_round' | 'executive_change' | 'job_posting' | 'technology_adoption' | 'expansion' | 'website_activity' | 'competitor_mention' | 'companies_house_filing' | 'news_mention' | 'social_media_activity'
+          signal_strength?: 'very_strong' | 'strong' | 'moderate' | 'weak'
+          confidence_score?: number
+          signal_data?: Json
+          detected_at?: string
+          detected_by?: string
+          status?: 'active' | 'acted_upon' | 'expired' | 'false_positive'
+          acted_upon_at?: string | null
+          acted_upon_by?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+      }
+      streams: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          description: string | null
+          emoji: string | null
+          color: string | null
+          stream_type: 'project' | 'deal' | 'campaign' | 'research' | 'territory'
+          stages: Json | null
+          metadata: Json | null
+          status: 'active' | 'archived' | 'completed'
+          archived_at: string | null
+          created_by: string
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          name: string
+          description?: string | null
+          emoji?: string | null
+          color?: string | null
+          stream_type?: 'project' | 'deal' | 'campaign' | 'research' | 'territory'
+          stages?: Json | null
+          metadata?: Json | null
+          status?: 'active' | 'archived' | 'completed'
+          archived_at?: string | null
+          created_by: string
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          name?: string
+          description?: string | null
+          emoji?: string | null
+          color?: string | null
+          stream_type?: 'project' | 'deal' | 'campaign' | 'research' | 'territory'
+          stages?: Json | null
+          metadata?: Json | null
+          status?: 'active' | 'archived' | 'completed'
+          archived_at?: string | null
+          created_by?: string
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      stream_members: {
+        Row: {
+          id: string
+          stream_id: string
+          user_id: string
+          role: 'owner' | 'editor' | 'viewer' | 'guest'
+          notification_settings: Json | null
+          invited_by: string | null
+          invitation_accepted_at: string | null
+          joined_at: string
+          last_accessed_at: string | null
+        }
+        Insert: {
+          id?: string
+          stream_id: string
+          user_id: string
+          role?: 'owner' | 'editor' | 'viewer' | 'guest'
+          notification_settings?: Json | null
+          invited_by?: string | null
+          invitation_accepted_at?: string | null
+          joined_at?: string
+          last_accessed_at?: string | null
+        }
+        Update: {
+          id?: string
+          stream_id?: string
+          user_id?: string
+          role?: 'owner' | 'editor' | 'viewer' | 'guest'
+          notification_settings?: Json | null
+          invited_by?: string | null
+          invitation_accepted_at?: string | null
+          joined_at?: string
+          last_accessed_at?: string | null
+        }
+      }
+      stream_items: {
+        Row: {
+          id: string
+          stream_id: string
+          item_type: string
+          item_id: string | null
+          position: number
+          stage_id: string | null
+          metadata: Json | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          stream_id: string
+          item_type: string
+          item_id?: string | null
+          position?: number
+          stage_id?: string | null
+          metadata?: Json | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          stream_id?: string
+          item_type?: string
+          item_id?: string | null
+          position?: number
+          stage_id?: string | null
+          metadata?: Json | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      api_audit_log: {
+        Row: {
+          id: string
+          api_name: string
+          endpoint: string
+          method?: string
+          request_params: Json | null
+          response_status: number
+          response_data?: Json | null
+          error_message?: string | null
+          user_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          api_name: string
+          endpoint: string
+          method?: string
+          request_params?: Json | null
+          response_status: number
+          response_data?: Json | null
+          error_message?: string | null
+          user_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          api_name?: string
+          endpoint?: string
+          method?: string
+          request_params?: Json | null
+          response_status?: number
+          response_data?: Json | null
+          error_message?: string | null
+          user_id?: string | null
+          created_at?: string
+        }
+      }
+      opportunities: {
+        Row: {
+          id: string
+          company_id: string
+          type: string
+          category: string
+          status: string
+          potential_value: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          type: string
+          category: string
+          status?: string
+          potential_value?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          type?: string
+          category?: string
+          status?: string
+          potential_value?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      business_followers: {
+        Row: {
+          id: string
+          business_id: string
+          user_id: string
+          notification_preference: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          user_id: string
+          notification_preference?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          user_id?: string
+          notification_preference?: string | null
+          created_at?: string
+        }
+      }
+      website_data: {
+        Row: {
+          id: string
+          business_id: string
+          platform: string
+          profile_url: string
+          username: string | null
+          bio: string | null
+          profile_image_url: string | null
+          is_active: boolean
+          last_scraped_at: string
+          scrape_status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          platform: string
+          profile_url: string
+          username?: string | null
+          bio?: string | null
+          profile_image_url?: string | null
+          is_active?: boolean
+          last_scraped_at?: string
+          scrape_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          platform?: string
+          profile_url?: string
+          username?: string | null
+          bio?: string | null
+          profile_image_url?: string | null
+          is_active?: boolean
+          last_scraped_at?: string
+          scrape_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      social_presence_scores: {
+        Row: {
+          id: string
+          business_id: string
+          overall_score: number
+          reach_score: number
+          engagement_score: number
+          activity_score: number
+          growth_score: number
+          strengths: string[]
+          weaknesses: string[]
+          recommendations: string[]
+          calculated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          overall_score: number
+          reach_score: number
+          engagement_score: number
+          activity_score: number
+          growth_score: number
+          strengths?: string[]
+          weaknesses?: string[]
+          recommendations?: string[]
+          calculated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          overall_score?: number
+          reach_score?: number
+          engagement_score?: number
+          activity_score?: number
+          growth_score?: number
+          strengths?: string[]
+          weaknesses?: string[]
+          recommendations?: string[]
+          calculated_at?: string
+          created_at?: string
+        }
+      }
+      bant_qualifications: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string
+          budget_score: number
+          authority_score: number
+          need_score: number
+          timing_score: number
+          overall_score: number
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id: string
+          budget_score: number
+          authority_score: number
+          need_score: number
+          timing_score: number
+          overall_score: number
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string
+          budget_score?: number
+          authority_score?: number
+          need_score?: number
+          timing_score?: number
+          overall_score?: number
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      business_lists: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          created_by: string
+          is_public: boolean
+          business_ids: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          created_by: string
+          is_public?: boolean
+          business_ids?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          created_by?: string
+          is_public?: boolean
+          business_ids?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      saved_businesses: {
+        Row: {
+          id: string
+          user_id: string
+          business_id: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          business_id: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          business_id?: string
+          notes?: string | null
+          created_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          message: string
+          type: string
+          status: string
+          metadata: Json | null
+          created_at: string
+          read_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          message: string
+          type: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+          read_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          message?: string
+          type?: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+          read_at?: string | null
+        }
+      }
+      research_reports: {
+        Row: {
+          id: string
+          user_id: string
+          company_id: string
+          company_name: string
+          company_number: string | null
+          status: string
+          confidence_score: number | null
+          sections_complete: number
+          total_sources: number
+          generated_at: string | null
+          cached_until: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_id: string
+          company_name: string
+          company_number?: string | null
+          status?: string
+          confidence_score?: number | null
+          sections_complete?: number
+          total_sources?: number
+          generated_at?: string | null
+          cached_until?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_id?: string
+          company_name?: string
+          company_number?: string | null
+          status?: string
+          confidence_score?: number | null
+          sections_complete?: number
+          total_sources?: number
+          generated_at?: string | null
+          cached_until?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      research_sections: {
+        Row: {
+          id: string
+          report_id: string
+          section_type: string
+          content: Json
+          confidence: string
+          sources_count: number
+          cached_at: string
+          expires_at: string
+          generation_time_ms: number | null
+          error_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          report_id: string
+          section_type: string
+          content: Json
+          confidence?: string
+          sources_count?: number
+          cached_at?: string
+          expires_at?: string
+          generation_time_ms?: number | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          report_id?: string
+          section_type?: string
+          content?: Json
+          confidence?: string
+          sources_count?: number
+          cached_at?: string
+          expires_at?: string
+          generation_time_ms?: number | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      research_sources: {
+        Row: {
+          id: string
+          report_id: string
+          section_type: string | null
+          url: string
+          title: string
+          published_date: string | null
+          accessed_date: string
+          source_type: string
+          reliability_score: number
+          domain: string | null
+          content_snippet: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          report_id: string
+          section_type?: string | null
+          url: string
+          title: string
+          published_date?: string | null
+          accessed_date?: string
+          source_type: string
+          reliability_score?: number
+          domain?: string | null
+          content_snippet?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          report_id?: string
+          section_type?: string | null
+          url?: string
+          title?: string
+          published_date?: string | null
+          accessed_date?: string
+          source_type?: string
+          reliability_score?: number
+          domain?: string | null
+          content_snippet?: string | null
+          created_at?: string
+        }
+      }
+      user_research_quotas: {
+        Row: {
+          user_id: string
+          period_start: string
+          period_end: string
+          researches_used: number
+          researches_limit: number
+          tier: string
+          notification_90_percent_sent: boolean
+          notification_100_percent_sent: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          period_start?: string
+          period_end?: string
+          researches_used?: number
+          researches_limit?: number
+          tier?: string
+          notification_90_percent_sent?: boolean
+          notification_100_percent_sent?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          period_start?: string
+          period_end?: string
+          researches_used?: number
+          researches_limit?: number
+          tier?: string
+          notification_90_percent_sent?: boolean
+          notification_100_percent_sent?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      stakeholders: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          job_title: string
+          department: string | null
+          linkedin_url: string | null
+          business_email: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          job_title: string
+          department?: string | null
+          linkedin_url?: string | null
+          business_email?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          job_title?: string
+          department?: string | null
+          linkedin_url?: string | null
+          business_email?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      stakeholder_engagement: {
+        Row: {
+          id: string
+          stakeholder_id: string
+          user_id: string
+          engagement_type: string
+          engagement_score: number
+          last_contact: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          stakeholder_id: string
+          user_id: string
+          engagement_type: string
+          engagement_score?: number
+          last_contact?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          stakeholder_id?: string
+          user_id?: string
+          engagement_type?: string
+          engagement_score?: number
+          last_contact?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      lead_scores: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string
+          overall_score: number
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id: string
+          overall_score: number
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string
+          overall_score?: number
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      meddic_qualifications: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string
+          metrics_score: number
+          economic_buyer_score: number
+          decision_criteria_score: number
+          decision_process_score: number
+          identify_pain_score: number
+          champion_score: number
+          overall_score: number
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id: string
+          metrics_score: number
+          economic_buyer_score: number
+          decision_criteria_score: number
+          decision_process_score: number
+          identify_pain_score: number
+          champion_score: number
+          overall_score: number
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string
+          metrics_score?: number
+          economic_buyer_score?: number
+          decision_criteria_score?: number
+          decision_process_score?: number
+          identify_pain_score?: number
+          champion_score?: number
+          overall_score?: number
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

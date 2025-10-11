@@ -26,7 +26,7 @@ export async function GET(_request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
     if (profileError) {
       console.error('Error fetching profile for billing:', profileError)
@@ -55,7 +55,7 @@ export async function GET(_request: NextRequest) {
       .from('organizations')
       .select('subscription_tier, trial_ends_at, stripe_customer_id, stripe_subscription_id')
       .eq('id', profile.org_id)
-      .single() as { data: Pick<Row<'organizations'>, 'subscription_tier' | 'trial_ends_at' | 'stripe_customer_id' | 'stripe_subscription_id'> | null; error: any }
+      .single()
 
     if (orgError) {
       console.error('Error fetching organization billing:', orgError)
@@ -66,7 +66,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // Check if in trial period
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     const isTrial = org.trial_ends_at ? new Date(org.trial_ends_at) > new Date() : false
 
     // Count organization members

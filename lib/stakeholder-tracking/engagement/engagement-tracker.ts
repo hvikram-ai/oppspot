@@ -33,7 +33,7 @@ interface RoleChangeRow {
 }
 
 export class EngagementTracker {
-  private supabase;
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   constructor() {
     // Initialize in methods to handle async
@@ -56,8 +56,8 @@ export class EngagementTracker {
       const supabase = await this.getSupabase();
 
       // Validate and save engagement
-      const { data: engagement, error } = await supabase
-        .from('stakeholder_engagement')
+      const { data: engagement, error } = await (supabase
+        .from('stakeholder_engagement') as any)
         .insert(request.engagement)
         .select()
         .single();
@@ -120,12 +120,12 @@ export class EngagementTracker {
       const supabase = await this.getSupabase();
 
       // Get recent engagements for score calculation
-      const { data: recentEngagements } = await supabase
-        .from('stakeholder_engagement')
+      const { data: recentEngagements } = await (supabase
+        .from('stakeholder_engagement') as any)
         .select('outcome, sentiment_score, engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
-        .limit(10) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
+        .limit(10);
 
       if (!recentEngagements) return;
 
@@ -135,7 +135,7 @@ export class EngagementTracker {
       // Frequency factor
       const daysSinceFirstEngagement = recentEngagements.length > 0
         ? Math.floor(
-            (Date.now() - new Date(recentEngagements[recentEngagements.length - 1].engagement_date).getTime()) /
+            (Date.now() - new Date((recentEngagements[recentEngagements.length - 1] as any).engagement_date).getTime()) /
             (1000 * 60 * 60 * 24)
           )
         : 0;
@@ -147,7 +147,7 @@ export class EngagementTracker {
 
       // Outcome factor
       const positiveOutcomes = recentEngagements.filter(
-        e => (e as Error).outcome === 'positive'
+        (e: any) => e.outcome === 'positive'
       ).length;
       const outcomeRatio = recentEngagements.length > 0
         ? positiveOutcomes / recentEngagements.length
@@ -156,14 +156,14 @@ export class EngagementTracker {
 
       // Sentiment factor
       const avgSentiment = recentEngagements
-        .filter(e => (e as Error).sentiment_score !== null)
-        .reduce((sum, e) => sum + ((e as Error).sentiment_score + 100) / 2, 0) /
-        (recentEngagements.filter(e => (e as Error).sentiment_score !== null).length || 1);
+        .filter((e: any) => e.sentiment_score !== null)
+        .reduce((sum: number, e: any) => sum + (e.sentiment_score + 100) / 2, 0) /
+        (recentEngagements.filter((e: any) => e.sentiment_score !== null).length || 1);
       engagementScore = Math.round(Math.min(100, engagementScore * (avgSentiment / 50)));
 
       // Update stakeholder
-      await supabase
-        .from('stakeholders')
+      await (supabase
+        .from('stakeholders') as any)
         .update({
           last_contact_date: engagement.engagement_date,
           engagement_score: engagementScore,
@@ -185,20 +185,20 @@ export class EngagementTracker {
     try {
       const supabase = await this.getSupabase();
 
-      const { data: engagements } = await supabase
-        .from('stakeholder_engagement')
+      const { data: engagements } = await (supabase
+        .from('stakeholder_engagement') as any)
         .select('sentiment_score, engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
-        .limit(10) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
+        .limit(10);
 
       if (!engagements || engagements.length < 2) {
         return 'stable';
       }
 
       const sentiments = engagements
-        .filter(e => (e as Error).sentiment_score !== null)
-        .map(e => (e as Error).sentiment_score as number);
+        .filter((e: any) => e.sentiment_score !== null)
+        .map((e: any) => e.sentiment_score as number);
 
       if (sentiments.length < 2) {
         return 'stable';
@@ -206,12 +206,12 @@ export class EngagementTracker {
 
       // Compare recent vs older
       const mid = Math.ceil(sentiments.length / 2);
-      const recentAvg = sentiments.slice(0, mid).reduce((a, b) => a + b, 0) / mid;
-      const olderAvg = sentiments.slice(mid).reduce((a, b) => a + b, 0) / (sentiments.length - mid);
+      const recentAvg = sentiments.slice(0, mid).reduce((a: number, b: number) => a + b, 0) / mid;
+      const olderAvg = sentiments.slice(mid).reduce((a: number, b: number) => a + b, 0) / (sentiments.length - mid);
 
       const diff = recentAvg - olderAvg;
-      const variance = sentiments.reduce((sum, val) => {
-        const mean = sentiments.reduce((a, b) => a + b, 0) / sentiments.length;
+      const variance = sentiments.reduce((sum: number, val: number) => {
+        const mean = sentiments.reduce((a: number, b: number) => a + b, 0) / sentiments.length;
         return sum + Math.pow(val - mean, 2);
       }, 0) / sentiments.length;
 
@@ -317,8 +317,8 @@ export class EngagementTracker {
       const alerts: Partial<StakeholderAlert>[] = [];
 
       // Get stakeholder info
-      const { data: stakeholder } = await supabase
-        .from('stakeholders')
+      const { data: stakeholder } = await (supabase
+        .from('stakeholders') as any)
         .select('*, champion_tracking!left(*)')
         .eq('id', stakeholder_id)
         .single();
@@ -326,14 +326,14 @@ export class EngagementTracker {
       if (!stakeholder) return;
 
       // Check for sentiment decline
-      if (engagement.sentiment_score < -50) {
+      if (engagement.sentiment_score && engagement.sentiment_score < -50) {
         alerts.push({
           stakeholder_id,
           org_id: stakeholder.org_id,
           alert_type: 'sentiment_decline',
           severity: 'urgent',
           title: 'Significant negative sentiment detected',
-          message: `${stakeholder.name} expressed strong negative sentiment in recent ${engagement.engagement_type}`,
+          message: `${stakeholder.name} expressed strong negative sentiment in recent engagement`,
           action_required: 'Immediate intervention recommended',
           status: 'active'
         });
@@ -341,7 +341,7 @@ export class EngagementTracker {
 
       // Check for champion at risk
       if (stakeholder.champion_status === 'active' || stakeholder.champion_status === 'super') {
-        if (engagement.outcome === 'negative' || engagement.sentiment_score < 0) {
+        if (engagement.outcome === 'negative' || (engagement.sentiment_score && engagement.sentiment_score < 0)) {
           alerts.push({
             stakeholder_id,
             org_id: stakeholder.org_id,
@@ -356,17 +356,17 @@ export class EngagementTracker {
       }
 
       // Check for engagement drop
-      const { data: recentEngagements } = await supabase
-        .from('stakeholder_engagement')
+      const { data: recentEngagements } = await (supabase
+        .from('stakeholder_engagement') as any)
         .select('engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
-        .limit(2) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
+        .limit(2);
 
       if (recentEngagements && recentEngagements.length === 2) {
         const daysBetween = Math.floor(
-          (new Date(recentEngagements[0].engagement_date).getTime() -
-           new Date(recentEngagements[1].engagement_date).getTime()) /
+          (new Date((recentEngagements[0] as any).engagement_date).getTime() -
+           new Date((recentEngagements[1] as any).engagement_date).getTime()) /
           (1000 * 60 * 60 * 24)
         );
 
@@ -386,8 +386,8 @@ export class EngagementTracker {
 
       // Save alerts
       if (alerts.length > 0) {
-        await supabase
-          .from('stakeholder_alerts')
+        await (supabase
+          .from('stakeholder_alerts') as any)
           .insert(alerts);
       }
 
@@ -434,8 +434,8 @@ export class EngagementTracker {
 
         if (roleChange) {
           // Save role change
-          const { data: savedChange } = await supabase
-            .from('role_changes')
+          const { data: savedChange } = await (supabase
+            .from('role_changes') as any)
             .insert(roleChange)
             .select()
             .single();
@@ -445,18 +445,18 @@ export class EngagementTracker {
 
             // Create alert
             const alert: Partial<StakeholderAlert> = {
-              stakeholder_id: stakeholder.id,
-              org_id: stakeholder.org_id,
+              stakeholder_id: (stakeholder as any).id,
+              org_id: (stakeholder as any).org_id,
               alert_type: 'role_change',
               severity: this.determineRoleChangeSeverity(roleChange),
-              title: `Role change detected for ${stakeholder.name}`,
+              title: `Role change detected for ${(stakeholder as any).name}`,
               message: `${roleChange.previous_role} → ${roleChange.new_role}`,
               action_required: 'Review and update engagement strategy',
               status: 'active'
             };
 
-            const { data: savedAlert } = await supabase
-              .from('stakeholder_alerts')
+            const { data: savedAlert } = await (supabase
+              .from('stakeholder_alerts') as any)
               .insert(alert)
               .select()
               .single();
@@ -605,7 +605,7 @@ export class EngagementTracker {
       if (stakeholder.champion_status === 'active' || stakeholder.champion_status === 'super') {
         return 'critical';
       }
-      if (stakeholder.role_type === 'decision_maker' || stakeholder.influence_level >= 7) {
+      if (stakeholder.role_type === 'decision_maker' || (stakeholder.influence_level && stakeholder.influence_level >= 7)) {
         return 'high';
       }
       return 'medium';
@@ -653,12 +653,12 @@ export class EngagementTracker {
 
       const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-      const { data: engagements } = await supabase
-        .from('stakeholder_engagement')
+      const { data: engagements } = await (supabase
+        .from('stakeholder_engagement') as any)
         .select('*')
         .eq('stakeholder_id', stakeholder_id)
         .gte('engagement_date', startDate)
-        .order('engagement_date', { ascending: false }) as { data: Row<'stakeholder_engagement'>[] | null; error: any };
+        .order('engagement_date', { ascending: false });
 
       if (!engagements || engagements.length === 0) {
         return {
@@ -676,18 +676,18 @@ export class EngagementTracker {
       let totalSentiment = 0;
       let sentimentCount = 0;
 
-      engagements.forEach(e => {
+      engagements.forEach((e: any) => {
         // Type distribution
-        engagementTypes[(e as Error).engagement_type] = (engagementTypes[(e as Error).engagement_type] || 0) + 1;
+        engagementTypes[e.engagement_type] = (engagementTypes[e.engagement_type] || 0) + 1;
 
         // Outcome distribution
-        if ((e as Error).outcome) {
-          outcomeDistribution[(e as Error).outcome] = (outcomeDistribution[(e as Error).outcome] || 0) + 1;
+        if (e.outcome) {
+          outcomeDistribution[e.outcome] = (outcomeDistribution[e.outcome] || 0) + 1;
         }
 
         // Sentiment average
-        if ((e as Error).sentiment_score !== null) {
-          totalSentiment += (e as Error).sentiment_score;
+        if (e.sentiment_score !== null) {
+          totalSentiment += e.sentiment_score;
           sentimentCount++;
         }
       });

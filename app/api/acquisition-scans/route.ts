@@ -20,7 +20,7 @@ export async function GET() {
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
@@ -154,12 +154,13 @@ export async function POST(request: NextRequest) {
       targets_identified: 0,
       targets_analyzed: 0
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: scan, error } = await (supabase
+     
+    const { data: scan, error } = await supabase
       .from('acquisition_scans')
-      .insert(scanData as any)
+      // @ts-expect-error - Complex JSONB field types
+      .insert(scanData)
       .select()
-      .single() as any)
+      .single()
 
     if (error) {
       console.error('Error creating acquisition scan:', error)
@@ -183,10 +184,11 @@ export async function POST(request: NextRequest) {
       legal_basis: 'legitimate_interest',
       retention_period: 365
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: auditError } = await (supabase
+     
+    const { error: auditError } = await supabase
       .from('scan_audit_log')
-      .insert(auditLogData as any) as any)
+      // @ts-expect-error - Audit log type
+      .insert(auditLogData)
 
     if (auditError) {
       console.error('Failed to create audit log:', auditError)

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         .from('profiles')
         .select('org_id, role')
         .eq('id', user.id)
-        .single() as { data: (Row<'profiles'> & { org_id?: string; role?: string }) | null; error: any }
+        .single()
       profile = data
     }
 

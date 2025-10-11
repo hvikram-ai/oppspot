@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       case 'like':
         // Toggle like
         const { data: likeResult, error: likeError } = await supabase
-          // @ts-ignore - Type inference issue
           .rpc('toggle_update_like', {
             update_id: updateId,
             user_id: user.id
@@ -58,7 +57,6 @@ export async function POST(request: NextRequest) {
         // Record share interaction
         const { error: shareError } = await supabase
           .from('update_interactions')
-          // @ts-ignore - Supabase type inference issue
           .insert({
             update_id: updateId,
             user_id: user.id,
@@ -81,14 +79,16 @@ export async function POST(request: NextRequest) {
         
       case 'save':
         // Toggle save
-        const { data: existingSave } = await supabase
+        const { data: existingSave, error: existError } = await supabase
           .from('update_interactions')
           .select('id')
           .eq('update_id', updateId)
           .eq('user_id', user.id)
           .eq('interaction_type', 'save')
-          .single() as { data: Pick<Row<'update_interactions'>, 'id'> | null; error: any }
-        
+          .single()
+
+        // Ignore error if not saved yet (expected case)
+
         if (existingSave) {
           // Unsave
           await supabase
@@ -103,7 +103,6 @@ export async function POST(request: NextRequest) {
         } else {
           // Save
           await supabase
-            // @ts-ignore - Supabase type inference issue
             .from('update_interactions')
             .insert({
               update_id: updateId,

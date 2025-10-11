@@ -25,13 +25,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if business exists
-    const { data: business } = await supabase
+    // @ts-ignore - businesses table
+    const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('id, name')
       .eq('id', businessId)
-      .single() as { data: Pick<Row<'businesses'>, 'id' | 'name'> | null; error: any }
-    
-    if (!business) {
+      .single()
+
+    const typedBusiness = business as unknown as { id: string; name: string } | null
+
+    if (businessError || !typedBusiness) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
@@ -40,33 +43,34 @@ export async function POST(request: NextRequest) {
     
     if (action === 'unfollow') {
       // Unfollow the business
+      // @ts-ignore - business_followers table
       const { error: unfollowError } = await supabase
         .from('business_followers')
         .delete()
         .eq('business_id', businessId)
         .eq('user_id', user.id)
-      
+
       if (unfollowError) throw unfollowError
-      
+
       // Log event
-      // @ts-ignore - Supabase type inference issue
+      // @ts-ignore - events table insert
       await supabase.from('events').insert({
         user_id: user.id,
         event_type: 'business_unfollowed',
         event_data: {
           business_id: businessId,
-          business_name: business.name
+          business_name: typedBusiness.name
         }
       } as Database['public']['Tables']['events']['Insert'])
-      
+
       return NextResponse.json({
         following: false,
-        message: `Unfollowed ${business.name}`
+        message: `Unfollowed ${typedBusiness.name}`
       })
     } else {
       // Follow the business
+      // @ts-ignore - business_followers table upsert
       const { error: followError } = await supabase
-        // @ts-ignore - Supabase type inference issue
         .from('business_followers')
         .upsert({
           business_id: businessId,
@@ -75,24 +79,24 @@ export async function POST(request: NextRequest) {
         }, {
           onConflict: 'business_id,user_id'
         })
-      
+
       if (followError) throw followError
-      // @ts-ignore - Supabase type inference issue
-      
+
       // Log event
+      // @ts-ignore - events table insert
       await supabase.from('events').insert({
         user_id: user.id,
         event_type: 'business_followed',
         event_data: {
           business_id: businessId,
-          business_name: business.name,
+          business_name: typedBusiness.name,
           notification_preference: notificationPreference
         }
       } as Database['public']['Tables']['events']['Insert'])
-      
+
       return NextResponse.json({
         following: true,
-        message: `Following ${business.name}`,
+        message: `Following ${typedBusiness.name}`,
         notification_preference: notificationPreference
       })
     }
@@ -125,27 +129,34 @@ export async function GET(request: NextRequest) {
     
     if (businessId) {
       // Check if user follows a specific business
-      const { data: follow } = await supabase
+      // @ts-ignore - business_followers table
+      const { data: follow, error: followError } = await supabase
         .from('business_followers')
         .select('notification_preference, created_at')
         .eq('business_id', businessId)
         .eq('user_id', user.id)
-        .single() as { data: Pick<Row<'business_followers'>, 'notification_preference' | 'created_at'> | null; error: any }
-      
+        .single()
+
+      const typedFollow = follow as unknown as { notification_preference: string; created_at: string } | null
+
+      // Ignore error if not following (expected case)
+
       // Get follower count for the business
+      // @ts-ignore - business_followers count
       const { count: followerCount } = await supabase
         .from('business_followers')
         .select('*', { count: 'exact', head: true })
         .eq('business_id', businessId)
-      
+
       return NextResponse.json({
-        following: !!follow,
-        notification_preference: follow?.notification_preference || null,
-        followed_at: follow?.created_at || null,
+        following: !!typedFollow,
+        notification_preference: typedFollow?.notification_preference || null,
+        followed_at: typedFollow?.created_at || null,
         follower_count: followerCount || 0
       })
     } else {
       // Get all businesses the user follows
+      // @ts-ignore - business_followers with join
       const { data: follows, error, count } = await supabase
         .from('business_followers')
         .select(`
@@ -162,42 +173,47 @@ export async function GET(request: NextRequest) {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
-      
+
       if (error) throw error
-      
+
+      const typedFollows = (follows || []) as unknown as Array<{ business_id: string; [key: string]: unknown }>
+
       // Get recent updates count for each followed business
-      const businessIds = follows?.map(f => f.business_id) || []
+      const businessIds = typedFollows.map(f => f.business_id as string)
       const recentUpdates: Record<string, number> = {}
-      
+
       if (businessIds.length > 0) {
         const oneWeekAgo = new Date()
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-        
-        const { data: updateCounts } = await supabase
+
+        // @ts-ignore - business_updates table
+        const { data: updateCounts, error: updateCountsError } = await supabase
           .from('business_updates')
           .select('business_id')
           .in('business_id', businessIds)
           .gte('published_at', oneWeekAgo.toISOString())
-        
+
+        const typedUpdateCounts = (updateCounts || []) as unknown as Array<{ business_id: string }>
+
         // Count updates per business
-        updateCounts?.forEach(update => {
+        typedUpdateCounts.forEach(update => {
           recentUpdates[update.business_id] = (recentUpdates[update.business_id] || 0) + 1
         })
       }
-      
+
       // Combine follows with recent update counts
-      const followsWithUpdates = follows?.map(follow => ({
+      const followsWithUpdates = typedFollows.map(follow => ({
         ...follow,
         recent_updates_count: recentUpdates[follow.business_id] || 0
       }))
-      
+
       return NextResponse.json({
-        follows: followsWithUpdates || [],
+        follows: followsWithUpdates,
         pagination: {
           page,
           limit,
           total: count || 0,
-          hasMore: (follows?.length || 0) === limit
+          hasMore: typedFollows.length === limit
         }
       })
     }
@@ -231,15 +247,15 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
     // Update notification preference
+    // @ts-ignore - business_followers table update
     const { error: updateError } = await supabase
       .from('business_followers')
-      // @ts-ignore - Type inference issue
       .update({ notification_preference: notificationPreference })
       .eq('business_id', businessId)
       .eq('user_id', user.id)
-    
+
     if (updateError) throw updateError
     
     return NextResponse.json({

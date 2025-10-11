@@ -62,7 +62,7 @@ export abstract class DomainEvent<TPayload = unknown> implements IDomainEvent<TP
     event.id = data.id
     event.type = data.type
     event.payload = data.payload
-    // @ts-ignore - Supabase type inference issue
+    // @ts-expect-error - Supabase type inference issue
     event.timestamp = new Date(data.timestamp)
     event.correlationId = data.correlationId
     event.causationId = data.causationId

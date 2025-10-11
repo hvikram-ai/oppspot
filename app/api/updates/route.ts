@@ -2,6 +2,40 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { Row } from '@/lib/supabase/helpers'
 
+// Type definitions for updates
+interface BusinessUpdate {
+  id: string;
+  business_id: string;
+  title: string;
+  content: string;
+  type?: string;
+  category?: string;
+  tags?: string[];
+  image_url?: string | null;
+  link_url?: string | null;
+  link_title?: string | null;
+  published_at: string;
+  expires_at?: string | null;
+  is_featured?: boolean;
+  is_verified?: boolean;
+  created_by: string;
+  verified_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  has_liked?: boolean;
+  has_viewed?: boolean;
+  business?: {
+    id: string;
+    name: string;
+    logo_url?: string | null;
+  };
+}
+
+interface UpdateInteraction {
+  update_id: string;
+  interaction_type: string;
+}
+
 // GET: Fetch business updates feed
 export async function GET(request: NextRequest) {
   try {
@@ -17,8 +51,8 @@ export async function GET(request: NextRequest) {
     
     // Check authentication for personalized feeds
     const { data: { user } } = await supabase.auth.getUser()
-    
-    let updates: unknown[] = []
+
+    let updates: BusinessUpdate[] = []
     let totalCount = 0
     
     switch (feedType) {
@@ -29,7 +63,7 @@ export async function GET(request: NextRequest) {
         }
         
         const { data: followingFeed, error: followingError } = await supabase
-          // @ts-ignore - Type inference issue
+          // @ts-expect-error - Type inference issue
           .rpc('get_following_feed', {
             user_id: user.id,
             limit_count: limit,
@@ -64,26 +98,32 @@ export async function GET(request: NextRequest) {
         const { data: businessUpdates, error: businessError, count } = await businessQuery
         
         if (businessError) throw businessError
-        updates = businessUpdates || []
+        updates = (businessUpdates || []) as BusinessUpdate[]
         totalCount = count || 0
-        
+
         // Add interaction status if user is authenticated
         if (user && updates.length > 0) {
-          const updateIds = updates.map((u: any) => u.id)
-          const { data: interactions } = await supabase
+          const updateIds = updates.map((u) => u.id)
+          const { data: interactions, error: interactionsError } = await supabase
             .from('update_interactions')
             .select('update_id, interaction_type')
             .eq('user_id', user.id)
-            .in('update_id', updateIds) as { data: Array<{ update_id: string; interaction_type: string }> | null; error: any }
+            .in('update_id', updateIds);
+
+          if (interactionsError) {
+            console.error('Error fetching interactions:', interactionsError);
+          }
+
+          const typedInteractions = interactions as unknown as UpdateInteraction[] | null;
 
           // Map interactions to updates
           updates = updates.map(update => ({
             ...update,
-            has_liked: interactions?.some(
-              i => i.update_id === (update as any).id && i.interaction_type === 'like'
+            has_liked: typedInteractions?.some(
+              i => i.update_id === update.id && i.interaction_type === 'like'
             ) || false,
-            has_viewed: interactions?.some(
-              i => i.update_id === (update as any).id && i.interaction_type === 'view'
+            has_viewed: typedInteractions?.some(
+              i => i.update_id === update.id && i.interaction_type === 'view'
             ) || false
           }))
         }
@@ -98,9 +138,9 @@ export async function GET(request: NextRequest) {
               limit_count: limit,
               offset_count: offset
             })
-          
+
           if (feedError) throw feedError
-          updates = personalizedFeed || []
+          updates = (personalizedFeed || []) as BusinessUpdate[]
         } else {
           // Public feed for non-authenticated users
           const publicQuery = supabase
@@ -117,11 +157,11 @@ export async function GET(request: NextRequest) {
             .order('is_featured', { ascending: false })
             .order('published_at', { ascending: false })
             .range(offset, offset + limit - 1)
-          
+
           const { data: publicUpdates, error: publicError, count } = await publicQuery
-          
+
           if (publicError) throw publicError
-          updates = publicUpdates || []
+          updates = (publicUpdates || []) as BusinessUpdate[]
           totalCount = count || 0
         }
     }
@@ -181,29 +221,42 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if user has permission to post for this business
-    const { data: business } = await supabase
+    const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('id, metadata')
       .eq('id', businessId)
-      .single() as { data: Pick<Row<'businesses'>, 'id' | 'metadata'> | null; error: any }
-    
-    if (!business) {
+      .single();
+
+    if (businessError || !business) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       )
     }
-    
+
     // Check if user is admin or business owner
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
     
-    const isAdmin = profile?.role === 'admin' || profile?.role === 'owner'
-    const metadata = business.metadata as Record<string, unknown> & { claimed_by?: string } | null
-    const isBusinessOwner = metadata?.claimed_by === user.id
+    interface ProfileData {
+      role?: string | null;
+    }
+
+    interface BusinessMetadata {
+      claimed_by?: string;
+    }
+
+    const typedProfile = profile as unknown as ProfileData | null;
+    const isAdmin = typedProfile?.role === 'admin' || typedProfile?.role === 'owner';
+    const metadata = business.metadata as unknown as BusinessMetadata | null;
+    const isBusinessOwner = metadata?.claimed_by === user.id;
     
     if (!isAdmin && !isBusinessOwner) {
       return NextResponse.json(
@@ -215,7 +268,6 @@ export async function POST(request: NextRequest) {
     // Create the update
     const { data: newUpdate, error: createError } = await supabase
       .from('business_updates')
-      // @ts-ignore - Supabase type inference issue
       .insert({
         business_id: businessId,
         title,
@@ -234,7 +286,7 @@ export async function POST(request: NextRequest) {
         verified_by: isAdmin ? user.id : null
       })
       .select()
-      .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
+      .single();
     
     if (createError) {
       console.error('Error creating update:', createError)
@@ -245,24 +297,29 @@ export async function POST(request: NextRequest) {
     }
     
     // Notify followers (in production, this would trigger a notification service)
-    const { data: followers } = await supabase
+    const { data: followers, error: followersError } = await supabase
       .from('business_followers')
       .select('user_id, notification_preference')
-      .eq('business_id', businessId)
-    
-    // @ts-ignore - Supabase type inference issue
+      .eq('business_id', businessId);
+
+    interface NewUpdateData {
+      id?: string;
+    }
+
+    const typedNewUpdate = newUpdate as unknown as NewUpdateData | null;
+
     // Log event
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'update_created',
       event_data: {
-        update_id: newUpdate.id,
+        update_id: typedNewUpdate?.id,
         business_id: businessId,
         title,
         type,
         follower_count: followers?.length || 0
       }
-    })
+    });
     
     return NextResponse.json({
       message: 'Update created successfully',
@@ -301,28 +358,40 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Check if user owns the update
-    const { data: existingUpdate } = await supabase
+    const { data: existingUpdate, error: existingError } = await supabase
       .from('business_updates')
       .select('created_by')
       .eq('id', updateId)
-      .single() as { data: Pick<Row<'business_updates'>, 'created_by'> | null; error: any }
-    
-    if (!existingUpdate) {
+      .single();
+
+    if (existingError || !existingUpdate) {
       return NextResponse.json(
         { error: 'Update not found' },
         { status: 404 }
       )
     }
-    
-    if (existingUpdate.created_by !== user.id) {
+
+    interface UpdateOwnerData {
+      created_by?: string | null;
+    }
+
+    const typedExisting = existingUpdate as unknown as UpdateOwnerData;
+
+    if (typedExisting.created_by !== user.id) {
       // Check if user is admin
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
-      
-      if (profile?.role !== 'admin' && profile?.role !== 'owner') {
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+      }
+
+      const typedProfile = profile as unknown as ProfileData | null;
+
+      if (typedProfile?.role !== 'admin' && typedProfile?.role !== 'owner') {
         return NextResponse.json(
           { error: 'Permission denied' },
           { status: 403 }
@@ -385,28 +454,44 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Check ownership
-    const { data: existingUpdate } = await supabase
+    const { data: existingUpdate, error: existingError } = await supabase
       .from('business_updates')
       .select('created_by')
       .eq('id', updateId)
-      .single() as { data: Pick<Row<'business_updates'>, 'created_by'> | null; error: any }
-    
-    if (!existingUpdate) {
+      .single();
+
+    if (existingError || !existingUpdate) {
       return NextResponse.json(
         { error: 'Update not found' },
         { status: 404 }
       )
     }
-    
-    if (existingUpdate.created_by !== user.id) {
+
+    interface UpdateOwnerData {
+      created_by?: string | null;
+    }
+
+    interface ProfileData {
+      role?: string | null;
+    }
+
+    const typedExisting = existingUpdate as unknown as UpdateOwnerData;
+
+    if (typedExisting.created_by !== user.id) {
       // Check if user is admin
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
-      
-      if (profile?.role !== 'admin' && profile?.role !== 'owner') {
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+      }
+
+      const typedProfile = profile as unknown as ProfileData | null;
+
+      if (typedProfile?.role !== 'admin' && typedProfile?.role !== 'owner') {
         return NextResponse.json(
           { error: 'Permission denied' },
           { status: 403 }

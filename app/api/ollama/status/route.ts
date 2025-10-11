@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       status: 'online',
-      models: data.models?.map((m: any) => m.name) || [],
+      models: data.models?.map((m: unknown) => m.name) || [],
     })
   } catch (error) {
     console.error('Ollama status check failed:', error)

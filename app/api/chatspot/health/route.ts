@@ -29,7 +29,7 @@ export async function GET() {
         const data = await ollamaResponse.json()
 
         // Check if mistral:7b model is available
-        checks.mistral_model = data.models?.some((m: any) =>
+        checks.mistral_model = data.models?.some((m: unknown) =>
           m.name === 'mistral:7b' || m.model === 'mistral:7b'
         ) || false
 

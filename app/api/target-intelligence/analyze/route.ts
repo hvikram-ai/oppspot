@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       try {
         const { error: storageError } = await supabase
           .from('target_intelligence_profiles')
-          // @ts-ignore - Supabase type inference issue
+          // @ts-expect-error - Supabase type inference issue
           .upsert({
             user_id: user.id,
             company_name: body.company_name,

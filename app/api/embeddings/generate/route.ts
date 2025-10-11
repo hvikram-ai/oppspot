@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // TODO: Add admin check - only admins should generate embeddings
-    // const { data: profile } = await supabase
+    // const { data: profile, error: profileError } = await supabase
     //   .from('profiles')
     //   .select('role')
     //   .eq('id', user.id)

@@ -4,7 +4,7 @@ import type { Row } from '@/lib/supabase/helpers'
 // Types for comprehensive data structure
 export interface ScanResultsData {
   scan: ScanData
-  targets: TargetCompunknown[]
+  targets: TargetCompany[]
   financialData: FinancialAnalysis[]
   riskData: RiskAssessment[]
   marketIntelligence: MarketIntelligence[]
@@ -269,7 +269,7 @@ export interface ScanSummary {
   industryBreakdown: { [key: string]: number }
   regionBreakdown: { [key: string]: number }
   sizeBreakdown: { [key: string]: number }
-  topOpportunities: TargetCompunknown[]
+  topOpportunities: TargetCompany[]
   riskAlerts: Array<{ target: TargetCompany; risks: string[] }>
   keyInsights: string[]
   nextActions: string[]
@@ -338,10 +338,10 @@ export class ScanResultsDataService {
       return null
     }
 
-    return data
+    return data as unknown as ScanData
   }
 
-  private async loadTargetCompanies(scanId: string): Promise<TargetCompunknown[]> {
+  private async loadTargetCompanies(scanId: string): Promise<TargetCompany[]> {
     const { data, error } = await this.supabase
       .from('target_companies')
       .select('*')
@@ -353,7 +353,7 @@ export class ScanResultsDataService {
       return []
     }
 
-    return data || []
+    return (data || []) as unknown as TargetCompany[]
   }
 
   private async loadFinancialAnalysis(scanId: string): Promise<FinancialAnalysis[]> {
@@ -378,7 +378,7 @@ export class ScanResultsDataService {
       return []
     }
 
-    return data || []
+    return (data || []) as unknown as FinancialAnalysis[]
   }
 
   private async loadRiskAssessments(scanId: string): Promise<RiskAssessment[]> {
@@ -403,7 +403,7 @@ export class ScanResultsDataService {
       return []
     }
 
-    return data || []
+    return (data || []) as unknown as RiskAssessment[]
   }
 
   private async loadMarketIntelligence(scanId: string): Promise<MarketIntelligence[]> {
@@ -417,7 +417,7 @@ export class ScanResultsDataService {
       return []
     }
 
-    return data || []
+    return (data || []) as unknown as MarketIntelligence[]
   }
 
   private async loadDueDiligence(scanId: string): Promise<DueDiligence[]> {
@@ -442,7 +442,7 @@ export class ScanResultsDataService {
       return []
     }
 
-    return data || []
+    return (data || []) as unknown as DueDiligence[]
   }
 
   private async loadValuationModels(scanId: string): Promise<ValuationModel[]> {
@@ -467,7 +467,7 @@ export class ScanResultsDataService {
       return []
     }
 
-    return data || []
+    return (data || []) as unknown as ValuationModel[]
   }
 
   private async loadScanReports(scanId: string): Promise<ScanReport[]> {
@@ -482,11 +482,11 @@ export class ScanResultsDataService {
       return []
     }
 
-    return data || []
+    return (data || []) as unknown as ScanReport[]
   }
 
   private generateScanSummary(
-    targets: TargetCompunknown[],
+    targets: TargetCompany[],
     financialData: FinancialAnalysis[],
     riskData: RiskAssessment[]
   ): ScanSummary {
@@ -583,7 +583,7 @@ export class ScanResultsDataService {
   }
 
   private generateKeyInsights(
-    targets: TargetCompunknown[],
+    targets: TargetCompany[],
     financialData: FinancialAnalysis[],
     riskData: RiskAssessment[]
   ): string[] {
@@ -611,7 +611,7 @@ export class ScanResultsDataService {
     return insights
   }
 
-  private generateNextActions(targets: TargetCompunknown[], riskData: RiskAssessment[]): string[] {
+  private generateNextActions(targets: TargetCompany[], riskData: RiskAssessment[]): string[] {
     const actions: string[] = []
 
     // Priority targets for immediate follow-up

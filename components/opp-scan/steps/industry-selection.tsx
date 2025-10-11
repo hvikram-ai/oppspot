@@ -285,7 +285,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
           <Input
             id="scan-name"
             placeholder="e.g., UK FinTech Acquisition Scan"
-            value={config.name || ''}
+            value={(config.name as string | undefined) || ''}
             onChange={(e) => onChange('name', e.target.value)}
           />
         </div>
@@ -294,7 +294,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
           <Input
             id="scan-description"
             placeholder="Brief description of your acquisition goals"
-            value={config.description || ''}
+            value={(config.description as string | undefined) || ''}
             onChange={(e) => onChange('description', e.target.value)}
           />
         </div>
@@ -326,9 +326,9 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
                 onClick={() => handleMarketMaturityToggle(maturity.id)}
               >
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     checked={config.marketMaturity?.includes(maturity.id) || false}
-                    readOnly
+                    onCheckedChange={() => {}}
                   />
                   <label className="font-medium text-sm">{maturity.label}</label>
                 </div>
@@ -420,7 +420,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Checkbox checked={isIndustrySelected(industry)} readOnly />
+                        <Checkbox checked={isIndustrySelected(industry)} onCheckedChange={() => {}} />
                         <span className="font-medium">Entire {industry.name} Sector</span>
                       </div>
                       <Badge variant="outline" className="text-xs">
@@ -443,9 +443,9 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
                           onClick={() => handleIndustryToggle(industry, subcategory)}
                         >
                           <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              checked={isIndustrySelected(industry, subcategory)} 
-                              readOnly 
+                            <Checkbox
+                              checked={isIndustrySelected(industry, subcategory)}
+                              onCheckedChange={() => {}}
                             />
                             <div className="min-w-0 flex-1">
                               <div className="font-medium">{subcategory.name}</div>

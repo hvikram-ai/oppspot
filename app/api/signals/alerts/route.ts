@@ -28,7 +28,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // Get recent alerts
-    const { data: alerts } = await supabase
+    const { data: alerts, error: alertsError } = await supabase
       .from('threshold_alerts')
       .select(`
         *,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
 
     const { data: config, error } = await supabase
       .from('signal_alert_configs')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert(alertConfig)
       .select()
       .single();
@@ -148,11 +148,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify ownership
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('signal_alert_configs')
       .select('user_id')
       .eq('id', config_id)
-      .single() as { data: Pick<Row<'signal_alert_configs'>, 'user_id'> | null; error: any };
+      .single();
 
     if (!existing || existing.user_id !== user.id) {
       return NextResponse.json(
@@ -164,7 +164,7 @@ export async function PATCH(request: NextRequest) {
     // Update configuration
     const { data: config, error } = await supabase
       .from('signal_alert_configs')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update(updates)
       .eq('id', config_id)
       .select()
@@ -212,11 +212,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify ownership
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('signal_alert_configs')
       .select('user_id')
       .eq('id', configId)
-      .single() as { data: Pick<Row<'signal_alert_configs'>, 'user_id'> | null; error: any };
+      .single();
 
     if (!existing || existing.user_id !== user.id) {
       return NextResponse.json(

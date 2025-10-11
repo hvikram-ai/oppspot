@@ -196,7 +196,7 @@ export function MapView({
             <Marker
               key={business.id}
               position={[business.latitude, business.longitude]}
-              // @ts-ignore - Supabase type inference issue
+              // @ts-expect-error - Supabase type inference issue
               icon={createCustomIcon(business)}
               eventHandlers={{
                 click: () => onBusinessSelect(business)

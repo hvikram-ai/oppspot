@@ -382,12 +382,12 @@ export class DataSourceFactory {
 
         // Execute source-specific search logic
         if (sourceId === 'companies_house') {
-          sourceResult = await this.executeCompaniesHouseSearch(source, params.searchCriteria, params.maxResultsPerSource)
+          sourceResult = await this.executeCompaniesHouseSearch(source, params.searchCriteria as Record<string, unknown>, params.maxResultsPerSource)
         } else if (sourceId === 'irish_cro') {
-          sourceResult = await this.executeIrishCROSearch(source, params.searchCriteria, params.maxResultsPerSource)
+          sourceResult = await this.executeIrishCROSearch(source, params.searchCriteria as Record<string, unknown>, params.maxResultsPerSource)
         } else {
           // For other sources, use simulated search
-          sourceResult = await this.executeSimulatedSearch(sourceId, params.searchCriteria, params.maxResultsPerSource)
+          sourceResult = await this.executeSimulatedSearch(sourceId, params.searchCriteria as Record<string, unknown>, params.maxResultsPerSource)
         }
 
         results.push(sourceResult)
@@ -435,38 +435,40 @@ export class DataSourceFactory {
   // Private helper methods
 
   private async executeCompaniesHouseSearch(
-    source: CompaniesHouseAPI, 
-    criteria: Record<string, unknown>, 
+    source: unknown,
+    criteria: Record<string, unknown>,
     maxResults?: number
   ): Promise<DataSourceResult> {
     const startTime = Date.now()
-    
-    const searchResult = await source.searchAcquisitionTargets({
-      industries: criteria.industries || [],
-      minIncorporationYear: criteria.minIncorporationYear,
-      maxIncorporationYear: criteria.maxIncorporationYear,
-      companyTypes: criteria.companyTypes,
+
+    const typedSource = source as CompaniesHouseAPI
+
+    const searchResult = await typedSource.searchAcquisitionTargets({
+      industries: (criteria.industries || []) as Array<{ sic_code: string; industry: string }>,
+      minIncorporationYear: (criteria.minIncorporationYear || undefined) as number | undefined,
+      maxIncorporationYear: (criteria.maxIncorporationYear || undefined) as number | undefined,
+      companyTypes: (criteria.companyTypes || undefined) as string[] | undefined,
       itemsPerPage: maxResults || 100
     })
 
-    const companies = searchResult.companies.map(company => ({
-      name: company.company_name,
-      registration_number: company.company_number,
+    const companies = searchResult.companies.map((company: any) => ({
+      name: company.company_name as string,
+      registration_number: company.company_number as string,
       country: 'UK',
-      industry_codes: company.sic_codes || [],
+      industry_codes: (company.sic_codes || []) as string[],
       website: undefined,
       description: `${company.company_type} - ${company.company_status}`,
       employee_count: undefined,
       revenue_estimate: undefined,
       founding_year: new Date(company.date_of_creation).getFullYear(),
-      address: company.registered_office_address,
+      address: company.registered_office_address as any,
       phone: undefined,
       email: undefined,
       confidence_score: 0.95,
       source_metadata: {
         source: 'companies_house',
-        company_status: company.company_status,
-        company_type: company.company_type,
+        company_status: company.company_status as string,
+        company_type: company.company_type as string,
         discovered_at: new Date().toISOString()
       }
     }))
@@ -485,22 +487,25 @@ export class DataSourceFactory {
   }
 
   private async executeIrishCROSearch(
-    source: IrishCROAPI, 
-    criteria: Record<string, unknown>, 
+    source: unknown,
+    criteria: Record<string, unknown>,
     maxResults?: number
   ): Promise<DataSourceResult> {
     const startTime = Date.now()
-    
-    const searchResult = await source.searchAcquisitionTargets({
-      industries: criteria.industries?.map(i => i.industry) || [],
-      minIncorporationYear: criteria.minIncorporationYear,
-      maxIncorporationYear: criteria.maxIncorporationYear,
-      companyTypes: criteria.companyTypes,
+
+    const typedSource = source as IrishCROAPI
+    const industries = (criteria.industries as Array<{ sic_code: string; industry: string }> | undefined)
+
+    const searchResult = await typedSource.searchAcquisitionTargets({
+      industries: industries?.map((i: any) => i.industry as string) || [],
+      minIncorporationYear: (criteria.minIncorporationYear || undefined) as number | undefined,
+      maxIncorporationYear: (criteria.maxIncorporationYear || undefined) as number | undefined,
+      companyTypes: (criteria.companyTypes || undefined) as string[] | undefined,
       pageSize: maxResults || 50
     })
 
-    const companies = searchResult.companies.map(company => 
-      source.convertToStandardFormat(company)
+    const companies = searchResult.companies.map((company: any) =>
+      typedSource.convertToStandardFormat(company)
     )
 
     return {
@@ -539,17 +544,19 @@ export class DataSourceFactory {
         industry_codes: ['62020'],
         website: `https://company${i + 1}.com`,
         description: `Company found via ${config.name}`,
-        employee_count: '11-50',
+        employee_count: '11-50' as any,
         revenue_estimate: Math.floor(Math.random() * 5000000) + 500000,
         founding_year: 2010 + Math.floor(Math.random() * 14),
-        address: { street: '123 Business St', city: 'London', country: 'UK' },
+        address: { street: '123 Business St', city: 'London', country: 'UK' } as any,
+        phone: undefined,
+        email: undefined,
         confidence_score: Math.random() * 0.3 + 0.5, // 0.5 to 0.8
         source_metadata: {
           source: sourceId,
           discovered_at: new Date().toISOString(),
           simulated: true
         }
-      })
+      } as CompanyData)
     }
 
     return {

@@ -33,14 +33,11 @@ export async function POST(
     console.log(`Enriching company: ${companyNumber}`)
 
     // Check if company already exists in database
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('businesses')
       .select('id, company_number, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
-      .single() as { data: (Row<'businesses'> & {
-        cache_expires_at?: string
-        companies_house_last_updated?: string
-      }) | null; error: any }
+      .single()
 
     // Check if cache is still valid
     if (existing?.cache_expires_at) {
@@ -49,11 +46,11 @@ export async function POST(
         console.log(`Using cached data for ${companyNumber}`)
 
         // Return existing data
-        const { data: cachedCompany } = await supabase
+        const { data: cachedCompany, error: cachedCompanyError } = await supabase
           .from('businesses')
           .select('*')
           .eq('id', existing.id)
-          .single() as { data: Row<'businesses'> | null; error: any }
+          .single()
 
         return NextResponse.json({
           success: true,
@@ -86,7 +83,7 @@ export async function POST(
         console.log(`Updating existing record for ${companyNumber}`)
         const { data: updated, error: updateError } = await supabase
           .from('businesses')
-          // @ts-ignore - Type inference issue
+          // @ts-expect-error - Type inference issue
           .update(businessData)
           .eq('id', existing.id)
           .select()
@@ -103,7 +100,7 @@ export async function POST(
         console.log(`Creating new record for ${companyNumber}`)
         const { data: created, error: createError } = await supabase
           .from('businesses')
-          // @ts-ignore - Supabase type inference issue
+          // @ts-expect-error - Supabase type inference issue
           .insert(businessData)
           .select()
           .single()
@@ -145,11 +142,11 @@ export async function POST(
 
       // If API fails but we have existing data, return it
       if (existing) {
-        const { data: fallbackCompany } = await supabase
+        const { data: fallbackCompany, error: fallbackCompanyError } = await supabase
           .from('businesses')
           .select('*')
           .eq('id', existing.id)
-          .single() as { data: Row<'businesses'> | null; error: any }
+          .single()
 
         return NextResponse.json({
           success: true,
@@ -201,10 +198,7 @@ export async function GET(
       .from('businesses')
       .select('id, company_number, name, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
-      .single() as { data: (Row<'businesses'> & {
-        cache_expires_at?: string
-        companies_house_last_updated?: string
-      }) | null; error: any }
+      .single()
 
     if (error || !company) {
       return NextResponse.json({

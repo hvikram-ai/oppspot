@@ -32,11 +32,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('organization_id, role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'organization_id' | 'role'> | null; error: any };
+      .single();
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -88,18 +88,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if integration already exists
-    const { data: existingIntegration } = await supabase
+    const { data: existingIntegration, error: existingIntegrationError } = await supabase
       .from('crm_integrations')
       .select('id')
       .eq('organization_id', profile.organization_id)
       .eq('crm_type', validated.crm_type)
-      .single() as { data: Pick<Row<'crm_integrations'>, 'id'> | null; error: any };
+      .single();
 
     if (existingIntegration) {
       // Update existing integration
       const { data: integration, error } = await supabase
         .from('crm_integrations')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({
           access_token: validated.access_token,
           refresh_token: validated.refresh_token,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       // Create new integration
       const { data: integration, error } = await supabase
         .from('crm_integrations')
-        // @ts-ignore - Supabase type inference issue
+        // @ts-expect-error - Supabase type inference issue
         .insert({
           organization_id: profile.organization_id,
           crm_type: validated.crm_type,
@@ -190,11 +190,11 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'organization_id'> | null; error: any };
+      .single();
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });

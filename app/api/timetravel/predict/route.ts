@@ -207,13 +207,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'No organization found' }, { status: 400 })
     }
 
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
       .from('signal_aggregates')
       .select('*')
       .eq('company_id', company_id)
-      .single() as { data: SignalAggregate | null; error: any }
+      .single()
 
     if (aggError && aggError.code !== 'PGRST116') {
       throw aggError
@@ -237,15 +237,14 @@ export async function POST(request: NextRequest) {
 
     // If no aggregate exists, refresh it
     if (!aggregate) {
-      // @ts-ignore - Type inference issue
       await supabase.rpc('refresh_signal_aggregates', { p_company_id: company_id })
 
       // Fetch again
-      const { data: newAggregate } = await supabase
+      const { data: newAggregate, error: newAggregateError } = await supabase
         .from('signal_aggregates')
         .select('*')
         .eq('company_id', company_id)
-        .single() as { data: SignalAggregate | null; error: any }
+        .single()
 
       if (!newAggregate) {
         return NextResponse.json({
@@ -277,7 +276,6 @@ export async function POST(request: NextRequest) {
     // Save prediction to database
     const { data: savedPrediction, error: saveError } = await supabase
       .from('predictive_scores')
-      // @ts-ignore - Supabase type inference issue
       .upsert({
         company_id,
         org_id: profile.org_id,
@@ -302,7 +300,7 @@ export async function POST(request: NextRequest) {
         onConflict: 'company_id,org_id'
       })
       .select()
-      .single() as { data: SavedPrediction | null; error: any }
+      .single()
 
     if (saveError) {
       console.error('Error saving prediction:', saveError)
@@ -311,7 +309,6 @@ export async function POST(request: NextRequest) {
     // Check if alert should be created
     if (prediction.buying_probability >= 75 && prediction.confidence_level === 'high') {
       await supabase
-        // @ts-ignore - Supabase type inference issue
         .from('prediction_alerts')
         .insert({
           prediction_id: savedPrediction?.id,

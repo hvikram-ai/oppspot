@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Get enrolled leads
-      const { data: enrollments } = await supabase
+      const { data: enrollments, error: enrollmentsError } = await supabase
         .from('nurture_campaign_enrollments')
         .select('*')
         .eq('campaign_id', campaignId);

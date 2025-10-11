@@ -36,12 +36,7 @@ export async function POST(
       .select('*')
       .eq('id', id)
       .eq('user_id', user.id)
-      .single() as { data: (Record<string, unknown> & {
-        id: string
-        name: string
-        description?: string
-        filters: unknown
-      }) | null; error: any }
+      .single()
 
     if (fetchError || !savedSearch) {
       return NextResponse.json(
@@ -63,7 +58,7 @@ export async function POST(
     })
 
     // Increment execution count (fire and forget)
-    // @ts-ignore - Type inference issue
+    // @ts-expect-error - Type inference issue
     supabase.rpc('increment_search_execution', {
       p_search_id: id,
       p_result_count: results.total,

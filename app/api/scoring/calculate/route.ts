@@ -38,11 +38,15 @@ export async function POST(request: NextRequest) {
     console.log('[API] Scoring request:', { company_id, company_number, company_name, force_refresh })
 
     // Get user's organization for custom weights
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
+
+    if (profileError) {
+      console.error('[API] Failed to fetch profile:', profileError)
+    }
 
     // Initialize scoring service
     const scoringService = new LeadScoringService()

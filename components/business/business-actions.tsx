@@ -33,7 +33,8 @@ interface BusinessActionsProps {
   business: {
     id: string
     name: string
-    description?: string
+    description?: string | null
+    [key: string]: unknown
   }
 }
 

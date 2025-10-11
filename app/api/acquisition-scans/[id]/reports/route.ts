@@ -28,21 +28,23 @@ export async function GET(
     const reportType = searchParams.get('type')
 
     // Check scan access
-    const { data: scan, error: scanError } = await supabase
+    const { data: scanData, error: scanError } = await supabase
       .from('acquisition_scans')
       .select('user_id, org_id')
       .eq('id', scanId)
-      .single() as { data: Pick<Row<'acquisition_scans'>, 'user_id' | 'org_id'> | null; error: any } 
+      .single();
 
-    if (scanError || !scan) {
+    if (scanError || !scanData) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
       )
     }
 
+    const scan = scanData as Pick<Row<'acquisition_scans'>, 'user_id' | 'org_id'>
+
     // Check access permissions
-    const hasAccess = scan.user_id === user.id || 
+    const hasAccess = scan.user_id === user.id ||
       (scan.org_id && await checkOrgAccess(supabase, user.id, scan.org_id))
 
     if (!hasAccess) {
@@ -103,11 +105,20 @@ export async function POST(
     const body = await request.json()
 
     // Check scan access
-    const { data: scan, error: scanError } = await supabase
+    const { data: scanData, error: scanError } = await supabase
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Row<'acquisition_scans'> | null; error: any }
+      .single()
+
+    if (scanError || !scanData) {
+      return NextResponse.json(
+        { error: 'Scan not found' },
+        { status: 404 }
+      )
+    }
+
+    const scan = scanData as Scan;
 
     if (scanError || !scan) {
       return NextResponse.json(
@@ -240,11 +251,18 @@ export async function POST(
   }
 }
 
+// Type for target companies with related data
+type TargetCompanyWithRelations = Row<'target_companies'> & {
+  financial_analysis?: any[]
+  risk_assessments?: Array<{ risk_category?: string; red_flags?: any[] }>
+  due_diligence?: any[]
+}
+
 // Generate report content based on type
 async function generateReportContent(supabase: DbClient, scanId: string, reportType: string, scan: Scan) {
   try {
     // Get scan data
-    const { data: targets } = await supabase
+    const { data: targetsData, error: targetsError } = await supabase
       .from('target_companies')
       .select(`
         *,
@@ -252,13 +270,15 @@ async function generateReportContent(supabase: DbClient, scanId: string, reportT
         risk_assessments (*),
         due_diligence (*)
       `)
-      .eq('scan_id', scanId) as { data: any[] | null; error: unknown }
+      .eq('scan_id', scanId);
 
-    const { data: marketIntelligence } = await supabase
+    const targets = (targetsData || []) as TargetCompanyWithRelations[]
+
+    const { data: marketIntelligence, error: marketError } = await supabase
       .from('market_intelligence')
       .select('*')
       .eq('scan_id', scanId)
-      .single() as { data: Row<'market_intelligence'> | null; error: any }
+      .single();
 
     // Generate content based on report type
     switch (reportType) {
@@ -334,11 +354,11 @@ async function generateReportContent(supabase: DbClient, scanId: string, reportT
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any } 
+      .single(); 
 
     return profile?.org_id === orgId
   } catch (error) {

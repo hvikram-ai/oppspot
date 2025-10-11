@@ -93,13 +93,26 @@ export async function POST(
     }
 
     // Get analysis data (handle demo mode)
-    type AnalysisData = Row<'similarity_analyses'> & {
+    interface AnalysisMetadata {
+      target_company_name?: string;
+      target_company_data?: Record<string, unknown>;
+      analysis_configuration?: Record<string, unknown>;
+      total_companies_analyzed?: number;
+      average_similarity_score?: number;
+      top_similarity_score?: number;
+      completed_at?: string;
+      executive_summary?: string;
+      key_opportunities?: string[];
+      risk_highlights?: string[];
+      strategic_recommendations?: string[];
+    }
+
+    type AnalysisData = Row<'similarity_analyses'> & AnalysisMetadata & {
       similar_company_matches?: Array<{
         company_name: string;
         overall_score: number;
-        [key: string]: any;
+        [key: string]: unknown;
       }>;
-      [key: string]: any;
     }
     let analysis: AnalysisData | null
     if (!isDemoMode) {
@@ -153,21 +166,21 @@ export async function POST(
     const exportData = {
       analysis: {
         id: analysis?.id,
-        targetCompany: (analysis as any)?.target_company_name,
-        targetCompanyData: (analysis as any)?.target_company_data,
-        configuration: (analysis as any)?.analysis_configuration,
+        targetCompany: analysis?.target_company_name,
+        targetCompanyData: analysis?.target_company_data,
+        configuration: analysis?.analysis_configuration,
         summary: {
-          totalCompanies: (analysis as any)?.total_companies_analyzed,
-          averageScore: (analysis as any)?.average_similarity_score,
-          topScore: (analysis as any)?.top_similarity_score,
+          totalCompanies: analysis?.total_companies_analyzed,
+          averageScore: analysis?.average_similarity_score,
+          topScore: analysis?.top_similarity_score,
           analysisDate: analysis?.created_at,
-          completionTime: (analysis as any)?.completed_at
+          completionTime: analysis?.completed_at
         },
         insights: {
-          executiveSummary: (analysis as any)?.executive_summary,
-          keyOpportunities: (analysis as any)?.key_opportunities || [],
-          riskHighlights: (analysis as any)?.risk_highlights || [],
-          strategicRecommendations: (analysis as any)?.strategic_recommendations || []
+          executiveSummary: analysis?.executive_summary,
+          keyOpportunities: analysis?.key_opportunities || [],
+          riskHighlights: analysis?.risk_highlights || [],
+          strategicRecommendations: analysis?.strategic_recommendations || []
         }
       },
       matches: topMatches,
@@ -189,13 +202,13 @@ export async function POST(
     switch (exportFormat) {
       case 'json':
         exportContent = JSON.stringify(exportData, null, 2)
-        fileName = `similar-companies-${(analysis as any)?.target_company_name || 'analysis'}-${analysisId.slice(0, 8)}.json`
+        fileName = `similar-companies-${analysis?.target_company_name || 'analysis'}-${analysisId.slice(0, 8)}.json`
         contentType = 'application/json'
         break
 
       case 'csv':
         exportContent = generateCSV(topMatches)
-        fileName = `similar-companies-${(analysis as any)?.target_company_name || 'analysis'}-${analysisId.slice(0, 8)}.csv`
+        fileName = `similar-companies-${analysis?.target_company_name || 'analysis'}-${analysisId.slice(0, 8)}.csv`
         contentType = 'text/csv'
         break
 
@@ -213,7 +226,7 @@ export async function POST(
 
       default:
         exportContent = JSON.stringify(exportData, null, 2)
-        fileName = `similar-companies-${(analysis as any)?.target_company_name || 'analysis'}.json`
+        fileName = `similar-companies-${analysis?.target_company_name || 'analysis'}.json`
         contentType = 'application/json'
     }
 
@@ -278,7 +291,15 @@ export async function GET(
         )
       }
 
-      const typedRecord = exportRecord as any
+      interface ExportRecord {
+        id: string;
+        export_type: string;
+        export_format: string;
+        generation_status: string;
+        file_path?: string;
+      }
+
+      const typedRecord = exportRecord as unknown as ExportRecord;
       if (typedRecord.generation_status === 'completed' && typedRecord.file_path) {
         // Return download link or file content
         return NextResponse.json({
@@ -400,22 +421,27 @@ async function generatePDFExport(
     console.error('PDF generation error:', error)
     
     // Fallback: Create export record for background processing
-    const { data: exportRecord } = await supabase
+    const exportDataTyped = exportData as { analysis: { targetCompany?: string } } | null;
+    const { data: exportRecord, error: insertError } = await supabase
       .from('similarity_analysis_exports')
       .insert({
         similarity_analysis_id: analysisId,
         user_id: userId,
         export_type: 'executive_summary',
         export_format: 'pdf',
-        export_title: `Similar Companies Analysis - ${(exportData as any).analysis.targetCompany || 'Unknown'}`,
+        export_title: `Similar Companies Analysis - ${exportDataTyped?.analysis?.targetCompany || 'Unknown'}`,
         export_description: 'Executive summary of similar company analysis for MnA evaluation',
-        export_content: exportData,
+        export_content: exportData as Record<string, unknown>,
         generation_status: 'failed',
         template_version: 'v1.0',
         error_message: getErrorMessage(error)
-      } as any)
+      })
       .select()
-      .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
+      .single();
+
+    if (insertError) {
+      console.error('[Export API] Error creating fallback export record:', insertError);
+    }
 
     return NextResponse.json({
       error: 'PDF generation temporarily unavailable',
@@ -442,12 +468,16 @@ async function generatePowerPointExport(
       export_format: 'pptx',
       export_title: `MnA Similar Companies Presentation - ${exportData.analysis.targetCompany || 'Unknown'}`,
       export_description: 'PowerPoint presentation for MnA committee review',
-      export_content: exportData,
+      export_content: exportData as Record<string, unknown>,
       generation_status: 'pending',
       template_version: 'v1.0'
-    } as any)
+    })
     .select()
-    .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
+    .single();
+
+  if (error) {
+    console.error('[Export API] Error creating PowerPoint export record:', error);
+  }
 
   if (error) {
     throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)
@@ -478,12 +508,16 @@ async function generateExcelExport(
       export_format: 'xlsx',
       export_title: `Similar Companies Data - ${exportData.analysis.targetCompany || 'Unknown'}`,
       export_description: 'Detailed Excel workbook with similarity analysis data',
-      export_content: exportData,
+      export_content: exportData as Record<string, unknown>,
       generation_status: 'pending',
       template_version: 'v1.0'
-    } as any)
+    })
     .select()
-    .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any }
+    .single();
+
+  if (error) {
+    console.error('[Export API] Error creating Excel export record:', error);
+  }
 
   if (error) {
     throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)

@@ -452,7 +452,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                     variant="secondary"
                     className="flex items-center gap-2"
                   >
-                    {region.name}, {region.country}
+                    {String(region.name)}, {String(region.country)}
                     <button
                       onClick={() => {
                         const newSelection = config.selectedRegions.filter((_: unknown, i: number) => i !== index)
@@ -481,7 +481,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Checkbox checked={isRegionSelected(region)} readOnly />
+                      <Checkbox checked={isRegionSelected(region)} onCheckedChange={() => {}} />
                       <div>
                         <CardTitle className="text-lg">{region.name}</CardTitle>
                         <CardDescription>{region.country}</CardDescription>
@@ -599,7 +599,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Checkbox checked={isRequirementSelected(requirement)} readOnly />
+                      <Checkbox checked={isRequirementSelected(requirement)} onCheckedChange={() => {}} />
                       <div>
                         <CardTitle className="text-base">{requirement.name}</CardTitle>
                         <CardDescription>{requirement.description}</CardDescription>
@@ -649,11 +649,11 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                 <div className="space-y-2">
                   {Object.values(config.regulatoryRequirements || {}).map((req: Record<string, unknown>, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
-                      <span className="font-medium">{req.name}</span>
+                      <span className="font-medium">{String(req.name)}</span>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{req.timeline}</span>
+                        <span>{String(req.timeline)}</span>
                         <span>•</span>
-                        <span>{req.estimated_cost}</span>
+                        <span>{String(req.estimated_cost)}</span>
                       </div>
                     </div>
                   ))}

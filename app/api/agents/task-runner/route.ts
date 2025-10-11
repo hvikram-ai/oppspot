@@ -18,21 +18,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's org (admin check could be added here)
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id' | 'role'> | null; error: any }
+      .single()
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
     // Get task statistics
-    const { data: tasks } = await supabase
+    const { data: tasks, error: tasksError } = await supabase
       .from('agent_tasks')
       .select('status')
-      .eq('org_id', profile.org_id) as { data: Pick<Row<'agent_tasks'>, 'status'>[] | null; error: any }
+      .eq('org_id', profile.org_id)
 
     const stats = {
       pending: tasks?.filter(t => t.status === 'pending').length || 0,
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent tasks
-    const { data: recentTasks } = await supabase
+    const { data: recentTasks, error: recentTasksError } = await supabase
       .from('agent_tasks')
       .select(`
         *,
@@ -87,13 +87,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user is admin (you may want to add admin role check)
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id' | 'role'> | null; error: any }
+      .single()
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 

@@ -18,19 +18,20 @@ interface BusinessInfoProps {
   business: {
     id: string
     name: string
-    description?: string
-    categories?: string[]
-    founded_year?: number
-    employee_count?: string
-    revenue_range?: string
+    description?: string | null
+    categories?: string[] | null
+    founded_year?: number | null
+    employee_count?: string | null
+    revenue_range?: string | null
     business_hours?: {
       [key: string]: { open: string; close: string }
-    }
-    certifications?: string[]
-    specialties?: string[]
-    google_place_id?: string
-    created_at?: string
-    updated_at?: string
+    } | null
+    certifications?: string[] | null
+    specialties?: string[] | null
+    google_place_id?: string | null
+    created_at?: string | null
+    updated_at?: string | null
+    [key: string]: unknown
   }
 }
 

@@ -3,19 +3,26 @@
  * Provides multi-level caching with Redis and in-memory fallback
  */
 
-import { ICacheService, CacheOptions } from '../../core/interfaces'
+import { ICacheService } from '../../core/interfaces'
+
+// Local type definition for cache options
+interface CacheOptions {
+  tags?: string[]
+  priority?: 'low' | 'medium' | 'high'
+}
 
 // Extended Redis client interface with all required methods
 interface RedisClient {
   get: (key: string) => Promise<string | null>
   set: (key: string, value: string, ex: number) => Promise<void>
-  del: (key: string) => Promise<void>
+  del: (...keys: string[]) => Promise<void>
   setex: (key: string, seconds: number, value: string) => Promise<void>
   sadd: (key: string, ...members: string[]) => Promise<number>
   smembers: (key: string) => Promise<string[]>
   expire: (key: string, seconds: number) => Promise<number>
   keys: (pattern: string) => Promise<string[]>
   exists: (...keys: string[]) => Promise<number>
+  mget: (...keys: string[]) => Promise<(string | null)[]>
   pipeline: () => any
   info: (section?: string) => Promise<string>
 }
@@ -45,7 +52,7 @@ export class CacheService implements ICacheService {
       // Fallback to memory cache
       const memoryItem = this.memoryCache.get(key)
       if (memoryItem && memoryItem.expiresAt > Date.now()) {
-        return memoryItem.value
+        return memoryItem.value as T | null
       }
 
       // Clean up expired item
@@ -73,15 +80,15 @@ export class CacheService implements ICacheService {
           // Store with tags for invalidation
           await Promise.all([
             this.redisClient.setex(key, ttl, serialized),
-            ...options.tags.map(tag => 
-              this.redisClient.sadd(`tag:${tag}`, key)
+            ...options.tags.map((tag: string) =>
+              this.redisClient!.sadd(`tag:${tag}`, key)
             )
           ])
-          
+
           // Set expiry for tag sets
           await Promise.all(
-            options.tags.map(tag => 
-              this.redisClient.expire(`tag:${tag}`, ttl + 60)
+            options.tags.map((tag: string) =>
+              this.redisClient!.expire(`tag:${tag}`, ttl + 60)
             )
           )
         } else {
@@ -127,7 +134,7 @@ export class CacheService implements ICacheService {
       if (this.redisClient) {
         const keys = await this.redisClient.keys('oppspot:*')
         if (keys.length > 0) {
-          await this.redisClient.del(...keys)
+          await this.redisClient.del(...(keys as string[]))
         }
       }
 
@@ -164,7 +171,7 @@ export class CacheService implements ICacheService {
         if (keys.length > 0) {
           // Delete all keys and the tag set
           await Promise.all([
-            this.redisClient.del(...keys),
+            this.redisClient.del(...(keys as string[])),
             this.redisClient.del(`tag:${tag}`)
           ])
         }
@@ -194,12 +201,12 @@ export class CacheService implements ICacheService {
           const value = redisValues[i]
           
           if (value) {
-            results[key] = JSON.parse(value)
+            results[key] = JSON.parse(value) as T | null
           } else {
             // Check memory cache for missing keys
             const memoryItem = this.memoryCache.get(key)
-            results[key] = (memoryItem && memoryItem.expiresAt > Date.now()) 
-              ? memoryItem.value 
+            results[key] = (memoryItem && memoryItem.expiresAt > Date.now())
+              ? (memoryItem.value as T | null)
               : null
           }
         }
@@ -207,8 +214,8 @@ export class CacheService implements ICacheService {
         // Use memory cache only
         for (const key of keys) {
           const memoryItem = this.memoryCache.get(key)
-          results[key] = (memoryItem && memoryItem.expiresAt > Date.now()) 
-            ? memoryItem.value 
+          results[key] = (memoryItem && memoryItem.expiresAt > Date.now())
+            ? (memoryItem.value as T | null)
             : null
         }
       }
@@ -237,7 +244,7 @@ export class CacheService implements ICacheService {
           
           // Handle tags
           if (options?.tags) {
-            options.tags.forEach(tag => {
+            options.tags.forEach((tag: string) => {
               pipeline.sadd(`tag:${tag}`, key)
               pipeline.expire(`tag:${tag}`, ttl + 60)
             })

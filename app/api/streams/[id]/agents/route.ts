@@ -24,12 +24,12 @@ export async function GET(
     }
 
     // Verify user has access to this stream
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single();
 
     if (!membership) {
       return NextResponse.json(
@@ -98,12 +98,12 @@ export async function POST(
     }
 
     // Verify user has editor/owner access
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single() as { data: Pick<Row<'stream_members'>, 'role'> | null; error: any }
+      .single();
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(
@@ -129,11 +129,11 @@ export async function POST(
     } = body
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single();
 
     let finalAgentId = agent_id
 
@@ -149,7 +149,6 @@ export async function POST(
 
       const { data: newAgent, error: agentError } = await supabase
         .from('ai_agents')
-        // @ts-ignore - Supabase type inference issue
         .insert({
           org_id: profile?.org_id,
           stream_id: streamId,
@@ -183,7 +182,6 @@ export async function POST(
 
     // Create stream-agent assignment
     const { data: assignment, error: assignError } = await supabase
-      // @ts-ignore - Supabase type inference issue
       .from('stream_agent_assignments')
       .insert({
         stream_id: streamId,
@@ -216,7 +214,6 @@ export async function POST(
     }
 
     // Create activity
-    // @ts-ignore - Supabase type inference issue
     await supabase
       .from('stream_activities')
       .insert({

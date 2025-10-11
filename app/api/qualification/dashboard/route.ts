@@ -45,19 +45,24 @@ interface ThresholdAlert {
   id: string;
   status: string;
   triggered_at: string;
-  [key: string]: any;
+  alert_type?: string;
+  message?: string;
+  severity?: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface QualificationActivity {
   id: string;
   created_at: string;
+  activity_type?: string;
+  activity_description?: string;
+  score_impact?: number | null;
   lead?: {
     id?: string;
     company?: {
       name?: string;
     };
   };
-  [key: string]: any;
 }
 
 export async function GET(request: NextRequest) {
@@ -103,9 +108,15 @@ export async function GET(request: NextRequest) {
       .in('qualification_status', ['qualified', 'sales_qualified']);
 
     // Get BANT scores
-    const { data: bantScores } = await supabase
+    const { data: bantScoresData, error: bantError } = await supabase
       .from('bant_qualifications')
-      .select('budget_score, authority_score, need_score, timeline_score, overall_score') as { data: BantQualification[] | null; error: any };
+      .select('budget_score, authority_score, need_score, timeline_score, overall_score');
+
+    if (bantError) {
+      console.error('Error fetching BANT scores:', bantError);
+    }
+
+    const bantScores = (bantScoresData || []) as BantQualification[]
 
     const bantAverages = {
       average_overall: 0,
@@ -124,9 +135,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Get MEDDIC scores
-    const { data: meddicScores } = await supabase
+    const { data: meddicScoresData, error: meddicError } = await supabase
       .from('meddic_qualifications')
-      .select('overall_score, qualification_confidence, forecast_category') as { data: MeddicQualification[] | null; error: any };
+      .select('overall_score, qualification_confidence, forecast_category');
+
+    if (meddicError) {
+      console.error('Error fetching MEDDIC scores:', meddicError);
+    }
+
+    const meddicScores = (meddicScoresData || []) as MeddicQualification[]
 
     const meddicData = {
       average_overall: 0,
@@ -149,9 +166,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Get routing metrics
-    const { data: assignments } = await supabase
+    const { data: assignmentsData, error: assignmentsError } = await supabase
       .from('lead_assignments')
-      .select('response_time_minutes, status') as { data: LeadAssignment[] | null; error: any };
+      .select('response_time_minutes, status');
+
+    if (assignmentsError) {
+      console.error('Error fetching assignments:', assignmentsError);
+    }
+
+    const assignments = (assignmentsData || []) as LeadAssignment[]
 
     const routingMetrics = {
       total_assignments: assignments?.length || 0,
@@ -162,7 +185,9 @@ export async function GET(request: NextRequest) {
 
     if (assignments?.length) {
       const responseTimes = assignments
-        .filter(a => a.response_time_minutes)
+        .filter((a): a is LeadAssignment & { response_time_minutes: number } =>
+          a.response_time_minutes !== null
+        )
         .map(a => a.response_time_minutes);
 
       if (responseTimes.length) {
@@ -177,9 +202,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Get checklist metrics
-    const { data: checklists } = await supabase
+    const { data: checklistsData, error: checklistsError } = await supabase
       .from('qualification_checklists')
-      .select('status, completion_percentage, total_items, completed_items') as { data: QualificationChecklist[] | null; error: any };
+      .select('status, completion_percentage, total_items, completed_items');
+
+    if (checklistsError) {
+      console.error('Error fetching checklists:', checklistsError);
+    }
+
+    const checklists = (checklistsData || []) as QualificationChecklist[]
 
     const checklistMetrics = {
       completion_rate: 0,
@@ -199,9 +230,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recycling metrics
-    const { data: recyclingHistory } = await supabase
+    const { data: recyclingHistoryData, error: recyclingError } = await supabase
       .from('lead_recycling_history')
-      .select('outcome') as { data: LeadRecyclingHistory[] | null; error: any };
+      .select('outcome');
+
+    if (recyclingError) {
+      console.error('Error fetching recycling history:', recyclingError);
+    }
+
+    const recyclingHistory = (recyclingHistoryData || []) as LeadRecyclingHistory[]
 
     const recyclingMetrics = {
       total_recycled: recyclingHistory?.length || 0,
@@ -218,7 +255,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent activities
-    const { data: recentActivities } = await supabase
+    const { data: recentActivities, error: activitiesError } = await supabase
       .from('qualification_activities')
       .select(`
         *,
@@ -228,10 +265,14 @@ export async function GET(request: NextRequest) {
         )
       `)
       .order('created_at', { ascending: false })
-      .limit(10) as { data: QualificationActivity[] | null; error: any };
+      .limit(10);
+
+    if (activitiesError) {
+      console.error('Error fetching recent activities:', activitiesError);
+    }
 
     // Get upcoming reviews
-    const { data: upcomingReviews } = await supabase
+    const { data: upcomingReviews, error: reviewsError } = await supabase
       .from('bant_qualifications')
       .select(`
         id,
@@ -243,15 +284,23 @@ export async function GET(request: NextRequest) {
       `)
       .gte('next_review_date', new Date().toISOString())
       .order('next_review_date', { ascending: true })
-      .limit(10) as { data: BantQualification[] | null; error: any };
+      .limit(10);
+
+    if (reviewsError) {
+      console.error('Error fetching upcoming reviews:', reviewsError);
+    }
 
     // Get active alerts
-    const { data: alerts } = await supabase
+    const { data: alerts, error: alertsError } = await supabase
       .from('threshold_alerts')
       .select('*')
       .eq('status', 'triggered')
       .order('triggered_at', { ascending: false })
-      .limit(10) as { data: ThresholdAlert[] | null; error: any };
+      .limit(10);
+
+    if (alertsError) {
+      console.error('Error fetching alerts:', alertsError);
+    }
 
     const dashboardData: QualificationDashboardData = {
       total_leads: totalLeads || 0,

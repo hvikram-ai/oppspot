@@ -76,9 +76,9 @@ export async function POST(
     }
 
     // Update scan status to starting
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateError } = await (supabase as any)
+    const { error: updateError } = await supabase
       .from('acquisition_scans')
+      // @ts-expect-error - Complex JSONB metadata type
       .update({
         status: 'scanning',
         current_step: 'initializing',
@@ -105,10 +105,11 @@ export async function POST(
       legal_basis: 'legitimate_interest',
       retention_period: 365
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: auditError } = await (supabase
+     
+    const { error: auditError } = await supabase
       .from('scan_audit_log')
-      .insert(auditLogData as any) as any)
+      // @ts-expect-error - Complex audit log type
+      .insert(auditLogData)
 
     if (auditError) {
       console.error('Failed to create audit log:', auditError)
@@ -207,7 +208,7 @@ function getEstimatedCompletion(scan: Scan): string {
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
     type ProfileOrgId = Pick<Database['public']['Tables']['profiles']['Row'], 'org_id'>
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

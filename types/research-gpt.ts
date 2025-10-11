@@ -37,14 +37,22 @@ export type SignalType =
   | 'hiring'
   | 'expansion'
   | 'leadership'
+  | 'leadership_change'
   | 'tech_change'
   | 'social_sentiment'
   | 'funding'
-  | 'product_launch';
+  | 'product_launch'
+  | 'partnership'
+  | 'award'
+  | 'company_update'
+  | 'financial_health'
+  | 'accounts_filing'
+  | 'compliance'
+  | 'business_status';
 
 export type SignalPriority = 'high' | 'medium' | 'low';
 
-export type SeniorityLevel = 'C-level' | 'VP' | 'Director' | 'Manager' | 'IC';
+export type SeniorityLevel = 'C-level' | 'VP' | 'Director' | 'Manager' | 'IC' | 'c-level' | 'vp' | 'director' | 'manager' | 'individual_contributor';
 
 export type DecisionInfluence = 'champion' | 'influencer' | 'blocker' | 'neutral' | 'unknown';
 
@@ -156,9 +164,9 @@ export type SectionContent =
  * Maps to: research_sources table
  */
 export interface Source {
-  id: string;
-  report_id: string;
-  section_type: SectionType | null; // null if used in multiple sections
+  id?: string; // Optional for data source layer, required for database
+  report_id?: string; // Optional for data source layer, required for database
+  section_type?: SectionType | null; // null if used in multiple sections
 
   // Source details
   url: string;
@@ -167,15 +175,15 @@ export interface Source {
   accessed_date: string;
 
   // Classification
-  source_type: SourceType;
+  source_type: SourceType | 'job_posting' | 'company_website' | 'companies_house'; // Extended types for data sources
   reliability_score: number; // 0-1
 
   // Metadata
-  domain: string | null;
-  content_snippet: string | null;
+  domain?: string | null;
+  content_snippet?: string | null;
 
   // Timestamp
-  created_at: string;
+  created_at?: string; // Optional for data source layer, required for database
 }
 
 /**
@@ -214,10 +222,27 @@ export interface UserResearchQuota {
  * Static data: 7-day cache
  */
 export interface CompanySnapshot {
+  // Core identification
+  company_name: string;
+  company_number: string | null;
+
   // FR-006: Basic information
   founded_year: number | null;
   company_type: string | null;
   company_status: string | null;
+
+  // Location data
+  registered_address: {
+    address_line_1?: string;
+    address_line_2?: string;
+    locality?: string;
+    city?: string;
+    region?: string;
+    postal_code?: string;
+    country?: string;
+  } | null;
+  headquarters_location: string | null;
+  operating_locations: string[];
 
   // FR-007: Employee metrics
   employee_count: number | null;
@@ -234,17 +259,38 @@ export interface CompanySnapshot {
       revenue: number;
     };
   } | null;
+  revenue_growth_yoy: number | null;
 
   // FR-009: Technology stack
   tech_stack: TechStackItem[];
 
   // FR-010: Funding history
   funding_rounds: FundingRound[];
+  total_funding: {
+    amount: number;
+    currency: string;
+  } | null;
 
   // Additional context
   industry: string | null;
   sic_codes: string[];
-  headquarters: {
+  description: string | null;
+  mission_statement: string | null;
+  value_proposition: string | null;
+  business_model: string | null;
+
+  // Market presence
+  target_market: string[];
+  geographic_presence: string[];
+
+  // Jurisdiction
+  jurisdiction: string;
+
+  // Metadata
+  last_updated: string;
+
+  // Legacy field for backwards compatibility
+  headquarters?: {
     city: string | null;
     country: string | null;
     address: string | null;
@@ -271,16 +317,18 @@ export interface FundingRound {
  */
 export interface BuyingSignal {
   signal_type: SignalType;
-  priority: SignalPriority; // FR-016
+  priority?: SignalPriority; // FR-016
   detected_date: string;
   confidence: ConfidenceLevel;
-  description: string;
-  source_url: string;
-  source_type: string;
+  title: string;
+  description?: string;
+  source_url?: string;
+  source_type?: string;
   category?: string;
+  relevance_score?: number; // 0-1, used for ranking signals
 
-  // Type-specific details
-  details: HiringSignal | ExpansionSignal | LeadershipSignal | TechSignal | SocialSentimentSignal;
+  // Type-specific details (optional for data source layer)
+  details?: HiringSignal | ExpansionSignal | LeadershipSignal | TechSignal | SocialSentimentSignal;
 }
 
 export interface HiringSignal {
@@ -327,32 +375,39 @@ export interface DecisionMaker {
   // FR-018: Core information
   name: string;
   job_title: string;
-  department: string;
-  seniority_level: SeniorityLevel;
-  linkedin_url: string | null;
+  department: string | null;
+  seniority_level?: SeniorityLevel;
+  linkedin_url?: string | null;
 
   // FR-018: Background
-  background_summary: string;
-  years_in_role: number | null;
-  previous_companies: string[];
+  background_summary?: string;
+  years_in_role?: number | null;
+  previous_companies?: string[];
 
   // FR-019: Reporting structure
-  reports_to: string | null;
-  team_size: number | null;
+  reports_to?: string | null;
+  team_size?: number | null;
 
   // FR-020: Champion identification
-  decision_influence: DecisionInfluence;
-  influence_rationale: string;
+  decision_influence?: DecisionInfluence;
+  influence_rationale?: string;
+  influence_score?: number; // 0-1, for ranking decision makers
+  is_decision_maker?: boolean;
 
   // FR-021: GDPR-compliant contact info
-  business_email: string | null; // Only if from official source
-  business_phone: string | null; // Only if from official source
-  contact_source: string;
-  contact_verified_date: string | null;
+  business_email?: string | null; // Only if from official source
+  phone_number?: string | null; // Alias for business_phone
+  business_phone?: string | null; // Only if from official source
+  contact_source?: string;
+  contact_verified_date?: string | null;
+  appointed_date?: string | null; // From Companies House
 
   // FR-021c: Removal tracking
-  removal_requested: boolean;
-  removal_date: string | null;
+  removal_requested?: boolean;
+  removal_date?: string | null;
+
+  // Additional metadata
+  notes?: string;
 }
 
 /**

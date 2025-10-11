@@ -53,11 +53,11 @@ export async function GET(request: NextRequest) {
 
     // Personalized recommendations (default)
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('industry, company_size')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'industry' | 'company_size'> | null; error: any }
+      .single()
 
     // Get user's template history
     const history = await TemplateRecommender.getUserTemplateHistory(user.id)

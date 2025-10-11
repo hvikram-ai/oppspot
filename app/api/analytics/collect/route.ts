@@ -14,11 +14,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single()
 
     if (profile?.role !== 'admin' && profile?.role !== 'analyst') {
       return NextResponse.json({ error: 'Admin or analyst access required' }, { status: 403 })

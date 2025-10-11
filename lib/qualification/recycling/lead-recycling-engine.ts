@@ -623,12 +623,17 @@ export class LeadRecyclingEngine {
 
     if (!similarLeads?.length) return 0.5; // Default 50% if no data
 
+    interface RecyclingHistoryData {
+      outcome: string | null;
+    }
+
     // Calculate success rate for similar leads
-    const successful = similarLeads.filter((l: any) =>
+    const typedLeads = similarLeads as unknown as RecyclingHistoryData[];
+    const successful = typedLeads.filter((l) =>
       l.outcome === 'converted' || l.outcome === 're_qualified'
     ).length;
 
-    return successful / similarLeads.length;
+    return successful / typedLeads.length;
   }
 
   async getRecyclingRecommendations(leadId: string) {

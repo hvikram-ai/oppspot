@@ -34,11 +34,11 @@ export async function POST(request: NextRequest) {
     }
     
     // Verify primary business exists
-    const { data: primaryBusiness } = await supabase
+    const { data: primaryBusiness, error: primaryBusinessError } = await supabase
       .from('businesses')
       .select('id, name, categories')
       .eq('id', primaryBusinessId)
-      .single() as { data: Pick<Row<'businesses'>, 'id' | 'name' | 'categories'> | null; error: any }
+      .single();
     
     if (!primaryBusiness) {
       return NextResponse.json(
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Create competitor set
     const { data: competitorSet, error: createError } = await supabase
       .from('competitor_sets')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         name,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     if (createError) throw createError
     
     // Fetch competitor details
-    const { data: competitors } = await supabase
+    const { data: competitors, error: competitorsError } = await supabase
       .from('businesses')
       .select('id, name, rating, review_count, categories')
       .in('id', finalCompetitorIds)
@@ -121,11 +121,7 @@ export async function GET(request: NextRequest) {
         .select('*')
         .eq('id', setId)
         .eq('user_id', user.id)
-        .single() as { data: (Record<string, unknown> & {
-          id: string
-          primary_business_id: string
-          competitor_ids: string[]
-        }) | null; error: any }
+        .single()
       
       if (error) throw error
       
@@ -142,13 +138,13 @@ export async function GET(request: NextRequest) {
         ...competitorSet.competitor_ids
       ].filter(Boolean)
       
-      const { data: businesses } = await supabase
+      const { data: businesses, error: businessesError } = await supabase
         .from('businesses')
         .select('*')
-        .in('id', allBusinessIds) as { data: Row<'businesses'>[] | null; error: any }
+        .in('id', allBusinessIds)
       
       // Fetch competitive metrics
-      const { data: metrics } = await supabase
+      const { data: metrics, error: metricsError } = await supabase
         .from('competitive_metrics')
         .select('*')
         .in('business_id', allBusinessIds)
@@ -172,7 +168,7 @@ export async function GET(request: NextRequest) {
       
     } else if (businessId) {
       // Find competitor sets for a specific business
-      const { data: sets } = await supabase
+      const { data: sets, error: setsError } = await supabase
         .from('competitor_sets')
         .select('*')
         .eq('user_id', user.id)
@@ -226,7 +222,7 @@ export async function PATCH(request: NextRequest) {
     // Update competitor set
     const { data: updated, error } = await supabase
       .from('competitor_sets')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update({
         ...updates,
         updated_at: new Date().toISOString()
@@ -297,18 +293,18 @@ async function discoverCompetitors(
 ) {
   try {
     // Get primary business location
-    const { data: primaryBusiness } = await supabase
+    const { data: primaryBusiness, error: primaryBusinessError } = await supabase
       .from('businesses')
       .select('latitude, longitude')
       .eq('id', primaryBusinessId)
-      .single() as { data: Pick<Row<'businesses'>, 'latitude' | 'longitude'> | null; error: any }
+      .single();
     
     if (!primaryBusiness || !primaryBusiness.latitude) {
       return []
     }
     
     // Find similar businesses nearby
-    const { data: competitors } = await supabase
+    const { data: competitors, error: competitorsError } = await supabase
       .rpc('nearby_businesses', {
         lat: primaryBusiness.latitude,
         lng: primaryBusiness.longitude,

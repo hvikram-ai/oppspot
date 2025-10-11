@@ -39,13 +39,13 @@ export async function GET(_request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single();
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
@@ -54,7 +54,7 @@ export async function GET(_request: NextRequest) {
       .from('ai_agents')
       .select('*')
       .eq('org_id', profile.org_id)
-      .order('created_at', { ascending: false }) as { data: Row<'ai_agents'>[] | null; error: any }
+      .order('created_at', { ascending: false })
 
     if (error) {
       throw new Error(`Failed to fetch agents: ${error.message}`)
@@ -85,13 +85,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single();
 
-    if (!profile?.org_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     // Create agent
     const { data: agent, error } = await supabase
       .from('ai_agents')
-      // @ts-ignore - Supabase type inference issue with insert
+      // @ts-expect-error - Supabase type inference issue with insert
       .insert([{
         org_id: profile.org_id,
         agent_type: validated.agent_type,
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         created_by: user.id
       }])
       .select()
-      .single() as { data: Row<'ai_agents'> | null; error: any }
+      .single();
 
     if (error) {
       throw new Error(`Failed to create agent: ${error.message}`)
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request', details: error.errors },
+        { error: 'Invalid request', details: error.issues },
         { status: 400 }
       )
     }

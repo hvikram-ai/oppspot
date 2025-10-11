@@ -28,18 +28,20 @@ export async function POST(
     const { action } = await request.json() // 'start', 'pause', 'resume', 'stop'
 
     // Get the existing scan
-    const { data: scan, error: fetchError } = await supabase
+    const { data: scanData, error: fetchError } = await supabase
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Row<'acquisition_scans'> | null; error: any }
+      .single()
 
-    if (fetchError || !scan) {
+    if (fetchError || !scanData) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
       )
     }
+
+    const scan = scanData as Scan
 
     // Check access permissions
     const hasAccess = scan.user_id === user.id || 
@@ -219,11 +221,11 @@ async function initializeScanExecution(supabase: DbClient, scanId: string, scan:
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single()
 
     return profile?.org_id === orgId
   } catch (error) {

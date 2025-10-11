@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
     // Create organization
     const { data: org, error: orgError } = await supabase
       .from('organizations')
-      // @ts-ignore - Supabase type inference issue
       .insert({
         name: testData.company_name,
         slug: 'test-company-ltd',
@@ -86,7 +85,6 @@ export async function POST(request: NextRequest) {
 
     // Create profile
     const { error: profileError } = await supabase
-      // @ts-ignore - Supabase type inference issue
       .from('profiles')
       .insert({
         id: authData.user.id,
@@ -156,7 +154,6 @@ export async function POST(request: NextRequest) {
 async function createSampleData(supabase: DbClient, userId: string, orgId?: string) {
   try {
     // Create a sample search
-    // @ts-ignore - Supabase type inference issue
     await supabase
       .from('searches')
       .insert({
@@ -170,7 +167,6 @@ async function createSampleData(supabase: DbClient, userId: string, orgId?: stri
         results_count: 25
       })
 
-    // @ts-ignore - Supabase type inference issue
     // Create a sample business list
     await supabase
       .from('lists')

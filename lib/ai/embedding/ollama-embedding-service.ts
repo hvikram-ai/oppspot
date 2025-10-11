@@ -127,7 +127,7 @@ export class OllamaEmbeddingService {
 
     const { error } = await supabase
       .from('businesses')
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       .update({
         embedding: JSON.stringify(embedding),
         embedding_model: embeddingResult.model,

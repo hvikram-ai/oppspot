@@ -52,7 +52,7 @@ export class ActivityTracker {
       if (!profile?.org_id) return
 
       // Create activity
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       await supabase.from('team_activities').insert({
         org_id: profile.org_id,
         user_id: user.id,
@@ -270,7 +270,7 @@ export class PresenceTracker {
       if (!profile?.org_id) return
 
       // Use upsert function
-      // @ts-ignore - Type inference issue
+      // @ts-expect-error - Type inference issue
       await supabase.rpc('upsert_user_presence', {
         p_user_id: user.id,
         p_org_id: profile.org_id,

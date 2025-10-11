@@ -58,7 +58,7 @@ export const dailySignalMonitorFunction = inngest.createFunction(
 
       const { error } = await supabase
         .from('buying_signals')
-        // @ts-ignore - Type inference issue
+        // @ts-expect-error - Type inference issue
         .update({ status: 'expired' })
         .eq('status', 'active')
         .lt('expires_at', new Date().toISOString())

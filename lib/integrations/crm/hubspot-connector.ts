@@ -116,8 +116,8 @@ export class HubSpotConnector extends BaseCRMConnector {
         client_secret: this.credentials.clientSecret,
       });
 
-      const newAccessToken = response.data.access_token;
-      const newRefreshToken = response.data.refresh_token;
+      const newAccessToken = (response.data.access_token || '') as string;
+      const newRefreshToken = (response.data.refresh_token || '') as string;
 
       // Update credentials
       this.credentials.accessToken = newAccessToken;
@@ -332,18 +332,18 @@ export class HubSpotConnector extends BaseCRMConnector {
     try {
       const properties = this.mapDealToHubSpot(deal);
 
-      const associations: HubSpotAssociation[] = [];
+      const associations: any[] = [];
       if (deal.contactId) {
         associations.push({
           to: { id: deal.contactId },
           types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }],
-        });
+        } as any);
       }
       if (deal.companyId) {
         associations.push({
           to: { id: deal.companyId },
           types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 5 }],
-        });
+        } as any);
       }
 
       const response = await this.httpClient!.post('/crm/v3/objects/deals', {
@@ -410,7 +410,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     try {
       const properties = this.mapTaskToHubSpot(task);
 
-      const associations: HubSpotAssociation[] = [];
+      const associations: any[] = [];
       if (task.relatedTo) {
         const typeMap: Record<string, number> = {
           contact: 204,
@@ -423,7 +423,7 @@ export class HubSpotConnector extends BaseCRMConnector {
             associationCategory: 'HUBSPOT_DEFINED',
             associationTypeId: typeMap[task.relatedTo.type],
           }],
-        });
+        } as any);
       }
 
       const response = await this.httpClient!.post('/crm/v3/objects/tasks', {
@@ -493,7 +493,7 @@ export class HubSpotConnector extends BaseCRMConnector {
         hs_timestamp: new Date().toISOString(),
       };
 
-      const associations: HubSpotAssociation[] = [];
+      const associations: any[] = [];
       if (note.relatedTo) {
         const typeMap: Record<string, number> = {
           contact: 202,
@@ -506,7 +506,7 @@ export class HubSpotConnector extends BaseCRMConnector {
             associationCategory: 'HUBSPOT_DEFINED',
             associationTypeId: typeMap[note.relatedTo.type],
           }],
-        });
+        } as any);
       }
 
       const response = await this.httpClient!.post('/crm/v3/objects/notes', {
@@ -647,10 +647,10 @@ export class HubSpotConnector extends BaseCRMConnector {
   private mapHubSpotToContact(data: HubSpotContact): CRMContact {
     return {
       id: data.id,
-      email: data.properties.email,
-      firstName: data.properties.firstname,
-      lastName: data.properties.lastname,
-      phone: data.properties.phone,
+      email: (data.properties.email || '') as string,
+      firstName: (data.properties.firstname || '') as string,
+      lastName: (data.properties.lastname || '') as string,
+      phone: (data.properties.phone || '') as string,
       properties: data.properties,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
@@ -688,8 +688,8 @@ export class HubSpotConnector extends BaseCRMConnector {
   private mapHubSpotToCompany(data: HubSpotCompany): CRMCompany {
     return {
       id: data.id,
-      name: data.properties.name,
-      domain: data.properties.domain,
+      name: (data.properties.name || '') as string,
+      domain: (data.properties.domain || '') as string,
       properties: data.properties,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
@@ -716,9 +716,9 @@ export class HubSpotConnector extends BaseCRMConnector {
   private mapHubSpotToDeal(data: HubSpotDeal): CRMDeal {
     return {
       id: data.id,
-      name: data.properties.dealname,
-      amount: parseFloat(data.properties.amount) || undefined,
-      stage: data.properties.dealstage,
+      name: (data.properties.dealname || '') as string,
+      amount: parseFloat((data.properties.amount || '0') as string) || undefined,
+      stage: (data.properties.dealstage || '') as string,
       properties: data.properties,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
@@ -745,9 +745,8 @@ export class HubSpotConnector extends BaseCRMConnector {
   private mapHubSpotToTask(data: HubSpotTask): CRMTask {
     return {
       id: data.id,
-      title: data.properties.hs_task_subject,
-      // @ts-ignore - Supabase type inference issue
-      dueDate: data.properties.hs_timestamp ? new Date(data.properties.hs_timestamp) : undefined,
+      title: (data.properties.hs_task_subject || '') as string,
+      dueDate: data.properties.hs_timestamp ? new Date(data.properties.hs_timestamp as string) : undefined,
       properties: data.properties,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),

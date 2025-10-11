@@ -329,7 +329,7 @@ export class AgentTaskRunner {
     const total = stream.target_metrics?.companies_to_find || currentProgress.total
 
     // Update progress
-    // @ts-ignore - Type inference issue
+    // @ts-expect-error - Type inference issue
     await supabase.rpc('update_stream_progress', {
       p_stream_id: streamId,
       p_completed: completed,
@@ -355,7 +355,7 @@ export class AgentTaskRunner {
 
     await supabase
       .from('stream_insights')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         insight_type: 'progress_update',

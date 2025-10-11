@@ -66,20 +66,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already saved
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('saved_businesses')
       .select('id')
       .eq('user_id', user.id)
       .eq('business_id', business_id)
-      .single() as { data: Pick<Row<'saved_businesses'>, 'id'> | null; error: any }
+      .single()
 
+    // Ignore error if not found (that's what we want)
     if (existing) {
       return NextResponse.json({ error: 'Business already saved' }, { status: 400 })
     }
 
     const { data, error } = await supabase
       .from('saved_businesses')
-      // @ts-ignore - Supabase type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         business_id,

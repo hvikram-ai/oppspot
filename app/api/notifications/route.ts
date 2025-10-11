@@ -95,11 +95,15 @@ export async function POST(request: NextRequest) {
     
     // Check if user has permission to send notifications
     // (In production, you might want to restrict this to admins or specific use cases)
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'role'> | null; error: any }
+      .single()
+
+    if (profileError) {
+      console.error('[API] Failed to fetch profile:', profileError)
+    }
     
     const canSendNotifications = profile?.role === 'admin' || 
                                  profile?.role === 'owner' || 
@@ -157,7 +161,7 @@ export async function PATCH(request: NextRequest) {
         // Mark single notification as read
         const { error } = await supabase
           .from('notifications')
-          // @ts-ignore - Type inference issue
+          // @ts-expect-error - Type inference issue
           .update({ 
             is_read: true,
             read_at: new Date().toISOString()

@@ -3,14 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 import type { Row } from '@/lib/supabase/helpers'
 
 interface GoalTemplate {
-  default_criteria: Record<string, any>
-  default_metrics: Record<string, any>
-  default_success_criteria: Record<string, any>
+  default_criteria: Record<string, unknown>
+  default_metrics: Record<string, unknown>
+  default_success_criteria: Record<string, unknown>
   suggested_agents?: Array<{
     agent_type: string
     role: string
     order: number
-    config: Record<string, any>
+    config: Record<string, unknown>
   }>
   use_count: number
 }
@@ -33,13 +33,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile } = await supabase
+    // @ts-ignore - profiles table type inference
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: Pick<Row<'profiles'>, 'org_id'> | null; error: any }
+      .single();
 
-    if (!profile?.org_id) {
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
+
+    const typedProfile = profile as unknown as { org_id: string } | null
+
+    if (!typedProfile?.org_id) {
       return NextResponse.json(
         { error: 'User organization not found' },
         { status: 400 }
@@ -77,35 +84,42 @@ export async function POST(request: NextRequest) {
     let agentsToAssign = assigned_agents || []
 
     if (goal_template_id) {
-      const { data: template } = await supabase
+      // @ts-ignore - goal_templates table
+      const { data: template, error: templateError } = await supabase
         .from('goal_templates')
         .select('*')
         .eq('id', goal_template_id)
-        .single() as { data: (Row<'goal_templates'> & GoalTemplate) | null; error: any }
+        .single();
 
-      if (template) {
+      if (templateError) {
+        console.error('Error fetching template:', templateError);
+      }
+
+      const typedTemplate = template as unknown as GoalTemplate | null;
+
+      if (typedTemplate) {
         // Merge template defaults with user overrides
-        finalCriteria = { ...template.default_criteria, ...goal_criteria }
-        finalMetrics = { ...template.default_metrics, ...target_metrics }
-        finalSuccessCriteria = { ...template.default_success_criteria, ...success_criteria }
+        finalCriteria = { ...typedTemplate.default_criteria, ...goal_criteria }
+        finalMetrics = { ...typedTemplate.default_metrics, ...target_metrics }
+        finalSuccessCriteria = { ...typedTemplate.default_success_criteria, ...success_criteria }
 
         // Use suggested agents if user requested
-        if (assign_agents && template.suggested_agents) {
-          agentsToAssign = template.suggested_agents
+        if (assign_agents && typedTemplate.suggested_agents) {
+          agentsToAssign = typedTemplate.suggested_agents
         }
 
         // Increment template use count
+        // @ts-ignore - goal_templates table update
         await supabase
           .from('goal_templates')
-          // @ts-ignore - Type inference issue
-          .update({ use_count: (template.use_count || 0) + 1 })
+          .update({ use_count: ((typedTemplate.use_count || 0) as number) + 1 })
           .eq('id', goal_template_id)
       }
     }
 
     // Create the stream
-    const insertData = {
-      org_id: profile.org_id,
+    const insertData: Record<string, unknown> = {
+      org_id: typedProfile.org_id,
       name,
       description: description || null,
       emoji: emoji || '🎯',
@@ -117,7 +131,7 @@ export async function POST(request: NextRequest) {
       success_criteria: finalSuccessCriteria,
       current_progress: {
         completed: 0,
-        total: finalMetrics.companies_to_find || 0,
+        total: (finalMetrics.companies_to_find as number) || 0,
         percentage: 0
       },
       goal_deadline: goal_deadline || null,
@@ -129,15 +143,15 @@ export async function POST(request: NextRequest) {
     console.log('[Goal Stream] Creating with data:', {
       ...insertData,
       user_id: user.id,
-      org_id: profile.org_id
+      org_id: typedProfile.org_id
     })
 
+    // @ts-ignore - streams table insert
     const { data: stream, error: streamError } = await supabase
       .from('streams')
-      // @ts-ignore - Supabase type inference issue
       .insert(insertData)
       .select()
-      .single() as { data: Row<'streams'> | null; error: any }
+      .single();
 
     if (streamError) {
       console.error('Error creating stream:', streamError)
@@ -147,12 +161,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    interface StreamData {
+      id: string;
+    }
+
+    const typedStream = stream as unknown as StreamData | null;
+
+    if (!typedStream) {
+      return NextResponse.json(
+        { error: 'Failed to create stream' },
+        { status: 500 }
+      );
+    }
+
     // Add creator as owner member (required for stream to show in list)
+    // @ts-ignore - stream_members table insert
     const { error: memberError } = await supabase
-      // @ts-ignore - Supabase type inference issue
       .from('stream_members')
       .insert({
-        stream_id: stream.id,
+        stream_id: typedStream.id,
         user_id: user.id,
         role: 'owner',
         invitation_accepted_at: new Date().toISOString()
@@ -164,11 +191,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create initial activity
-    // @ts-ignore - Supabase type inference issue
+    // @ts-ignore - stream_activities table insert
     await supabase
       .from('stream_activities')
       .insert({
-        stream_id: stream.id,
+        stream_id: typedStream.id,
         user_id: user.id,
         activity_type: 'stream_created',
         description: `Created goal-oriented stream: ${name}`,
@@ -186,15 +213,25 @@ export async function POST(request: NextRequest) {
       // First, create or get AI agent records for each agent type
       for (const suggestedAgent of agentsToAssign) {
         // Check if agent already exists for this org
-        const { data: existingAgent } = await supabase
+        // @ts-ignore - ai_agents table
+        const { data: existingAgent, error: existingAgentError } = await supabase
           .from('ai_agents')
           .select('id')
-          .eq('org_id', profile.org_id)
-          .eq('agent_type', suggestedAgent.agent_type)
-          .eq('stream_id', stream.id)
-          .single() as { data: Pick<Row<'ai_agents'>, 'id'> | null; error: any }
+          .eq('org_id', typedProfile.org_id)
+          .eq('agent_type', (suggestedAgent as any).agent_type)
+          .eq('stream_id', typedStream.id)
+          .single();
 
-        let agentId = existingAgent?.id
+        if (existingAgentError) {
+          console.error('Error checking existing agent:', existingAgentError);
+        }
+
+        interface AgentIdData {
+          id: string;
+        }
+
+        const typedExistingAgent = existingAgent as unknown as AgentIdData | null;
+        let agentId = typedExistingAgent?.id;
 
         // Create agent if doesn't exist
         if (!agentId) {
@@ -204,57 +241,72 @@ export async function POST(request: NextRequest) {
             research_gpt: 'ResearchGPT™',
             scoring_agent: 'Scoring Agent'
           }
-// @ts-ignore - Supabase type inference issue
 
-          const { data: newAgent } = await supabase
+          const agentType = (suggestedAgent as any).agent_type as string
+
+          // @ts-ignore - ai_agents table insert
+          const { data: newAgent, error: newAgentError } = await supabase
             .from('ai_agents')
             .insert({
-              org_id: profile.org_id,
-              stream_id: stream.id,
-              agent_type: suggestedAgent.agent_type,
-              name: agentNames[suggestedAgent.agent_type] || suggestedAgent.agent_type,
+              org_id: typedProfile.org_id,
+              stream_id: typedStream.id,
+              agent_type: agentType,
+              name: agentNames[agentType] || agentType,
               description: `Auto-assigned agent for ${name}`,
-              configuration: suggestedAgent.config || {},
+              configuration: (suggestedAgent as any).config || {},
               is_active: true,
               created_by: user.id
             })
             .select('id')
-            .single() as { data: Pick<Row<'ai_agents'>, 'id'> | null; error: any }
+            .single();
 
-          agentId = newAgent?.id
+          if (newAgentError) {
+            console.error('Error creating agent:', newAgentError);
+          }
+
+          const typedNewAgent = newAgent as unknown as AgentIdData | null;
+          agentId = typedNewAgent?.id;
         }
 
-        // @ts-ignore - Supabase type inference issue
         if (agentId) {
+          const agentRole = (suggestedAgent as any).role as string || 'primary'
+          const agentOrder = (suggestedAgent as any).order as number || 1
+          const agentConfig = (suggestedAgent as any).config as Record<string, unknown> || {}
+
           // Create stream-agent assignment
-          const { data: assignment } = await supabase
+          // @ts-ignore - stream_agent_assignments table insert
+          const { data: assignment, error: assignmentError } = await supabase
             .from('stream_agent_assignments')
             .insert({
-              stream_id: stream.id,
+              stream_id: typedStream.id,
               agent_id: agentId,
-              assignment_role: suggestedAgent.role || 'primary',
-              execution_order: suggestedAgent.order || 1,
+              assignment_role: agentRole,
+              execution_order: agentOrder,
               is_active: true,
-              auto_execute: suggestedAgent.role === 'primary',
-              execution_frequency: suggestedAgent.role === 'primary' ? 'daily' : 'on_demand',
-              execution_config: suggestedAgent.config || {}
+              auto_execute: agentRole === 'primary',
+              execution_frequency: agentRole === 'primary' ? 'daily' : 'on_demand',
+              execution_config: agentConfig
             })
             .select()
-            .single() as { data: Row<'stream_agent_assignments'> | null; error: any }
+            .single();
+
+          if (assignmentError) {
+            console.error('Error creating assignment:', assignmentError);
+          }
 
           if (assignment) {
             assignedAgentRecords.push(assignment)
           }
         }
       }
-// @ts-ignore - Supabase type inference issue
 
       // Create activity for agent assignments
       if (assignedAgentRecords.length > 0) {
+        // @ts-ignore - stream_activities table insert
         await supabase
           .from('stream_activities')
           .insert({
-            stream_id: stream.id,
+            stream_id: typedStream.id,
             user_id: user.id,
             activity_type: 'ai_update',
             description: `Assigned ${assignedAgentRecords.length} AI agents to work on this goal`,
@@ -266,10 +318,11 @@ export async function POST(request: NextRequest) {
 
     // Update goal status to in_progress if agents assigned
     if (assignedAgentRecords.length > 0) {
+      // @ts-ignore - streams table update
       await supabase
         .from('streams')
         .update({ goal_status: 'in_progress' })
-        .eq('id', stream.id)
+        .eq('id', typedStream.id)
     }
 
     return NextResponse.json({

@@ -35,11 +35,11 @@ export async function POST(request: NextRequest) {
     
     if (isAuthenticated) {
       // Get user's organization
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('org_id, role')
         .eq('id', user.id)
-        .single() as { data: Pick<Row<'profiles'>, 'org_id' | 'role'> | null; error: any }
+        .single()
       
       orgId = profile?.org_id
     } else {
@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
           `)
           .eq('id', analysisId)
           .eq('user_id', effectiveUserId!)
-          .single() as { data: Record<string, unknown> & { similar_company_matches?: unknown[] } | null; error: any }
+          .single()
 
         if (error || !fullAnalysis) {
           return NextResponse.json(
