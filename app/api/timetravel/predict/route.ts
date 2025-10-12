@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get or refresh signal aggregates
-    const { data: aggregate, error: aggError } = await supabase
+    const { data: aggregateData, error: aggError } = await supabase
       .from('signal_aggregates')
       .select('*')
       .eq('company_id', company_id)
@@ -235,16 +235,20 @@ export async function POST(request: NextRequest) {
       throw aggError
     }
 
+    const aggregate = aggregateData as SignalAggregate | null
+
     // If no aggregate exists, refresh it
     if (!aggregate) {
       await supabase.rpc('refresh_signal_aggregates', { p_company_id: company_id })
 
       // Fetch again
-      const { data: newAggregate, error: newAggregateError } = await supabase
+      const { data: newAggregateData, error: newAggregateError } = await supabase
         .from('signal_aggregates')
         .select('*')
         .eq('company_id', company_id)
         .single()
+
+      const newAggregate = newAggregateData as SignalAggregate | null
 
       if (!newAggregate) {
         return NextResponse.json({
@@ -274,7 +278,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Save prediction to database
-    const { data: savedPrediction, error: saveError } = await supabase
+    const { data: savedPredictionData, error: saveError } = await supabase
       .from('predictive_scores')
       .upsert({
         company_id,
@@ -301,6 +305,8 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single()
+
+    const savedPrediction = savedPredictionData as SavedPrediction | null
 
     if (saveError) {
       console.error('Error saving prediction:', saveError)

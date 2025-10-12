@@ -17,11 +17,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -38,18 +40,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch the business
-    const { data: business, error: fetchError } = await supabase
+    const { data: businessData, error: fetchError } = await supabase
       .from('businesses')
       .select('*')
       .eq('id', businessId)
       .single()
 
-    if (fetchError || !business) {
+    if (fetchError || !businessData) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       )
     }
+
+    const business = businessData as Business
 
     const aiClient = getAIClient()
     const updates: Partial<Business> = {}
@@ -167,21 +171,23 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
     const body = await request.json()
-    const { 
-      limit = 10, 
+    const {
+      limit = 10,
       enhancements = ['description'],
-      filter = 'missing_description' 
+      filter = 'missing_description'
     } = body
 
     // Build query based on filter
@@ -208,7 +214,9 @@ export async function PUT(request: NextRequest) {
     // Limit the number of businesses to process
     query = query.limit(limit)
 
-    const { data: businesses, error: fetchError } = await query
+    const { data: businessesData, error: fetchError } = await query
+
+    const businesses = (businessesData || []) as Business[]
 
     if (fetchError || !businesses || businesses.length === 0) {
       return NextResponse.json({

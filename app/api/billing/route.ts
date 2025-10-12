@@ -22,11 +22,13 @@ export async function GET(_request: NextRequest) {
     }
 
     // Get user's profile to find org_id
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single()
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profileError) {
       console.error('Error fetching profile for billing:', profileError)
@@ -51,11 +53,13 @@ export async function GET(_request: NextRequest) {
     }
 
     // Fetch organization billing details
-    const { data: org, error: orgError } = await supabase
+    const { data: orgData, error: orgError } = await supabase
       .from('organizations')
       .select('subscription_tier, trial_ends_at, stripe_customer_id, stripe_subscription_id')
       .eq('id', profile.org_id)
       .single()
+
+    const org = orgData as Pick<Row<'organizations'>, 'subscription_tier' | 'trial_ends_at' | 'stripe_customer_id' | 'stripe_subscription_id'> | null
 
     if (orgError) {
       console.error('Error fetching organization billing:', orgError)
@@ -66,8 +70,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // Check if in trial period
-    // @ts-expect-error - Supabase type inference issue
-    const isTrial = org.trial_ends_at ? new Date(org.trial_ends_at) > new Date() : false
+    const isTrial = org?.trial_ends_at ? new Date(org.trial_ends_at) > new Date() : false
 
     // Count organization members
     const { count: seatsUsed } = await supabase
@@ -84,17 +87,17 @@ export async function GET(_request: NextRequest) {
       enterprise: 999
     }
 
-    const seatsLimit = tierLimits[org.subscription_tier || 'free'] || 1
+    const seatsLimit = tierLimits[org?.subscription_tier || 'free'] || 1
 
     // Build billing response
     const billingInfo = {
-      subscription_tier: org.subscription_tier || 'free',
-      trial_ends_at: org.trial_ends_at,
+      subscription_tier: org?.subscription_tier || 'free',
+      trial_ends_at: org?.trial_ends_at,
       is_trial: isTrial,
       seats_used: seatsUsed || 1,
       seats_limit: seatsLimit,
-      has_payment_method: !!org.stripe_customer_id,
-      is_subscribed: !!org.stripe_subscription_id,
+      has_payment_method: !!org?.stripe_customer_id,
+      is_subscribed: !!org?.stripe_subscription_id,
       // Additional fields can be added as needed
       monthly_spend: 0, // TODO: Calculate from usage metrics
       billing_cycle_start: null, // TODO: Get from Stripe

@@ -22,11 +22,13 @@ export async function GET(request: NextRequest) {
     const champion_status = searchParams.get('champion_status');
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single();
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profileError) {
       console.error('[API] Error fetching profile:', profileError);
@@ -112,18 +114,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single();
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profileError) {
       console.error('[API] Error fetching profile:', profileError);
     }
 
     // Add metadata
-    const stakeholderData = {
+    const insertData = {
       ...body.stakeholder,
       org_id: profile?.org_id,
       created_by: user.id,
@@ -131,11 +135,13 @@ export async function POST(request: NextRequest) {
     };
 
     // Create stakeholder
-    const { data: stakeholder, error } = await supabase
+    const { data: stakeholderData, error } = await supabase
       .from('stakeholders')
-      .insert(stakeholderData)
+      .insert(insertData)
       .select()
       .single();
+
+    const stakeholder = stakeholderData as Row<'stakeholders'> | null
 
     if (error) {
       console.error('[API] Error creating stakeholder:', error);
@@ -166,7 +172,7 @@ export async function POST(request: NextRequest) {
           role_type: body.stakeholder.role_type
         },
         response_status: 201,
-        response_data: { stakeholder_id: stakeholder.id },
+        response_data: { stakeholder_id: stakeholder?.id },
         user_id: user.id
       });
 
@@ -226,11 +232,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single();
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profileError) {
       console.error('[API] Error fetching profile:', profileError);
@@ -318,11 +326,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single();
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profileError) {
       console.error('[API] Error fetching profile:', profileError);

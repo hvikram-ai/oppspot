@@ -33,11 +33,13 @@ export async function POST(
     console.log(`Enriching company: ${companyNumber}`)
 
     // Check if company already exists in database
-    const { data: existing, error: existingError } = await supabase
+    const { data: existingData, error: existingError } = await supabase
       .from('businesses')
       .select('id, company_number, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
       .single()
+
+    const existing = existingData as Pick<Row<'businesses'>, 'id' | 'company_number' | 'companies_house_last_updated' | 'cache_expires_at'> | null
 
     // Check if cache is still valid
     if (existing?.cache_expires_at) {
@@ -194,11 +196,13 @@ export async function GET(
     }
 
     // Check if company exists in database
-    const { data: company, error } = await supabase
+    const { data: companyData, error } = await supabase
       .from('businesses')
       .select('id, company_number, name, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
       .single()
+
+    const company = companyData as Pick<Row<'businesses'>, 'id' | 'company_number' | 'name' | 'companies_house_last_updated' | 'cache_expires_at'> | null
 
     if (error || !company) {
       return NextResponse.json({

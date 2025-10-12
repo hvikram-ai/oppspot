@@ -17,43 +17,47 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if user is admin
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
+    const profile = profileData as Row<'profiles'> | null
+
     if (profileError) {
       console.error('[Social API] Error fetching profile:', profileError);
     }
-    
+
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
-    
+
     const body = await request.json()
     const { businessId, scrapeWebsite = true, scrapeSocial = true } = body
-    
+
     if (!businessId) {
       return NextResponse.json(
         { error: 'Business ID is required' },
         { status: 400 }
       )
     }
-    
+
     // Get business details
-    const { data: business, error: businessError } = await supabase
+    const { data: businessData, error: businessError } = await supabase
       .from('businesses')
       .select('*')
       .eq('id', businessId)
       .single();
-    
-    if (businessError || !business) {
+
+    if (businessError || !businessData) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       )
     }
+
+    const business = businessData as Row<'businesses'>
     
     interface ScoreData {
       overall_score: number

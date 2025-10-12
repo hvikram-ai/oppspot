@@ -34,19 +34,21 @@ export async function POST(request: NextRequest) {
     }
     
     // Verify primary business exists
-    const { data: primaryBusiness, error: primaryBusinessError } = await supabase
+    const { data: primaryBusinessData, error: primaryBusinessError } = await supabase
       .from('businesses')
       .select('id, name, categories')
       .eq('id', primaryBusinessId)
       .single();
-    
+
+    const primaryBusiness = primaryBusinessData as Row<'businesses'> | null
+
     if (!primaryBusiness) {
       return NextResponse.json(
         { error: 'Primary business not found' },
         { status: 404 }
       )
     }
-    
+
     // Auto-discover competitors if none provided
     let finalCompetitorIds = competitorIds
     if (competitorIds.length === 0) {
@@ -116,26 +118,28 @@ export async function GET(request: NextRequest) {
     
     if (setId) {
       // Get specific competitor set with details
-      const { data: competitorSet, error } = await supabase
+      const { data: competitorSetData, error } = await supabase
         .from('competitor_sets')
         .select('*')
         .eq('id', setId)
         .eq('user_id', user.id)
         .single()
-      
+
       if (error) throw error
-      
+
+      const competitorSet = competitorSetData as Row<'competitor_sets'> | null
+
       if (!competitorSet) {
         return NextResponse.json(
           { error: 'Competitor set not found' },
           { status: 404 }
         )
       }
-      
+
       // Fetch all business details
       const allBusinessIds = [
         competitorSet.primary_business_id,
-        ...competitorSet.competitor_ids
+        ...(Array.isArray(competitorSet.competitor_ids) ? competitorSet.competitor_ids : [])
       ].filter(Boolean)
       
       const { data: businesses, error: businessesError } = await supabase
@@ -155,8 +159,9 @@ export async function GET(request: NextRequest) {
       const primaryBusiness = businesses?.find(
         b => b.id === competitorSet.primary_business_id
       )
+      const competitorIds = Array.isArray(competitorSet.competitor_ids) ? competitorSet.competitor_ids : []
       const competitors = businesses?.filter(
-        b => competitorSet.competitor_ids.includes(b.id)
+        b => competitorIds.includes(b.id)
       )
       
       return NextResponse.json({
@@ -293,16 +298,18 @@ async function discoverCompetitors(
 ) {
   try {
     // Get primary business location
-    const { data: primaryBusiness, error: primaryBusinessError } = await supabase
+    const { data: primaryBusinessData, error: primaryBusinessError } = await supabase
       .from('businesses')
       .select('latitude, longitude')
       .eq('id', primaryBusinessId)
       .single();
-    
+
+    const primaryBusiness = primaryBusinessData as { latitude: number | null; longitude: number | null } | null
+
     if (!primaryBusiness || !primaryBusiness.latitude) {
       return []
     }
-    
+
     // Find similar businesses nearby
     const { data: competitors, error: competitorsError } = await supabase
       .rpc('nearby_businesses', {

@@ -74,16 +74,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = (await supabase
+    const { data: keysData, error } = await supabase
       .from('api_keys')
       .select('*')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false }))
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching API keys:', error)
       return NextResponse.json({ error: 'Failed to fetch API keys' }, { status: 500 })
     }
+
+    const data = (keysData || []) as ApiKey[]
 
     // Don't send encrypted keys to client, only metadata
     const sanitizedKeys: SanitizedApiKey[] = data?.map(key => ({
@@ -130,7 +132,7 @@ export async function POST(request: NextRequest) {
       is_active: true
     }
 
-    const { data, error } = await supabase
+    const { data: keyData, error } = await supabase
       .from('api_keys')
       // @ts-expect-error - Supabase type inference issue with encryption
       .insert(insertData)
@@ -144,6 +146,8 @@ export async function POST(request: NextRequest) {
       console.error('Error saving API key:', error)
       return NextResponse.json({ error: 'Failed to save API key' }, { status: 500 })
     }
+
+    const data = keyData as ApiKey | null
 
     if (!data) {
       return NextResponse.json({ error: 'Failed to create API key' }, { status: 500 })

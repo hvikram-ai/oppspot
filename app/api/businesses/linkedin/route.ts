@@ -263,11 +263,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -292,7 +294,9 @@ export async function PUT(request: NextRequest) {
 
     query = query.limit(limit)
 
-    const { data: businesses, error: fetchError } = await query
+    const { data: businessesData, error: fetchError } = await query
+
+    const businesses = (businessesData || []) as Row<'businesses'>[]
 
     if (fetchError || !businesses || businesses.length === 0) {
       return NextResponse.json({

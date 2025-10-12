@@ -29,22 +29,26 @@ export async function POST(
     const { agentId } = await params
 
     // Fetch agent
-    const { data: agent, error: fetchError } = await supabase
+    const { data: agentData, error: fetchError } = await supabase
       .from('ai_agents')
       .select('*')
       .eq('id', agentId)
       .single()
 
-    if (fetchError || !agent) {
+    if (fetchError || !agentData) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
     }
 
+    const agent = agentData as Row<'ai_agents'>
+
     // Check user has access to this agent
-    const { data: profile, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
       .single()
+
+    const profile = profileData as Row<'profiles'> | null
 
     if (profile?.org_id !== agent.org_id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
