@@ -201,7 +201,7 @@ export class TemplateRecommender {
       .from('streams')
       .select('goal_template_id, goal_status')
       .eq('created_by', userId)
-      .not('goal_template_id', 'is', null) as { data: Row<'streams'>[] | null; error: any }
+      .not('goal_template_id', 'is', null) as { data: Array<{ goal_template_id?: string | null; goal_status?: string | null }> | null; error: any }
 
     if (!streams || streams.length === 0) {
       return {

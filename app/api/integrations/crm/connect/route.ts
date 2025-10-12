@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('organization_id, role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string; role: string } | null; error: unknown }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', existingIntegration.id)
         .select()
-        .single();
+        .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
       if (error) {
         console.error('Database error:', error);
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
           is_active: true,
         })
         .select()
-        .single();
+        .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
       if (error) {
         console.error('Database error:', error);

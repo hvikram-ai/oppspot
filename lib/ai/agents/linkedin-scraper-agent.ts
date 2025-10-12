@@ -190,7 +190,7 @@ export class LinkedInScraperAgent extends BaseAgent {
     const limit = config.maxCompanies || 10
     query = query.limit(limit)
 
-    const { data, error } = await query
+    const { data, error } = await query as { data: Array<{ id: string; name: string; website?: string; linkedin_url?: string }> | null; error: unknown }
 
     if (error) {
       throw new Error(`Failed to fetch companies: ${error.message}`)

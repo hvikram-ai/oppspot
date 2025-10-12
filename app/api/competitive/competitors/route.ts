@@ -123,11 +123,11 @@ export async function GET(request: NextRequest) {
         .select('*')
         .eq('id', setId)
         .eq('user_id', user.id)
-        .single()
+        .single() as { data: { id: string; primary_business_id: string; competitor_ids: string[] } & Record<string, unknown> | null; error: unknown }
 
       if (error) throw error
 
-      const competitorSet = competitorSetData as Row<'competitor_sets'> | null
+      const competitorSet = competitorSetData
 
       if (!competitorSet) {
         return NextResponse.json(

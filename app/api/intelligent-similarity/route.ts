@@ -37,13 +37,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization (skip in demo mode)
-    let profile = null
+    let profile: { org_id: string; role: string } | null = null
     if (user) {
       const { data } = await supabase
         .from('profiles')
         .select('org_id, role')
         .eq('id', user.id)
-        .single()
+        .single() as { data: { org_id: string; role: string } | null; error: unknown }
       profile = data
     }
 

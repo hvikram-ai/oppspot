@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null; error: unknown }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         .eq('organization_id', profile.organization_id)
         .eq('is_active', true)
         .limit(1)
-        .single();
+        .single() as { data: { id: string; organization_id: string } | null; error: unknown }
 
       if (!integration) {
         return NextResponse.json(
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { organization_id: string } | null; error: unknown }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });

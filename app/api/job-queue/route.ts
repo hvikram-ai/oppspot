@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           .from('acquisition_scans')
           .select('*')
           .eq('id', scanId)
-          .single()
+          .single() as { data: { user_id: string; org_id: string } & Record<string, unknown> | null; error: unknown }
 
         if (scanError || !scan) {
           return NextResponse.json(
@@ -191,7 +191,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: { org_id: string } | null; error: unknown }
 
     return profile?.org_id === orgId
   } catch (error) {

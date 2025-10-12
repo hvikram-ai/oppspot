@@ -476,8 +476,8 @@ Keep responses under 200 words unless detailed explanation needed.`
         results: message.results
       })
       .select()
-      .single()
+      .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
-    return data as ChatMessage
+    return data as unknown as ChatMessage
   }
 }

@@ -32,7 +32,7 @@ export class EngagementTracker {
       .select('*')
       .eq('company_id', company.id)
       .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()) // Last 90 days
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false }) as { data: Array<{ created_at: string } & Record<string, unknown>> | null; error: unknown }
 
     let score = 30 // Base score for no engagement
 

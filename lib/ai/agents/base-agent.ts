@@ -268,20 +268,20 @@ export abstract class BaseAgent {
         expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
       })
       .select('id')
-      .single()
+      .single() as { data: { id: string } | null; error: unknown }
 
     if (error) {
       throw new Error(`Failed to create buying signal: ${error.message}`)
     }
 
     this.emitEvent('buying_signal.created', {
-      signalId: data.id,
+      signalId: data!.id,
       companyId,
       signalType,
       signalStrength,
       confidenceScore
     })
 
-    return data.id
+    return data!.id
   }
 }
