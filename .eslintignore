@@ -1,0 +1,6 @@
+**/*.cjs
+*.cjs
+scripts/**/*.cjs
+node_modules
+.next
+out

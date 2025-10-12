@@ -225,7 +225,7 @@ async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string)
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single()
+      .single() as { data: { org_id: string } | null; error: unknown }
 
     return profile?.org_id === orgId
   } catch (error) {

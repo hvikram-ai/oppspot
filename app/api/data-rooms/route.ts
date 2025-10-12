@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         metadata: body.metadata || {}
       })
       .select()
-      .single()
+      .single() as { data: { id: string; name: string } & Record<string, unknown> | null; error: unknown }
 
     if (error) {
       console.error('[Data Rooms API] Create error:', error)

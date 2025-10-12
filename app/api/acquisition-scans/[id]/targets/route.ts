@@ -260,7 +260,7 @@ export async function POST(
       .from('target_companies')
       .insert(targetData)
       .select()
-      .single();
+      .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
     if (insertError) {
       console.error('Error creating target company:', insertError)

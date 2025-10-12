@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string } | null; error: unknown }
 
     let query = supabase.from('peer_groups').select('*')
 

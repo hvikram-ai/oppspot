@@ -95,10 +95,10 @@ export async function GET(request: NextRequest) {
         .from('business_comparisons')
         .select('*')
         .eq('id', comparisonId)
-        .single()
-      
+        .single() as { data: { is_public: boolean; user_id: string; business_ids: string[] } & Record<string, unknown> | null; error: unknown }
+
       if (error) throw error
-      
+
       // Check access permissions
       const { data: { user } } = await supabase.auth.getUser()
       if (!comparison.is_public && comparison.user_id !== user?.id) {

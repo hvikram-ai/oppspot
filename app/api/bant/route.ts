@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
         bant_need: bantScore.need_score,
         bant_timeline: bantScore.timeline_score,
         bant_qualification_status: bantScore.qualification_status,
-        bant_recommendations: bantScore.recommendations,
-        bant_next_actions: bantScore.next_actions,
+        bant_recommendations: bantScore.details.recommendations,
+        bant_next_actions: bantScore.details.next_actions,
         bant_last_calculated: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, {

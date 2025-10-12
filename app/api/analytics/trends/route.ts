@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       .eq('entity_id', entityId)
       .eq('period_days', periodDays)
       .order('analysis_date', { ascending: false })
-      .limit(1)
+      .limit(1) as { data: Array<{ created_at: string } & Record<string, unknown>> | null; error: unknown }
     
     // Check if we have recent analysis (within last 24 hours)
     const recentAnalysis = existingAnalysis?.[0]
@@ -143,8 +143,8 @@ export async function DELETE(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
-    
+      .single() as { data: { role: string } | null; error: unknown }
+
     if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }

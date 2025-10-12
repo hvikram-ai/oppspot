@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         status: 'active'
       })
       .select()
-      .single()
+      .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
     if (orgError) {
       console.error('Org error:', orgError)

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string } | null; error: unknown }
 
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })

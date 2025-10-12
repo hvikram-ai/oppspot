@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { role: string } | null; error: unknown }
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })

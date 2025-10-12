@@ -94,6 +94,9 @@ export async function POST(
 
     // Get analysis data (handle demo mode)
     interface AnalysisMetadata {
+      id?: string;
+      status?: string;
+      created_at?: string;
       target_company_name?: string;
       target_company_data?: Record<string, unknown>;
       analysis_configuration?: Record<string, unknown>;
@@ -459,7 +462,7 @@ async function generatePowerPointExport(
   userId: string
 ): Promise<NextResponse> {
   // Create export record
-  const { data: exportRecord, error } = await supabase
+  const { data: exportRecordData, error } = await supabase
     .from('similarity_analysis_exports')
     .insert({
       similarity_analysis_id: analysisId,
@@ -474,6 +477,8 @@ async function generatePowerPointExport(
     })
     .select()
     .single();
+
+  const exportRecord = exportRecordData as Row<'similarity_analysis_exports'> | null
 
   if (error) {
     console.error('[Export API] Error creating PowerPoint export record:', error);
@@ -499,7 +504,7 @@ async function generateExcelExport(
   userId: string
 ): Promise<NextResponse> {
   // Create export record
-  const { data: exportRecord, error } = await supabase
+  const { data: exportRecordData, error } = await supabase
     .from('similarity_analysis_exports')
     .insert({
       similarity_analysis_id: analysisId,
@@ -514,6 +519,8 @@ async function generateExcelExport(
     })
     .select()
     .single();
+
+  const exportRecord = exportRecordData as Row<'similarity_analysis_exports'> | null
 
   if (error) {
     console.error('[Export API] Error creating Excel export record:', error);

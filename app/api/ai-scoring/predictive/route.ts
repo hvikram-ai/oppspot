@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { org_id: string } | null; error: unknown }
 
     const body = await request.json();
     const { company_id, include_recommendations = true, use_ai = true } = body;
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { org_id: string } | null; error: unknown }
 
     const searchParams = request.nextUrl.searchParams;
     const company_id = searchParams.get('company_id');

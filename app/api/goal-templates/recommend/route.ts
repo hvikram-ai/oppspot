@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('industry, company_size')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { industry: string; company_size: string } | null; error: unknown }
 
     // Get user's template history
     const history = await TemplateRecommender.getUserTemplateHistory(user.id)

@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     const results = await embeddingService.findSimilarCompanies(params.companyId, {
       limit: params.limit,
       threshold: params.threshold
-    })
+    }) as Array<{ id: string; similarity: number }>
 
     // Fetch full company details
     const companyIds = results.map(r => r.id)

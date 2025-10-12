@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string; role: string } | null; error: unknown }
 
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const { data: tasks, error: tasksError } = await supabase
       .from('agent_tasks')
       .select('status')
-      .eq('org_id', profile.org_id)
+      .eq('org_id', profile.org_id) as { data: { status: string }[] | null; error: unknown }
 
     const stats = {
       pending: tasks?.filter(t => t.status === 'pending').length || 0,
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string; role: string } | null; error: unknown }
 
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })

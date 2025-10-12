@@ -48,12 +48,14 @@ export async function POST(
     }
 
     // Verify user has access
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membershipData, error: membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
       .single();
+
+    const membership = membershipData as Row<'stream_members'> | null
 
     if (membershipError) {
       console.error('[Agent Execute] Error fetching membership:', membershipError);
@@ -82,22 +84,26 @@ export async function POST(
 
     const streamTyped = stream as unknown as StreamRow | null;
 
-    const { data: agent, error: agentError } = await supabase
+    const { data: agentData, error: agentError } = await supabase
       .from('ai_agents')
       .select('*')
       .eq('id', agentId)
       .single();
 
+    const agent = agentData as Row<'ai_agents'> | null
+
     if (agentError) {
       console.error('[Agent Execute] Error fetching agent:', agentError);
     }
 
-    const { data: assignment, error: assignmentError } = await supabase
+    const { data: assignmentData, error: assignmentError } = await supabase
       .from('stream_agent_assignments')
       .select('*')
       .eq('stream_id', streamId)
       .eq('agent_id', agentId)
       .single();
+
+    const assignment = assignmentData as StreamAgentAssignment | null
 
     if (assignmentError) {
       console.error('[Agent Execute] Error fetching assignment:', assignmentError);

@@ -161,8 +161,8 @@ export async function PATCH(request: NextRequest) {
         .from('opportunities')
         .select('*')
         .eq('id', opportunityId)
-        .single()
-      
+        .single() as { data: { type: string; category: string; potential_value: number } & Record<string, unknown> | null; error: unknown }
+
       if (opportunity) {
         await supabase
           .from('notifications')
@@ -210,8 +210,8 @@ export async function DELETE() {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
-    
+      .single() as { data: { role: string } | null; error: unknown }
+
     if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }

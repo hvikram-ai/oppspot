@@ -30,7 +30,7 @@ export async function GET(
       .from('businesses')
       .select('*')
       .eq('company_number', companyNumber)
-      .single()
+      .single() as { data: { enriched_at?: string | null } & Record<string, unknown> | null; error: unknown }
 
     if (existingCompany && existingCompany.enriched_at) {
       // Check if data is recent (less than 24 hours old)
