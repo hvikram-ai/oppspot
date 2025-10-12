@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const results = await embeddingService.semanticSearch(query, {
       limit,
       threshold
-    })
+    }) as Array<{ id: string; similarity: number } & Record<string, unknown>>
 
     if (results.length === 0) {
       return NextResponse.json({

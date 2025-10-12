@@ -36,7 +36,7 @@ export async function GET() {
         updated_at
       `)
       .eq('user_id', user.id)
-      .order('name', { ascending: true })
+      .order('name', { ascending: true }) as { data: Array<{ id: string } & Record<string, unknown>> | null; error: unknown }
 
     if (error) {
       console.error('Error fetching lists:', error)

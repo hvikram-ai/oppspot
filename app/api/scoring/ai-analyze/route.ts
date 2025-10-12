@@ -61,14 +61,14 @@ export async function POST(request: NextRequest) {
         .from('businesses')
         .select('*')
         .eq('id', company_id)
-        .single()
+        .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
       company = data
     } else if (company_number) {
       const { data } = await supabase
         .from('businesses')
         .select('*')
         .eq('company_number', company_number.toUpperCase())
-        .single()
+        .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
       company = data
     } else {
       const { data } = await supabase
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         .select('*')
         .ilike('name', `%${company_name}%`)
         .limit(1)
-        .single()
+        .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
       company = data
     }
 

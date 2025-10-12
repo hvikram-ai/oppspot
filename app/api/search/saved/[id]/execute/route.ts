@@ -36,7 +36,7 @@ export async function POST(
       .select('*')
       .eq('id', id)
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: { id: string; name: string; description: string; filters: unknown } & Record<string, unknown> | null; error: unknown }
 
     if (fetchError || !savedSearch) {
       return NextResponse.json(
