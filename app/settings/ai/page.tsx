@@ -163,12 +163,12 @@ export default function AISettingsPage() {
 
       // Load user settings
       const { data: settings } = await supabase
-        .from('user_settings' as any)
+        .from('user_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single() as any
+        .single()
 
-      const typedSettings = settings as any
+      const typedSettings = settings
       if (typedSettings) {
         setSelectedProvider((typedSettings as { default_ai_provider?: string }).default_ai_provider || 'openrouter')
         if ((typedSettings as { local_llm_config?: { ollama_url?: string } }).local_llm_config?.ollama_url) {
@@ -178,20 +178,20 @@ export default function AISettingsPage() {
 
       // Load API keys (masked)
       const { data: keys } = await supabase
-        .from('api_keys' as any)
+        .from('api_keys')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false }) as any
+        .order('created_at', { ascending: false })
 
       if (keys) {
-        setApiKeys(keys.map((key: any) => ({
-          id: (key as any).id,
-          provider: (key as any).provider,
-          keyName: (key as any).key_name,
-          maskedKey: maskApiKey((key as any).provider),
-          isActive: (key as any).is_active,
-          lastUsed: (key as any).last_used,
-          createdAt: (key as any).created_at
+        setApiKeys(keys.map((key: Record<string, unknown>) => ({
+          id: key?.id,
+          provider: key?.provider,
+          keyName: key?.key_name,
+          maskedKey: maskApiKey(key?.provider),
+          isActive: key?.is_active,
+          lastUsed: key?.last_used,
+          createdAt: key?.created_at
         })))
       }
     } catch (error) {

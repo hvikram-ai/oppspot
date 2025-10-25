@@ -338,7 +338,7 @@ export class LeadScoringService {
         explanation += `#### ${this.capitalizeFirst(component)} (Weight: ${breakdown.weight * 100}%)\n`
 
         const topFactors = breakdown.factors
-          .sort((a: any, b: unknown) => Math.abs(b.value) - Math.abs(a.value))
+          .sort((a: { value: number }, b: { value: number }) => Math.abs(b.value) - Math.abs(a.value))
           .slice(0, 3)
 
         for (const factor of topFactors) {
@@ -443,7 +443,7 @@ export class LeadScoringService {
   private async getCachedScore(companyId: string): Promise<LeadScore | null> {
     const supabase = await createClient()
     const { data } = await (supabase
-      .from('lead_scores') as any)
+      .from('lead_scores'))
       .select('*')
       .eq('company_id', companyId)
       .single()
@@ -466,15 +466,15 @@ export class LeadScoringService {
     if (options.org_id) {
       const supabase = await createClient()
       const { data } = await (supabase
-        .from('scoring_criteria') as any)
+        .from('scoring_criteria'))
         .select('criteria_type, weight')
         .eq('org_id', options.org_id)
         .eq('is_active', true)
 
       if (data && data.length > 0) {
-        const weights: any = {}
+        const weights: Record<string, number> = {}
         data.forEach(criteria => {
-          weights[(criteria as any).criteria_type] = (criteria as any).weight
+          weights[criteria?.criteria_type] = criteria?.weight
         })
         return { ...this.defaultWeights, ...weights }
       }
@@ -531,7 +531,7 @@ export class LeadScoringService {
     const supabase = await createClient()
 
     const { error } = await (supabase
-      .from('lead_scores') as any)
+      .from('lead_scores'))
       .upsert({
         company_id: score.company_id,
         company_number: score.company_number,
@@ -566,7 +566,7 @@ export class LeadScoringService {
 
     const supabase = await createClient()
     const { data: alerts } = await (supabase
-      .from('scoring_alerts') as any)
+      .from('scoring_alerts'))
       .select('*')
       .eq('org_id', orgId)
       .eq('is_active', true)
@@ -574,8 +574,8 @@ export class LeadScoringService {
     if (!alerts) return
 
     for (const alert of alerts) {
-      if (this.shouldTriggerAlert(score, (alert as any).criteria)) {
-        console.log(`[LeadScoring] Triggering alert: ${(alert as any).alert_name}`)
+      if (this.shouldTriggerAlert(score, alert?.criteria)) {
+        console.log(`[LeadScoring] Triggering alert: ${alert?.alert_name}`)
         // TODO: Implement notification sending
       }
     }
@@ -645,8 +645,8 @@ export class LeadScoringService {
    * Convert AI analysis to LeadScore format
    */
   private convertAIAnalysisToLeadScore(
-    aiAnalysis: any,
-    company: any
+    aiAnalysis: Record<string, unknown>,
+    company: Record<string, unknown>
   ): LeadScore {
     // Build score breakdown from AI analysis
     const scoreBreakdown: ScoreBreakdown = {
@@ -754,7 +754,7 @@ export class LeadScoringService {
     const supabase = await createClient()
 
     await (supabase
-      .from('lead_scores') as any)
+      .from('lead_scores'))
       .upsert({
         ...score,
         ai_analysis: aiAnalysis,

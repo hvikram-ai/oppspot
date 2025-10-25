@@ -19,7 +19,7 @@ export interface BuyingSignal {
   source_url?: string
   title?: string
   description?: string
-  raw_data?: any
+  raw_data?: Record<string, unknown>
   metadata?: Record<string, unknown>
   detected_at: Date
   expires_at?: Date
@@ -49,7 +49,7 @@ export interface SignalPattern {
   id: string
   pattern_name: string
   pattern_type: string
-  detection_rules: any
+  detection_rules: Record<string, unknown>
   keywords: string[]
   weight: number
   min_confidence: number
@@ -176,7 +176,7 @@ export class BuyingSignalDetector {
       .select('*')
       .eq('company_id', companyId)
       .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-      .order('created_at', { ascending: false }) as { data: Row<'web_activity_signals'>[] | null; error: any }
+      .order('created_at', { ascending: false }) as { data: Row<'web_activity_signals'>[] | null; error: unknown }
 
     if (!activities || activities.length === 0) {
       return signals
@@ -188,10 +188,10 @@ export class BuyingSignalDetector {
     let highIntentPages = 0
 
     for (const activity of activities) {
-      pageTypeCounts[(activity as any).page_type] = (pageTypeCounts[(activity as any).page_type] || 0) + 1
-      totalTimeOnSite += (activity as any).time_on_page || 0
+      pageTypeCounts[activity?.page_type] = (pageTypeCounts[activity?.page_type] || 0) + 1
+      totalTimeOnSite += activity?.time_on_page || 0
 
-      if (['pricing', 'demo', 'contact'].includes((activity as any).page_type)) {
+      if (['pricing', 'demo', 'contact'].includes(activity?.page_type)) {
         highIntentPages++
       }
     }
@@ -261,7 +261,7 @@ export class BuyingSignalDetector {
       .from('businesses')
       .select('name, company_number')
       .eq('id', companyId)
-      .single() as { data: { name: string; company_number: string } | null; error: any }
+      .single() as { data: { name: string; company_number: string } | null; error: unknown }
 
     if (!company) return signals
 
@@ -340,7 +340,7 @@ export class BuyingSignalDetector {
       .from('businesses')
       .select('website')
       .eq('id', companyId)
-      .single() as { data: { website: string | null } | null; error: any }
+      .single() as { data: { website: string | null } | null; error: unknown }
 
     if (!company?.website) return signals
 
@@ -360,7 +360,7 @@ export class BuyingSignalDetector {
           .select('id')
           .eq('company_id', companyId)
           .eq('technology_name', tech.name)
-          .single() as { data: { id: string } | null; error: any }
+          .single() as { data: { id: string } | null; error: unknown }
 
         if (!existing) {
           signals.push({
@@ -405,7 +405,7 @@ export class BuyingSignalDetector {
       .from('businesses')
       .select('name')
       .eq('id', companyId)
-      .single() as { data: { name: string } | null; error: any }
+      .single() as { data: { name: string } | null; error: unknown }
 
     if (!company) return signals
 
@@ -455,7 +455,7 @@ export class BuyingSignalDetector {
       .select('*')
       .eq('company_id', companyId)
       .gte('detected_at', new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString())
-      .order('signal_strength', { ascending: false }) as { data: Row<'buying_signals'>[] | null; error: any }
+      .order('signal_strength', { ascending: false }) as { data: Row<'buying_signals'>[] | null; error: unknown }
 
     if (!signals || signals.length === 0) {
       return {
@@ -544,7 +544,7 @@ export class BuyingSignalDetector {
       company_id: companyId,
       intent_score: Math.round(intentScore),
       intent_level: intentLevel,
-      top_signals: signals.slice(0, 5) as any[], // Database signals don't match BuyingSignal interface
+      top_signals: signals.slice(0, 5) as unknown[], // Database signals don't match BuyingSignal interface
       growth_indicators: categoryScores.growth,
       technology_indicators: categoryScores.technology,
       engagement_indicators: categoryScores.engagement,

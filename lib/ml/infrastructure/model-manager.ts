@@ -187,7 +187,7 @@ export class ModelManager {
    */
   async predict(
     modelId: string,
-    input: any,
+    input: unknown,
     options?: {
       saveToDb?: boolean
       userId?: string
@@ -201,7 +201,7 @@ export class ModelManager {
     }
 
     try {
-      let output: any
+      let output: unknown
       let confidence: number | undefined
 
       switch (model.provider) {
@@ -251,8 +251,8 @@ export class ModelManager {
    */
   private async predictWithOpenRouter(
     model: ModelConfig,
-    input: any
-  ): Promise<{ output: any; confidence?: number }> {
+    input: unknown
+  ): Promise<{ output: unknown; confidence?: number }> {
     const apiKey = process.env.OPENROUTER_API_KEY
 
     if (!apiKey) {
@@ -307,8 +307,8 @@ export class ModelManager {
    */
   private async predictWithCustomModel(
     model: ModelConfig,
-    input: any
-  ): Promise<{ output: any; confidence?: number }> {
+    input: unknown
+  ): Promise<{ output: unknown; confidence?: number }> {
     const algorithm = model.parameters?.algorithm
 
     switch (algorithm) {
@@ -331,8 +331,8 @@ export class ModelManager {
    */
   private weightedScoringAlgorithm(
     model: ModelConfig,
-    input: any
-  ): { output: any; confidence?: number } {
+    input: unknown
+  ): { output: unknown; confidence?: number } {
     const weights = model.parameters?.weights || {}
     let totalScore = 0
     let totalWeight = 0
@@ -360,8 +360,8 @@ export class ModelManager {
    */
   private gradientBoostingAlgorithm(
     model: ModelConfig,
-    input: any
-  ): { output: any; confidence?: number } {
+    input: unknown
+  ): { output: unknown; confidence?: number } {
     const features = model.parameters?.features || []
 
     // Simplified gradient boosting logic
@@ -387,8 +387,8 @@ export class ModelManager {
    */
   private ensembleAlgorithm(
     model: ModelConfig,
-    input: any
-  ): { output: any; confidence?: number } {
+    input: unknown
+  ): { output: unknown; confidence?: number } {
     const models = model.parameters?.models || []
     const predictions: number[] = []
 
@@ -496,7 +496,7 @@ export class ModelManager {
    */
   async batchPredict(
     modelId: string,
-    inputs: any[],
+    inputs: unknown[],
     options?: { saveToDb?: boolean; userId?: string }
   ): Promise<ModelPrediction[]> {
     const predictions: ModelPrediction[] = []

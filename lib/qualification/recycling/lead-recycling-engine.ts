@@ -207,14 +207,14 @@ export class LeadRecyclingEngine {
 
         // Update lead status to re-engaged
         if (leadData.id) {
-          await (supabase
+          await supabase
             .from('lead_scores')
-            .update as any)({
+            .update({
               status: 're_engaged',
               assigned_to,
               re_engaged_at: new Date().toISOString()
             })
-            .eq('id', leadData.id);
+            .eq('id', leadData.id)
         }
         break;
 
@@ -234,13 +234,13 @@ export class LeadRecyclingEngine {
 
         // Update lead status
         if (leadData.id) {
-          await (supabase
+          await supabase
             .from('lead_scores')
-            .update as any)({
+            .update({
               status: 'nurturing',
               nurture_campaign_id: nurture_campaign?.id
             })
-            .eq('id', leadData.id);
+            .eq('id', leadData.id)
         }
         break;
 
@@ -257,28 +257,28 @@ export class LeadRecyclingEngine {
         );
 
         if (leadData.id) {
-          await (supabase
+          await supabase
             .from('lead_scores')
-            .update as any)({
+            .update({
               status: 're_qualifying',
               assigned_to,
               re_qualification_date: new Date().toISOString()
             })
-            .eq('id', leadData.id);
+            .eq('id', leadData.id)
         }
         break;
 
       case 'archive':
         // Archive the lead
         if (leadData.id) {
-          await (supabase
+          await supabase
             .from('lead_scores')
-            .update as any)({
+            .update({
               status: 'archived',
               archived_at: new Date().toISOString(),
               archive_reason: reason
             })
-            .eq('id', leadData.id);
+            .eq('id', leadData.id)
         }
         break;
     }
@@ -344,7 +344,7 @@ export class LeadRecyclingEngine {
         enrolled_at: new Date().toISOString(),
         status: 'active',
         current_step: 0
-      } as any);
+      } as Record<string, unknown>);
 
     // Schedule first campaign step
     const { data: campaign } = await supabase
@@ -353,7 +353,7 @@ export class LeadRecyclingEngine {
       .eq('id', campaignId)
       .single();
 
-    const typedCampaign = campaign as any;
+    const typedCampaign = campaign;
     if (typedCampaign?.nurture_campaign_steps?.length) {
       await this.scheduleNextStep(
         leadId,
@@ -383,7 +383,7 @@ export class LeadRecyclingEngine {
         task_type: step.type,
         scheduled_for: executionTime,
         status: 'pending'
-      } as any);
+      } as Record<string, unknown>);
   }
 
   private calculateStepExecutionTime(timing: string): string {
@@ -437,7 +437,7 @@ export class LeadRecyclingEngine {
         if (reps?.length) {
           // Simple round-robin for now
           const randomIndex = Math.floor(Math.random() * reps.length);
-          return (reps[randomIndex] as any).id;
+          return reps[randomIndex]?.id;
         }
         break;
 
@@ -450,7 +450,7 @@ export class LeadRecyclingEngine {
           .eq('is_active', true)
           .single();
 
-        return (nurtureTeam as any)?.id;
+        return nurtureTeam?.id;
 
       case 'marketing':
         // Assign to marketing team queue
@@ -481,9 +481,9 @@ export class LeadRecyclingEngine {
       .eq('lead_id', leadId);
 
     // Reset lead score
-    await (supabase
+    await supabase
       .from('lead_scores')
-      .update as any)({
+      .update({
         score: 0,
         qualification_status: null,
         qualified_at: null
@@ -508,7 +508,7 @@ export class LeadRecyclingEngine {
         recycling_reason: result.action as string,
         recycled_to: result.assigned_to as string,
         created_at: new Date().toISOString()
-      } as any);
+      } as Record<string, unknown>);
   }
 
   private calculateDaysSince(date: string): number {
@@ -569,9 +569,9 @@ export class LeadRecyclingEngine {
 
       // Boost priority for high-performing rules
       if (successRate > 0.3) {
-        await (supabase
+        await supabase
           .from('lead_recycling_rules')
-          .update as any)({
+          .update({
             priority: Math.min(100, Math.round(successRate * 100)),
             settings: {
               success_rate: successRate,
@@ -617,7 +617,7 @@ export class LeadRecyclingEngine {
           )
         )
       `)
-      .eq('lead.company.industry', (lead as any).company?.industry)
+      .eq('lead.company.industry', lead.company?.industry)
       .not('outcome', 'is', null);
 
     if (!similarLeads?.length) return 0.5; // Default 50% if no data

@@ -212,7 +212,7 @@ export class BenchmarkEngine {
 
     if (!business) return null
 
-    const bizData = business as any
+    const bizData = business
 
     // Extract available metrics from business data
     const metrics: Partial<CompanyMetrics> = {
@@ -392,7 +392,7 @@ export class BenchmarkEngine {
     const percentile = this.calculateMetricPercentile(
       companyValue,
       industryBenchmark,
-      peerMetrics.map(p => (p as any)[metricName]).filter(v => v !== undefined) as number[]
+      peerMetrics.map(p => p?.[metricName]).filter(v => v !== undefined) as number[]
     )
 
     return {
@@ -472,11 +472,11 @@ export class BenchmarkEngine {
     )
 
     metricNames.forEach(metric => {
-      const value = (company as any)[metric]
+      const value = company?.[metric]
       if (value !== undefined && value !== null && typeof value === 'number') {
         const industryBenchmark = industryBenchmarks.find(b => b.metric_name === metric)
         const peerValues = peerMetrics
-          .map(p => (p as any)[metric])
+          .map(p => p?.[metric])
           .filter(v => v !== undefined && v !== null)
 
         rankings[metric] = this.calculateMetricPercentile(value, industryBenchmark, peerValues)
@@ -500,7 +500,7 @@ export class BenchmarkEngine {
     const keyMetrics = ['profit_margin', 'revenue_growth_yoy', 'revenue_per_employee', 'return_on_equity']
 
     for (const metric of keyMetrics) {
-      const companyValue = (company as any)[metric]
+      const companyValue = company?.[metric]
       if (companyValue === undefined) continue
 
       // Get target value (75th percentile of industry or peers)
@@ -511,7 +511,7 @@ export class BenchmarkEngine {
         targetValue = industryBenchmark.p75_value
       } else if (peerMetrics.length > 0) {
         const peerValues = peerMetrics
-          .map(p => (p as any)[metric])
+          .map(p => p?.[metric])
           .filter(v => v !== undefined && v !== null)
           .sort((a, b) => a - b)
         targetValue = peerValues[Math.floor(peerValues.length * 0.75)] || companyValue
@@ -723,7 +723,7 @@ export class BenchmarkEngine {
       .eq('id', companyId)
       .single()
 
-    const sicCodes = (data as any)?.sic_codes
+    const sicCodes = data?.sic_codes
     if (sicCodes && sicCodes.length > 0) {
       // Return primary SIC code (first two digits)
       return sicCodes[0].substring(0, 2)
@@ -792,7 +792,7 @@ export class BenchmarkEngine {
 
     if (!members || members.length === 0) return []
 
-    const companyIds = members.map((m: any) => m.company_id)
+    const companyIds = members.map((m: Record<string, unknown>) => m.company_id)
 
     const { data: metrics } = await this.supabase!
       .from('company_metrics')
@@ -802,7 +802,7 @@ export class BenchmarkEngine {
 
     // Group by company and take latest metric for each
     const latestMetrics: Record<string, unknown> = {}
-    metrics?.forEach((metric: any) => {
+    metrics?.forEach((metric: string) => {
       if (!latestMetrics[metric.company_id]) {
         latestMetrics[metric.company_id] = metric
       }
@@ -819,7 +819,7 @@ export class BenchmarkEngine {
 
     await this.supabase!
       .from('benchmark_comparisons')
-      .upsert(comparison as any)
+      .upsert(comparison as Record<string, unknown>)
   }
 
   /**
@@ -831,7 +831,7 @@ export class BenchmarkEngine {
   ): Promise<any[]> {
     if (!this.supabase) await this.ensureClient()
 
-    const alerts: any[] = []
+    const alerts: Array<Record<string, unknown>> = []
 
     // Check for significant underperformance
     Object.entries(comparison.percentile_rankings).forEach(([metric, percentile]) => {
@@ -841,7 +841,7 @@ export class BenchmarkEngine {
           alert_type: 'underperformance',
           severity: percentile < 10 ? 'high' : 'medium',
           metric_name: metric,
-          current_value: (metrics as any)[metric],
+          current_value: metrics?.[metric],
           peer_average: comparison.comparison_results.financial_metrics?.find(m => m.metric_name === metric)?.benchmark_value,
           title: `Low ${this.getMetricLabel(metric)}`,
           message: `Company is in the ${percentile}th percentile for ${this.getMetricLabel(metric)}`

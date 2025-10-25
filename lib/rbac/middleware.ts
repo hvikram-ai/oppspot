@@ -14,13 +14,13 @@ import { UserRole } from './types';
 
 export type NextRouteHandler = (
   request: NextRequest,
-  context?: any
+  context?: Record<string, unknown>
 ) => Promise<NextResponse> | NextResponse;
 
 export type ProtectedRouteHandler = (
   request: NextRequest,
-  context?: any,
-  user?: any
+  context?: Record<string, unknown>,
+  user?: Record<string, unknown>
 ) => Promise<NextResponse> | NextResponse;
 
 // =====================================================
@@ -31,7 +31,7 @@ export type ProtectedRouteHandler = (
  * Require authenticated user
  */
 export function requireAuth(handler: ProtectedRouteHandler): NextRouteHandler {
-  return async (request: NextRequest, context?: any) => {
+  return async (request: NextRequest, context?: Record<string, unknown>) => {
     const supabase = await createClient();
     const {
       data: { user },
@@ -65,7 +65,7 @@ export function requireAuth(handler: ProtectedRouteHandler): NextRouteHandler {
  */
 export function requireRole(...allowedRoles: UserRole[]) {
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
-    return async (request: NextRequest, context?: any) => {
+    return async (request: NextRequest, context?: Record<string, unknown>) => {
       const supabase = await createClient();
       const {
         data: { user },
@@ -153,7 +153,7 @@ export const requireAnyUser = requireRole(
  */
 export function requirePermission(...requiredPermissions: string[]) {
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
-    return async (request: NextRequest, context?: any) => {
+    return async (request: NextRequest, context?: Record<string, unknown>) => {
       const supabase = await createClient();
       const {
         data: { user },
@@ -200,7 +200,7 @@ export function requirePermission(...requiredPermissions: string[]) {
  */
 export function requireAnyPermission(...permissions: string[]) {
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
-    return async (request: NextRequest, context?: any) => {
+    return async (request: NextRequest, context?: Record<string, unknown>) => {
       const supabase = await createClient();
       const {
         data: { user },
@@ -255,7 +255,7 @@ export function requireAnyPermission(...permissions: string[]) {
  */
 export function requireOrgAccess(orgIdParam: string = 'orgId') {
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
-    return async (request: NextRequest, context?: any) => {
+    return async (request: NextRequest, context?: Record<string, unknown>) => {
       const supabase = await createClient();
       const {
         data: { user },
@@ -327,7 +327,7 @@ export function requireOrgAccess(orgIdParam: string = 'orgId') {
  */
 export function requireOwnerOrAdmin(ownerIdField: string = 'userId') {
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
-    return async (request: NextRequest, context?: any) => {
+    return async (request: NextRequest, context?: Record<string, unknown>) => {
       const supabase = await createClient();
       const {
         data: { user },
@@ -385,7 +385,7 @@ export function requireOwnerOrAdmin(ownerIdField: string = 'userId') {
 export function compose(...middlewares: Array<(handler: ProtectedRouteHandler) => NextRouteHandler>) {
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
     return middlewares.reduceRight(
-      (acc, middleware) => middleware(acc as any) as any,
+      (acc, middleware) => middleware(acc) as NextRequest,
       handler
     ) as NextRouteHandler;
   };
@@ -414,7 +414,7 @@ export function rateLimit(options?: {
   const requestCounts = new Map<string, { count: number; resetAt: number }>();
 
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
-    return async (request: NextRequest, context?: any) => {
+    return async (request: NextRequest, context?: Record<string, unknown>) => {
       const supabase = await createClient();
       const {
         data: { user },
