@@ -338,7 +338,7 @@ export class LeadScoringService {
         explanation += `#### ${this.capitalizeFirst(component)} (Weight: ${breakdown.weight * 100}%)\n`
 
         const topFactors = breakdown.factors
-          .sort((a: any, b: any) => Math.abs(b.value) - Math.abs(a.value))
+          .sort((a: any, b: unknown) => Math.abs(b.value) - Math.abs(a.value))
           .slice(0, 3)
 
         for (const factor of topFactors) {
@@ -398,7 +398,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('company_number', identifier.toUpperCase())
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single() as { data: Row<'businesses'> | null; error: unknown }
 
       if (byNumber) return byNumber
 
@@ -406,7 +406,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('id', identifier)
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single() as { data: Row<'businesses'> | null; error: unknown }
 
       return byId
     }
@@ -416,7 +416,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('id', identifier.company_id)
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single() as { data: Row<'businesses'> | null; error: unknown }
       return data
     }
 
@@ -425,7 +425,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('company_number', (identifier.company_number as string).toUpperCase())
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single() as { data: Row<'businesses'> | null; error: unknown }
       return data
     }
 
@@ -435,7 +435,7 @@ export class LeadScoringService {
       .select('*')
       .ilike('name', `%${identifier.company_name}%`)
       .limit(1)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single() as { data: Row<'businesses'> | null; error: unknown }
 
     return data
   }
@@ -501,7 +501,7 @@ export class LeadScoringService {
     return Math.round(totalWeight > 0 ? weightedSum / totalWeight : 0)
   }
 
-  private calculateConfidenceLevel(componentScores: any[]): 'high' | 'medium' | 'low' {
+  private calculateConfidenceLevel(componentScores: unknown[]): 'high' | 'medium' | 'low' {
     const avgDataQuality = componentScores.reduce((sum, score) => sum + score.data_quality, 0) / componentScores.length
     const totalMissingData = componentScores.reduce((sum, score) => sum + score.missing_data.length, 0)
 
@@ -514,7 +514,7 @@ export class LeadScoringService {
     const sources = new Set<string>()
 
     for (const component of Object.values(breakdown)) {
-      component.factors.forEach((factor: any) => {
+      component.factors.forEach((factor: unknown) => {
         // Extract data source from factor name or use default
         if (factor.name.includes('Companies House')) sources.add('companies_house')
         if (factor.name.includes('Website')) sources.add('website_analysis')
@@ -581,7 +581,7 @@ export class LeadScoringService {
     }
   }
 
-  private shouldTriggerAlert(score: LeadScore, criteria: any): boolean {
+  private shouldTriggerAlert(score: LeadScore, criteria: unknown): boolean {
     const scoreType = criteria.score_type || 'overall'
     const value = score[`${scoreType}_score` as keyof LeadScore] as number
     const threshold = criteria.value
@@ -750,7 +750,7 @@ export class LeadScoringService {
   /**
    * Save AI-enhanced score with additional metadata
    */
-  private async saveAIScore(score: LeadScore, aiAnalysis: any): Promise<void> {
+  private async saveAIScore(score: LeadScore, aiAnalysis: unknown): Promise<void> {
     const supabase = await createClient()
 
     await (supabase

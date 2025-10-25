@@ -146,7 +146,7 @@ export class EngagementTracker {
 
       // Outcome factor
       const positiveOutcomes = recentEngagements.filter(
-        (e: any) => e.outcome === 'positive'
+        (e: unknown) => e.outcome === 'positive'
       ).length;
       const outcomeRatio = recentEngagements.length > 0
         ? positiveOutcomes / recentEngagements.length
@@ -155,9 +155,9 @@ export class EngagementTracker {
 
       // Sentiment factor
       const avgSentiment = recentEngagements
-        .filter((e: any) => e.sentiment_score !== null)
-        .reduce((sum: number, e: any) => sum + (e.sentiment_score + 100) / 2, 0) /
-        (recentEngagements.filter((e: any) => e.sentiment_score !== null).length || 1);
+        .filter((e: unknown) => e.sentiment_score !== null)
+        .reduce((sum: number, e: unknown) => sum + (e.sentiment_score + 100) / 2, 0) /
+        (recentEngagements.filter((e: unknown) => e.sentiment_score !== null).length || 1);
       engagementScore = Math.round(Math.min(100, engagementScore * (avgSentiment / 50)));
 
       // Update stakeholder
@@ -196,8 +196,8 @@ export class EngagementTracker {
       }
 
       const sentiments = engagements
-        .filter((e: any) => e.sentiment_score !== null)
-        .map((e: any) => e.sentiment_score as number);
+        .filter((e: unknown) => e.sentiment_score !== null)
+        .map((e: unknown) => e.sentiment_score as number);
 
       if (sentiments.length < 2) {
         return 'stable';
@@ -675,7 +675,7 @@ export class EngagementTracker {
       let totalSentiment = 0;
       let sentimentCount = 0;
 
-      engagements.forEach((e: any) => {
+      engagements.forEach((e: unknown) => {
         // Type distribution
         engagementTypes[e.engagement_type] = (engagementTypes[e.engagement_type] || 0) + 1;
 

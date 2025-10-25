@@ -267,16 +267,16 @@ export interface IScanRepository {
   findById(id: string): Promise<any | null>
   findByUserId(userId: string): Promise<any[]>
   findByStatus(status: ScanStatus): Promise<any[]>
-  save(scan: any): Promise<void>
-  update(scan: any): Promise<void>
+  save(scan: unknown): Promise<void>
+  update(scan: unknown): Promise<void>
   delete(id: string): Promise<void>
 }
 
 export interface ICompanyRepository {
   findById(id: string): Promise<any | null>
   findByUserId(userId: string): Promise<any[]>
-  save(company: any): Promise<void>
-  update(company: any): Promise<void>
+  save(company: unknown): Promise<void>
+  update(company: unknown): Promise<void>
   delete(id: string): Promise<void>
 }
 
@@ -285,11 +285,11 @@ export interface ICompanyRepository {
 // ==========================================
 
 export interface IDataCollectionService {
-  collectData(params: any): Promise<any>
+  collectData(params: unknown): Promise<any>
 }
 
 export interface ICompanyAnalysisService {
-  analyzeCompany(company: any): Promise<any>
+  analyzeCompany(company: unknown): Promise<any>
 }
 
 export interface IScanOrchestrationService {
@@ -318,7 +318,7 @@ export interface ICostManagementService {
 // ==========================================
 
 export interface IEventStore {
-  append(streamId: string, events: any[]): Promise<void>
+  append(streamId: string, events: unknown[]): Promise<void>
   getEvents(streamId: string): Promise<any[]>
 }
 

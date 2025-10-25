@@ -114,7 +114,7 @@ export class StreamService {
       .select('stream_id')
       .eq('user_id', userId)
 
-    const streamIds = (memberData as any[])?.map((m: any) => m.stream_id) || []
+    const streamIds = (memberData as any[])?.map((m: Record<string, unknown>) => m.stream_id) || []
 
     // If user has no streams, return empty
     if (streamIds.length === 0) {

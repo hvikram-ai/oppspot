@@ -112,7 +112,7 @@ export class ResearchRepository {
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single() as { data: Row<'research_reports'> | null; error: any };
+      .single() as { data: Row<'research_reports'> | null; error: unknown };
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -207,7 +207,7 @@ export class ResearchRepository {
       .from('research_sections')
       .select('*')
       .eq('report_id', reportId)
-      .order('created_at', { ascending: true }) as { data: Row<'research_sections'>[] | null; error: any };
+      .order('created_at', { ascending: true }) as { data: Row<'research_sections'>[] | null; error: unknown };
 
     if (error) {
       console.error('Failed to get sections:', error);
@@ -228,7 +228,7 @@ export class ResearchRepository {
       .select('*')
       .eq('report_id', reportId)
       .eq('section_type', sectionType)
-      .single() as { data: Row<'research_sections'> | null; error: any };
+      .single() as { data: Row<'research_sections'> | null; error: unknown };
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -292,7 +292,7 @@ export class ResearchRepository {
       .from('research_sources')
       .select('*')
       .eq('report_id', reportId)
-      .order('reliability_score', { ascending: false }) as { data: Row<'research_sources'>[] | null; error: any };
+      .order('reliability_score', { ascending: false }) as { data: Row<'research_sources'>[] | null; error: unknown };
 
     if (error) {
       console.error('Failed to get sources:', error);
@@ -317,7 +317,7 @@ export class ResearchRepository {
       .from('user_research_quotas')
       .select('*')
       .eq('user_id', userId)
-      .single() as { data: Row<'user_research_quotas'> | null; error: any };
+      .single() as { data: Row<'user_research_quotas'> | null; error: unknown };
 
     if (error && error.code === 'PGRST116') {
       // Create new quota
@@ -351,7 +351,7 @@ export class ResearchRepository {
 
     // Check if we need to reset for new period
     const now = new Date();
-    const periodEnd = new Date((data as any).period_end);
+    const periodEnd = new Date(data?.period_end);
 
     if (now > periodEnd) {
       // Reset quota
@@ -422,7 +422,7 @@ export class ResearchRepository {
     const { count } = (await supabase
       .from('research_reports')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)) as { count: number | null; data: null; error: any };
+      .eq('user_id', userId)) as { count: number | null; data: null; error: unknown };
 
     // Get reports
     const { data, error } = await supabase
@@ -430,7 +430,7 @@ export class ResearchRepository {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1) as { data: Row<'research_reports'>[] | null; error: any };
+      .range(offset, offset + limit - 1) as { data: Row<'research_reports'>[] | null; error: unknown };
 
     if (error) {
       throw new Error(`Failed to get research history: ${error.message}`);
@@ -488,7 +488,7 @@ export class ResearchRepository {
         const content = section.content as any;
         if (section.section_type === 'decision_makers' && Array.isArray(content)) {
           // Remove personal contact info
-          const anonymized = content.map((person: any) => ({
+          const anonymized = content.map((person: unknown) => ({
             ...person,
             business_email: null,
             phone_number: null,

@@ -86,7 +86,7 @@ class OppScanEngine {
         .from('acquisition_scans')
         .select('*')
         .eq('id', scanId)
-        .single() as { data: Row<'acquisition_scans'> | null; error: any }
+        .single() as { data: Row<'acquisition_scans'> | null; error: unknown }
 
       if (error || !scan) {
         throw new Error(`Failed to load scan configuration: ${error?.message}`)
@@ -463,7 +463,7 @@ class OppScanEngine {
             analysis_status: 'pending'
           })
           .select('id')
-          .single() as { data: { id: string } | null; error: any }
+          .single() as { data: { id: string } | null; error: unknown }
 
         if (target) {
           targetIds.push(target.id)
@@ -546,7 +546,7 @@ class OppScanEngine {
       .from('market_intelligence')
       .select('id')
       .eq('scan_id', scanId)
-      .single() as { data: Row<'market_intelligence'> | null; error: any }
+      .single() as { data: Row<'market_intelligence'> | null; error: unknown }
 
     const intelligenceData = {
       scan_id: scanId,
