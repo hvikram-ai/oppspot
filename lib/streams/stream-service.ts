@@ -56,7 +56,7 @@ export class StreamService {
         metadata: data.metadata || {},
         created_by: userId,
         status: 'active' as const
-      } as any)
+      } as Record<string, unknown>)
       .select()
       .single()
 
@@ -65,7 +65,7 @@ export class StreamService {
       throw new Error(`Failed to create stream: ${error?.message || 'Unknown error'}`)
     }
 
-    const streamData = stream as any
+    const streamData = stream
     console.log('[StreamService] Stream created:', streamData.id)
 
     // Add creator as owner member using same admin client to bypass RLS
@@ -78,7 +78,7 @@ export class StreamService {
         user_id: userId,
         role: 'owner' as const,
         invitation_accepted_at: new Date().toISOString()
-      } as any])
+      } as Record<string, unknown>])
 
     if (memberError) {
       console.error('[StreamService] Error adding stream member:', memberError)
@@ -114,7 +114,7 @@ export class StreamService {
       .select('stream_id')
       .eq('user_id', userId)
 
-    const streamIds = (memberData as any[])?.map((m: Record<string, unknown>) => m.stream_id) || []
+    const streamIds = (memberData as unknown[])?.map((m: Record<string, unknown>) => m.stream_id) || []
 
     // If user has no streams, return empty
     if (streamIds.length === 0) {
@@ -234,7 +234,7 @@ export class StreamService {
     await supabase
       .from('stream_members')
       // @ts-expect-error - Supabase type inference issue
-      .update({ last_accessed_at: new Date().toISOString() } as any)
+      .update({ last_accessed_at: new Date().toISOString() } as Record<string, unknown>)
       .eq('stream_id', streamId)
       .eq('user_id', userId)
 
@@ -265,14 +265,14 @@ export class StreamService {
       .update({
         ...data,
         updated_by: userId
-      } as any)
+      } as Record<string, unknown>)
       .eq('id', streamId)
       .select()
       .single()
 
     if (error || !stream) throw error || new Error('Stream not found')
 
-    const streamData = stream as any
+    const streamData = stream
     // Log activity
     await this.logActivity(streamId, userId, 'stream_updated', {
       description: `Updated stream: ${streamData.name ?? "Unknown"}`,
@@ -299,7 +299,7 @@ export class StreamService {
         status: 'archived' as const,
         archived_at: new Date().toISOString(),
         updated_by: userId
-      } as any)
+      } as Record<string, unknown>)
       .eq('id', streamId)
 
     if (error) throw error
@@ -357,13 +357,13 @@ export class StreamService {
         },
         invited_by: requesterId,
         invitation_accepted_at: new Date().toISOString()
-      } as any)
+      } as Record<string, unknown>)
       .select()
       .single()
 
     if (error || !member) throw error || new Error('Failed to add member')
 
-    const memberData = member as any
+    const memberData = member
     // Log activity
     await this.logActivity(streamId, requesterId, 'member_added', {
       description: `Added member to stream`,
@@ -435,7 +435,7 @@ export class StreamService {
       .limit(1)
       .single()
 
-    const nextPosition = ((maxPosition as any)?.position || 0) + 1
+    const nextPosition = (maxPosition?.position || 0) + 1
 
     const { data: item, error } = await supabase
       .from('stream_items')
@@ -457,13 +457,13 @@ export class StreamService {
         metadata: data.metadata || {},
         added_by: userId,
         status: 'open'
-      } as any)
+      } as Record<string, unknown>)
       .select()
       .single()
 
     if (error || !item) throw error || new Error('Failed to create item')
 
-    const itemData = item as any
+    const itemData = item
     // Notify assigned user
     if (data.assigned_to && data.assigned_to !== userId) {
       await this.createNotification({
@@ -500,7 +500,7 @@ export class StreamService {
 
     if (!existingItem) throw new Error('Item not found')
 
-    const existingItemData = existingItem as any
+    const existingItemData = existingItem
     // Verify user is owner or editor
     await this.verifyRole(existingItemData.stream_id, userId, ['owner', 'editor'])
 
@@ -510,14 +510,14 @@ export class StreamService {
       .update({
         ...data,
         updated_by: userId
-      } as any)
+      } as Record<string, unknown>)
       .eq('id', itemId)
       .select()
       .single()
 
     if (error) throw error
 
-    const itemData = item as any
+    const itemData = item
     // Notify if assignment changed
     if (data.assigned_to && data.assigned_to !== existingItemData.assigned_to && itemData) {
       await this.createNotification({
@@ -550,7 +550,7 @@ export class StreamService {
 
     if (!item) throw new Error('Item not found')
 
-    const itemData = item as any
+    const itemData = item
     // Verify user is owner or editor
     await this.verifyRole(itemData.stream_id, userId, ['owner', 'editor'])
 
@@ -645,13 +645,13 @@ export class StreamService {
         thread_id: data.parent_comment_id || null, // If reply, use parent as thread
         mentioned_users: data.mentioned_users || [],
         author_id: userId
-      } as any)
+      } as Record<string, unknown>)
       .select()
       .single()
 
     if (error || !comment) throw error || new Error('Failed to create comment')
 
-    const commentData = comment as any
+    const commentData = comment
     // Notify mentioned users
     if (data.mentioned_users && data.mentioned_users.length > 0) {
       for (const mentionedUserId of data.mentioned_users) {
@@ -709,7 +709,7 @@ export class StreamService {
       .eq('user_id', userId)
       .single()
 
-    const memberData = data as any
+    const memberData = data
     if (error || !memberData || !allowedRoles.includes(memberData.role)) {
       throw new Error('Insufficient permissions')
     }
@@ -742,7 +742,7 @@ export class StreamService {
       importance: options.importance || 'normal',
       metadata: options.metadata || {},
       is_system: false
-    } as any)
+    } as Record<string, unknown>)
   }
 
   /**
@@ -772,6 +772,6 @@ export class StreamService {
       comment_id: data.comment_id || null,
       actor_id: data.actor_id || null,
       action_url: `/streams/${data.stream_id}${data.item_id ? `/items/${data.item_id}` : ''}`
-    } as any)
+    } as Record<string, unknown>)
   }
 }

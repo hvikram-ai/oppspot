@@ -46,7 +46,7 @@ export class OpportunityBot extends BaseAgent {
         .from('streams')
         .select('*')
         .eq('id', stream_id)
-        .single() as { data: Row<'streams'> | null; error: any }
+        .single() as { data: Row<'streams'> | null; error: unknown }
 
       if (!stream) {
         throw new Error(`Stream not found: ${stream_id}`)
@@ -356,7 +356,7 @@ export class OpportunityBot extends BaseAgent {
       .select('id')
       .eq('stream_id', streamId)
       .eq('business_id', company.id)
-      .single() as { data: Row<'stream_items'> | null; error: any }
+      .single() as { data: Row<'stream_items'> | null; error: unknown }
 
     if (existing) {
       this.log(`Company ${company.name} already in stream, skipping`)
@@ -368,7 +368,7 @@ export class OpportunityBot extends BaseAgent {
       .from('streams')
       .select('stages')
       .eq('id', streamId)
-      .single() as { data: Row<'streams'> | null; error: any }
+      .single() as { data: Row<'streams'> | null; error: unknown }
 
     const streamData = stream as any;
     const stages = Array.isArray(streamData?.stages) ? streamData.stages : [];
@@ -395,7 +395,7 @@ export class OpportunityBot extends BaseAgent {
           region: company.region
         },
         added_by: this.config.id // Agent ID as added_by
-      } as any)
+      } as Record<string, unknown>)
 
     this.log(`Added ${company.name} to stream (score: ${company.quality_score.toFixed(1)})`)
   }
@@ -403,7 +403,7 @@ export class OpportunityBot extends BaseAgent {
   /**
    * Detect buying signals for a company
    */
-  private async detectBuyingSignals(company: any): Promise<void> {
+  private async detectBuyingSignals(company: unknown): Promise<void> {
     // Detect signals based on available data
     const signals: Array<{
       type: string
@@ -470,7 +470,7 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single() as { data: Row<'ai_agents'> | null; error: any }
+    .single() as { data: Row<'ai_agents'> | null; error: unknown }
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)

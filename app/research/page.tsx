@@ -24,7 +24,7 @@ async function getResearchHistory(userId: string) {
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(50) as { data: Row<'research_reports'>[] | null; error: any };
+    .limit(50) as { data: Row<'research_reports'>[] | null; error: unknown };
 
   if (error) {
     console.error('Failed to fetch research history:', error);
@@ -71,59 +71,59 @@ export default async function ResearchPage() {
           ) : (
             <div className="space-y-4" data-testid="research-history-list">
               {reports.map((report) => (
-                <Card key={(report as any).id} className="p-6" data-testid="history-item">
+                <Card key={report.id} className="p-6" data-testid="history-item">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <Link
-                          href={`/research/${(report as any).id}`}
+                          href={`/research/${report.id}`}
                           className="text-xl font-semibold hover:underline"
                         >
-                          {(report as any).company_name}
+                          {report.company_name}
                         </Link>
                         <Badge
                           variant={
-                            (report as any).status === 'complete'
+                            report.status === 'complete'
                               ? 'default'
-                              : (report as any).status === 'generating'
+                              : report.status === 'generating'
                               ? 'secondary'
                               : 'outline'
                           }
                         >
-                          {(report as any).status}
+                          {report.status}
                         </Badge>
                       </div>
 
                       <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {formatDistanceToNow(new Date((report as any).created_at), {
+                          {formatDistanceToNow(new Date(report.created_at), {
                             addSuffix: true,
                           })}
                         </div>
 
-                        {(report as any).sections_complete > 0 && (
+                        {report.sections_complete > 0 && (
                           <div className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4" />
-                            {(report as any).sections_complete}/6 sections
+                            {report.sections_complete}/6 sections
                           </div>
                         )}
 
-                        {(report as any).confidence_score && (
+                        {report.confidence_score && (
                           <div>
-                            Confidence: {((report as any).confidence_score * 100).toFixed(0)}%
+                            Confidence: {(report.confidence_score * 100).toFixed(0)}%
                           </div>
                         )}
 
-                        {(report as any).total_sources > 0 && (
-                          <div>{(report as any).total_sources} sources</div>
+                        {report.total_sources > 0 && (
+                          <div>{report.total_sources} sources</div>
                         )}
                       </div>
 
-                      {(report as any).generated_at && (report as any).cached_until && (
+                      {report.generated_at && report.cached_until && (
                         <p className="text-xs text-muted-foreground mt-2">
                           Valid until{' '}
-                          {formatDistanceToNow(new Date((report as any).cached_until), {
+                          {formatDistanceToNow(new Date(report.cached_until), {
                             addSuffix: true,
                           })}
                         </p>
@@ -131,7 +131,7 @@ export default async function ResearchPage() {
                     </div>
 
                     <Button asChild variant="outline">
-                      <Link href={`/research/${(report as any).id}`}>View Report</Link>
+                      <Link href={`/research/${report.id}`}>View Report</Link>
                     </Button>
                   </div>
                 </Card>

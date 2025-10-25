@@ -134,7 +134,7 @@ export class EngagementTracker {
       // Frequency factor
       const daysSinceFirstEngagement = recentEngagements.length > 0
         ? Math.floor(
-            (Date.now() - new Date((recentEngagements[recentEngagements.length - 1] as any).engagement_date).getTime()) /
+            (Date.now() - new Date((recentEngagements[recentEngagements.length - 1] as Record<string, unknown>[]).engagement_date).getTime()) /
             (1000 * 60 * 60 * 24)
           )
         : 0;
@@ -364,8 +364,8 @@ export class EngagementTracker {
 
       if (recentEngagements && recentEngagements.length === 2) {
         const daysBetween = Math.floor(
-          (new Date((recentEngagements[0] as any).engagement_date).getTime() -
-           new Date((recentEngagements[1] as any).engagement_date).getTime()) /
+          (new Date((recentEngagements[0] as Record<string, unknown>[]).engagement_date).getTime() -
+           new Date((recentEngagements[1] as Record<string, unknown>[]).engagement_date).getTime()) /
           (1000 * 60 * 60 * 24)
         );
 
@@ -444,11 +444,11 @@ export class EngagementTracker {
 
             // Create alert
             const alert: Partial<StakeholderAlert> = {
-              stakeholder_id: (stakeholder as any).id,
-              org_id: (stakeholder as any).org_id,
+              stakeholder_id: stakeholder?.id,
+              org_id: stakeholder?.org_id,
               alert_type: 'role_change',
               severity: this.determineRoleChangeSeverity(roleChange),
-              title: `Role change detected for ${(stakeholder as any).name}`,
+              title: `Role change detected for ${stakeholder?.name}`,
               message: `${roleChange.previous_role} → ${roleChange.new_role}`,
               action_required: 'Review and update engagement strategy',
               status: 'active'
