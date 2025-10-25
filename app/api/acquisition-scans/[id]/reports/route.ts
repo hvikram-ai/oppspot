@@ -28,7 +28,7 @@ export async function GET(
     const reportType = searchParams.get('type')
 
     // Check scan access
-    const { data: scanData, error: scanError } = await supabase
+    const { data: scanData, error: _scanError } = await supabase
       .from('acquisition_scans')
       .select('user_id, org_id')
       .eq('id', scanId)
@@ -65,7 +65,7 @@ export async function GET(
       query = query.eq('report_type', reportType)
     }
 
-    const { data: reports, error: reportsError } = await query
+    const { data: reports, error: _reportsError } = await query
 
     if (reportsError) {
       console.error('Error fetching reports:', reportsError)
@@ -105,7 +105,7 @@ export async function POST(
     const body = await request.json()
 
     // Check scan access
-    const { data: scanData, error: scanError } = await supabase
+    const { data: scanData, error: _scanError } = await supabase
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
@@ -181,7 +181,7 @@ export async function POST(
     // Create report
     const { data: report, error: insertError } = await supabase
       .from('scan_reports')
-      // @ts-expect-error - Supabase type inference issue with insert() method for scan reports
+      // @ts-expect-error - scan_reports insert type mismatch
       .insert({
         scan_id: scanId,
         user_id: user.id,
@@ -213,7 +213,7 @@ export async function POST(
       setTimeout(async () => {
         await supabase
           .from('scan_reports')
-          // @ts-expect-error - Supabase type inference issue with update() method
+          // @ts-expect-error - scan_reports update type mismatch
           .update({
             generation_status: 'completed',
             generated_at: new Date().toISOString(),
@@ -226,7 +226,7 @@ export async function POST(
     // Create audit log entry
     await supabase
       .from('scan_audit_log')
-      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
+      // @ts-expect-error - scan_audit_log insert type mismatch
       .insert({
         scan_id: scanId,
         user_id: user.id,
@@ -253,16 +253,23 @@ export async function POST(
 
 // Type for target companies with related data
 type TargetCompanyWithRelations = Row<'target_companies'> & {
-  financial_analysis?: any[]
-  risk_assessments?: Array<{ risk_category?: string; red_flags?: any[] }>
-  due_diligence?: any[]
+  financial_analysis?: Array<Record<string, unknown>>
+  risk_assessments?: Array<{
+    risk_category?: string
+    red_flags?: Array<{
+      category?: string
+      description?: string
+      severity?: string
+    }>
+  }>
+  due_diligence?: Array<Record<string, unknown>>
 }
 
 // Generate report content based on type
 async function generateReportContent(supabase: DbClient, scanId: string, reportType: string, scan: Scan) {
   try {
     // Get scan data
-    const { data: targetsData, error: targetsError } = await supabase
+    const { data: targetsData, error: _targetsError } = await supabase
       .from('target_companies')
       .select(`
         *,
@@ -274,7 +281,7 @@ async function generateReportContent(supabase: DbClient, scanId: string, reportT
 
     const targets = (targetsData || []) as TargetCompanyWithRelations[]
 
-    const { data: marketIntelligence, error: marketError } = await supabase
+    const { data: marketIntelligence, error: _marketError } = await supabase
       .from('market_intelligence')
       .select('*')
       .eq('scan_id', scanId)
@@ -354,7 +361,7 @@ async function generateReportContent(supabase: DbClient, scanId: string, reportT
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

@@ -20,7 +20,7 @@ export interface BuyingSignal {
   title?: string
   description?: string
   raw_data?: any
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   detected_at: Date
   expires_at?: Date
 }

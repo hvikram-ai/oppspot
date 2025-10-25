@@ -8,7 +8,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { UpdateDataRoomRequest } from '@/lib/data-room/types'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface DataRoomAccess {
   user_id?: string;
@@ -151,7 +150,7 @@ export async function PATCH(
     // Update data room
     const { data: dataRoom, error } = await supabase
       .from('data_rooms')
-      .update(updates)
+      .update(updates as never)
       .eq('id', id)
       .select()
       .single()
@@ -171,7 +170,7 @@ export async function PATCH(
       details: { updates },
       ip_address: request.headers.get('x-forwarded-for') || '0.0.0.0',
       user_agent: request.headers.get('user-agent') || 'Unknown'
-    })
+    } as never)
 
     return NextResponse.json({
       success: true,
@@ -228,7 +227,7 @@ export async function DELETE(
       .update({
         status: 'deleted',
         deleted_at: new Date().toISOString()
-      })
+      } as never)
       .eq('id', id)
 
     if (error) {
@@ -246,7 +245,7 @@ export async function DELETE(
       details: { name: typedExisting.name },
       ip_address: request.headers.get('x-forwarded-for') || '0.0.0.0',
       user_agent: request.headers.get('user-agent') || 'Unknown'
-    })
+    } as never)
 
     return NextResponse.json({
       success: true,

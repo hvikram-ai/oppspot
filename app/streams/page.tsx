@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Grid3x3, List, Search, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,13 +62,7 @@ export default function StreamsPage() {
     getOrgId()
   }, [supabase])
 
-  // Fetch streams
-  useEffect(() => {
-    if (!orgId || orgId === 'pending') return
-    fetchStreams()
-  }, [orgId, statusFilter, searchQuery])
-
-  const fetchStreams = async () => {
+  const fetchStreams = useCallback(async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams()
@@ -85,7 +79,13 @@ export default function StreamsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [statusFilter, searchQuery])
+
+  // Fetch streams
+  useEffect(() => {
+    if (!orgId || orgId === 'pending') return
+    fetchStreams()
+  }, [orgId, fetchStreams])
 
   const handleCreateStream = async (data: CreateStreamRequest) => {
     try {
@@ -214,7 +214,7 @@ export default function StreamsPage() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8" suppressHydrationWarning={true}>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -257,7 +257,6 @@ export default function StreamsPage() {
       </div>
 
       {/* Stream Wizard */}
-      {console.log('Rendering wizard with open:', isWizardOpen, 'orgId:', orgId)}
       <StreamWizard
         open={isWizardOpen}
         onOpenChange={setIsWizardOpen}

@@ -57,17 +57,23 @@ export default function ProfilePage() {
         throw profileError
       }
 
-      const typedProfile = profileData as Row<'profiles'>
+      const typedProfile = profileData as Row<'profiles'> & {
+        phone?: string | null;
+        company?: string | null;
+        job_title?: string | null;
+        bio?: string | null;
+        website?: string | null;
+      };
       setProfile({
         id: user.id,
         email: user.email || '',
         full_name: typedProfile.full_name,
         avatar_url: typedProfile.avatar_url,
-        phone: typedProfile.phone,
-        company: typedProfile.company,
-        job_title: typedProfile.job_title,
-        bio: typedProfile.bio,
-        website: typedProfile.website,
+        phone: typedProfile.phone || null,
+        company: typedProfile.company || null,
+        job_title: typedProfile.job_title || null,
+        bio: typedProfile.bio || null,
+        website: typedProfile.website || null,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile')
@@ -86,7 +92,6 @@ export default function ProfilePage() {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        // @ts-expect-error - Type inference issue
         .update({
           full_name: profile.full_name,
           phone: profile.phone,

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import leadRecyclingEngine from '@/lib/qualification/recycling/lead-recycling-engine';
 import { RecycleLeadRequest } from '@/lib/qualification/types/qualification';
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {

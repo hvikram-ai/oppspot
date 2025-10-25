@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,14 +79,14 @@ export async function POST(request: NextRequest) {
             form_interactions,
             ...metadata
           }
-        })
+        } as never)
         .select()
         .single()
 
       if (!signalError && signal) {
         // Record web activity
         await supabase.from('web_activity_signals').insert({
-          signal_id: signal.id,
+          signal_id: (signal as { id: string }).id,
           company_id,
           session_id,
           visitor_id,
@@ -98,7 +97,7 @@ export async function POST(request: NextRequest) {
           scroll_depth,
           clicks,
           form_interactions
-        })
+        } as never)
 
         // Update company signal summary
         if (company_id) {
@@ -123,7 +122,7 @@ export async function POST(request: NextRequest) {
         form_interactions,
         metadata
       }
-    })
+    } as never)
 
     return NextResponse.json({
       success: true,
@@ -171,9 +170,9 @@ async function updateCompanySignalSummary(supabase: Awaited<ReturnType<typeof cr
     let totalWeight = 0
 
     for (const signal of signals) {
-      const age = (Date.now() - new Date(signal.detected_at).getTime()) / (1000 * 60 * 60 * 24)
+      const age = (Date.now() - new Date((signal as { detected_at: string }).detected_at).getTime()) / (1000 * 60 * 60 * 24)
       const recency = age < 7 ? 1.0 : age < 30 ? 0.7 : age < 90 ? 0.4 : 0.2
-      weightedSum += signal.signal_strength * recency
+      weightedSum += (signal as { signal_strength: number }).signal_strength * recency
       totalWeight += recency
     }
 
@@ -194,9 +193,9 @@ async function updateCompanySignalSummary(supabase: Awaited<ReturnType<typeof cr
       intent_score: Math.round(intentScore),
       intent_level: intentLevel,
       top_signals: signals.slice(0, 5),
-      last_signal_date: signals[0].detected_at,
+      last_signal_date: (signals[0] as { detected_at: string }).detected_at,
       updated_at: new Date().toISOString()
-    })
+    } as never)
   } catch (error) {
     console.error('[API] Error updating signal summary:', error)
   }

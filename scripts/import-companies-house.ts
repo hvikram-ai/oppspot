@@ -310,7 +310,7 @@ class LocalImporter {
     }
   }
 
-  async importBatch(batch: any[]): Promise<void> {
+  async importBatch(batch: Array<Record<string, unknown>>): Promise<void> {
     try {
       this.currentBatch++
 
@@ -336,8 +336,9 @@ class LocalImporter {
         : 0
 
       console.log(`✅ Batch ${this.currentBatch}: ${batch.length} companies | Total imported: ${this.importedRows.toLocaleString()} | ETA: ${Math.round(eta/60)}min`)
-    } catch (error: any) {
-      console.error(`❌ Failed to import batch:`, error.message)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      console.error(`❌ Failed to import batch:`, message)
       this.errorRows += batch.length
     }
   }
@@ -346,7 +347,7 @@ class LocalImporter {
     console.log(`\n🔄 Processing CSV file...`)
 
     return new Promise((resolve, reject) => {
-      let batch: any[] = []
+      let batch: Array<Record<string, unknown>> = []
       let lastLogTime = Date.now()
 
       const fileStream = fs.createReadStream(filePath, { encoding: 'utf8' })
@@ -465,8 +466,9 @@ class LocalImporter {
       console.log(`   Average rate: ${Math.round(this.processedRows / elapsed)} rows/sec`)
       console.log('')
 
-    } catch (error: any) {
-      console.error('\n❌ Import failed:', error.message)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      console.error('\n❌ Import failed:', message)
       throw error
     } finally {
       // Cleanup

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         analysisId
       })
       
-      console.log(`[TEST API] Analysis completed. Found ${result.similarityAnalysis?.similar_company_matches?.length || 0} matches`)
+      console.log(`[TEST API] Analysis completed. Found ${(result.similarityAnalysis as any)?.similar_company_matches?.length || 0} matches`)
       
       return NextResponse.json({
         success: true,

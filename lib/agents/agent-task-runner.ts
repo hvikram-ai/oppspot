@@ -22,7 +22,7 @@ export interface AgentTask {
   org_id: string
   task_type: string
   priority: number
-  payload: Record<string, any>
+  payload: Record<string, unknown>
   status: 'pending' | 'processing' | 'completed' | 'failed'
   retry_count: number
   max_retries: number
@@ -161,18 +161,20 @@ export class AgentTaskRunner {
 
       console.log(`[AgentTaskRunner] Task ${task.id} completed successfully`)
 
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[AgentTaskRunner] Task ${task.id} failed:`, error)
+
+      const errorMessage = error instanceof Error ? error.message : String(error)
 
       // Check if we should retry
       if (task.retry_count < task.max_retries) {
         // Retry task
-        await this.retryTask(task, error.message)
+        await this.retryTask(task, errorMessage)
       } else {
         // Mark as failed permanently
         await this.updateTaskStatus(task.id, 'failed', {
           completed_at: new Date().toISOString(),
-          error_message: error.message
+          error_message: errorMessage
         })
       }
     } finally {
@@ -329,7 +331,6 @@ export class AgentTaskRunner {
     const total = stream.target_metrics?.companies_to_find || currentProgress.total
 
     // Update progress
-    // @ts-expect-error - Type inference issue
     await supabase.rpc('update_stream_progress', {
       p_stream_id: streamId,
       p_completed: completed,
@@ -355,7 +356,6 @@ export class AgentTaskRunner {
 
     await supabase
       .from('stream_insights')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         insight_type: 'progress_update',
@@ -438,7 +438,7 @@ export class AgentTaskRunner {
   private async updateTaskStatus(
     taskId: string,
     status: AgentTask['status'],
-    updates: Record<string, any> = {}
+    updates: Record<string, unknown> = {}
   ): Promise<void> {
     const supabase = await createClient()
 

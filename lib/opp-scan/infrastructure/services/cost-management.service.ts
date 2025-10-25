@@ -60,7 +60,6 @@ export class CostManagementService implements ICostManagementService {
     }
   }
 
-  // @ts-ignore - Method signature mismatch
   async trackCost(
     scanId: string,
     sourceId: string,

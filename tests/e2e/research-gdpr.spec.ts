@@ -7,6 +7,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import fs from 'fs';
 
 test.describe('ResearchGPT GDPR Compliance Integration', () => {
 
@@ -397,7 +398,6 @@ test.describe('ResearchGPT GDPR Compliance Integration', () => {
     // Optionally verify JSON structure
     const path = await download.path();
     if (path) {
-      const fs = require('fs');
       const exportData = JSON.parse(fs.readFileSync(path, 'utf-8'));
 
       // Assert: Contains user research data

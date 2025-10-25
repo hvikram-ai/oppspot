@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -31,14 +31,15 @@ export function BenchmarkDashboard({ companyId, companyName }: BenchmarkDashboar
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [comparison, setComparison] = useState<BenchmarkComparison | null>(null)
-  const [peers, setPeers] = useState<Array<Record<string, unknown>>>([])
+  const [peers, setPeers] = useState<Array<{
+    id: string
+    company_name: string
+    similarity_score?: number
+    [key: string]: unknown
+  }>>([])
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchBenchmarkData()
-  }, [companyId])
-
-  const fetchBenchmarkData = async (forceRefresh = false) => {
+  const fetchBenchmarkData = useCallback(async (forceRefresh = false) => {
     try {
       if (forceRefresh) {
         setRefreshing(true)
@@ -90,7 +91,11 @@ export function BenchmarkDashboard({ companyId, companyName }: BenchmarkDashboar
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [companyId])
+
+  useEffect(() => {
+    fetchBenchmarkData()
+  }, [fetchBenchmarkData])
 
   const getQuartileLabel = (quartile?: number) => {
     if (!quartile) return 'N/A'
@@ -200,7 +205,7 @@ export function BenchmarkDashboard({ companyId, companyName }: BenchmarkDashboar
                 <span className="text-sm text-muted-foreground">th percentile</span>
               </div>
               <Badge
-                variant={getQuartileColor(comparison.quartile)}
+                variant={getQuartileColor(comparison.quartile) as any}
                 className="mt-2"
               >
                 {getQuartileLabel(comparison.quartile)}
@@ -370,12 +375,12 @@ export function BenchmarkDashboard({ companyId, companyName }: BenchmarkDashboar
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {peers.slice(0, 5).map((peer) => (
-                <div key={peer.company_id} className="flex items-center justify-between p-2 rounded hover:bg-muted">
+              {peers.slice(0, 5).map((peer: any) => (
+                <div key={peer.company_id as any} className="flex items-center justify-between p-2 rounded hover:bg-muted">
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{peer.company_name}</p>
+                    <p className="font-medium text-sm">{peer.company_name as any}</p>
                     <div className="flex gap-2 mt-1">
-                      {peer.matching_criteria?.map((criteria: string, index: number) => (
+                      {((peer as { matching_criteria?: string[] }).matching_criteria || []).map((criteria: string, index: number) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {criteria}
                         </Badge>
@@ -398,7 +403,15 @@ export function BenchmarkDashboard({ companyId, companyName }: BenchmarkDashboar
   )
 }
 
-function MetricsCard({ title, metrics }: { title: string; metrics: any[] }) {
+interface MetricComparison {
+  metric_label: string
+  company_value: number
+  benchmark_value: number
+  percentile: number
+  trend?: string
+}
+
+function MetricsCard({ title, metrics }: { title: string; metrics: MetricComparison[] }) {
   if (!metrics || metrics.length === 0) {
     return (
       <Card>
@@ -434,16 +447,16 @@ function MetricsCard({ title, metrics }: { title: string; metrics: any[] }) {
               </div>
               <div className="flex items-center gap-2">
                 <Badge
-                  variant={
+                  variant={(
                     metric.percentile >= 75 ? 'success' :
                     metric.percentile >= 50 ? 'default' :
                     metric.percentile >= 25 ? 'secondary' :
                     'destructive'
-                  }
+                  ) as any}
                 >
                   {metric.percentile}th %ile
                 </Badge>
-                {metric.trend && getTrendIcon(metric.trend)}
+                {metric.trend && (metric.trend as any)}
               </div>
             </div>
           ))}

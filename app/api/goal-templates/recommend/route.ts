@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { TemplateRecommender } from '@/lib/templates/template-recommender'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/goal-templates/recommend
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     // Personalized recommendations (default)
     // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('industry, company_size')
       .eq('id', user.id)
@@ -66,7 +65,7 @@ export async function GET(request: NextRequest) {
     const context = {
       userId: user.id,
       industry: profile?.industry || undefined,
-      teamSize: profile?.company_size || undefined,
+      teamSize: profile?.company_size ? parseInt(profile.company_size, 10) : undefined,
       previousStreamTypes: history.templatesUsed
     }
 

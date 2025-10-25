@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SignalAlertConfig } from '@/lib/signals/types/buying-signals';
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(_request: NextRequest) {
   try {
@@ -101,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     const { data: config, error } = await supabase
       .from('signal_alert_configs')
-      // @ts-expect-error - Supabase type inference issue
+      // @ts-expect-error - signal_alert_configs insert type mismatch
       .insert(alertConfig)
       .select()
       .single();
@@ -148,11 +147,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify ownership
-    const { data: existing, error: existingError } = await supabase
+    const { data: existing, error: _existingError } = await supabase
       .from('signal_alert_configs')
       .select('user_id')
       .eq('id', config_id)
-      .single();
+      .single() as { data: { user_id: string } | null; error: unknown };
 
     if (!existing || existing.user_id !== user.id) {
       return NextResponse.json(
@@ -164,7 +163,7 @@ export async function PATCH(request: NextRequest) {
     // Update configuration
     const { data: config, error } = await supabase
       .from('signal_alert_configs')
-      // @ts-expect-error - Type inference issue
+      // @ts-expect-error - signal_alert_configs update type mismatch
       .update(updates)
       .eq('id', config_id)
       .select()
@@ -212,11 +211,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify ownership
-    const { data: existing, error: existingError } = await supabase
+    const { data: existing, error: _existingError } = await supabase
       .from('signal_alert_configs')
       .select('user_id')
       .eq('id', configId)
-      .single();
+      .single() as { data: { user_id: string } | null; error: unknown };
 
     if (!existing || existing.user_id !== user.id) {
       return NextResponse.json(

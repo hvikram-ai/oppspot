@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface SignalAggregate {
   id: string
@@ -207,11 +206,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'No organization found' }, { status: 400 })
@@ -239,7 +238,7 @@ export async function POST(request: NextRequest) {
 
     // If no aggregate exists, refresh it
     if (!aggregate) {
-      await supabase.rpc('refresh_signal_aggregates', { p_company_id: company_id })
+      await supabase.rpc('refresh_signal_aggregates', { p_company_id: company_id } as any)
 
       // Fetch again
       const { data: newAggregateData, error: newAggregateError } = await supabase
@@ -282,7 +281,7 @@ export async function POST(request: NextRequest) {
       .from('predictive_scores')
       .upsert({
         company_id,
-        org_id: profile.org_id,
+        org_id: profile!.org_id!,
         buying_probability: prediction.buying_probability,
         predicted_timeline_days: prediction.predicted_timeline_days,
         confidence_level: prediction.confidence_level,
@@ -300,7 +299,7 @@ export async function POST(request: NextRequest) {
         features_used: signalData,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
         updated_at: new Date().toISOString()
-      }, {
+      } as never, {
         onConflict: 'company_id,org_id'
       })
       .select()
@@ -319,11 +318,11 @@ export async function POST(request: NextRequest) {
         .insert({
           prediction_id: savedPrediction?.id,
           company_id,
-          org_id: profile.org_id,
+          org_id: profile!.org_id!,
           alert_type: 'high_probability',
           alert_priority: 'critical',
           alert_message: `${prediction.buying_probability}% buying probability detected with ${prediction.signal_count_30d} signals in the last 30 days`
-        })
+        } as never)
     }
 
     return NextResponse.json({

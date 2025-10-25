@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -47,16 +47,7 @@ export function BenchmarkCard({ companyId, companyName }: BenchmarkCardProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!isDemoMode) {
-      fetchBenchmarkData()
-    } else {
-      setLoading(false)
-      setError('Benchmarks are not available in demo mode')
-    }
-  }, [companyId, isDemoMode])
-
-  const fetchBenchmarkData = async () => {
+  const fetchBenchmarkData = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/benchmarks?company_id=${companyId}`)
@@ -73,7 +64,16 @@ export function BenchmarkCard({ companyId, companyName }: BenchmarkCardProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [companyId])
+
+  useEffect(() => {
+    if (!isDemoMode) {
+      fetchBenchmarkData()
+    } else {
+      setLoading(false)
+      setError('Benchmarks are not available in demo mode')
+    }
+  }, [isDemoMode, fetchBenchmarkData])
 
   const triggerBenchmarkCalculation = async () => {
     try {

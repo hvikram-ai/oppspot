@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import type { Row } from '@/lib/supabase/helpers'
 import type {
   StakeholderEngagement,
   EngagementType,

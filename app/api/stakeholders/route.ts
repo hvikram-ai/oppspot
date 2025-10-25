@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Create stakeholder
     const { data: stakeholderData, error } = await supabase
       .from('stakeholders')
-      .insert(insertData)
+      .insert(insertData as never)
       .select()
       .single();
 
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         response_status: 201,
         response_data: { stakeholder_id: stakeholder?.id },
         user_id: user.id
-      });
+      } as never);
 
     return NextResponse.json({
       success: true,
@@ -218,7 +218,7 @@ export async function PUT(request: NextRequest) {
       .from('stakeholders')
       .select('org_id')
       .eq('id', body.stakeholder_id)
-      .single();
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     if (existingError) {
       console.error('[API] Error fetching stakeholder:', existingError);
@@ -257,7 +257,7 @@ export async function PUT(request: NextRequest) {
       .update({
         ...body.updates,
         updated_at: new Date().toISOString()
-      })
+      } as never)
       .eq('id', body.stakeholder_id)
       .select()
       .single();
@@ -312,7 +312,7 @@ export async function DELETE(request: NextRequest) {
       .from('stakeholders')
       .select('org_id')
       .eq('id', stakeholder_id)
-      .single();
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     if (existingError) {
       console.error('[API] Error fetching stakeholder:', existingError);

@@ -5,6 +5,11 @@
 
 import { createClient } from '@/lib/supabase/client'
 
+// Type definitions for database operations
+type CostBudgetInsert = Omit<CostBudget, 'id'>
+type CostBudgetUpdate = Partial<Omit<CostBudget, 'id' | 'created_at'>>
+type CostTransactionInsert = Omit<CostTransaction, 'id'>
+
 export interface CostBudget {
   id: string
   user_id: string
@@ -68,7 +73,6 @@ export class CostManagementService {
    * Create a new cost budget
    */
   async createBudget(budget: Omit<CostBudget, 'id' | 'created_at' | 'updated_at'>): Promise<CostBudget> {
-    // @ts-ignore - Supabase type inference issue
     const { data, error } = await this.supabase
       .from('cost_budgets')
       .insert({
@@ -76,12 +80,12 @@ export class CostManagementService {
         remaining_budget: budget.total_budget,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      })
+      } as CostBudgetInsert)
       .select()
-      .single()
+      .single() as { data: CostBudget | null, error: Error | null }
 
-    if (error) {
-      throw new Error(`Failed to create budget: ${error.message}`)
+    if (error || !data) {
+      throw new Error(`Failed to create budget: ${error?.message || 'Unknown error'}`)
     }
 
     return data
@@ -116,17 +120,16 @@ export class CostManagementService {
    */
   async recordTransaction(transaction: Omit<CostTransaction, 'id' | 'created_at'>): Promise<CostTransaction> {
     const { data, error } = await this.supabase
-    // @ts-ignore - Supabase type inference issue
       .from('cost_transactions')
       .insert({
         ...transaction,
         created_at: new Date().toISOString()
-      })
+      } as CostTransactionInsert)
       .select()
-      .single()
+      .single() as { data: CostTransaction | null, error: Error | null }
 
-    if (error) {
-      throw new Error(`Failed to record transaction: ${error.message}`)
+    if (error || !data) {
+      throw new Error(`Failed to record transaction: ${error?.message || 'Unknown error'}`)
     }
 
     // Update budget if transaction was successful
@@ -246,13 +249,12 @@ export class CostManagementService {
     critical_threshold: number
     email_notifications: boolean
   }): Promise<void> {
-    // @ts-ignore - Supabase type inference issue
     const { error } = await this.supabase
       .from('cost_budgets')
       .update({
         budget_alerts: alerts,
         updated_at: new Date().toISOString()
-      } as any)
+      } as CostBudgetUpdate)
       .eq('id', budgetId)
 
     if (error) {
@@ -386,14 +388,12 @@ export class CostManagementService {
 
       const newRemainingBudget = Math.max(0, budget.remaining_budget - amount)
 
-
-      // @ts-ignore - Supabase type inference issue
       await this.supabase
         .from('cost_budgets')
         .update({
           remaining_budget: newRemainingBudget,
           updated_at: new Date().toISOString()
-        } as any)
+        } as CostBudgetUpdate)
         .eq('id', budget.id)
 
       // Check for budget alerts after updating

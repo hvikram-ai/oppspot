@@ -37,7 +37,7 @@ export interface GeneratedInsight {
   description: string
   severity: InsightSeverity
   is_actionable: boolean
-  data: Record<string, any>
+  data: Record<string, unknown>
 }
 
 export class InsightGenerator {
@@ -112,7 +112,7 @@ export class InsightGenerator {
     let qualityCount = 0
     items.forEach(item => {
       if (item.metadata && typeof item.metadata === 'object') {
-        const metadata = item.metadata as Record<string, any>
+        const metadata = item.metadata as Record<string, unknown>
         if (typeof metadata.quality_score === 'number') {
           totalQualityScore += metadata.quality_score
           qualityCount++
@@ -450,7 +450,6 @@ export class InsightGenerator {
 
     const { data, error } = await supabase
       .from('stream_insights')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         insight_type: insight.insight_type,

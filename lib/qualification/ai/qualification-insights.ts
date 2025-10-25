@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { OpenRouter } from '@/lib/ai/openrouter'
 import type { BANTQualification, MEDDICQualification } from '@/types/qualification'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Company data interface
 export interface CompanyData {
@@ -506,7 +505,6 @@ export class QualificationInsightsEngine {
 
     // Recent engagement (last 7 days)
     const recentEvents = events.filter(e => {
-      // @ts-expect-error - Supabase type inference issue
       const eventDate = new Date(e.created_at)
       const daysSince = (Date.now() - eventDate.getTime()) / (1000 * 60 * 60 * 24)
       return daysSince <= 7

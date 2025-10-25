@@ -27,7 +27,7 @@ export interface TrackActivityParams {
   entityType: string
   entityId: string
   entityName: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export class ActivityTracker {
@@ -52,7 +52,6 @@ export class ActivityTracker {
       if (!profile?.org_id) return
 
       // Create activity
-      // @ts-expect-error - Supabase type inference issue
       await supabase.from('team_activities').insert({
         org_id: profile.org_id,
         user_id: user.id,
@@ -270,7 +269,6 @@ export class PresenceTracker {
       if (!profile?.org_id) return
 
       // Use upsert function
-      // @ts-expect-error - Type inference issue
       await supabase.rpc('upsert_user_presence', {
         p_user_id: user.id,
         p_org_id: profile.org_id,

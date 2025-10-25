@@ -25,7 +25,7 @@ export async function GET(
     const scanId = awaitedParams.id
 
     // Get the scan with access control
-    const { data: scanData, error: scanError } = await supabase
+    const { data: scanData, error: _scanError } = await supabase
       .from('acquisition_scans')
       .select(`
         *,
@@ -71,13 +71,13 @@ export async function GET(
     }
 
     // Get market intelligence data
-    const { data: marketIntelligence, error: marketIntelligenceError } = await supabase
+    const { data: marketIntelligence, error: _marketIntelligenceError } = await supabase
       .from('market_intelligence')
       .select('*')
       .eq('scan_id', scanId)
 
     // Get scan reports
-    const { data: reports, error: reportsError } = await supabase
+    const { data: reports, error: _reportsError } = await supabase
       .from('scan_reports')
       .select('id, report_type, report_title, generation_status, created_at, file_size')
       .eq('scan_id', scanId)
@@ -152,7 +152,7 @@ export async function PATCH(
     } as Database['public']['Tables']['acquisition_scans']['Update']
     const { data: updatedScan, error: updateError } = await supabase
       .from('acquisition_scans')
-      // @ts-expect-error - Supabase type inference issue with update() method
+      // @ts-expect-error - acquisition_scans update type mismatch
       .update(updateData)
       .eq('id', scanId)
       .select()
@@ -183,7 +183,7 @@ export async function PATCH(
       } as Database['public']['Tables']['scan_audit_log']['Insert']
     await supabase
       .from('scan_audit_log')
-      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
+      // @ts-expect-error - scan_audit_log insert type mismatch
       .insert(auditData)
 
     return NextResponse.json({ scan: updatedScan })
@@ -271,7 +271,7 @@ export async function DELETE(
       } as Database['public']['Tables']['scan_audit_log']['Insert']
     await supabase
       .from('scan_audit_log')
-      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
+      // @ts-expect-error - scan_audit_log insert type mismatch
       .insert(deleteAuditData)
 
     return NextResponse.json({ success: true })
@@ -287,7 +287,7 @@ export async function DELETE(
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

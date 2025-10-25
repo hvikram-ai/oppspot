@@ -78,13 +78,13 @@ export function SignalTimeline({ signals, onSignalClick, maxHeight = '600px' }: 
 
     switch (signal.signal_type) {
       case 'funding_round':
-        return `${data.round_type?.replace('_', ' ').toUpperCase() || 'Funding'} - $${(data.amount / 1000000).toFixed(1)}M`;
+        return `${(data as { round_type?: string }).round_type?.replace('_', ' ').toUpperCase() || 'Funding'} - $${((data as { amount?: number }).amount || 0 / 1000000).toFixed(1)}M`;
       case 'executive_change':
         return `New ${data.position || 'Executive'} - ${data.department || 'Leadership'}`;
       case 'job_posting':
         return `${data.title || 'Job Posting'} - ${data.department || 'Hiring'}`;
       case 'technology_adoption':
-        return `${data.technology_name || 'Technology'} ${data.adoption_type?.replace('_', ' ') || 'Adoption'}`;
+        return `${(data as { technology_name?: string }).technology_name || 'Technology'} ${(data as { adoption_type?: string }).adoption_type?.replace('_', ' ') || 'Adoption'}`;
       default:
         return signal.signal_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }

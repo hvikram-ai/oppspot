@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { UpdateCard } from '@/components/updates/update-card'
@@ -51,11 +51,7 @@ export function BusinessUpdates({ businessId, businessName }: BusinessUpdatesPro
   const [loading, setLoading] = useState(true)
   const [isFollowing, setIsFollowing] = useState(false)
 
-  useEffect(() => {
-    fetchUpdates()
-  }, [businessId])
-
-  const fetchUpdates = async () => {
+  const fetchUpdates = useCallback(async () => {
     try {
       const response = await fetch(`/api/updates?businessId=${businessId}&limit=3`)
       const data = await response.json()
@@ -68,7 +64,11 @@ export function BusinessUpdates({ businessId, businessName }: BusinessUpdatesPro
     } finally {
       setLoading(false)
     }
-  }
+  }, [businessId])
+
+  useEffect(() => {
+    fetchUpdates()
+  }, [fetchUpdates])
 
   const handleInteraction = (updateId: string, action: string) => {
     // Update local state optimistically

@@ -33,7 +33,7 @@ export async function POST(
     console.log(`Enriching company: ${companyNumber}`)
 
     // Check if company already exists in database
-    const { data: existingData, error: existingError } = await supabase
+    const { data: existingData, error: _existingError } = await supabase
       .from('businesses')
       .select('id, company_number, companies_house_last_updated, cache_expires_at')
       .eq('company_number', companyNumber)
@@ -85,7 +85,6 @@ export async function POST(
         console.log(`Updating existing record for ${companyNumber}`)
         const { data: updated, error: updateError } = await supabase
           .from('businesses')
-          // @ts-expect-error - Type inference issue
           .update(businessData)
           .eq('id', existing.id)
           .select()
@@ -102,7 +101,6 @@ export async function POST(
         console.log(`Creating new record for ${companyNumber}`)
         const { data: created, error: createError } = await supabase
           .from('businesses')
-          // @ts-expect-error - Supabase type inference issue
           .insert(businessData)
           .select()
           .single()

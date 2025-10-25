@@ -29,8 +29,7 @@ export function WorkflowStep({ data, onUpdate }: WorkflowStepProps) {
       id: `stage_${Date.now()}`,
       name: 'New Stage',
       color: '#94a3b8',
-      order: data.stages.length,
-    }
+    } as any
     onUpdate({ stages: [...data.stages, newStage] })
   }
 

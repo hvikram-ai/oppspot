@@ -9,7 +9,6 @@ import { createClient } from '@/lib/supabase/server'
 import { SimilarCompanyUseCase } from '@/lib/opp-scan/services/similar-company-use-case'
 import { SimilarityConfiguration } from '@/lib/opp-scan/core/similarity-interfaces'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Initialize services
 let similarCompanyUseCase: SimilarCompanyUseCase
@@ -35,12 +34,12 @@ export async function POST(request: NextRequest) {
     
     if (isAuthenticated) {
       // Get user's organization
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: _profileError } = await supabase
         .from('profiles')
         .select('org_id, role')
         .eq('id', user.id)
-        .single()
-      
+        .single() as { data: { org_id?: string | null; role: string } | null; error: unknown }
+
       orgId = profile?.org_id
     } else {
       // Demo mode - generate temporary ID
@@ -117,7 +116,7 @@ export async function POST(request: NextRequest) {
     if (isAuthenticated) {
       const cachedAnalysis = await useCase.getCachedAnalysis(
         targetCompanyName.trim(),
-        userId,
+        userId ?? '',
         configuration
       )
 
@@ -146,7 +145,7 @@ export async function POST(request: NextRequest) {
     const analysisPromise = useCase.executeSimilarityAnalysis({
       ...analysisRequest,
       analysisId // Pass the ID to ensure consistency
-    })
+    } as any)
     
     // Start the analysis in the background
     analysisPromise.catch(error => {
@@ -204,7 +203,7 @@ export async function GET(request: NextRequest) {
 
     if (analysisId) {
       // Get specific analysis status or results
-      const rawAnalysisStatus = await useCase.getAnalysisStatus(analysisId, effectiveUserId)
+      const rawAnalysisStatus = await useCase.getAnalysisStatus(analysisId, effectiveUserId ?? '')
 
       if (!rawAnalysisStatus) {
         return NextResponse.json(
@@ -246,7 +245,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           analysis: fullAnalysis,
           status: 'completed',
-          matches: fullAnalysis.similar_company_matches || []
+          matches: (fullAnalysis as { similar_company_matches?: unknown[] }).similar_company_matches || []
         })
       }
 
@@ -257,12 +256,12 @@ export async function GET(request: NextRequest) {
         progress: analysisStatus.progress_percentage,
         currentStep: analysisStatus.current_step,
         error: analysisStatus.error_message,
-        message: getStatusMessage(analysisStatus.status, analysisStatus.current_step)
+        message: getStatusMessage(analysisStatus.status ?? '', (analysisStatus.current_step || '') as string)
       })
 
     } else {
       // List user's analyses
-      const analyses = await useCase.getUserAnalyses(user.id, limit)
+      const analyses = await useCase.getUserAnalyses(user?.id || '', limit)
       
       // Apply status filter if provided
       const filteredAnalyses = status ? 

@@ -1,0 +1,151 @@
+# Docker Compose for Background Workers
+# Run with: docker-compose -f docker-compose.workers.yml up
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Redis - Job Queue Storage
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: oppspot-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - oppspot-network
+
+  # ============================================================================
+  # Research Worker - AI Research Generation
+  # ============================================================================
+  research-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: oppspot-research-worker
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - ENABLE_RESEARCH_WORKER=true
+      - ENABLE_ENRICHMENT_WORKER=false
+      - ENABLE_SCORING_WORKER=false
+      - ENABLE_SIGNALS_WORKER=false
+      - RESEARCH_WORKER_CONCURRENCY=2
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - oppspot-network
+    command: npm run worker:research
+
+  # ============================================================================
+  # Enrichment Worker - Data Enrichment
+  # ============================================================================
+  enrichment-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: oppspot-enrichment-worker
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - ENABLE_RESEARCH_WORKER=false
+      - ENABLE_ENRICHMENT_WORKER=true
+      - ENABLE_SCORING_WORKER=false
+      - ENABLE_SIGNALS_WORKER=false
+      - ENRICHMENT_WORKER_CONCURRENCY=5
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - COMPANIES_HOUSE_API_KEY=${COMPANIES_HOUSE_API_KEY}
+      - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - oppspot-network
+    command: npm run worker:enrichment
+
+  # ============================================================================
+  # Scoring Worker - Lead Scoring
+  # ============================================================================
+  scoring-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: oppspot-scoring-worker
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - ENABLE_RESEARCH_WORKER=false
+      - ENABLE_ENRICHMENT_WORKER=false
+      - ENABLE_SCORING_WORKER=true
+      - ENABLE_SIGNALS_WORKER=false
+      - SCORING_WORKER_CONCURRENCY=10
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - oppspot-network
+    command: npm run worker:scoring
+
+  # ============================================================================
+  # Signals Worker - Buying Signal Detection
+  # ============================================================================
+  signals-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: oppspot-signals-worker
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - ENABLE_RESEARCH_WORKER=false
+      - ENABLE_ENRICHMENT_WORKER=false
+      - ENABLE_SCORING_WORKER=false
+      - ENABLE_SIGNALS_WORKER=true
+      - SIGNALS_WORKER_CONCURRENCY=5
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NEWS_API_KEY=${NEWS_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - oppspot-network
+    command: npm run worker:signals
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  redis-data:
+    driver: local
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  oppspot-network:
+    driver: bridge

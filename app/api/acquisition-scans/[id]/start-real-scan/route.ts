@@ -4,7 +4,6 @@ import CostManagementService from '@/lib/opp-scan/cost-management'
 import DataSourceFactory from '@/lib/opp-scan/data-sources/data-source-factory'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
@@ -132,7 +131,7 @@ export async function POST(
     // Update scan status to starting
     await supabase
       .from('acquisition_scans')
-      // @ts-expect-error - Supabase type inference issue with update() method
+      // @ts-expect-error - acquisition_scans update type mismatch
       .update({
         status: 'scanning',
         current_step: 'initializing_real_data',
@@ -145,7 +144,7 @@ export async function POST(
     // Create audit log entry
     await supabase
       .from('scan_audit_log')
-      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
+      // @ts-expect-error - scan_audit_log insert type mismatch
       .insert({
         scan_id: scanId,
         user_id: user.id,
@@ -179,7 +178,7 @@ export async function POST(
     // Update scan with job ID for tracking
     await supabase
       .from('acquisition_scans')
-      // @ts-expect-error - Supabase type inference issue with update() method
+      // @ts-expect-error - acquisition_scans update type mismatch
       .update({
         current_step: 'queued_for_processing',
         updated_at: new Date().toISOString()

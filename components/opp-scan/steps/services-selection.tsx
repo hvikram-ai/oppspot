@@ -469,7 +469,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
             <CardHeader>
               <CardTitle className="text-base">Add Custom Capability</CardTitle>
               <CardDescription>
-                Can't find what you're looking for? Add a custom capability requirement.
+                Can&apos;t find what you&apos;re looking for? Add a custom capability requirement.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -502,7 +502,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     {capability.name}
                     <button
                       onClick={() => {
-                        const newSelection = config.requiredCapabilities.filter((_: unknown, i: number) => i !== index)
+                        const newSelection = (config.requiredCapabilities ?? []).filter((_: unknown, i: number) => i !== index)
                         onChange('requiredCapabilities', newSelection)
                       }}
                       className="ml-1 hover:text-destructive"
@@ -607,7 +607,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
               <CardContent className="p-8 text-center">
                 <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-muted-foreground">
-                  No capabilities found matching "{searchTerm}"
+                  No capabilities found matching &quot;{searchTerm}&quot;
                 </p>
               </CardContent>
             </Card>
@@ -804,15 +804,15 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                           key={priority}
                           onClick={() => {
                             onChange('synergyRequirements', {
-                              ...config.synergyRequirements,
+                              ...(config.synergyRequirements as any),
                               priorities: {
-                                ...config.synergyRequirements?.priorities,
+                                ...(config.synergyRequirements?.priorities as any),
                                 [synergy.id]: priority.toLowerCase()
                               }
                             })
                           }}
                           className={`px-3 py-1 text-xs rounded ${
-                            config.synergyRequirements?.priorities?.[synergy.id] === priority.toLowerCase()
+                            (config.synergyRequirements?.priorities as any)?.[synergy.id] === priority.toLowerCase()
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-muted hover:bg-muted/80'
                           }`}

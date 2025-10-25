@@ -42,7 +42,7 @@ export async function POST(
     const agent = agentData as Row<'ai_agents'>
 
     // Check user has access to this agent
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
@@ -64,7 +64,7 @@ export async function POST(
     // Option 1: Run in background with Inngest (recommended for long-running tasks)
     if (runAsync) {
       try {
-        await triggerAgent(agentId, agent.org_id, input)
+        await triggerAgent(agentId, agent.org_id ?? '', input)
 
         return NextResponse.json({
           success: true,

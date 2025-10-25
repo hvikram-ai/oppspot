@@ -2,10 +2,20 @@ import React from 'react'
 import { Document, Page, View, Text } from '@react-pdf/renderer'
 import { cleanPdfStyles } from '../styles/clean-pdf-styles'
 
+// Define proper company data structure
+interface CompanyData {
+  country?: string
+  industry?: string
+  employees?: string | number
+  revenue?: string
+  description?: string
+  [key: string]: unknown
+}
+
 interface SimilarityMatch {
   id: string
   company_name: string
-  company_data: Record<string, unknown>
+  company_data: CompanyData
   overall_score: number
   confidence: number
   rank: number
@@ -27,7 +37,7 @@ interface AnalysisData {
   analysis: {
     id: string
     targetCompany: string
-    targetCompanyData: Record<string, unknown>
+    targetCompanyData: CompanyData
     configuration: {
       weights: {
         financial: number
@@ -223,22 +233,16 @@ export const CleanSimilarityTemplate: React.FC<CleanSimilarityTemplateProps> = (
         <View style={cleanPdfStyles.companyCard}>
           <Text style={cleanPdfStyles.companyName}>{analysis.targetCompany}</Text>
           <View style={cleanPdfStyles.companyMeta}>
-            // @ts-expect-error - Supabase type inference issue
             <Text style={cleanPdfStyles.metaItem}>
               📍 {analysis.targetCompanyData?.country || 'N/A'}
-            // @ts-expect-error - Supabase type inference issue
             </Text>
             <Text style={cleanPdfStyles.metaItem}>
-              // @ts-expect-error - Supabase type inference issue
               🏢 {analysis.targetCompanyData?.industry || 'N/A'}
             </Text>
-            // @ts-expect-error - Supabase type inference issue
             <Text style={cleanPdfStyles.metaItem}>
               👥 {analysis.targetCompanyData?.employees || 'N/A'} employees
             </Text>
-            // @ts-expect-error - Supabase type inference issue
             <Text style={cleanPdfStyles.metaItem}>
-              // @ts-expect-error - Supabase type inference issue
               💰 {analysis.targetCompanyData?.revenue || 'N/A'} revenue
             </Text>
           </View>
@@ -254,10 +258,8 @@ export const CleanSimilarityTemplate: React.FC<CleanSimilarityTemplateProps> = (
         <View style={cleanPdfStyles.companySection}>
           {topMatches.map((match, index) => (
             <View key={match.id} style={cleanPdfStyles.companyCard}>
-              // @ts-expect-error - Supabase type inference issue
               <View style={cleanPdfStyles.companyHeader}>
                 <View style={cleanPdfStyles.companyInfo}>
-                  // @ts-expect-error - Supabase type inference issue
                   <Text style={cleanPdfStyles.companyName}>
                     #{match.rank} {match.company_name}
                   </Text>
@@ -267,9 +269,7 @@ export const CleanSimilarityTemplate: React.FC<CleanSimilarityTemplateProps> = (
                     </Text>
                     <Text style={cleanPdfStyles.metaItem}>
                       🏢 {match.company_data?.industry || 'N/A'}
-                    // @ts-expect-error - Supabase type inference issue
                     </Text>
-                    // @ts-expect-error - Supabase type inference issue
                     <Text style={cleanPdfStyles.metaItem}>
                       📊 {match.market_position}
                     </Text>

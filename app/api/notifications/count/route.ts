@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET() {
   try {

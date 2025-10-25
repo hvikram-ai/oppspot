@@ -169,7 +169,7 @@ export async function GET(
                 .update(enrichedData as never)
                 .eq('id', business.id)
                 .select()
-                .single() as { data: Row<'businesses'> | null }
+                .single() as { data: Row<'businesses'> | null; error: unknown }
 
               business = updated
             } else {
@@ -183,7 +183,7 @@ export async function GET(
                   updated_at: new Date().toISOString()
                 } as never)
                 .select()
-                .single() as { data: Row<'businesses'> | null }
+                .single() as { data: Row<'businesses'> | null; error: unknown }
 
               business = created
             }

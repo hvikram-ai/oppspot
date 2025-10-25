@@ -102,7 +102,7 @@ export function SavedSearches({ userId }: SavedSearchesProps) {
     // Navigate to search with pre-filled query and filters
     const params = new URLSearchParams({
       q: search.query,
-      ...search.filters
+      ...(search.filters as Record<string, string>)
     })
     window.location.href = `/search?${params.toString()}`
   }
@@ -182,7 +182,7 @@ export function SavedSearches({ userId }: SavedSearchesProps) {
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{search.name}</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      "{search.query}"
+                      &quot;{search.query}&quot;
                     </p>
                   </div>
                   <Button

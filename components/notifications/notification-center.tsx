@@ -175,7 +175,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
                 : 'No notifications yet'}
             </p>
             <p className="text-sm text-muted-foreground text-center mt-2">
-              We'll notify you when something important happens
+              We&apos;ll notify you when something important happens
             </p>
           </div>
         ) : (

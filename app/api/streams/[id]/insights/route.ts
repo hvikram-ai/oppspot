@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/streams/[id]/insights
@@ -24,7 +23,7 @@ export async function GET(
     }
 
     // Verify user has access
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
@@ -132,7 +131,7 @@ export async function PATCH(
     }
 
     // Verify user has access
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
@@ -171,7 +170,6 @@ export async function PATCH(
     // Update insight
     const { data: insight, error } = await supabase
       .from('stream_insights')
-      // @ts-expect-error - Type inference issue
       .update(updates)
       .eq('id', insight_id)
       .eq('stream_id', streamId)

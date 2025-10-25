@@ -188,7 +188,7 @@ export class UnifiedDataLayer {
   /**
    * Query data from a source
    */
-  async query(query: DataQuery): Promise<unknown> {
+  async query(query: DataQuery): Promise<DataSet | DataItem | number> {
     const source = this.dataSources.get(query.source)
     if (!source) {
       throw new Error(`Data source ${query.source} not found`)
@@ -198,10 +198,10 @@ export class UnifiedDataLayer {
     const cacheKey = this.getCacheKey(query)
     const cached = this.getFromCache(cacheKey)
     if (cached) {
-      return cached
+      return cached as DataSet | DataItem | number
     }
 
-    let result: unknown
+    let result: DataSet | DataItem | number
 
     switch (source.type) {
       case 'database':
@@ -240,7 +240,7 @@ export class UnifiedDataLayer {
         } else if (value === null) {
           dbQuery = dbQuery.is(key, null)
         } else {
-          dbQuery = dbQuery.eq(key, value)
+          dbQuery = dbQuery.eq(key, value as string)
         }
       }
     }
@@ -273,8 +273,8 @@ export class UnifiedDataLayer {
    * Query API source
    */
   private async queryAPI(source: DataSource, query: DataQuery): Promise<DataSet | DataItem> {
-    const baseUrl = source.config.baseUrl
-    const apiKey = source.config.apiKey
+    const baseUrl = source.config.baseUrl as string
+    const apiKey = source.config.apiKey as string
 
     switch (source.id) {
       case 'companies-house':
@@ -300,7 +300,7 @@ export class UnifiedDataLayer {
     const url = new URL(`${baseUrl}${endpoint}`)
 
     if (query.filters?.q) {
-      url.searchParams.append('q', query.filters.q)
+      url.searchParams.append('q', query.filters.q as string)
     }
     if (query.limit) {
       url.searchParams.append('items_per_page', query.limit.toString())
@@ -333,7 +333,7 @@ export class UnifiedDataLayer {
     // Add query parameters
     if (query.filters) {
       for (const [key, value] of Object.entries(query.filters)) {
-        url.searchParams.append(key, (value as any).toString())
+        url.searchParams.append(key, String(value))
       }
     }
 
@@ -362,31 +362,31 @@ export class UnifiedDataLayer {
     )
 
     if (!transformation) {
-      return results
+      return results as DataSet
     }
 
-    return this.applyTransformation(results, transformation)
+    return await this.applyTransformation(results as DataSet, transformation)
   }
 
   /**
    * Apply transformation to data
    */
-  private applyTransformation(data: DataSet | DataItem | number, transformation: DataTransformation): DataSet | DataItem | number {
+  private async applyTransformation(data: DataSet | DataItem | number, transformation: DataTransformation): Promise<DataSet | DataItem | number> {
     switch (transformation.type) {
       case 'map':
-        return this.mapTransformation(data, transformation.config)
+        return this.mapTransformation(data as DataSet, transformation.config as MapTransformationConfig)
 
       case 'filter':
-        return this.filterTransformation(data, transformation.config)
+        return this.filterTransformation(data as DataSet, transformation.config as FilterTransformationConfig)
 
       case 'aggregate':
-        return this.aggregateTransformation(data, transformation.config)
+        return this.aggregateTransformation(data as DataSet, transformation.config as AggregateTransformationConfig)
 
       case 'join':
-        return this.joinTransformation(data, transformation.config)
+        return this.joinTransformation(data as unknown as DataSet[], transformation.config as JoinTransformationConfig)
 
       case 'enrich':
-        return this.enrichTransformation(data, transformation.config)
+        return await this.enrichTransformation(data as DataSet, transformation.config as EnrichTransformationConfig)
 
       default:
         return data
@@ -529,9 +529,9 @@ export class UnifiedDataLayer {
     )
 
     // Apply transformations
-    let result = sourceData
+    let result: DataSet | DataItem | number | Record<string, DataSet> = sourceData as DataSet
     for (const transformation of pipeline.transformations) {
-      result = await this.applyTransformation(result, transformation)
+      result = await this.applyTransformation(result as DataSet, transformation)
     }
 
     // Save to destination if specified
@@ -550,8 +550,7 @@ export class UnifiedDataLayer {
 
     if (source === 'supabase-primary') {
       const supabase = await createClient()
-      // @ts-expect-error - Supabase type inference issue
-      await supabase.from(entity).insert(data)
+      await supabase.from(entity).insert(data as any)
     } else {
       console.warn(`Destination ${destination} not implemented`)
     }
@@ -603,11 +602,11 @@ export class UnifiedDataLayer {
     ])
 
     return {
-      company: businessData?.[0],
-      scoring: leadScore?.[0],
+      company: (businessData as DataSet)?.[0],
+      scoring: (leadScore as DataSet)?.[0],
       stakeholders,
-      funding: fundingSignals,
-      benchmark: benchmark?.[0],
+      funding: fundingSignals as DataSet,
+      benchmark: (benchmark as DataSet)?.[0],
       unified_at: new Date().toISOString()
     }
   }

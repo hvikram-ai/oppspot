@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Type definitions for updates
 interface BusinessUpdate {
@@ -63,7 +62,6 @@ export async function GET(request: NextRequest) {
         }
         
         const { data: followingFeed, error: followingError } = await supabase
-          // @ts-expect-error - Type inference issue
           .rpc('get_following_feed', {
             user_id: user.id,
             limit_count: limit,
@@ -137,7 +135,7 @@ export async function GET(request: NextRequest) {
               user_id: user.id,
               limit_count: limit,
               offset_count: offset
-            })
+            } as any)
 
           if (feedError) throw feedError
           updates = (personalizedFeed || []) as BusinessUpdate[]
@@ -235,7 +233,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is admin or business owner
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -255,7 +253,8 @@ export async function POST(request: NextRequest) {
 
     const typedProfile = profile as unknown as ProfileData | null;
     const isAdmin = typedProfile?.role === 'admin' || typedProfile?.role === 'owner';
-    const metadata = business.metadata as unknown as BusinessMetadata | null;
+    const typedBusiness = business as { metadata?: BusinessMetadata };
+    const metadata = typedBusiness.metadata;
     const isBusinessOwner = metadata?.claimed_by === user.id;
     
     if (!isAdmin && !isBusinessOwner) {
@@ -284,7 +283,7 @@ export async function POST(request: NextRequest) {
         is_verified: isAdmin,
         created_by: user.id,
         verified_by: isAdmin ? user.id : null
-      })
+      } as never)
       .select()
       .single();
     
@@ -319,7 +318,7 @@ export async function POST(request: NextRequest) {
         type,
         follower_count: followers?.length || 0
       }
-    });
+    } as never);
     
     return NextResponse.json({
       message: 'Update created successfully',
@@ -358,7 +357,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Check if user owns the update
-    const { data: existingUpdate, error: existingError } = await supabase
+    const { data: existingUpdate, error: _existingError } = await supabase
       .from('business_updates')
       .select('created_by')
       .eq('id', updateId)
@@ -375,11 +374,15 @@ export async function PATCH(request: NextRequest) {
       created_by?: string | null;
     }
 
+    interface ProfileData {
+      role?: string | null;
+    }
+
     const typedExisting = existingUpdate as unknown as UpdateOwnerData;
 
     if (typedExisting.created_by !== user.id) {
       // Check if user is admin
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: _profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
@@ -405,7 +408,7 @@ export async function PATCH(request: NextRequest) {
       .update({
         ...updates,
         updated_at: new Date().toISOString()
-      })
+      } as never)
       .eq('id', updateId)
       .select()
       .single()
@@ -454,7 +457,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Check ownership
-    const { data: existingUpdate, error: existingError } = await supabase
+    const { data: existingUpdate, error: _existingError } = await supabase
       .from('business_updates')
       .select('created_by')
       .eq('id', updateId)
@@ -479,7 +482,7 @@ export async function DELETE(request: NextRequest) {
 
     if (typedExisting.created_by !== user.id) {
       // Check if user is admin
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: _profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)

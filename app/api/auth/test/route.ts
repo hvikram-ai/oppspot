@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET() {
   try {
@@ -51,7 +50,7 @@ export async function GET() {
           process.env.SUPABASE_SERVICE_ROLE_KEY
         )
         
-        const { data: profile, error: profileError } = await adminClient
+        const { data: profile, error: _profileError } = await adminClient
           .from('profiles')
           .select('id, email, org_id')
           .eq('email', 'demo@oppspot.com')

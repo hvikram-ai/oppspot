@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +15,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'No organization' }, { status: 400 })
@@ -27,10 +26,9 @@ export async function POST(request: NextRequest) {
     // Insert command log
     const { error } = await supabase
       .from('voice_commands')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
-        org_id: profile.org_id,
+        org_id: profile!.org_id!,
         transcript: body.transcript,
         intent: body.intent,
         confidence: body.confidence,

@@ -97,7 +97,6 @@ export const executeAgentFunction = inngest.createFunction(
 
         await supabase
           .from('ai_agents')
-          // @ts-expect-error - Type inference issue
           .update({ next_run_at: nextRun.toISOString() })
           .eq('id', agentId)
       })

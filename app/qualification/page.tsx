@@ -84,7 +84,7 @@ export default function QualificationDashboard() {
     title: string;
     value: string | number;
     change?: number;
-    icon: React.ElementType;
+    icon: React.ComponentType<{ className?: string }>;
     color?: string;
   }) => {
     const getColorClasses = () => {

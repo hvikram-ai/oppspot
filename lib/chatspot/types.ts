@@ -110,7 +110,7 @@ export interface ConversationContext {
 
   // User preferences
   preferred_actions?: ActionType[]
-  default_filters?: Record<string, any>
+  default_filters?: Record<string, unknown>
 }
 
 // ============================================================================
@@ -155,7 +155,7 @@ export interface SuggestedAction {
   type: ActionType
   label: string
   description: string
-  parameters?: Record<string, any>
+  parameters?: Record<string, unknown>
   priority: number
 }
 
@@ -174,15 +174,15 @@ export interface ProcessedQuery {
 export interface APICall {
   endpoint: string
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
-  params?: Record<string, any>
-  body?: Record<string, any>
+  params?: Record<string, unknown>
+  body?: Record<string, unknown>
 }
 
 export interface WorkflowStep {
   step_number: number
   action: ActionType
   description: string
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
   depends_on?: number[]
 }
 
@@ -201,7 +201,7 @@ export interface ChatResponse {
 export interface StreamChunk {
   type: 'text' | 'action' | 'result' | 'complete'
   content: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 // ============================================================================
@@ -227,7 +227,7 @@ export interface ExecuteActionRequest {
   message_id: string
   action: {
     type: ActionType
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   }
 }
 
@@ -291,7 +291,7 @@ export interface ChatContext {
   user_profile?: {
     name: string
     email: string
-    preferences?: Record<string, any>
+    preferences?: Record<string, unknown>
   }
   org_context?: {
     name: string
@@ -306,8 +306,8 @@ export interface ChatContext {
 
 export interface ActionExecutor {
   type: ActionType
-  execute: (params: Record<string, any>, context: ChatContext) => Promise<ChatResult>
-  validate: (params: Record<string, any>) => { valid: boolean; errors?: string[] }
+  execute: (params: Record<string, unknown>, context: ChatContext) => Promise<ChatResult>
+  validate: (params: Record<string, unknown>) => { valid: boolean; errors?: string[] }
 }
 
 // ============================================================================

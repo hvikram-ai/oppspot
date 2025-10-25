@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Stream, StreamItem, StreamMember } from '@/types/streams'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { StreamDashboard } from '@/components/streams/stream-dashboard'
 import { MilestoneToast } from '@/components/streams/milestone-toast'
 import { AgentList } from '@/components/agents/agent-list'
+import { TeamPresence } from '@/components/collaboration/TeamPresence'
 
 interface StreamDetailPageProps {
   params: Promise<{ id: string }>
@@ -27,7 +28,22 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
   const [stream, setStream] = useState<Stream | null>(null)
   const [items, setItems] = useState<StreamItem[]>([])
   const [members, setMembers] = useState<StreamMember[]>([])
-  const [agents, setAgents] = useState<any[]>([])
+  const [agents, setAgents] = useState<Array<{
+    agent_id: string
+    is_active: boolean
+    auto_execute: boolean
+    execution_order?: number
+    execution_config?: Record<string, unknown>
+    total_executions?: number
+    successful_executions?: number
+    last_executed_at?: string
+    avg_execution_time_ms?: number
+    agent?: {
+      agent_type: string
+      name: string
+      description?: string
+    }
+  }>>([])
   const [activities, setActivities] = useState<Array<{
     id: string
     activity_type: string
@@ -40,11 +56,7 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('dashboard')
 
-  useEffect(() => {
-    fetchStreamDetail()
-  }, [streamId])
-
-  const fetchStreamDetail = async () => {
+  const fetchStreamDetail = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch(`/api/streams/${streamId}`)
@@ -92,7 +104,11 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [streamId, router])
+
+  useEffect(() => {
+    fetchStreamDetail()
+  }, [fetchStreamDetail])
 
   const handleAddItem = async (itemData: Partial<StreamItem>) => {
     try {
@@ -212,6 +228,11 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
             <Button variant="outline" size="icon">
               <Settings className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Team Presence */}
+          <div className="mt-4">
+            <TeamPresence entityType="stream" entityId={streamId} />
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>

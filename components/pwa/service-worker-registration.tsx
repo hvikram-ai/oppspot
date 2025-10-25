@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Download } from 'lucide-react';
@@ -10,39 +10,7 @@ export function ServiceWorkerRegistration() {
   const [isOffline, setIsOffline] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
-  useEffect(() => {
-    // Check if service workers are supported
-    if (!('serviceWorker' in navigator)) {
-      return;
-    }
-
-    // Register service worker
-    registerServiceWorker();
-
-    // Handle online/offline status
-    const handleOnline = () => {
-      setIsOffline(false);
-      toast.success('Back online! Your data is syncing...');
-    };
-
-    const handleOffline = () => {
-      setIsOffline(true);
-      toast.warning('You are offline. Some features may be limited.');
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Check initial status
-    setIsOffline(!navigator.onLine);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  const registerServiceWorker = async () => {
+  const registerServiceWorker = useCallback(async () => {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
@@ -77,7 +45,40 @@ export function ServiceWorkerRegistration() {
     } catch (error) {
       console.error('Service worker registration failed:', error);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Check if service workers are supported
+    if (!('serviceWorker' in navigator)) {
+      return;
+    }
+
+    // Register service worker
+    registerServiceWorker();
+
+    // Handle online/offline status
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success('Back online! Your data is syncing...');
+    };
+
+    const handleOffline = () => {
+      setIsOffline(true);
+      toast.warning('You are offline. Some features may be limited.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Check initial status
+    setIsOffline(!navigator.onLine);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [registerServiceWorker]);
 
   const updateServiceWorker = () => {
     if (!registration?.waiting) return;

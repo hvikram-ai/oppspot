@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { TrendAnalyzer } from '@/lib/analytics/trend-analyzer'
-import type { Row } from '@/lib/supabase/helpers'
 
 // GET: Fetch trend analysis
 export async function GET(request: NextRequest) {
@@ -98,8 +97,8 @@ export async function POST(request: NextRequest) {
         .order('analysis_date', { ascending: false })
         .limit(1)
       
-      const recentAnalysis = existingAnalysis?.[0]
-      const isRecent = recentAnalysis && 
+      const recentAnalysis = existingAnalysis?.[0] as { created_at: string } | undefined
+      const isRecent = recentAnalysis &&
         (new Date().getTime() - new Date(recentAnalysis.created_at).getTime()) < 24 * 60 * 60 * 1000
       
       if (isRecent) {
@@ -139,7 +138,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)

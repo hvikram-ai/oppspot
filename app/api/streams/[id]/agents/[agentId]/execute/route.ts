@@ -142,8 +142,8 @@ export async function POST(
 
       const completedDependencies = new Set(
         dependentExecutions
-          ?.filter(e => e.status === 'completed')
-          .map(e => e.agent_id) || []
+          ?.filter((e: { status: string; agent_id: string }) => e.status === 'completed')
+          .map((e: { status: string; agent_id: string }) => e.agent_id) || []
       )
 
       const missingDependencies = assignmentTyped.depends_on_agent_ids.filter(
@@ -176,7 +176,7 @@ export async function POST(
           success_criteria: streamTyped.success_criteria,
           current_progress: streamTyped.current_progress
         }
-      })
+      } as never)
       .select()
       .single();
 
@@ -205,7 +205,7 @@ export async function POST(
             goal_context: executionTyped.goal_context
           } as Record<string, unknown>,
           status: 'pending'
-        })
+        } as never)
     }
 
     // Update assignment last execution
@@ -214,7 +214,7 @@ export async function POST(
       .update({
         last_executed_at: new Date().toISOString(),
         total_executions: (assignmentTyped.total_executions || 0) + 1
-      })
+      } as never)
       .eq('id', assignmentTyped.id)
 
     // Create activity
@@ -232,7 +232,7 @@ export async function POST(
             agent_id: agentId,
             execution_id: executionTyped.id
           } as Record<string, unknown>
-        })
+        } as never)
     }
 
     // Generate initial insight
@@ -254,7 +254,7 @@ export async function POST(
           agent_execution_id: executionTyped.id,
           is_read: false,
           is_actionable: false
-        })
+        } as never)
     }
 
     return NextResponse.json({

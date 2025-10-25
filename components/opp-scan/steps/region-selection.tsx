@@ -455,7 +455,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                     {String(region.name)}, {String(region.country)}
                     <button
                       onClick={() => {
-                        const newSelection = config.selectedRegions.filter((_: unknown, i: number) => i !== index)
+                        const newSelection = (config.selectedRegions ?? []).filter((_: unknown, i: number) => i !== index)
                         onChange('selectedRegions', newSelection)
                       }}
                       className="ml-1 hover:text-destructive"
@@ -500,7 +500,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                 <CardContent>
                   <div className="space-y-4">
                     {/* Key Metrics */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                       {region.population && (
                         <div className="text-center p-3 bg-muted rounded-md">
                           <Building2 className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
@@ -564,7 +564,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
               <CardContent className="p-8 text-center">
                 <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-muted-foreground">
-                  No regions found matching "{searchTerm}"
+                  No regions found matching &quot;{searchTerm}&quot;
                 </p>
               </CardContent>
             </Card>
@@ -647,7 +647,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.values(config.regulatoryRequirements || {}).map((req: Record<string, unknown>, index) => (
+                  {Object.values(config.regulatoryRequirements || {}).map((req: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
                       <span className="font-medium">{String(req.name)}</span>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">

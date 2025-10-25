@@ -38,7 +38,16 @@ async function generateOllamaEmbedding(
   return response.json()
 }
 
-function buildCompanyText(company: any): string {
+interface CompanyData {
+  name: string
+  description?: string
+  sic_codes?: string[]
+  categories?: string[]
+  website?: string
+  [key: string]: unknown
+}
+
+function buildCompanyText(company: CompanyData): string {
   const parts: string[] = []
   parts.push(`Company: ${company.name}`)
   if (company.description) parts.push(`Description: ${company.description}`)
@@ -134,8 +143,9 @@ async function generateEmbeddings(limit?: number, model: string = 'nomic-embed-t
           console.log(`   ✅ Processed ${processed}/${companies.length} (${rate.toFixed(1)}/sec)`)
         }
       }
-    } catch (error: any) {
-      console.error(`   ❌ Error with ${company.name}:`, error.message)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      console.error(`   ❌ Error with ${company.name}:`, message)
     }
   }
 

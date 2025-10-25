@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -79,60 +79,7 @@ export default function ListsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [isDemo, setIsDemo] = useState(false)
 
-  useEffect(() => {
-    fetchLists()
-  }, [])
-
-  useEffect(() => {
-    filterLists()
-  }, [lists, searchQuery])
-
-  const fetchLists = async () => {
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        setIsDemo(true)
-        loadDemoData()
-        return
-      }
-
-      // Fetch lists with business count
-      const { data: listsData, error: listsError } = await supabase
-        .from('business_lists')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-
-      if (listsError) throw listsError
-
-      // For each list, count the businesses
-      const listsWithCounts = await Promise.all(
-        (listsData || []).map(async (list) => {
-          const { count } = await supabase
-            .from('saved_businesses')
-            .select('*', { count: 'exact', head: true })
-            .eq('list_id', (list as Row<'business_lists'>).id)
-
-          return {
-            ...list,
-            business_count: count || 0
-          }
-        })
-      )
-
-      setLists(listsWithCounts)
-    } catch (error) {
-      console.error('Error fetching lists:', error)
-      toast.error('Failed to load lists')
-      loadDemoData()
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadDemoData = () => {
+  const loadDemoData = useCallback(() => {
     const demoLists: BusinessList[] = [
       {
         id: '1',
@@ -170,9 +117,54 @@ export default function ListsPage() {
     ]
     setLists(demoLists)
     setLoading(false)
-  }
+  }, [])
 
-  const filterLists = () => {
+  const fetchLists = useCallback(async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        setIsDemo(true)
+        loadDemoData()
+        return
+      }
+
+      // Fetch lists with business count
+      const { data: listsData, error: listsError } = await supabase
+        .from('business_lists')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+
+      if (listsError) throw listsError
+
+      // For each list, count the businesses
+      const listsWithCounts = await Promise.all(
+        (listsData || []).map(async (list) => {
+          const { count } = await supabase
+            .from('saved_businesses')
+            .select('*', { count: 'exact', head: true })
+            .eq('list_id', (list as Row<'business_lists'>).id)
+
+          return {
+            ...(list as any),
+            business_count: count || 0
+          }
+        })
+      )
+
+      setLists(listsWithCounts)
+    } catch (error) {
+      console.error('Error fetching lists:', error)
+      toast.error('Failed to load lists')
+      loadDemoData()
+    } finally {
+      setLoading(false)
+    }
+  }, [loadDemoData])
+
+  const filterLists = useCallback(() => {
     let filtered = lists
 
     if (searchQuery) {
@@ -183,7 +175,15 @@ export default function ListsPage() {
     }
 
     setFilteredLists(filtered)
-  }
+  }, [lists, searchQuery])
+
+  useEffect(() => {
+    fetchLists()
+  }, [fetchLists])
+
+  useEffect(() => {
+    filterLists()
+  }, [filterLists])
 
   const handleViewList = async (list: BusinessList) => {
     setSelectedList(list)
@@ -245,7 +245,7 @@ export default function ListsPage() {
       }
 
       const formattedData = data?.filter(item => (item as { businesses?: unknown }).businesses).map(item => ({
-        ...item,
+        ...(item as any),
         business: (item as { businesses: unknown }).businesses!
       })) || []
 

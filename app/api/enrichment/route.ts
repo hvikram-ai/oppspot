@@ -7,7 +7,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createEnrichmentOrchestrator, EnrichmentRequest } from '@/lib/ai/enrichment/enrichment-orchestrator'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
     console.error('Error starting enrichment:', error)
 
     return NextResponse.json(
-      { error: error.message || 'Failed to start enrichment' },
+      { error: (error as any).message || 'Failed to start enrichment' },
       { status: 500 }
     )
   }
@@ -144,7 +143,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching enrichment jobs:', error)
 
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch enrichment jobs' },
+      { error: (error as any).message || 'Failed to fetch enrichment jobs' },
       { status: 500 }
     )
   }

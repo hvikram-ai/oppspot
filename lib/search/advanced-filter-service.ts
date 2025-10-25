@@ -29,7 +29,6 @@ export class AdvancedFilterService {
 
       // Get total count
       const { count } = await supabase
-        // @ts-expect-error - Type inference issue
         .rpc('count_filtered_businesses', { filter_params: params })
         .single();
 
@@ -69,10 +68,10 @@ export class AdvancedFilterService {
   buildQuery(filters: AdvancedFilters): {
     query: string;
     countQuery: string;
-    params: Record<string, any>;
+    params: Record<string, unknown>;
   } {
     const conditions: string[] = [];
-    const params: Record<string, any> = {};
+    const params: Record<string, unknown> = {};
 
     // 1. Keywords Filter
     if (filters.keywords) {

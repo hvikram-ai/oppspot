@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { ALL_TEMPLATES } from '@/lib/templates/template-library'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * POST /api/goal-templates/seed
@@ -26,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     if (!isAdmin) {
       // Check if user is admin via database
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: _profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
@@ -50,7 +49,7 @@ export async function POST(request: NextRequest) {
     for (const template of ALL_TEMPLATES) {
       try {
         // Check if template exists
-        const { data: existing, error: existingError } = await supabase
+        const { data: existing, error: _existingError } = await supabase
           .from('goal_templates')
           .select('id')
           .eq('id', template.id)
@@ -60,7 +59,6 @@ export async function POST(request: NextRequest) {
           // Update existing template
           const { error } = await supabase
             .from('goal_templates')
-            // @ts-expect-error - Type inference issue
             .update({
               name: template.name,
               description: template.description,
@@ -80,7 +78,6 @@ export async function POST(request: NextRequest) {
           // Insert new template
           const { error } = await supabase
             .from('goal_templates')
-            // @ts-expect-error - Supabase type inference issue
             .insert({
               id: template.id,
               name: template.name,

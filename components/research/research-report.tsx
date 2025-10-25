@@ -24,14 +24,20 @@ interface ResearchReportProps {
     generated_at: string;
     cached_until: string;
     sections: {
-      snapshot?: any;
-      buying_signals?: any;
-      decision_makers?: any;
-      revenue_signals?: any;
-      recommended_approach?: any;
-      sources?: any;
+      snapshot?: Record<string, unknown>;
+      buying_signals?: Record<string, unknown>;
+      decision_makers?: Record<string, unknown>;
+      revenue_signals?: Record<string, unknown>;
+      recommended_approach?: Record<string, unknown>;
+      sources?: Record<string, unknown>;
     };
-    sources: any[];
+    sources: Array<{
+      url: string;
+      title: string;
+      domain: string;
+      reliability_score: number;
+      source_type: string;
+    }>;
   };
   onRefresh?: () => void;
   onExport?: () => void;
@@ -53,24 +59,24 @@ export function ResearchReport({ report, onRefresh, onExport }: ResearchReportPr
   return (
     <div className="space-y-6" data-testid="research-report">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{report.company_name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{report.company_name}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Research Report
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {onRefresh && (
-            <Button variant="outline" size="sm" onClick={onRefresh}>
+            <Button variant="outline" size="sm" onClick={onRefresh} className="h-9">
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
           )}
           {onExport && (
-            <Button variant="outline" size="sm" onClick={onExport}>
+            <Button variant="outline" size="sm" onClick={onExport} className="h-9">
               <Download className="mr-2 h-4 w-4" />
-              Export PDF
+              <span className="hidden sm:inline">Export PDF</span>
             </Button>
           )}
         </div>
@@ -78,27 +84,27 @@ export function ResearchReport({ report, onRefresh, onExport }: ResearchReportPr
 
       {/* Metadata */}
       <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto">
+            <div className="flex-shrink-0">
               <p className="text-xs text-muted-foreground">Confidence Score</p>
               <p className={`text-lg font-semibold ${confidenceColor}`} data-testid="confidence-score">
                 {(report.confidence_score * 100).toFixed(0)}%
               </p>
             </div>
-            <div className="border-l pl-4">
+            <div className="border-l pl-3 sm:pl-4 flex-shrink-0">
               <p className="text-xs text-muted-foreground">Sources</p>
               <p className="text-lg font-semibold">{report.sources.length}</p>
             </div>
-            <div className="border-l pl-4">
+            <div className="border-l pl-3 sm:pl-4 flex-shrink-0">
               <p className="text-xs text-muted-foreground">Generated</p>
               <p className="text-sm flex items-center gap-1" data-testid="cache-indicator">
                 <Clock className="h-3 w-3" />
-                {cacheAge}
+                <span className="whitespace-nowrap">{cacheAge}</span>
               </p>
             </div>
           </div>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs whitespace-nowrap self-start sm:self-auto">
             Valid for {formatDistanceToNow(new Date(report.cached_until))}
           </Badge>
         </div>
@@ -106,14 +112,16 @@ export function ResearchReport({ report, onRefresh, onExport }: ResearchReportPr
 
       {/* Sections Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="signals">Signals</TabsTrigger>
-          <TabsTrigger value="contacts">Contacts</TabsTrigger>
-          <TabsTrigger value="financial">Financial</TabsTrigger>
-          <TabsTrigger value="strategy">Strategy</TabsTrigger>
-          <TabsTrigger value="sources">Sources</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2 md:pb-0">
+          <TabsList className="inline-flex md:grid w-auto md:w-full grid-cols-6 min-w-max md:min-w-0">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="signals">Signals</TabsTrigger>
+            <TabsTrigger value="contacts">Contacts</TabsTrigger>
+            <TabsTrigger value="financial">Financial</TabsTrigger>
+            <TabsTrigger value="strategy">Strategy</TabsTrigger>
+            <TabsTrigger value="sources">Sources</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-4">
           {report.sections.snapshot && (
@@ -155,11 +163,20 @@ export function ResearchReport({ report, onRefresh, onExport }: ResearchReportPr
 
 // Section Components (simplified - full implementation would be in separate files)
 
-function SnapshotSection({ data }: { data: any }) {
+interface SnapshotData {
+  industry?: string
+  employee_count?: string | number
+  founded_year?: string | number
+  company_status?: string
+  description?: string
+  [key: string]: unknown
+}
+
+function SnapshotSection({ data }: { data: SnapshotData }) {
   return (
     <Card className="p-6" data-testid="section-snapshot">
       <h2 className="text-xl font-semibold mb-4">Company Snapshot</h2>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {data.industry && (
           <div>
             <p className="text-sm text-muted-foreground">Industry</p>
@@ -195,7 +212,26 @@ function SnapshotSection({ data }: { data: any }) {
   );
 }
 
-function SignalsSection({ data }: { data: any }) {
+interface SignalData {
+  hiring_signals?: Array<{
+    title: string
+    description?: string
+    urgency?: string
+  }>
+  expansion_signals?: Array<{
+    title: string
+    description?: string
+    urgency?: string
+  }>
+  leadership_changes?: Array<{
+    title: string
+    description?: string
+    urgency?: string
+  }>
+  [key: string]: unknown
+}
+
+function SignalsSection({ data }: { data: SignalData }) {
   const allSignals = [
     ...(data.hiring_signals || []),
     ...(data.expansion_signals || []),
@@ -206,7 +242,7 @@ function SignalsSection({ data }: { data: any }) {
     <Card className="p-6" data-testid="section-buying-signals">
       <h2 className="text-xl font-semibold mb-4">Buying Signals</h2>
       <div className="space-y-3">
-        {allSignals.map((signal: any, idx: number) => (
+        {allSignals.map((signal, idx: number) => (
           <div key={idx} className="border-l-2 border-blue-500 pl-4 py-2">
             <div className="flex items-center justify-between">
               <p className="font-medium">{signal.title}</p>
@@ -226,14 +262,24 @@ function SignalsSection({ data }: { data: any }) {
   );
 }
 
-function DecisionMakersSection({ data }: { data: any }) {
+interface DecisionMakerData {
+  key_people?: Array<{
+    name: string
+    job_title: string
+    department?: string
+    business_email?: string
+  }>
+  [key: string]: unknown
+}
+
+function DecisionMakersSection({ data }: { data: DecisionMakerData }) {
   const people = data.key_people || [];
 
   return (
     <Card className="p-6" data-testid="section-decision-makers">
       <h2 className="text-xl font-semibold mb-4">Decision Makers</h2>
       <div className="space-y-4">
-        {people.slice(0, 10).map((person: any, idx: number) => (
+        {people.slice(0, 10).map((person, idx: number) => (
           <div key={idx} className="flex items-start justify-between border-b pb-3">
             <div>
               <p className="font-medium">{person.name}</p>
@@ -254,13 +300,23 @@ function DecisionMakersSection({ data }: { data: any }) {
   );
 }
 
-function RevenueSection({ data }: { data: any }) {
+interface RevenueData {
+  summary?: {
+    health_score?: number
+    growth_indicator?: string
+    risk_level?: string
+    budget_availability?: string
+  }
+  [key: string]: unknown
+}
+
+function RevenueSection({ data }: { data: RevenueData }) {
   const summary = data.summary || {};
 
   return (
     <Card className="p-6" data-testid="section-revenue-signals">
       <h2 className="text-xl font-semibold mb-4">Financial Health</h2>
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <p className="text-sm text-muted-foreground">Health Score</p>
           <p className="text-2xl font-bold">
@@ -290,7 +346,15 @@ function RevenueSection({ data }: { data: any }) {
   );
 }
 
-function ApproachSection({ data }: { data: any }) {
+interface ApproachData {
+  strategy?: string
+  talking_points?: string[]
+  next_steps?: string[]
+  urgency_level?: string
+  [key: string]: unknown
+}
+
+function ApproachSection({ data }: { data: ApproachData }) {
   return (
     <Card className="p-6" data-testid="section-recommended-approach">
       <h2 className="text-xl font-semibold mb-4">Recommended Approach</h2>
@@ -335,7 +399,13 @@ function ApproachSection({ data }: { data: any }) {
   );
 }
 
-function SourcesSection({ sources }: { sources: any[] }) {
+function SourcesSection({ sources }: { sources: Array<{
+  url: string;
+  title: string;
+  domain: string;
+  reliability_score: number;
+  source_type: string;
+}> }) {
   return (
     <Card className="p-6" data-testid="section-sources">
       <h2 className="text-xl font-semibold mb-4">Sources ({sources.length})</h2>

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface SavedBusiness {
   business_id: string
@@ -126,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     // Check if digest already exists for today
     if (!forceRefresh) {
-      const { data: existing, error: existingError } = await supabase
+      const { data: existing, error: _existingError } = await supabase
         .from('ai_digest')
         .select('id')
         .eq('user_id', user.id)
@@ -160,7 +159,6 @@ export async function POST(request: NextRequest) {
 
     const { data: digest, error: upsertError } = await supabase
       .from('ai_digest')
-      // @ts-expect-error - Supabase type inference issue
       .upsert(digestPayload, {
         onConflict: 'user_id,digest_date',
         ignoreDuplicates: false
@@ -217,14 +215,14 @@ async function generateDigestData(supabase: SupabaseClient, userId: string): Pro
 
   // Build digest structure
   const digestData: DigestData = {
-    overnight_discoveries: (recentSearches || []).map((search: SavedBusiness) => ({
+    overnight_discoveries: (recentSearches || []).map((search: { business_id: any; created_at: any }) => ({
       type: 'opportunity',
       title: `New business matches found`,
       description: 'Companies matching your search criteria',
       action_url: `/business/${search.business_id}`,
       priority: 'medium'
     })),
-    urgent_alerts: (staleLeads || []).slice(0, 3).map((lead: SavedBusiness) => ({
+    urgent_alerts: (staleLeads || []).slice(0, 3).map((lead: { business_id: any; updated_at: any }) => ({
       type: 'follow_up',
       title: `Lead needs follow-up`,
       company_ids: [lead.business_id],

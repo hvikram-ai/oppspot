@@ -33,8 +33,19 @@ const ACTIVITY_LABELS: Record<string, string> = {
 }
 
 export default function TeamPlayPage() {
-  const [activities, setActivities] = useState<any[]>([])
-  const [onlineUsers, setOnlineUsers] = useState<any[]>([])
+  const [activities, setActivities] = useState<Array<{
+    id: string
+    activity_type: string
+    entity_name?: string
+    created_at: string
+    user?: { full_name?: string; email?: string }
+  }>>([])
+  const [onlineUsers, setOnlineUsers] = useState<Array<{
+    id: string
+    status: string
+    current_page?: string
+    user?: { full_name?: string; email?: string }
+  }>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

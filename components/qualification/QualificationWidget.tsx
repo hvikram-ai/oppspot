@@ -33,7 +33,11 @@ export function QualificationWidget({ compact = false }: QualificationWidgetProp
     pendingActions: 0
   })
 
-  const [recentQualifications, setRecentQualifications] = useState<any[]>([])
+  const [recentQualifications, setRecentQualifications] = useState<Array<{
+    created_at: string
+    framework: string
+    [key: string]: unknown
+  }>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -251,17 +255,19 @@ export function QualificationWidget({ compact = false }: QualificationWidgetProp
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Recent Qualifications</h4>
                 <div className="space-y-2">
-                  {recentQualifications.map((qual, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">Lead #{qual.lead_id?.slice(0, 8)}</span>
-                          <span className="text-xs text-muted-foreground">{qual.framework}</span>
+                  {recentQualifications.map((qual, index) => {
+                    const leadId = qual.lead_id as string | undefined;
+                    return (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex items-center gap-3">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">Lead #{leadId?.slice(0, 8)}</span>
+                            <span className="text-xs text-muted-foreground">{qual.framework}</span>
+                          </div>
                         </div>
-                      </div>
                       <div className="flex items-center gap-2">
                         <div className="text-right">
-                          <p className="text-sm font-semibold">{qual.overall_score}%</p>
+                          <p className="text-sm font-semibold">{qual.overall_score as number}%</p>
                           <Badge
                             variant={
                               qual.qualification_status === 'qualified' || qual.forecast_category === 'commit'
@@ -272,12 +278,13 @@ export function QualificationWidget({ compact = false }: QualificationWidgetProp
                             }
                             className="text-xs"
                           >
-                            {qual.qualification_status || qual.forecast_category}
+                            {(qual.qualification_status || qual.forecast_category) as string}
                           </Badge>
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

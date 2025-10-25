@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
+type ScanUpdate = Database['public']['Tables']['acquisition_scans']['Update']
+type AuditLogInsert = Database['public']['Tables']['acquisition_scan_audit_logs']['Insert']
+type MarketIntelligenceInsert = Database['public']['Tables']['acquisition_scan_market_intelligence']['Insert']
+type ScanReportInsert = Database['public']['Tables']['acquisition_scan_reports']['Insert']
 type Industry = { industry: string; description?: string }
 type Region = { id: string; name: string; country: string }
 
@@ -112,14 +115,14 @@ export async function POST(
     // Update scan status
     const { data: updatedScan, error: updateError } = await supabase
       .from('acquisition_scans')
-      // @ts-expect-error - Supabase type inference issue with update() method
+      // @ts-expect-error - Complex acquisition_scans update type
       .update({
         status: newStatus,
         current_step: newStep,
         started_at,
         completed_at,
         updated_at: new Date().toISOString()
-      })
+      } as ScanUpdate)
       .eq('id', scanId)
       .select()
       .single()
@@ -135,7 +138,7 @@ export async function POST(
     // Create audit log entry
     await supabase
       .from('scan_audit_log')
-      // @ts-expect-error - Supabase type inference issue with insert() method for audit log
+      // @ts-expect-error - scan_audit_log insert type mismatch
       .insert({
         scan_id: scanId,
         user_id: user.id,
@@ -149,7 +152,7 @@ export async function POST(
         user_agent: request.headers.get('user-agent') || 'unknown',
         legal_basis: 'legitimate_interest',
         retention_period: 365
-      })
+      } as AuditLogInsert)
 
     return NextResponse.json({ 
       scan: updatedScan,
@@ -170,7 +173,7 @@ async function initializeScanExecution(supabase: DbClient, scanId: string, scan:
     // Create market intelligence entry
     await supabase
       .from('market_intelligence')
-      // @ts-expect-error - Supabase type inference issue with insert() method for market intelligence
+      // @ts-expect-error - market_intelligence insert type mismatch
       .insert({
         scan_id: scanId,
         industry_sector: (scan.selected_industries as Industry[]).map((i: Industry) => i.industry).join(', '),
@@ -182,12 +185,12 @@ async function initializeScanExecution(supabase: DbClient, scanId: string, scan:
         data_sources: scan.data_sources,
         analysis_date: new Date().toISOString().split('T')[0],
         confidence_level: 0.0
-      })
+      } as MarketIntelligenceInsert)
 
     // Create initial scan report entry
     await supabase
       .from('scan_reports')
-      // @ts-expect-error - Supabase type inference issue with insert() method for scan reports
+      // @ts-expect-error - scan_reports insert type mismatch
       .insert({
         scan_id: scanId,
         user_id: scan.user_id,
@@ -205,7 +208,7 @@ async function initializeScanExecution(supabase: DbClient, scanId: string, scan:
         generation_status: 'pending',
         is_confidential: true,
         access_level: 'private'
-      })
+      } as ScanReportInsert)
 
     // Note: In a real implementation, this would trigger background jobs
     // to start data collection from various sources. For now, we'll simulate
@@ -221,7 +224,7 @@ async function initializeScanExecution(supabase: DbClient, scanId: string, scan:
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

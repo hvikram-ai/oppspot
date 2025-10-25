@@ -6,7 +6,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET() {
   try {
@@ -105,7 +104,6 @@ export async function POST(request: NextRequest) {
     // Create list
     const { data: list, error } = await supabase
       .from('business_lists')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         name: name.trim(),
@@ -127,7 +125,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       list: {
-        ...list,
+        ...(list as any),
         business_count: 0,
       },
     })

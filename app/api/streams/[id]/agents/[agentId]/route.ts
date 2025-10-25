@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * PATCH /api/streams/[id]/agents/[agentId]
@@ -24,12 +23,12 @@ export async function PATCH(
     }
 
     // Verify user has editor/owner access
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single();
+      .single() as { data: { role: string } | null; error: unknown };
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(
@@ -43,7 +42,6 @@ export async function PATCH(
     // Update the assignment
     const { data: assignment, error: updateError } = await supabase
       .from('stream_agent_assignments')
-      // @ts-expect-error - Type inference issue
       .update(body)
       .eq('stream_id', streamId)
       .eq('agent_id', agentId)
@@ -100,12 +98,12 @@ export async function DELETE(
     }
 
     // Verify user has editor/owner access
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single();
+      .single() as { data: { role: string } | null; error: unknown };
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(
@@ -132,7 +130,6 @@ export async function DELETE(
     // Create activity
     await supabase
       .from('stream_activities')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         user_id: user.id,

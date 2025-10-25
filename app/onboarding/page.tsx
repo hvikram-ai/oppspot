@@ -135,8 +135,8 @@ export default function OnboardingPage() {
 
       // Update profile with onboarding data
       const { error: profileError } = await (supabase
-         
-        .from('profiles') as unknown)
+
+        .from('profiles') as any)
         .update({
           preferences: {
             ...formData,
@@ -155,10 +155,10 @@ export default function OnboardingPage() {
         .eq('id', user.id)
         .single()
 
-      const typedProfile = profile as Row<'profiles'>
+      const typedProfile = profile as unknown as Row<'profiles'>
       if (typedProfile?.org_id) {
         await (supabase
-          .from('organizations') as unknown)
+          .from('organizations') as any)
           .update({
             settings: {
               industry: formData.industry,

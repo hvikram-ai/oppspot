@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { OpportunityIdentifier } from '@/lib/analytics/opportunity-identifier'
-import type { Row } from '@/lib/supabase/helpers'
 
 // GET: Fetch opportunities
 export async function GET(request: NextRequest) {
@@ -149,7 +148,6 @@ export async function PATCH(request: NextRequest) {
     
     const { error } = await supabase
       .from('opportunities')
-      // @ts-expect-error - Type inference issue
       .update(updateData)
       .eq('id', opportunityId)
     
@@ -166,7 +164,6 @@ export async function PATCH(request: NextRequest) {
       if (opportunity) {
         await supabase
           .from('notifications')
-          // @ts-expect-error - Supabase type inference issue
           .insert({
             user_id: user.id,
             type: 'opportunity_captured',
@@ -206,7 +203,7 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -219,7 +216,7 @@ export async function DELETE() {
     // Update expired opportunities
     const { error } = await supabase
       .from('opportunities')
-      .update({ status: 'expired' })
+      .update({ status: 'expired' } as never)
       .eq('status', 'active')
       .lt('expires_at', new Date().toISOString())
     

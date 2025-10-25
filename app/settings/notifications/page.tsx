@@ -66,8 +66,8 @@ export default function NotificationSettingsPage() {
 
       if (profile?.preferences) {
         setSettings(prev => ({
-          ...prev,
-          ...profile.preferences
+          ...(prev as any),
+          ...(profile.preferences as any)
         }))
       }
     } catch (error) {
@@ -91,7 +91,6 @@ export default function NotificationSettingsPage() {
 
       const { error } = await supabase
         .from('profiles')
-        // @ts-expect-error - Type inference issue
         .update({ 
           preferences: settings,
           updated_at: new Date().toISOString()

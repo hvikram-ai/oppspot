@@ -110,7 +110,7 @@ ${prompt.trim()}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
       }
     }
 
-    return configs[taskType] || configs.generation
+    return configs[taskType as keyof typeof configs] || configs.generation
   }
 
   /**
@@ -119,17 +119,17 @@ ${prompt.trim()}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
   private static getDefaultSystemPrompt(taskType: string): string {
     const prompts = {
       analysis: "You are a professional business analyst. Provide accurate, insightful analysis based on the provided data. Focus on actionable insights and clear explanations.",
-      
+
       generation: "You are a professional content creator. Generate high-quality, relevant content that meets the specified requirements. Be creative while maintaining accuracy.",
-      
+
       classification: "You are a classification expert. Analyze the provided content and assign appropriate categories based on the given criteria. Be precise and consistent.",
-      
+
       extraction: "You are a data extraction specialist. Extract specific information from the provided content accurately and completely. Present results in the requested format.",
-      
+
       summary: "You are a professional summarizer. Create concise, comprehensive summaries that capture the key points and essential information. Maintain clarity and readability."
     }
 
-    return prompts[taskType] || prompts.generation
+    return prompts[taskType as keyof typeof prompts] || prompts.generation
   }
 
   /**

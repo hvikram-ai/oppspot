@@ -110,7 +110,7 @@ export default async function ReportPage({
     <ProtectedLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-6xl mx-auto">
-          <ResearchReport report={reportData} />
+          <ResearchReport report={reportData as any} />
         </div>
       </div>
     </ProtectedLayout>

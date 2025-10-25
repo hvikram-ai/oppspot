@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { StakeholderDashboard } from '@/components/stakeholders/stakeholder-dashboard';
@@ -16,11 +16,7 @@ function StakeholdersContent() {
   const companyId = searchParams.get('company_id');
   const supabase = createClient();
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -29,7 +25,11 @@ function StakeholdersContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    checkUser();
+  }, [checkUser]);
 
   if (loading) {
     return (

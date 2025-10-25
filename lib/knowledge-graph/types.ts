@@ -96,7 +96,7 @@ export interface KnowledgeEntity {
 
   // Entity metadata
   description?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 
   // Embeddings for semantic search
   embedding?: number[]
@@ -128,7 +128,7 @@ export interface EntityRelationship {
   relationship_label?: string
 
   // Relationship metadata
-  properties?: Record<string, any>
+  properties?: Record<string, unknown>
   strength: number // 0.0-1.0
   confidence: ConfidenceLevel
 
@@ -167,7 +167,7 @@ export interface KnowledgeFact {
 
   // Context
   context?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 
   // Evidence
   source_type: string
@@ -220,7 +220,7 @@ export interface KnowledgeQuery {
   // Query specification
   query_pattern?: any
   query_filters?: any
-  query_params?: Record<string, any>
+  query_params?: Record<string, unknown>
 
   // Usage
   is_public: boolean
@@ -266,7 +266,7 @@ export interface KnowledgeInsight {
   related_facts: string[]
 
   // Evidence
-  evidence?: Record<string, any>
+  evidence?: Record<string, unknown>
   confidence: ConfidenceLevel
 
   // Impact
@@ -297,7 +297,7 @@ export interface GraphNode {
   type: EntityType
   subtype?: string
   confidence: ConfidenceLevel
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 
   // Visual properties
   size?: number
@@ -347,7 +347,7 @@ export interface CreateEntityRequest {
   reference_type?: string
   reference_id?: string
   description?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   confidence?: ConfidenceLevel
 }
 
@@ -361,7 +361,7 @@ export interface UpdateEntityRequest {
   entity_id: string
   entity_name?: string
   description?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   confidence?: ConfidenceLevel
 }
 
@@ -371,7 +371,7 @@ export interface CreateRelationshipRequest {
   target_entity_id: string
   relationship_type: RelationshipType
   relationship_label?: string
-  properties?: Record<string, any>
+  properties?: Record<string, unknown>
   strength?: number
   confidence?: ConfidenceLevel
   evidence?: string

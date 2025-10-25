@@ -379,7 +379,6 @@ export class LeadScoringService {
     for (const [type, weight] of Object.entries(newWeights)) {
       await supabase
         .from('scoring_criteria')
-        // @ts-expect-error - Type inference issue
         .update({ weight, updated_at: new Date().toISOString() })
         .eq('org_id', orgId)
         .eq('criteria_type', type)

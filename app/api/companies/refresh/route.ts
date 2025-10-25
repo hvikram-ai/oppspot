@@ -75,7 +75,6 @@ export async function POST(request: NextRequest) {
           
           const { error: updateError } = await supabase
             .from('businesses')
-            // @ts-expect-error - Type inference issue
             .update({
               ...formatted,
               companies_house_last_updated: new Date().toISOString(),

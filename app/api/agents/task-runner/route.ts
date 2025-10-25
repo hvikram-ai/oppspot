@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getTaskRunner, startTaskRunner, stopTaskRunner } from '@/lib/agents/agent-task-runner'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/agents/task-runner
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's org (admin check could be added here)
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)
@@ -87,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user is admin (you may want to add admin role check)
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id, role')
       .eq('id', user.id)

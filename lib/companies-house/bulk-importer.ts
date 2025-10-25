@@ -166,10 +166,11 @@ export class CompaniesHouseBulkImporter {
 
       return this.progress
 
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       console.error('[CH Import] Error:', error)
       this.progress.status = 'failed'
-      this.progress.error = error.message
+      this.progress.error = errorMessage
       throw error
     }
   }
@@ -384,7 +385,7 @@ export class CompaniesHouseBulkImporter {
 
       console.log(`[CH Import] Batch ${this.progress.currentBatch} imported: ${batch.length} companies`)
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('[CH Import] Failed to import batch:', error)
       this.progress.errorRows += batch.length
       // Continue processing despite errors

@@ -2,7 +2,17 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   // Debug environment variables
-  const debug = {
+  const debug: {
+    hasSupabaseUrl: boolean
+    hasSupabaseKey: boolean
+    urlLength: number
+    keyLength: number
+    urlPrefix: string | undefined
+    keyPrefix: string | undefined
+    authTest?: string
+    authResponse?: string
+    authError?: string
+  } = {
     hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     urlLength: process.env.NEXT_PUBLIC_SUPABASE_URL?.length || 0,

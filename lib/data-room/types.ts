@@ -308,7 +308,7 @@ export interface ActivityLog {
 
   // Action details
   action: ActivityAction;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 
   // Technical details
   ip_address: string;

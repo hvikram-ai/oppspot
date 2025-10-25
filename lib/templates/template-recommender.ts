@@ -5,7 +5,6 @@
 
 import { ExtendedGoalTemplate, ALL_TEMPLATES } from './template-library'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export interface RecommendationContext {
   userId: string

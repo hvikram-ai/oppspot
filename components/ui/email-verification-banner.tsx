@@ -27,9 +27,9 @@ export function EmailVerificationBanner() {
         .select('email_verified_at')
         .eq('id', user.id)
          
-        .single() as unknown
-      
-      if (profile?.email_verified_at) {
+        .single() as { data: { email_verified_at?: string | null } | null }
+
+      if ((profile as { data: { email_verified_at?: string | null } | null })?.data?.email_verified_at) {
         setIsVerified(true)
         setIsVisible(false)
       }

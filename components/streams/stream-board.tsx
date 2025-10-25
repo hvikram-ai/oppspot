@@ -16,7 +16,7 @@ import {
 interface StreamBoardProps {
   stream: Stream
   items: StreamItem[]
-  onUpdateItem: (itemId: string, updates: any) => void
+  onUpdateItem: (itemId: string, updates: Partial<StreamItem>) => void
   onDeleteItem: (itemId: string) => void
 }
 
@@ -48,7 +48,7 @@ export function StreamBoard({ stream, items, onUpdateItem, onDeleteItem }: Strea
         const stageItems = getItemsByStage(stage.id)
 
         return (
-          <div key={stage.id} className="flex-shrink-0 w-80">
+          <div key={stage.id} className="flex-shrink-0 w-full min-w-[280px] md:w-80">
             <Card className="h-full">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

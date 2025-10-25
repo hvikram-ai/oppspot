@@ -200,7 +200,7 @@ export function SignalAggregationScore({
 
           {/* Velocity Metrics */}
           {(aggregation.signal_velocity || aggregation.signal_acceleration) && (
-            <div className="grid grid-cols-2 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
@@ -247,7 +247,7 @@ export function SignalAggregationScore({
             </ResponsiveContainer>
 
             {/* Strength Distribution */}
-            <div className="grid grid-cols-4 gap-2 mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
               {Object.entries(aggregation.strength_distribution).map(([strength, count]) => (
                 <div key={strength} className="text-center p-2 bg-gray-50 rounded">
                   <p className="text-xs text-muted-foreground capitalize">

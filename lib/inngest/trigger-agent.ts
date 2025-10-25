@@ -11,7 +11,7 @@ import { inngest } from './client'
 export async function triggerAgent(
   agentId: string,
   orgId: string,
-  input?: Record<string, any>
+  input?: Record<string, unknown>
 ) {
   await inngest.send({
     name: 'agent.execute',

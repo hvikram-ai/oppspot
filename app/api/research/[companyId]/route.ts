@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getResearchGPTService } from '@/lib/research-gpt/research-gpt-service';
 import { z } from 'zod';
-import type { Row } from '@/lib/supabase/helpers'
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -89,36 +88,87 @@ export async function POST(
       );
     }
 
-    // Initiate research generation (async)
-    const report = await service.generateResearch({
-      user_id: user.id,
-      company_id: company.id,
-      company_name: company.name,
-      company_number: company.company_number,
-      website_url: company.website,
-      force_refresh: forceRefresh,
-      user_context: requestBody.user_context,
-      focus_areas: requestBody.focus_areas,
-    });
+    // Check if we should use queue-based processing (recommended for production)
+    const useQueue = process.env.USE_QUEUE_PROCESSING !== 'false';
 
-    // Get updated quota
-    const updatedQuota = await service.getQuota(user.id);
+    if (useQueue) {
+      // Queue-based async processing (NEW: Bull Queue)
+      const { addResearchJob, isCompanyResearchQueued } = await import('@/lib/queue/queues/research-queue');
 
-    // Return 202 Accepted with report ID and poll URL
-    return NextResponse.json(
-      {
-        report_id: report.id,
-        status: report.status,
-        estimated_completion_seconds: 30,
-        poll_url: `/api/research/${report.id}`,
-        quota: {
-          researches_used: updatedQuota.researches_used,
-          researches_limit: updatedQuota.researches_limit,
-          researches_remaining: updatedQuota.researches_limit - updatedQuota.researches_used,
+      // Check if already queued
+      const alreadyQueued = await isCompanyResearchQueued(company.id);
+      if (alreadyQueued && !forceRefresh) {
+        return NextResponse.json(
+          {
+            error: 'Already processing',
+            message: 'Research generation is already in progress for this company',
+          },
+          { status: 409 }
+        );
+      }
+
+      // Add job to queue
+      const job = await addResearchJob({
+        user_id: user.id,
+        company_id: company.id,
+        company_name: company.name,
+        company_number: company.company_number || undefined,
+        website_url: company.website || undefined,
+        force_refresh: forceRefresh,
+        user_context: requestBody.user_context,
+        focus_areas: requestBody.focus_areas,
+      });
+
+      // Get updated quota
+      const updatedQuota = await service.getQuota(user.id);
+
+      // Return 202 Accepted with job ID and poll URL
+      return NextResponse.json(
+        {
+          job_id: job.id,
+          status: 'queued',
+          estimated_completion_seconds: 60, // Queue processing time
+          poll_url: `/api/jobs/${job.id}`,
+          quota: {
+            researches_used: updatedQuota.researches_used,
+            researches_limit: updatedQuota.researches_limit,
+            researches_remaining: updatedQuota.researches_limit - updatedQuota.researches_used,
+          },
         },
-      },
-      { status: 202 }
-    );
+        { status: 202 }
+      );
+    } else {
+      // Synchronous processing (LEGACY: for backward compatibility)
+      const report = await service.generateResearch({
+        user_id: user.id,
+        company_id: company.id,
+        company_name: company.name,
+        company_number: company.company_number,
+        website_url: company.website,
+        force_refresh: forceRefresh,
+        user_context: requestBody.user_context,
+        focus_areas: requestBody.focus_areas,
+      });
+
+      // Get updated quota
+      const updatedQuota = await service.getQuota(user.id);
+
+      // Return 202 Accepted with report ID and poll URL
+      return NextResponse.json(
+        {
+          report_id: report.id,
+          status: report.status,
+          estimated_completion_seconds: 30,
+          poll_url: `/api/research/${report.id}`,
+          quota: {
+            researches_used: updatedQuota.researches_used,
+            researches_limit: updatedQuota.researches_limit,
+            researches_remaining: updatedQuota.researches_limit - updatedQuota.researches_used,
+          },
+        },
+        { status: 202 }
+      );
+    }
   } catch (error) {
     console.error('Research generation error:', error);
 
@@ -181,8 +231,8 @@ export async function GET(
     // Format sections by type
     const sectionsByType: Record<string, any> = {};
     for (const section of sections) {
-      sectionsByType[section.section_type] = {
-        ...section.content,
+      sectionsByType[section.section_type as string] = {
+        ...(section.content as any),
         confidence: section.confidence,
         cached_at: section.cached_at,
         expires_at: section.expires_at,

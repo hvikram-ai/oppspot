@@ -264,7 +264,7 @@ export function StakeholderDialog({
                 <Label htmlFor="role_type">Role Type</Label>
                 <Select
                   value={formData.role_type}
-                  onValueChange={(value: string) => setFormData(prev => ({ ...prev, role_type: value }))}
+                  onValueChange={(value: string) => setFormData(prev => ({ ...prev, role_type: value } as any))}
                   disabled={loading}
                 >
                   <SelectTrigger>
@@ -286,7 +286,7 @@ export function StakeholderDialog({
                 <Label htmlFor="relationship_status">Relationship Status</Label>
                 <Select
                   value={formData.relationship_status}
-                  onValueChange={(value: string) => setFormData(prev => ({ ...prev, relationship_status: value }))}
+                  onValueChange={(value: string) => setFormData(prev => ({ ...prev, relationship_status: value } as any))}
                   disabled={loading}
                 >
                   <SelectTrigger>
@@ -365,7 +365,7 @@ export function StakeholderDialog({
                 <Label htmlFor="champion_status">Champion Status</Label>
                 <Select
                   value={formData.champion_status}
-                  onValueChange={(value: string) => setFormData(prev => ({ ...prev, champion_status: value }))}
+                  onValueChange={(value: string) => setFormData(prev => ({ ...prev, champion_status: value } as any))}
                   disabled={loading}
                 >
                   <SelectTrigger>

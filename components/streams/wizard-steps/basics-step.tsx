@@ -41,7 +41,7 @@ export function BasicsStep({ data, onUpdate }: BasicsStepProps) {
       <div>
         <h3 className="text-lg font-semibold mb-1">Stream Basics</h3>
         <p className="text-sm text-muted-foreground">
-          Let's start by giving your stream a name and choosing its appearance
+          Let&apos;s start by giving your stream a name and choosing its appearance
         </p>
       </div>
 

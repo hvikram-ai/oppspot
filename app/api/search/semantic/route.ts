@@ -16,7 +16,6 @@ import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { z } from 'zod'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 const searchSchema = z.object({
   query: z.string().min(1).max(500),
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
     const results = await embeddingService.semanticSearch(query, {
       limit,
       threshold
-    }) as Array<{ id: string; similarity: number } & Record<string, unknown>>
+    }) as unknown as Array<{ id: string; similarity: number } & Record<string, unknown>>
 
     if (results.length === 0) {
       return NextResponse.json({
@@ -77,9 +76,9 @@ export async function POST(request: NextRequest) {
       } else if (companies) {
         // Merge similarity scores with company data
         enrichedResults = companies.map(company => {
-          const result = results.find(r => r.id === company.id)
+          const result = results.find((r: { id: string; similarity: number }) => r.id === (company as { id: string }).id)
           return {
-            ...company,
+            ...(company as any),
             similarity: result?.similarity || 0
           }
         })
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request', details: error.errors },
+        { error: 'Invalid request', details: error.issues },
         { status: 400 }
       )
     }

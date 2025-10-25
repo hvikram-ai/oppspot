@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/types/database'
-import type { Row } from '@/lib/supabase/helpers'
 
 type ProfileOrgId = Pick<Database['public']['Tables']['profiles']['Row'], 'org_id'>
 type ScanInsert = Database['public']['Tables']['acquisition_scans']['Insert']
@@ -20,7 +19,7 @@ export async function GET() {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
@@ -157,7 +156,7 @@ export async function POST(request: NextRequest) {
      
     const { data: scan, error } = await supabase
       .from('acquisition_scans')
-      // @ts-expect-error - Complex JSONB field types
+      // @ts-expect-error - acquisition_scans insert type mismatch
       .insert(scanData)
       .select()
       .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
@@ -187,7 +186,7 @@ export async function POST(request: NextRequest) {
      
     const { error: auditError } = await supabase
       .from('scan_audit_log')
-      // @ts-expect-error - Audit log type
+      // @ts-expect-error - scan_audit_log insert type mismatch
       .insert(auditLogData)
 
     if (auditError) {

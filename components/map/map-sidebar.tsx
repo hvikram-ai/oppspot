@@ -3,14 +3,16 @@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Business } from '@/app/map/page'
-import { 
-  MapPin, 
-  Phone, 
-  Globe, 
-  Mail, 
-  X, 
+import {
+  MapPin,
+  Phone,
+  Globe,
+  Mail,
+  X,
   Building2,
-  Navigation
+  Navigation,
+  CheckCircle,
+  Star
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getGooglePlacesClient } from '@/lib/google-places/client'
 import { Database } from '@/lib/supabase/database.types'
-import type { Row } from '@/lib/supabase/helpers'
 
 type BusinessInsert = Database['public']['Tables']['businesses']['Insert']
 
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
     for (const place of placesToImport) {
       try {
         // Check if business already exists
-        const { data: existing, error: existingError } = await supabase
+        const { data: existing, error: _existingError } = await supabase
           .from('businesses')
           .select('id')
           .eq('google_place_id', place.place_id)
@@ -92,7 +91,6 @@ export async function POST(request: NextRequest) {
     if (businessesToInsert.length > 0) {
       const { data, error } = await supabase
         .from('businesses')
-        // @ts-expect-error - Supabase type inference issue
         .insert(businessesToInsert as Database['public']['Tables']['businesses']['Insert'][])
         .select()
 
@@ -107,7 +105,6 @@ export async function POST(request: NextRequest) {
       insertedCount = data?.length || 0
     }
 
-    // @ts-expect-error - Supabase type inference issue
     // Log the import event
     await supabase.from('events').insert({
       user_id: user.id,

@@ -5,7 +5,6 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET() {
   try {
@@ -39,9 +38,9 @@ export async function GET() {
     // Extract unique tags and count usage
     const tagMap = new Map<string, number>()
 
-    savedBusinesses?.forEach(sb => {
+    savedBusinesses?.forEach((sb: { tags?: string[] }) => {
       if (sb.tags && Array.isArray(sb.tags)) {
-        sb.tags.forEach(tag => {
+        sb.tags.forEach((tag: string) => {
           const normalizedTag = tag.trim().toLowerCase()
           if (normalizedTag) {
             tagMap.set(normalizedTag, (tagMap.get(normalizedTag) || 0) + 1)

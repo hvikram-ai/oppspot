@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Mock similar companies for demo/testing
 const MOCK_SIMILAR_COMPANIES = [
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
     // Create analysis record in database (non-blocking)
     if (user) {
       // Store analysis metadata in database
-      // @ts-expect-error - Supabase type inference issue
       supabase.from('similarity_analyses').insert({
         id: analysisId,
         user_id: user.id,
@@ -98,17 +96,16 @@ export async function POST(request: NextRequest) {
         created_at: new Date().toISOString()
       }).then(() => {
         console.log(`Analysis ${analysisId} record created`)
-      }).catch(err => {
-        console.error('Failed to create analysis record:', err)
-      })
+        return Promise.resolve()
+      }) as any
     }
 
     // For demo/testing, store mock results in memory
     // In production, this would trigger an async job
     if (process.env.NODE_ENV === 'development' || !user) {
       // Simulate async processing by storing results that can be retrieved later
-      global.similarityAnalyses = global.similarityAnalyses || {}
-      global.similarityAnalyses[analysisId] = {
+      (global as any).similarityAnalyses = (global as any).similarityAnalyses || {}
+      ;(global as any).similarityAnalyses[analysisId] = {
         id: analysisId,
         status: 'processing',
         targetCompany: targetCompanyName.trim(),
@@ -118,9 +115,9 @@ export async function POST(request: NextRequest) {
 
       // Simulate completion after a delay (non-blocking)
       setTimeout(() => {
-        if (global.similarityAnalyses[analysisId]) {
-          global.similarityAnalyses[analysisId] = {
-            ...global.similarityAnalyses[analysisId],
+        if ((global as any).similarityAnalyses[analysisId]) {
+          ;(global as any).similarityAnalyses[analysisId] = {
+            ...(global as any).similarityAnalyses[analysisId],
             status: 'completed',
             completedAt: new Date().toISOString(),
             results: MOCK_SIMILAR_COMPANIES.slice(0, maxResults),
@@ -173,8 +170,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check in-memory storage first (for demo/dev)
-    if (global.similarityAnalyses && global.similarityAnalyses[analysisId]) {
-      const analysis = global.similarityAnalyses[analysisId]
+    if ((global as any).similarityAnalyses && (global as any).similarityAnalyses[analysisId]) {
+      const analysis = (global as any).similarityAnalyses[analysisId]
       return NextResponse.json(analysis)
     }
 
@@ -222,6 +219,6 @@ export async function GET(request: NextRequest) {
 }
 
 // Initialize global storage for demo
-if (typeof global.similarityAnalyses === 'undefined') {
-  global.similarityAnalyses = {}
+if (typeof (global as any).similarityAnalyses === 'undefined') {
+  (global as any).similarityAnalyses = {}
 }

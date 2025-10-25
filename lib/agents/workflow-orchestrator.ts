@@ -19,7 +19,7 @@ export interface WorkflowNode {
   dependsOn: string[] // Agent IDs this node depends on
   isActive: boolean
   autoExecute: boolean
-  executionConfig: Record<string, any>
+  executionConfig: Record<string, unknown>
 }
 
 export interface WorkflowExecution {
@@ -36,8 +36,8 @@ export interface WorkflowExecution {
 export interface WorkflowContext {
   streamId: string
   goalContext: any
-  sharedData: Record<string, any> // Data shared between agents
-  agentOutputs: Record<string, any> // Output from each agent
+  sharedData: Record<string, unknown> // Data shared between agents
+  agentOutputs: Record<string, unknown> // Output from each agent
   metrics: {
     totalItems: number
     qualityScore: number
@@ -257,7 +257,7 @@ export class WorkflowOrchestrator {
 
       try {
         await Promise.all(layerPromises)
-      } catch (error: any) {
+      } catch (error) {
         console.error(`[WorkflowOrchestrator] Layer ${layerIndex + 1} failed:`, error)
         execution.status = 'failed'
         throw error
@@ -354,7 +354,7 @@ export class WorkflowOrchestrator {
 
       console.log(`[WorkflowOrchestrator] Agent ${node.agentType} completed successfully`)
 
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[WorkflowOrchestrator] Agent ${node.agentType} failed:`, error)
       execution.failedNodes.push(agentId)
       throw error
@@ -367,8 +367,8 @@ export class WorkflowOrchestrator {
   private gatherDependencyContext(
     node: WorkflowNode,
     execution: WorkflowExecution
-  ): Record<string, any> {
-    const context: Record<string, any> = {}
+  ): Record<string, unknown> {
+    const context: Record<string, unknown> = {}
 
     for (const depAgentId of node.dependsOn) {
       const depOutput = execution.context.agentOutputs[depAgentId]
@@ -461,8 +461,9 @@ export class WorkflowOrchestrator {
         valid: errors.length === 0,
         errors
       }
-    } catch (error: any) {
-      errors.push(error.message)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      errors.push(errorMessage)
       return {
         valid: false,
         errors

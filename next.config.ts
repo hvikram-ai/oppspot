@@ -7,8 +7,9 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Temporarily disabled during builds - extensive technical debt cleanup needed
-    // TypeScript checking still available via `tsc --noEmit`
+    // Temporarily ignoring build errors due to missing database types for newly added tables
+    // (agent_workflows, ai_agents, system_alerts, etc. not in generated types/database.ts)
+    // These tables need to be added to the Supabase schema or types regenerated
     ignoreBuildErrors: true,
   },
   // Re-enabled static optimization with Suspense boundaries now in place

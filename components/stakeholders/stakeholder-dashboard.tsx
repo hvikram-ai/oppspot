@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,11 +47,7 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [companyId, orgId]);
-
-  const fetchDashboardData = async (refresh = false) => {
+  const fetchDashboardData = useCallback(async (refresh = false) => {
     try {
       if (refresh) {
         setRefreshing(true);
@@ -118,7 +114,7 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
             action: 'Follow-up required',
             due_date: s.next_action_date!
           }))
-          .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+          .sort((a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
           .slice(0, 5),
         relationship_map: {
           nodes: [],
@@ -135,7 +131,11 @@ export function StakeholderDashboard({ companyId, orgId }: StakeholderDashboardP
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [companyId, orgId]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const handleAddStakeholder = () => {
     setSelectedStakeholder(null);

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 type ScanAccess = Pick<Database['public']['Tables']['acquisition_scans']['Row'], 'user_id' | 'org_id'>
@@ -39,7 +38,7 @@ export async function GET(
     const minScore = searchParams.get('minScore') ? parseFloat(searchParams.get('minScore')!) : null
 
     // Check scan access
-    const { data: scan, error: scanError } = await supabase
+    const { data: scan, error: _scanError } = await supabase
       .from('acquisition_scans')
       .select('user_id, org_id')
       .eq('id', scanId)
@@ -105,7 +104,7 @@ export async function GET(
     const offset = (page - 1) * limit
     query = query.range(offset, offset + limit - 1)
 
-    const { data: targets, error: targetsError, count } = await query
+    const { data: targets, error: _targetsError, count } = await query
 
     if (targetsError) {
       console.error('Error fetching targets:', targetsError)
@@ -116,7 +115,7 @@ export async function GET(
     }
 
     // Calculate summary statistics
-    const { data: stats, error: statsError } = await supabase
+    const { data: stats, error: _statsError } = await supabase
       .from('target_companies')
       .select('analysis_status, overall_score')
       .eq('scan_id', scanId)
@@ -173,7 +172,7 @@ export async function POST(
     const body = await request.json()
 
     // Check scan access
-    const { data: scan, error: scanError } = await supabase
+    const { data: scan, error: _scanError } = await supabase
       .from('acquisition_scans')
       .select('user_id, org_id, status')
       .eq('id', scanId)
@@ -258,7 +257,7 @@ export async function POST(
      
     const { data: target, error: insertError } = await supabase
       .from('target_companies')
-      .insert(targetData)
+      .insert(targetData as never)
       .select()
       .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
@@ -274,7 +273,7 @@ export async function POST(
     const { error: rpcError } = await supabase.rpc('increment_scan_targets', {
       scan_id: scanId,
       increment: 1
-    });
+    } as any);
 
     if (rpcError) {
       console.error('Failed to increment scan targets:', rpcError)
@@ -298,7 +297,7 @@ export async function POST(
      
     const { error: auditError } = await supabase
       .from('scan_audit_log')
-      .insert(auditLogData);
+      .insert(auditLogData as never);
 
     if (auditError) {
       console.error('Failed to create audit log:', auditError)
@@ -317,7 +316,7 @@ export async function POST(
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

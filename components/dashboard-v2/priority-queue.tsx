@@ -57,7 +57,7 @@ export function PriorityQueue() {
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <Check className="h-12 w-12 mx-auto mb-2 text-green-600" />
-            <p>You're all caught up! Great work.</p>
+            <p>You&apos;re all caught up! Great work.</p>
           </div>
         </CardContent>
       </Card>

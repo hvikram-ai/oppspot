@@ -107,8 +107,9 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
           // Rate limiting
           await this.delay(1000 + Math.random() * 2000) // 1-3 seconds
 
-        } catch (error: any) {
-          this.log(`Error analyzing website for ${company.name}: ${error.message}`, 'warn')
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          this.log(`Error analyzing website for ${company.name}: ${errorMessage}`, 'warn')
         }
       }
 
@@ -124,12 +125,13 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
         },
         metrics
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       metrics.durationMs = Date.now() - startTime
       return {
         success: false,
         output: {},
-        error: error.message,
+        error: errorMessage,
         metrics
       }
     }
@@ -213,8 +215,9 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
 
       return analysisData
 
-    } catch (error: any) {
-      this.log(`Error fetching ${url}: ${error.message}`, 'error')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      this.log(`Error fetching ${url}: ${errorMessage}`, 'error')
       return null
     }
   }
@@ -475,13 +478,11 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
     if (Object.keys(updateData).length > 0) {
       await supabase
         .from('businesses')
-        // @ts-expect-error - Type inference issue
         .update(updateData)
         .eq('id', data.companyId)
     }
 
     // Store enrichment metadata
-    // @ts-expect-error - Supabase type inference issue
     await supabase.from('enrichment_data').insert({
       company_id: data.companyId,
       source: 'website_analysis',

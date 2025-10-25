@@ -75,8 +75,9 @@ export class ScoutAgent extends BaseAgent {
           }
 
           metrics.itemsProcessed++
-        } catch (error: any) {
-          this.log(`Error checking company ${company.name}: ${error.message}`, 'warn')
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          this.log(`Error checking company ${company.name}: ${errorMessage}`, 'warn')
         }
       }
 
@@ -93,12 +94,13 @@ export class ScoutAgent extends BaseAgent {
         },
         metrics
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       metrics.durationMs = Date.now() - startTime
       return {
         success: false,
         output: {},
-        error: error.message,
+        error: errorMessage,
         metrics
       }
     }
@@ -214,8 +216,9 @@ export class ScoutAgent extends BaseAgent {
         this.log(`Detected Companies House filing for company ${companyNumber}`)
         return [signalId]
       }
-    } catch (error: any) {
-      this.log(`Error checking Companies House: ${error.message}`, 'warn')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      this.log(`Error checking Companies House: ${errorMessage}`, 'warn')
     }
 
     return []

@@ -88,7 +88,7 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
     assigned_agents: [],
     // Workflow
     workflowTemplate: 'project_stages',
-    stages: WORKFLOW_TEMPLATES.project_stages.stages,
+    stages: WORKFLOW_TEMPLATES.project_stages.stages as any,
     // Team
     members: [],
     privacy: 'team',
@@ -208,7 +208,7 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
     } finally {
       setIsSubmitting(false)
     }
-  }, [data, orgId, canProceed, onComplete, reset, clearDraft, onOpenChange])
+  }, [data, canProceed, onComplete, reset, clearDraft, onOpenChange])
 
   const handleClose = useCallback(() => {
     if (confirm('Are you sure? Your progress will be saved as a draft.')) {
@@ -246,7 +246,7 @@ export function StreamWizard({ open, onOpenChange, onComplete, orgId }: StreamWi
             </Button>
           </div>
 
-          <StepIndicator steps={activeSteps} currentStep={currentStep} />
+          <StepIndicator steps={activeSteps as any} currentStep={currentStep} />
         </div>
 
         {/* Step content */}

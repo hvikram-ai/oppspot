@@ -57,7 +57,7 @@ export function LiveProgressCard({
       const timer = setTimeout(() => setShowIncrement(false), 2000)
       return () => clearTimeout(timer)
     }
-  }, [progress?.completed, previousCompleted])
+  }, [progress?.completed, previousCompleted]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const completed = progress?.completed || 0
   const total = progress?.total || targetMetrics?.companies_to_find || 100

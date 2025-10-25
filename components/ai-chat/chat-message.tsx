@@ -49,12 +49,11 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown
                 components={{
-                  code({ node, inline, className, children, ...props }) {
+                  code: (({ node, inline, className, children, ...props }: { node?: unknown; inline?: boolean; className?: string; children?: React.ReactNode; [key: string]: unknown }) => {
                     const match = /language-(\w+)/.exec(className || '')
                     return !inline && match ? (
                       <SyntaxHighlighter
-                        // @ts-expect-error - Supabase type inference issue
-                        style={oneDark}
+                        style={oneDark as any}
                         language={match[1]}
                         PreTag="div"
                         {...props}
@@ -66,7 +65,7 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
                         {children}
                       </code>
                     )
-                  },
+                  }) as any,
                   p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                   ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
                   ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,

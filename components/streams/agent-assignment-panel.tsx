@@ -153,7 +153,7 @@ export function AgentAssignmentPanel({
       <div>
         <h3 className="text-lg font-semibold mb-2">Assign AI Agents</h3>
         <p className="text-sm text-muted-foreground">
-          Select agents to work on this goal. They'll execute autonomously based on your criteria.
+          Select agents to work on this goal. They&apos;ll execute autonomously based on your criteria.
         </p>
       </div>
 

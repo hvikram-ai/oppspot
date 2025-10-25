@@ -40,13 +40,12 @@ const TYPE_OPTIONS: { label: string; value: StreamType; description: string }[] 
 export function CreateStreamDialog({ open, onOpenChange, onSubmit, orgId }: CreateStreamDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateStreamRequest>({
-    org_id: orgId,
     name: '',
     description: '',
     emoji: '📁',
     color: '#6366f1',
     stream_type: 'project',
-  })
+  } as any)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,7 +54,6 @@ export function CreateStreamDialog({ open, onOpenChange, onSubmit, orgId }: Crea
       await onSubmit(formData)
       // Reset form
       setFormData({
-        org_id: orgId,
         name: '',
         description: '',
         emoji: '📁',

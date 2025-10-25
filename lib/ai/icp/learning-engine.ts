@@ -45,6 +45,17 @@ export interface ICPProfile {
   last_trained_at: string | null
 }
 
+export interface CompanySnapshot {
+  industry?: string
+  employee_count?: number
+  revenue?: number
+  location?: string
+  tech_stack?: string[]
+  buying_signals?: string[]
+  funding_stage?: string
+  [key: string]: unknown
+}
+
 export interface DealOutcome {
   id: string
   company_id: string
@@ -54,7 +65,7 @@ export interface DealOutcome {
   outcome: 'won' | 'lost' | 'open'
   outcome_reason?: string
   outcome_date?: string
-  company_snapshot: Record<string, any>
+  company_snapshot: CompanySnapshot
   org_id?: string
 }
 
@@ -169,14 +180,14 @@ export class ICPLearningEngine {
    * Extract patterns from deal outcomes
    */
   private extractPatterns(wonDeals: DealOutcome[], lostDeals: DealOutcome[]) {
-    const patterns: Record<string, any> = {
-      industries: {},
-      employee_ranges: [],
-      revenue_ranges: [],
-      locations: {},
-      tech_stacks: {},
-      growth_indicators: {},
-      funding_stages: {}
+    const patterns = {
+      industries: {} as Record<string, number>,
+      employee_ranges: [] as number[],
+      revenue_ranges: [] as number[],
+      locations: {} as Record<string, number>,
+      tech_stacks: {} as Record<string, number>,
+      growth_indicators: {} as Record<string, number>,
+      funding_stages: {} as Record<string, number>
     }
 
     // Analyze won deals
@@ -230,7 +241,15 @@ export class ICPLearningEngine {
    * Generate ICP criteria using AI
    */
   private async generateCriteriaWithAI(
-    patterns: Record<string, any>,
+    patterns: {
+      industries: Record<string, number>
+      employee_ranges: number[]
+      revenue_ranges: number[]
+      locations: Record<string, number>
+      tech_stacks: Record<string, number>
+      growth_indicators: Record<string, number>
+      funding_stages: Record<string, number>
+    },
     wonDeals: DealOutcome[],
     lostDeals: DealOutcome[]
   ): Promise<ICPCriteria> {
@@ -297,45 +316,53 @@ Focus on patterns that appear in >30% of won deals.`
   /**
    * Fallback: Generate criteria from patterns (no AI)
    */
-  private generateCriteriaFromPatterns(patterns: Record<string, any>): ICPCriteria {
+  private generateCriteriaFromPatterns(patterns: {
+    industries: Record<string, number>
+    employee_ranges: number[]
+    revenue_ranges: number[]
+    locations: Record<string, number>
+    tech_stacks: Record<string, number>
+    growth_indicators: Record<string, number>
+    funding_stages: Record<string, number>
+  }): ICPCriteria {
     // Top industries (appear in >20% of deals)
-    const totalDeals = Object.values(patterns.industries).reduce((sum: number, count) => sum + (count as number), 0) as number
+    const totalDeals = Object.values(patterns.industries).reduce((sum, count) => sum + count, 0)
     const industries = Object.entries(patterns.industries)
-      .filter(([_, count]) => (count as number) / totalDeals > 0.2)
+      .filter(([_, count]) => count / totalDeals > 0.2)
       .map(([industry]) => industry)
       .slice(0, 5)
 
     // Employee range (10th-90th percentile)
-    const employees = patterns.employee_ranges.sort((a: number, b: number) => a - b)
+    const employees = [...patterns.employee_ranges].sort((a, b) => a - b)
     const employeeMin = employees[Math.floor(employees.length * 0.1)]
     const employeeMax = employees[Math.floor(employees.length * 0.9)]
 
     // Revenue range (10th-90th percentile)
-    const revenues = patterns.revenue_ranges.sort((a: number, b: number) => a - b)
+    const revenues = [...patterns.revenue_ranges].sort((a, b) => a - b)
     const revenueMin = revenues[Math.floor(revenues.length * 0.1)]
     const revenueMax = revenues[Math.floor(revenues.length * 0.9)]
 
     // Top locations
     const locations = Object.entries(patterns.locations)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([loc]) => loc)
 
     // Top tech stack
     const techStack = Object.entries(patterns.tech_stacks)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([tech]) => tech)
 
     // Growth indicators
     const growthIndicators = Object.entries(patterns.growth_indicators)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([ind]) => ind)
 
     // Funding stages
     const fundingStages = Object.entries(patterns.funding_stages)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([stage]) => stage)
 
@@ -353,12 +380,20 @@ Focus on patterns that appear in >30% of won deals.`
   /**
    * Calculate confidence scores for each criteria
    */
-  private calculateConfidenceScores(patterns: Record<string, any>, wonDealsCount: number): Record<string, number> {
+  private calculateConfidenceScores(patterns: {
+    industries: Record<string, number>
+    employee_ranges: number[]
+    revenue_ranges: number[]
+    locations: Record<string, number>
+    tech_stacks: Record<string, number>
+    growth_indicators: Record<string, number>
+    funding_stages: Record<string, number>
+  }, wonDealsCount: number): Record<string, number> {
     const scores: Record<string, number> = {}
 
     // Industry confidence (based on concentration)
-    const industryTotal = Object.values(patterns.industries).reduce((sum: number, count) => sum + (count as number), 0) as number
-    const topIndustryCount = Math.max(...Object.values(patterns.industries).map(c => c as number))
+    const industryTotal = Object.values(patterns.industries).reduce((sum, count) => sum + count, 0)
+    const topIndustryCount = Math.max(...Object.values(patterns.industries))
     scores.industries = Math.min((topIndustryCount / industryTotal) * 100, 100)
 
     // Employee range confidence (based on sample size)
@@ -368,16 +403,16 @@ Focus on patterns that appear in >30% of won deals.`
     scores.revenue_range = Math.min((patterns.revenue_ranges.length / wonDealsCount) * 100, 100)
 
     // Location confidence
-    const locationTotal = Object.values(patterns.locations).reduce((sum: number, count) => sum + (count as number), 0) as number
-    const topLocationCount = Math.max(...Object.values(patterns.locations).map(c => c as number), 0)
+    const locationTotal = Object.values(patterns.locations).reduce((sum, count) => sum + count, 0)
+    const topLocationCount = Math.max(...Object.values(patterns.locations), 0)
     scores.locations = Math.min((topLocationCount / locationTotal) * 100, 100)
 
     // Tech stack confidence
-    const techTotal = Object.values(patterns.tech_stacks).reduce((sum: number, count) => sum + (count as number), 0) as number
+    const techTotal = Object.values(patterns.tech_stacks).reduce((sum, count) => sum + count, 0)
     scores.tech_stack = Math.min((techTotal / wonDealsCount) * 50, 100) // Tech data is often sparse
 
     // Growth indicators confidence
-    const growthTotal = Object.values(patterns.growth_indicators).reduce((sum: number, count) => sum + (count as number), 0) as number
+    const growthTotal = Object.values(patterns.growth_indicators).reduce((sum, count) => sum + count, 0)
     scores.growth_indicators = Math.min((growthTotal / wonDealsCount) * 60, 100)
 
     return scores

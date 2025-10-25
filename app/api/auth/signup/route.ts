@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { Row } from '@/lib/supabase/helpers'
 
 type Organization = Database['public']['Tables']['organizations']['Row']
 type OrganizationInsert = Database['public']['Tables']['organizations']['Insert']
@@ -38,7 +37,7 @@ export async function POST(request: Request) {
           company_name: companyName,
           company_industry: null,
           company_size: null,
-        })
+        } as any)
       if (rpcError) throw rpcError
       if (rpcId) {
         const { data: orgRow, error: orgFetchErr } = await supabase
@@ -61,7 +60,7 @@ export async function POST(request: Request) {
           onboarding_step: 0,
           industry: null,
           company_size: null,
-        } as OrganizationInsert)
+        } as never)
         .select()
         .single()
       org = orgRow
@@ -93,7 +92,7 @@ export async function POST(request: Request) {
         last_active: new Date().toISOString(),
         trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days trial
         onboarding_completed: false,
-      } as ProfileInsert)
+      } as never)
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
@@ -117,8 +116,8 @@ export async function POST(request: Request) {
             role,
             signup_source: 'web',
           },
-         
-        } as unknown)
+
+        } as never)
     } catch (eventError) {
       // Events table might not exist yet, that's okay
       console.log('Event logging skipped:', eventError)

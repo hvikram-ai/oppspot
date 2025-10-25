@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface LeadScore {
   overall_score: number;

@@ -16,12 +16,12 @@ interface StreamWithCreator extends Row<'streams'> {
   goal_deadline?: string
 }
 
-interface StreamItemWithMetadata extends Row<'stream_items'> {
+interface StreamItemWithMetadata extends Omit<Row<'stream_items'>, 'metadata'> {
   status?: string
   metadata?: {
     quality_score?: number
     signals?: unknown[]
-  }
+  } | null
 }
 
 interface InsightWithAgent {
@@ -109,7 +109,7 @@ export async function GET(
     const stream = streamData as StreamWithCreator
 
     // Verify user has access to this stream
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
@@ -174,7 +174,7 @@ export async function GET(
     const quality_score = avg_quality_score
 
     // Fetch insights
-    const { data: insights = [], error: insightsError } = await supabase
+    const { data: insights = [], error: _insightsError } = await supabase
       .from('stream_insights')
       .select(`
         *,

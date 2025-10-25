@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
             ...typedExactMatch,
             source: 'cache_expired',
             needs_refresh: true,
-            cache_age: getAgeInHours(typedExactMatch.companies_house_last_updated)
+            cache_age: getAgeInHours(typedExactMatch.companies_house_last_updated ?? null)
           })
         }
       }
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
               ...match,
               source: isValidCache ? 'cache' : 'cache_expired',
               needs_refresh: !isValidCache,
-              cache_age: getAgeInHours(match.companies_house_last_updated)
+              cache_age: getAgeInHours(match.companies_house_last_updated ?? null)
             })
             
             if (isValidCache) {
@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
               response_status: 200,
               response_data: { total_results: apiResults.total_results },
               user_id: user.id
-            })
+            } as never)
           } catch (logError) {
             console.log('Failed to log API call:', logError)
             // Continue even if logging fails
@@ -319,7 +319,7 @@ export async function POST(request: NextRequest) {
             results.push({
               id: `api-${apiCompany.company_number}`,
               company_number: apiCompany.company_number,
-              name: apiCompany.title || apiCompany.company_name,
+              name: apiCompany.title || (apiCompany as any).company_name,
               company_status: apiCompany.company_status,
               company_type: apiCompany.company_type,
               date_of_creation: extendedApiCompany.date_of_creation,
@@ -407,7 +407,7 @@ export async function POST(request: NextRequest) {
               response_status: 500,
               error_message: apiError instanceof Error ? apiError.message : 'Unknown error',
               user_id: user.id
-            })
+            } as never)
           } catch (logError) {
             console.log('Failed to log API error:', logError)
             // Continue even if logging fails

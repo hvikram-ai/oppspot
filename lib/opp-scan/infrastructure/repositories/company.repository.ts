@@ -44,7 +44,6 @@ interface IndustryCountRow {
   count: string
 }
 
-  // @ts-ignore - Interface implementation mismatch
 export class CompanyRepository implements ICompanyRepository {
   constructor(
     private readonly db: {

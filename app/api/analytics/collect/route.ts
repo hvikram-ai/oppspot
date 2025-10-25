@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DataCollector } from '@/lib/analytics/data-collector'
-import type { Row } from '@/lib/supabase/helpers'
 
 // POST: Collect market metrics
 export async function POST(request: NextRequest) {
@@ -14,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)

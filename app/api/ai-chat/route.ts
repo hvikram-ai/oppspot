@@ -165,8 +165,8 @@ export async function POST(request: NextRequest) {
     
     // Generate session ID if not provided
     const sessionId = session_id || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
-    let aiResponse: string
+
+    let aiResponse: string = ''
     let confidence = 0.85
     let usedModel = 'fallback'
     interface PlatformData {
@@ -290,11 +290,12 @@ export async function POST(request: NextRequest) {
         aiResponse = platformResult.formattedResponse
         confidence = 0.95
         usedModel = 'platform_orchestrator'
-        platformData = platformResult.data
+        platformData = platformResult.data as PlatformData | null
         // Derive lightweight citations from platform data if available
         try {
-          if (platformResult.data?.topMatches?.length) {
-            collectedCitations = (platformResult.data as PlatformData).topMatches!.slice(0, 5).map((m, idx: number) => ({
+          const typedData = platformResult.data as PlatformData
+          if (typedData?.topMatches?.length) {
+            collectedCitations = typedData.topMatches!.slice(0, 5).map((m, idx: number) => ({
               id: `${Date.now()}-${idx}`,
               source_type: 'analysis',
               title: m.company_name || m.name || 'Similar company',

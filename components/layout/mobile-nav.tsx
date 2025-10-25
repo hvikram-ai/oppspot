@@ -17,12 +17,14 @@ import {
   Target,
   Newspaper,
   BarChart3,
-  Mic
+  Mic,
+  Command
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { VoiceCommandModal } from '@/components/voice/voice-command-modal';
+import { useCommandBar } from '@/hooks/use-command-bar';
 
 interface MobileNavItem {
   href: string;
@@ -201,6 +203,7 @@ export function MobileFAB() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const { setOpen: setCommandBarOpen } = useCommandBar();
 
   // Don't show on certain pages
   if (
@@ -222,6 +225,18 @@ export function MobileFAB() {
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             className="absolute bottom-16 right-0 bg-background border rounded-lg shadow-lg p-2 space-y-2 min-w-[150px]"
           >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsOpen(false);
+                setCommandBarOpen(true);
+              }}
+            >
+              <Command className="h-4 w-4 mr-2" />
+              Command Bar
+            </Button>
             <Link href="/search">
               <Button
                 variant="ghost"

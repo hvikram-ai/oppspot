@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { jobQueue, ScanJobProcessor } from '@/lib/opp-scan/job-queue'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -98,7 +97,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify scan exists and user has access
-        const { data: scan, error: scanError } = await supabase
+        const { data: scan, error: _scanError } = await supabase
           .from('acquisition_scans')
           .select('*')
           .eq('id', scanId)
@@ -131,7 +130,6 @@ export async function POST(request: NextRequest) {
         // Update scan status to queued
         await supabase
           .from('acquisition_scans')
-          // @ts-expect-error - Type inference issue
           .update({
             status: 'scanning',
             current_step: 'queued_for_processing',
@@ -187,7 +185,7 @@ export async function POST(request: NextRequest) {
 // Helper function to check organization access
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

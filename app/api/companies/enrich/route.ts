@@ -59,7 +59,6 @@ export async function POST(request: NextRequest) {
         if (Object.keys(merged).length > 0) {
           const { error: updateError } = await supabase
             .from('businesses')
-            // @ts-expect-error - Type inference issue
             .update(merged)
             .eq('id', businessId)
           

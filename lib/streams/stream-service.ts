@@ -4,7 +4,6 @@
  */
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 import type {
   Stream,
   StreamMember,
@@ -34,7 +33,7 @@ export class StreamService {
     data: CreateStreamRequest
   ): Promise<Stream> {
     // Use admin client to bypass RLS for stream creation
-    const adminClient = await createAdminClient()
+    const adminClient = createAdminClient()
 
     console.log('[StreamService] Creating stream with:', { userId, orgId, streamName: data.name })
 
@@ -56,28 +55,30 @@ export class StreamService {
         ],
         metadata: data.metadata || {},
         created_by: userId,
-        status: 'active'
-      })
+        status: 'active' as const
+      } as any)
       .select()
-      .single() as { data: Row<'streams'> | null; error: any }
+      .single()
 
     if (error || !stream) {
       console.error('[StreamService] Error creating stream:', error)
       throw new Error(`Failed to create stream: ${error?.message || 'Unknown error'}`)
     }
 
-    console.log('[StreamService] Stream created:', stream.id)
+    const streamData = stream as any
+    console.log('[StreamService] Stream created:', streamData.id)
 
     // Add creator as owner member using same admin client to bypass RLS
-    console.log('[StreamService] Adding owner member:', { streamId: stream.id, userId })
+    console.log('[StreamService] Adding owner member:', { streamId: streamData.id, userId })
     const { error: memberError } = await adminClient
-      .from('stream_members' as any)
+      .from('stream_members')
+      // @ts-expect-error - Supabase type inference issue with admin client
       .insert([{
-        stream_id: stream.id,
+        stream_id: streamData.id,
         user_id: userId,
-        role: 'owner',
+        role: 'owner' as const,
         invitation_accepted_at: new Date().toISOString()
-      }] as any)
+      } as any])
 
     if (memberError) {
       console.error('[StreamService] Error adding stream member:', memberError)
@@ -87,13 +88,13 @@ export class StreamService {
     console.log('[StreamService] Member added successfully')
 
     // Log activity
-    await this.logActivity(stream.id, userId, 'stream_created', {
-      description: `Created stream: ${stream.name}`,
+    await this.logActivity(streamData.id, userId, 'stream_created', {
+      description: `Created stream: ${streamData.name}`,
       target_type: 'stream',
-      target_id: stream.id
+      target_id: streamData.id
     })
 
-    return stream as unknown as Stream
+    return streamData as Stream
   }
 
   /**
@@ -108,12 +109,12 @@ export class StreamService {
     const supabase = await createClient()
 
     // First get stream IDs for this user
-    const { data: memberData } = (await supabase
+    const { data: memberData } = await supabase
       .from('stream_members')
       .select('stream_id')
-      .eq('user_id', userId)) as { data: Row<'stream_members'>[] | null; error: any }
+      .eq('user_id', userId)
 
-    const streamIds = memberData?.map(m => m.stream_id) || []
+    const streamIds = (memberData as any[])?.map((m: any) => m.stream_id) || []
 
     // If user has no streams, return empty
     if (streamIds.length === 0) {
@@ -180,14 +181,14 @@ export class StreamService {
     await this.verifyAccess(streamId, userId)
 
     // Get stream
-    const { data: stream, error: streamError } = (await supabase
+    const { data: stream, error: streamError } = await supabase
       .from('streams')
       .select(`
         *,
         creator:profiles!streams_created_by_fkey(id, full_name, avatar_url)
       `)
       .eq('id', streamId)
-      .single()) as { data: Row<'streams'> | null; error: any }
+      .single()
 
     if (streamError) throw streamError
 
@@ -205,20 +206,20 @@ export class StreamService {
     if (itemsError) throw itemsError
 
     // Get members
-    const { data: members, error: membersError } = (await supabase
+    const { data: members, error: membersError } = await supabase
       .from('stream_members')
       .select(`
         *,
         user:profiles(id, full_name, email, avatar_url)
       `)
       .eq('stream_id', streamId)
-      .order('joined_at', { ascending: true })) as { data: Row<'stream_members'>[] | null; error: any }
+      .order('joined_at', { ascending: true })
 
     if (membersError) throw membersError
 
     // Get recent activity
     const { data: activity, error: activityError } = await supabase
-      .from('stream_activities' as any)
+      .from('stream_activities')
       .select(`
         *,
         user:profiles(id, full_name, avatar_url)
@@ -230,9 +231,10 @@ export class StreamService {
     if (activityError) throw activityError
 
     // Update last accessed
-    await (supabase
-      .from('stream_members') as any)
-      .update({ last_accessed_at: new Date().toISOString() })
+    await supabase
+      .from('stream_members')
+      // @ts-expect-error - Supabase type inference issue
+      .update({ last_accessed_at: new Date().toISOString() } as any)
       .eq('stream_id', streamId)
       .eq('user_id', userId)
 
@@ -257,26 +259,28 @@ export class StreamService {
     // Verify user is owner or editor
     await this.verifyRole(streamId, userId, ['owner', 'editor'])
 
-    const { data: stream, error } = await (supabase
-      .from('streams') as any)
+    const { data: stream, error } = await supabase
+      .from('streams')
+      // @ts-expect-error - Supabase type inference issue
       .update({
         ...data,
         updated_by: userId
-      })
+      } as any)
       .eq('id', streamId)
       .select()
       .single()
 
     if (error || !stream) throw error || new Error('Stream not found')
 
+    const streamData = stream as any
     // Log activity
     await this.logActivity(streamId, userId, 'stream_updated', {
-      description: `Updated stream: ${(stream as any).name}`,
+      description: `Updated stream: ${streamData.name ?? "Unknown"}`,
       target_type: 'stream',
       target_id: streamId
     })
 
-    return stream as Stream
+    return streamData as Stream
   }
 
   /**
@@ -288,13 +292,14 @@ export class StreamService {
     // Verify user is owner
     await this.verifyRole(streamId, userId, ['owner'])
 
-    const { error } = await (supabase
-      .from('streams') as any)
+    const { error } = await supabase
+      .from('streams')
+      // @ts-expect-error - Supabase type inference issue
       .update({
-        status: 'archived',
+        status: 'archived' as const,
         archived_at: new Date().toISOString(),
         updated_by: userId
-      })
+      } as any)
       .eq('id', streamId)
 
     if (error) throw error
@@ -336,8 +341,8 @@ export class StreamService {
     // Verify requester is owner or editor
     await this.verifyRole(streamId, requesterId, ['owner', 'editor'])
 
-    const { data: member, error } = await (supabase
-      .from('stream_members') as any)
+    const { data: member, error } = await supabase
+      .from('stream_members')
       .insert({
         stream_id: streamId,
         user_id: data.user_id,
@@ -352,17 +357,18 @@ export class StreamService {
         },
         invited_by: requesterId,
         invitation_accepted_at: new Date().toISOString()
-      })
+      } as any)
       .select()
       .single()
 
     if (error || !member) throw error || new Error('Failed to add member')
 
+    const memberData = member as any
     // Log activity
     await this.logActivity(streamId, requesterId, 'member_added', {
       description: `Added member to stream`,
       target_type: 'member',
-      target_id: (member as any).id
+      target_id: memberData.id ?? ""
     })
 
     // Create notification for new member
@@ -376,7 +382,7 @@ export class StreamService {
       actor_id: requesterId
     })
 
-    return member as StreamMember
+    return memberData as StreamMember
   }
 
   /**
@@ -421,18 +427,18 @@ export class StreamService {
     await this.verifyRole(streamId, userId, ['owner', 'editor'])
 
     // Get next position
-    const { data: maxPosition } = (await supabase
+    const { data: maxPosition } = await supabase
       .from('stream_items')
       .select('position')
       .eq('stream_id', streamId)
       .order('position', { ascending: false })
       .limit(1)
-      .single()) as { data: Row<'stream_items'> | null; error: any }
+      .single()
 
-    const nextPosition = (maxPosition?.position || 0) + 1
+    const nextPosition = ((maxPosition as any)?.position || 0) + 1
 
-    const { data: item, error } = (await (supabase
-      .from('stream_items') as any)
+    const { data: item, error } = await supabase
+      .from('stream_items')
       .insert({
         stream_id: streamId,
         item_type: data.item_type,
@@ -451,12 +457,13 @@ export class StreamService {
         metadata: data.metadata || {},
         added_by: userId,
         status: 'open'
-      })
+      } as any)
       .select()
-      .single()) as { data: Row<'stream_items'> | null; error: any }
+      .single()
 
     if (error || !item) throw error || new Error('Failed to create item')
 
+    const itemData = item as any
     // Notify assigned user
     if (data.assigned_to && data.assigned_to !== userId) {
       await this.createNotification({
@@ -466,12 +473,12 @@ export class StreamService {
         title: 'New Task Assigned',
         body: `You've been assigned: ${data.title}`,
         priority: data.priority || 'medium',
-        item_id: item.id,
+        item_id: itemData.id,
         actor_id: userId
       })
     }
 
-    return item as unknown as StreamItem
+    return itemData as StreamItem
   }
 
   /**
@@ -485,44 +492,47 @@ export class StreamService {
     const supabase = await createClient()
 
     // Get item to verify access
-    const { data: existingItem } = (await supabase
+    const { data: existingItem } = await supabase
       .from('stream_items')
       .select('stream_id, assigned_to, stage_id, status')
       .eq('id', itemId)
-      .single()) as { data: { stream_id: string; assigned_to: string | null; stage_id: string | null; status: string } | null; error: any }
+      .single()
 
     if (!existingItem) throw new Error('Item not found')
 
+    const existingItemData = existingItem as any
     // Verify user is owner or editor
-    await this.verifyRole(existingItem.stream_id, userId, ['owner', 'editor'])
+    await this.verifyRole(existingItemData.stream_id, userId, ['owner', 'editor'])
 
-    const { data: item, error } = (await (supabase
-      .from('stream_items') as any)
+    const { data: item, error } = await supabase
+      .from('stream_items')
+      // @ts-expect-error - Supabase type inference issue
       .update({
         ...data,
         updated_by: userId
-      })
+      } as any)
       .eq('id', itemId)
       .select()
-      .single()) as { data: (Row<'stream_items'> & { title?: string; priority?: string }) | null; error: any }
+      .single()
 
     if (error) throw error
 
+    const itemData = item as any
     // Notify if assignment changed
-    if (data.assigned_to && data.assigned_to !== existingItem.assigned_to && item) {
+    if (data.assigned_to && data.assigned_to !== existingItemData.assigned_to && itemData) {
       await this.createNotification({
-        stream_id: existingItem.stream_id,
+        stream_id: existingItemData.stream_id,
         user_id: data.assigned_to,
         notification_type: 'item_assigned',
         title: 'Task Reassigned',
-        body: `You've been assigned: ${item.title || 'a task'}`,
-        priority: item.priority || 'medium',
+        body: `You've been assigned: ${itemData.title || 'a task'}`,
+        priority: itemData.priority || 'medium',
         item_id: itemId,
         actor_id: userId
       })
     }
 
-    return item as unknown as StreamItem
+    return itemData as StreamItem
   }
 
   /**
@@ -532,16 +542,17 @@ export class StreamService {
     const supabase = await createClient()
 
     // Get item to verify access
-    const { data: item } = (await supabase
+    const { data: item } = await supabase
       .from('stream_items')
       .select('stream_id')
       .eq('id', itemId)
-      .single()) as { data: { stream_id: string } | null; error: any }
+      .single()
 
     if (!item) throw new Error('Item not found')
 
+    const itemData = item as any
     // Verify user is owner or editor
-    await this.verifyRole(item.stream_id, userId, ['owner', 'editor'])
+    await this.verifyRole(itemData.stream_id, userId, ['owner', 'editor'])
 
     const { error } = await supabase
       .from('stream_items')
@@ -624,8 +635,8 @@ export class StreamService {
     // Verify access
     await this.verifyAccess(streamId, userId)
 
-    const { data: comment, error } = (await (supabase
-      .from('stream_comments') as any)
+    const { data: comment, error } = await supabase
+      .from('stream_comments')
       .insert({
         stream_id: streamId,
         item_id: data.item_id || null,
@@ -634,12 +645,13 @@ export class StreamService {
         thread_id: data.parent_comment_id || null, // If reply, use parent as thread
         mentioned_users: data.mentioned_users || [],
         author_id: userId
-      })
+      } as any)
       .select()
-      .single()) as { data: any; error: any }
+      .single()
 
     if (error || !comment) throw error || new Error('Failed to create comment')
 
+    const commentData = comment as any
     // Notify mentioned users
     if (data.mentioned_users && data.mentioned_users.length > 0) {
       for (const mentionedUserId of data.mentioned_users) {
@@ -652,14 +664,14 @@ export class StreamService {
             body: `in a comment: ${data.content.substring(0, 100)}`,
             priority: 'medium',
             item_id: data.item_id || null,
-            comment_id: (comment as any).id,
+            comment_id: commentData.id ?? "",
             actor_id: userId
           })
         }
       }
     }
 
-    return comment as StreamComment
+    return commentData as StreamComment
   }
 
   /**
@@ -668,12 +680,12 @@ export class StreamService {
   private static async verifyAccess(streamId: string, userId: string): Promise<void> {
     const supabase = await createClient()
 
-    const { data, error } = (await supabase
+    const { data, error } = await supabase
       .from('stream_members')
       .select('id')
       .eq('stream_id', streamId)
       .eq('user_id', userId)
-      .single()) as { data: { id: string } | null; error: any }
+      .single()
 
     if (error || !data) {
       throw new Error('Access denied')
@@ -690,14 +702,15 @@ export class StreamService {
   ): Promise<void> {
     const supabase = await createClient()
 
-    const { data, error } = (await supabase
+    const { data, error } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', userId)
-      .single()) as { data: { role: string } | null; error: any }
+      .single()
 
-    if (error || !data || !allowedRoles.includes(data.role)) {
+    const memberData = data as any
+    if (error || !memberData || !allowedRoles.includes(memberData.role)) {
       throw new Error('Insufficient permissions')
     }
   }
@@ -719,7 +732,7 @@ export class StreamService {
   ): Promise<void> {
     const supabase = await createClient()
 
-    await (supabase.from('stream_activities') as any).insert({
+    await supabase.from('stream_activities').insert({
       stream_id: streamId,
       user_id: userId,
       activity_type: activityType,
@@ -729,7 +742,7 @@ export class StreamService {
       importance: options.importance || 'normal',
       metadata: options.metadata || {},
       is_system: false
-    })
+    } as any)
   }
 
   /**
@@ -748,7 +761,7 @@ export class StreamService {
   }): Promise<void> {
     const supabase = await createClient()
 
-    await (supabase.from('stream_notifications') as any).insert({
+    await supabase.from('stream_notifications').insert({
       stream_id: data.stream_id,
       user_id: data.user_id,
       notification_type: data.notification_type,
@@ -759,6 +772,6 @@ export class StreamService {
       comment_id: data.comment_id || null,
       actor_id: data.actor_id || null,
       action_url: `/streams/${data.stream_id}${data.item_id ? `/items/${data.item_id}` : ''}`
-    })
+    } as any)
   }
 }

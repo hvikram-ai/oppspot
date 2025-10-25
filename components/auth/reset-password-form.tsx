@@ -212,7 +212,7 @@ export function ResetPasswordForm() {
                   <p className="text-xs font-medium text-muted-foreground mb-2">
                     Password must contain:
                   </p>
-                  <div className="grid grid-cols-2 gap-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                     <RequirementItem 
                       met={passwordStrength.requirements.length} 
                       text="At least 8 characters" 

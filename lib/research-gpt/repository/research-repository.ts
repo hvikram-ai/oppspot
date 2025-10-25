@@ -148,7 +148,6 @@ export class ResearchRepository {
       updated_at: new Date().toISOString(),
     };
 
-    // @ts-ignore - Supabase typing issue with dynamic update fields
     const { error } = await supabase
       .from('research_reports')
       .update(updateData)
@@ -367,7 +366,6 @@ export class ResearchRepository {
         notification_100_percent_sent: false,
       };
 
-      // @ts-ignore - Supabase typing issue with dynamic update fields
       const { data: updatedData, error: updateError} = await supabase
         .from('user_research_quotas')
         .update(quotaUpdateData)
@@ -501,7 +499,6 @@ export class ResearchRepository {
             content: anonymized,
           };
 
-          // @ts-ignore - Supabase typing issue with dynamic update fields
           await supabase
             .from('research_sections')
             .update(sectionUpdateData)

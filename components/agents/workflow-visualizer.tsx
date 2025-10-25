@@ -5,7 +5,7 @@
  * Visual representation of agent dependency workflow
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -56,15 +56,10 @@ export function WorkflowVisualizer({
     errors: string[]
   } | null>(null)
 
-  useEffect(() => {
-    computeLayers()
-    validateWorkflow()
-  }, [assignments])
-
   /**
    * Compute execution layers for visualization
    */
-  const computeLayers = () => {
+  const computeLayers = useCallback(() => {
     if (!assignments || assignments.length === 0) {
       setLayers([])
       return
@@ -120,12 +115,12 @@ export function WorkflowVisualizer({
     }
 
     setLayers(layerList)
-  }
+  }, [assignments])
 
   /**
    * Validate workflow for circular dependencies
    */
-  const validateWorkflow = async () => {
+  const validateWorkflow = useCallback(async () => {
     try {
       const response = await fetch(`/api/streams/${streamId}/workflow/validate`)
       if (response.ok) {
@@ -135,7 +130,12 @@ export function WorkflowVisualizer({
     } catch (error) {
       console.error('Error validating workflow:', error)
     }
-  }
+  }, [streamId])
+
+  useEffect(() => {
+    computeLayers()
+    validateWorkflow()
+  }, [computeLayers, validateWorkflow])
 
   const getAgentIcon = (agentType: string) => {
     const icons: Record<string, string> = {

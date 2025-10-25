@@ -75,6 +75,7 @@ export function AIDigestCard() {
       const timer = setTimeout(markAsRead, 3000)
       return () => clearTimeout(timer)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [digest])
 
   // Gracefully handle errors and missing data

@@ -6,14 +6,13 @@ import { createClient } from '@/lib/supabase/server';
 import { HubSpotConnector } from '@/lib/integrations/crm/hubspot-connector';
 import { z } from 'zod';
 import { getErrorMessage } from '@/lib/utils/error-handler';
-import type { Row } from '@/lib/supabase/helpers'
 
 const ConnectSchema = z.object({
   crm_type: z.enum(['hubspot', 'salesforce', 'pipedrive']),
   access_token: z.string().min(1),
   refresh_token: z.string().optional(),
   instance_url: z.string().optional(), // For Salesforce
-  config: z.record(z.any()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
   sync_direction: z.enum(['to_crm', 'from_crm', 'bidirectional']).default('bidirectional'),
   sync_frequency: z.enum(['realtime', 'hourly', 'daily', 'manual']).default('realtime'),
   auto_enrich: z.boolean().default(true),
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('organization_id, role')
       .eq('id', user.id)
@@ -99,7 +98,7 @@ export async function POST(request: NextRequest) {
       // Update existing integration
       const { data: integration, error } = await supabase
         .from('crm_integrations')
-        // @ts-expect-error - Type inference issue
+        // @ts-expect-error - crm_integrations update type mismatch
         .update({
           access_token: validated.access_token,
           refresh_token: validated.refresh_token,
@@ -115,13 +114,13 @@ export async function POST(request: NextRequest) {
           last_error: null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', existingIntegration.id)
+        .eq('id', (existingIntegration as { id: string }).id)
         .select()
         .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
       if (error) {
         console.error('Database error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: (error as { message: string }).message }, { status: 500 });
       }
 
       return NextResponse.json({
@@ -133,7 +132,7 @@ export async function POST(request: NextRequest) {
       // Create new integration
       const { data: integration, error } = await supabase
         .from('crm_integrations')
-        // @ts-expect-error - Supabase type inference issue
+        // @ts-expect-error - crm_integrations insert type mismatch
         .insert({
           organization_id: profile.organization_id,
           crm_type: validated.crm_type,
@@ -154,7 +153,7 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('Database error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: (error as { message: string }).message }, { status: 500 });
       }
 
       return NextResponse.json({
@@ -168,7 +167,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
@@ -190,7 +189,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
@@ -203,7 +202,7 @@ export async function GET(_request: NextRequest) {
     const { data: integrations, error } = await supabase
       .from('crm_integrations')
       .select('id, crm_type, sync_direction, sync_frequency, auto_enrich, auto_score, auto_assign, auto_create_tasks, is_active, last_sync_at, sync_count, created_at')
-      .eq('organization_id', profile.organization_id)
+      .eq('organization_id', (profile as { organization_id: string }).organization_id)
       .order('created_at', { ascending: false });
 
     if (error) {

@@ -136,7 +136,7 @@ export function ChatWidget({
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground py-8">
                   <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary/50" />
-                  <p className="text-sm">Hi! I'm your AI assistant.</p>
+                  <p className="text-sm">Hi! I&apos;m your AI assistant.</p>
                   <p className="text-xs mt-2">Ask me anything about OppSpot or business intelligence.</p>
                 </div>
               )}

@@ -59,21 +59,6 @@ export function CompanyAutocomplete({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Debounced search
-  useEffect(() => {
-    if (query.length < 2) {
-      setResults([])
-      setShowResults(false)
-      return
-    }
-
-    const timeoutId = setTimeout(() => {
-      searchCompanies(query)
-    }, 300)
-
-    return () => clearTimeout(timeoutId)
-  }, [query])
-
   const searchCompanies = useCallback(async (searchQuery: string) => {
     setIsSearching(true)
     setError(null)
@@ -123,6 +108,21 @@ export function CompanyAutocomplete({
       setIsSearching(false)
     }
   }, [selectedCompanies])
+
+  // Debounced search
+  useEffect(() => {
+    if (query.length < 2) {
+      setResults([])
+      setShowResults(false)
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      searchCompanies(query)
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [query, searchCompanies])
 
   const handleSelectCompany = (company: Company) => {
     if (maxSelections && selectedCompanies.length >= maxSelections) {
@@ -176,7 +176,7 @@ export function CompanyAutocomplete({
             onFocus={() => {
               if (results.length > 0) setShowResults(true)
             }}
-            disabled={isMaxReached}
+            disabled={isMaxReached || false}
             className="pl-9 pr-9"
           />
           {isSearching && (
@@ -185,7 +185,7 @@ export function CompanyAutocomplete({
         </div>
 
         {/* Results Dropdown */}
-        {showResults && (query.length >= 2) && (
+        {showResults && query.length >= 2 && (
           <div
             ref={dropdownRef}
             className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg"

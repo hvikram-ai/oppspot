@@ -675,7 +675,6 @@ export class OllamaScoringService {
 
     await supabase
       .from('ai_scoring_cache')
-      // @ts-expect-error - Supabase type inference issue
       .upsert({
         company_id: companyId,
         analysis_result: result,

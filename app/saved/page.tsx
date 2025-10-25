@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface SavedBusiness {
   id: string
@@ -67,15 +66,7 @@ export default function SavedBusinessesPage() {
   const [selectedBusiness, setSelectedBusiness] = useState<SavedBusiness | null>(null)
   const [isDemo, setIsDemo] = useState(false)
 
-  useEffect(() => {
-    fetchSavedBusinesses()
-  }, [])
-
-  useEffect(() => {
-    filterBusinesses()
-  }, [savedBusinesses, searchQuery, selectedTags])
-
-  const fetchSavedBusinesses = async () => {
+  const fetchSavedBusinesses = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -115,7 +106,7 @@ export default function SavedBusinessesPage() {
       if (error) throw error
 
       const formattedData = data?.filter(item => (item as { businesses?: unknown }).businesses).map(item => ({
-        ...item,
+        ...(item as any),
         business: (item as { businesses: unknown }).businesses!
       })) || []
 
@@ -127,7 +118,7 @@ export default function SavedBusinessesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const loadDemoData = () => {
     const demoData: SavedBusiness[] = [
@@ -176,7 +167,7 @@ export default function SavedBusinessesPage() {
     setLoading(false)
   }
 
-  const filterBusinesses = () => {
+  const filterBusinesses = useCallback(() => {
     let filtered = savedBusinesses
 
     if (searchQuery) {
@@ -194,7 +185,15 @@ export default function SavedBusinessesPage() {
     }
 
     setFilteredBusinesses(filtered)
-  }
+  }, [savedBusinesses, searchQuery, selectedTags])
+
+  useEffect(() => {
+    fetchSavedBusinesses()
+  }, [fetchSavedBusinesses])
+
+  useEffect(() => {
+    filterBusinesses()
+  }, [filterBusinesses])
 
   const handleRemove = async (id: string) => {
     if (isDemo) {
@@ -690,7 +689,7 @@ export default function SavedBusinessesPage() {
                       </div>
                     )}
                     
-                    {selectedBusiness.business.phone_numbers && (
+                    {(selectedBusiness.business.phone_numbers as any) && (
                       <div>
                         <h4 className="font-semibold mb-2">Phone</h4>
                         <p className="text-sm">

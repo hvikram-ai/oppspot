@@ -509,6 +509,23 @@ export class WebSearchService implements IWebSearchService {
 
   // Private helper methods
 
+  /**
+   * Create fetch options with timeout using AbortController (standard approach)
+   */
+  private createFetchOptionsWithTimeout(timeout: number, additionalOptions?: RequestInit): RequestInit & { signal: AbortSignal } {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+    // Clean up timeout if request completes
+    const signal = controller.signal
+    signal.addEventListener('abort', () => clearTimeout(timeoutId))
+
+    return {
+      ...additionalOptions,
+      signal
+    }
+  }
+
   private async searchWithProvider(
     provider: SearchProviderConfig, 
     query: CompanySearchQuery
@@ -611,13 +628,14 @@ export class WebSearchService implements IWebSearchService {
     const searchUrl = `${provider.endpoint}?key=${provider.apiKey}&cx=${process.env.GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(searchTerms)}&num=10`
 
     try {
-      const response = await fetch(searchUrl, {
-        // @ts-expect-error - timeout not in standard fetch, implementation-specific
-        timeout: this.config.defaultTimeout,
-        headers: {
-          'User-Agent': 'oppSpot-SimilarCompany/1.0'
+      const response = await fetch(searchUrl, this.createFetchOptionsWithTimeout(
+        this.config.defaultTimeout,
+        {
+          headers: {
+            'User-Agent': 'oppSpot-SimilarCompany/1.0'
+          }
         }
-      })
+      ))
 
       if (!response.ok) {
         throw new Error(`Google Search API error: ${response.status}`)
@@ -643,14 +661,15 @@ export class WebSearchService implements IWebSearchService {
     const searchUrl = `${provider.endpoint}?q=${encodeURIComponent(searchTerms)}&count=10&mkt=en-GB`
 
     try {
-      const response = await fetch(searchUrl, {
-        // @ts-expect-error - timeout not in standard fetch, implementation-specific
-        timeout: this.config.defaultTimeout,
-        headers: {
-          'Ocp-Apim-Subscription-Key': provider.apiKey,
-          'User-Agent': 'oppSpot-SimilarCompany/1.0'
+      const response = await fetch(searchUrl, this.createFetchOptionsWithTimeout(
+        this.config.defaultTimeout,
+        {
+          headers: {
+            'Ocp-Apim-Subscription-Key': provider.apiKey,
+            'User-Agent': 'oppSpot-SimilarCompany/1.0'
+          }
         }
-      })
+      ))
 
       if (!response.ok) {
         throw new Error(`Bing Search API error: ${response.status}`)
@@ -675,14 +694,15 @@ export class WebSearchService implements IWebSearchService {
     const searchUrl = `${provider.endpoint}?q=${encodeURIComponent(query.query)}&items_per_page=20`
 
     try {
-      const response = await fetch(searchUrl, {
-        // @ts-expect-error - timeout not in standard fetch, implementation-specific
-        timeout: this.config.defaultTimeout,
-        headers: {
-          'Authorization': `Basic ${Buffer.from(provider.apiKey + ':').toString('base64')}`,
-          'User-Agent': 'oppSpot-SimilarCompany/1.0'
+      const response = await fetch(searchUrl, this.createFetchOptionsWithTimeout(
+        this.config.defaultTimeout,
+        {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(provider.apiKey + ':').toString('base64')}`,
+            'User-Agent': 'oppSpot-SimilarCompany/1.0'
+          }
         }
-      })
+      ))
 
       if (!response.ok) {
         throw new Error(`Companies House API error: ${response.status}`)
@@ -714,14 +734,15 @@ export class WebSearchService implements IWebSearchService {
     const searchUrl = `${provider.endpoint}?${searchParams.toString()}`
 
     try {
-      const response = await fetch(searchUrl, {
-        // @ts-expect-error - timeout not in standard fetch, implementation-specific
-        timeout: this.config.defaultTimeout,
-        headers: {
-          'Authorization': `Bearer ${provider.apiKey}`,
-          'User-Agent': 'oppSpot-SimilarCompany/1.0'
+      const response = await fetch(searchUrl, this.createFetchOptionsWithTimeout(
+        this.config.defaultTimeout,
+        {
+          headers: {
+            'Authorization': `Bearer ${provider.apiKey}`,
+            'User-Agent': 'oppSpot-SimilarCompany/1.0'
+          }
         }
-      })
+      ))
 
       if (!response.ok) {
         throw new Error(`Clearbit API error: ${response.status}`)
@@ -766,17 +787,18 @@ export class WebSearchService implements IWebSearchService {
     }
 
     try {
-      const response = await fetch(provider.endpoint, {
-        method: 'POST',
-        // @ts-expect-error - timeout not in standard fetch, implementation-specific
-        timeout: this.config.defaultTimeout,
-        headers: {
-          'X-cb-user-key': provider.apiKey,
-          'Content-Type': 'application/json',
-          'User-Agent': 'oppSpot-SimilarCompany/1.0'
-        },
-        body: JSON.stringify(searchBody)
-      })
+      const response = await fetch(provider.endpoint, this.createFetchOptionsWithTimeout(
+        this.config.defaultTimeout,
+        {
+          method: 'POST',
+          headers: {
+            'X-cb-user-key': provider.apiKey,
+            'Content-Type': 'application/json',
+            'User-Agent': 'oppSpot-SimilarCompany/1.0'
+          },
+          body: JSON.stringify(searchBody)
+        }
+      ))
 
       if (!response.ok) {
         throw new Error(`Crunchbase API error: ${response.status}`)

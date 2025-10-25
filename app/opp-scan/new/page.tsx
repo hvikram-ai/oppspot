@@ -33,7 +33,7 @@ interface WorkflowStep {
   id: string
   title: string
   description: string
-  icon: React.ComponentType
+  icon: React.ComponentType<{ className?: string }>
   component: React.ComponentType<StepComponentProps>
 }
 
@@ -98,28 +98,28 @@ function NewOppScanPageContent() {
       title: 'Industry Selection',
       description: 'Choose target industries and market segments',
       icon: Building2,
-      component: IndustrySelectionStep
+      component: IndustrySelectionStep as unknown as React.ComponentType<StepComponentProps>
     },
     {
       id: 'region',
       title: 'Geographic Scope',
       description: 'Select regions and regulatory considerations',
       icon: MapPin,
-      component: RegionSelectionStep
+      component: RegionSelectionStep as unknown as React.ComponentType<StepComponentProps>
     },
     {
       id: 'services',
       title: 'Capabilities & Services',
       description: 'Define strategic requirements and synergies',
       icon: Settings,
-      component: ServicesSelectionStep
+      component: ServicesSelectionStep as unknown as React.ComponentType<StepComponentProps>
     },
     {
       id: 'scan',
       title: 'Scan Configuration',
       description: 'Configure data sources and scanning parameters',
       icon: Search,
-      component: ScanConfigurationStep
+      component: ScanConfigurationStep as unknown as React.ComponentType<StepComponentProps>
     }
   ]
 
@@ -139,6 +139,7 @@ function NewOppScanPageContent() {
       setUser(user)
     }
     getUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemoMode, demoData.user])
 
   const currentStep = steps[currentStepIndex]
@@ -166,6 +167,13 @@ function NewOppScanPageContent() {
     setScanConfig(prev => ({
       ...prev,
       [field]: value
+    }))
+  }
+
+  const handleConfigUpdate = (updates: Partial<ScanConfig>) => {
+    setScanConfig(prev => ({
+      ...prev,
+      ...updates
     }))
   }
 
@@ -202,7 +210,7 @@ function NewOppScanPageContent() {
           progress_percentage: shouldAutoStart ? 10 : 0,
           targets_identified: 0,
           targets_analyzed: 0,
-          selected_industries: scanConfig.selectedIndustries,
+          selected_industries: scanConfig.selectedIndustries as { key: string; industry: string; subcategory?: string }[],
           selected_regions: scanConfig.selectedRegions,
           current_step: shouldAutoStart ? 'data_collection' : 'industry_selection',
           started_at: shouldAutoStart ? new Date().toISOString() : undefined
@@ -247,7 +255,7 @@ function NewOppScanPageContent() {
         .from('acquisition_scans')
         .insert({
           user_id: user.id,
-          org_id: (profile as Row<'profiles'>)?.org_id,
+          org_id: (profile as unknown as Row<'profiles'>)?.org_id,
           name: scanConfig.name,
           description: scanConfig.description,
           status: 'configuring',
@@ -263,7 +271,7 @@ function NewOppScanPageContent() {
           scan_depth: scanConfig.scanDepth,
           current_step: 'industry_selection',
           config: scanConfig
-        })
+        } as never)
         .select()
         .single()
 
@@ -463,7 +471,7 @@ function NewOppScanPageContent() {
               <CardContent>
                 <StepComponent
                   config={scanConfig}
-                  onChange={handleConfigChange}
+                  updateConfig={handleConfigUpdate}
                 />
               </CardContent>
             </Card>

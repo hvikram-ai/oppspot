@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { BANTScorer } from '@/lib/ai/scoring/bant-scorer'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
         bant_next_actions: bantScore.details.next_actions,
         bant_last_calculated: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }, {
+      } as never, {
         onConflict: 'company_id'
       })
 
@@ -130,7 +129,7 @@ export async function POST(request: NextRequest) {
         response_status: 200,
         response_data: { bant_score: bantScore.overall_score },
         user_id: user.id
-      })
+      } as never)
 
     return NextResponse.json({
       success: true,

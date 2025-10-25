@@ -7,10 +7,20 @@ import { CompanyGrid } from '../components/CompanyGrid'
 import { Visualizations } from '../components/Visualizations'
 import { Footer } from '../components/Footer'
 
+// Define proper company data structure
+interface CompanyData {
+  country?: string
+  industry?: string
+  employees?: string | number
+  revenue?: string
+  description?: string
+  [key: string]: unknown
+}
+
 interface SimilarityMatch {
   id: string
   company_name: string
-  company_data: Record<string, unknown>
+  company_data: CompanyData
   overall_score: number
   confidence: number
   rank: number
@@ -43,7 +53,7 @@ interface AnalysisData {
   analysis: {
     id: string
     targetCompany: string
-    targetCompanyData: Record<string, unknown>
+    targetCompanyData: CompanyData
     configuration: {
       weights: {
         financial: number
@@ -179,33 +189,27 @@ export const SimilarityAnalysisTemplate: React.FC<SimilarityAnalysisTemplateProp
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={pdfStyles.scoreLabel}>Country</Text>
               <Text style={pdfStyles.paragraph}>
-                // @ts-expect-error - Supabase type inference issue
                 {analysis.targetCompanyData?.country || 'N/A'}
               </Text>
             </View>
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={pdfStyles.scoreLabel}>Industry</Text>
-              // @ts-expect-error - Supabase type inference issue
               <Text style={pdfStyles.paragraph}>
                 {analysis.targetCompanyData?.industry || 'N/A'}
               </Text>
             </View>
             <View style={{ flex: 1, marginRight: 10 }}>
-              // @ts-expect-error - Supabase type inference issue
               <Text style={pdfStyles.scoreLabel}>Employees</Text>
               <Text style={pdfStyles.paragraph}>
                 {analysis.targetCompanyData?.employees || 'N/A'}
               </Text>
             </View>
-            // @ts-expect-error - Supabase type inference issue
             <View style={{ flex: 1 }}>
               <Text style={pdfStyles.scoreLabel}>Revenue</Text>
               <Text style={pdfStyles.paragraph}>
-                // @ts-expect-error - Supabase type inference issue
                 {analysis.targetCompanyData?.revenue || 'N/A'}
               </Text>
             </View>
-          // @ts-expect-error - Supabase type inference issue
           </View>
           {analysis.targetCompanyData?.description && (
             <View style={{ marginTop: 10 }}>

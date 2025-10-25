@@ -71,6 +71,10 @@ interface MarketAnalysis {
   threats?: string[]
 }
 
+interface ComparisonMetricsType {
+  [key: string]: unknown
+}
+
 export default function CompetitiveAnalysisPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -352,8 +356,8 @@ export default function CompetitiveAnalysisPage() {
           {/* Comparison Results */}
           {comparisonData && (
             <BusinessComparison
-              businesses={comparisonData.businesses}
-              metrics={comparisonData.metrics}
+              businesses={comparisonData.businesses as Business[]}
+              metrics={comparisonData.metrics as any}
               insights={comparisonData.insights}
             />
           )}

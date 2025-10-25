@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(_request: NextRequest) {
   try {
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already saved
-    const { data: existing, error: existingError } = await supabase
+    const { data: existing, error: _existingError } = await supabase
       .from('saved_businesses')
       .select('id')
       .eq('user_id', user.id)
@@ -80,7 +79,6 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('saved_businesses')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         business_id,

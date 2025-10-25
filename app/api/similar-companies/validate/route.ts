@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/server'
 import { WebSearchService } from '@/lib/opp-scan/services/web-search-service'
 import { SimilarCompanyUseCase } from '@/lib/opp-scan/services/similar-company-use-case'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Simple in-memory rate limiting for demo mode
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
@@ -88,8 +87,20 @@ export async function POST(request: NextRequest) {
       // Validate company existence
       const validation = await webSearchService.validateCompanyExists(cleanedName)
       
-      let suggestions = []
-      let competitors = []
+      let suggestions: Array<{
+        name: string
+        country?: string
+        industry?: string
+        description?: string
+        confidence?: number
+        website?: string
+      }> = []
+      let competitors: Array<{
+        name: string
+        country?: string
+        industry?: string
+        description?: string
+      }> = []
 
       // Get suggestions if requested and company exists or partially matches
       if (includeSuggestions && (validation.exists || validation.suggestedMatches)) {

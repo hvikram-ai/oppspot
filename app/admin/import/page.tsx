@@ -340,7 +340,7 @@ export default function ImportBusinessesPage() {
               {recentImports.map((import_, index) => (
                 <div key={index} className="flex items-center justify-between p-2 rounded-lg border">
                   <div className="flex items-center space-x-3">
-                    {import_.event_data?.errors_count > 0 ? (
+                    {(import_.event_data?.errors_count ?? 0) > 0 ? (
                       <AlertCircle className="h-4 w-4 text-yellow-500" />
                     ) : (
                       <CheckCircle className="h-4 w-4 text-green-500" />

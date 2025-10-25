@@ -17,6 +17,7 @@ import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { getMockCompany, getMockRelatedCompanies } from '@/lib/mock-data/companies'
 import { Database } from '@/lib/supabase/database.types'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
+import { TeamPresence } from '@/components/collaboration/TeamPresence'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -107,12 +108,12 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
 
   // Check if it's a mock/demo company first
   if (params.id.startsWith('mock-') || params.id.startsWith('demo-')) {
-    business = getMockCompany(params.id) as Business
+    business = getMockCompany(params.id) as unknown as Business
     if (!business) {
       notFound()
     }
     // Get mock related businesses
-    relatedBusinesses = getMockRelatedCompanies(params.id, 6) as Business[]
+    relatedBusinesses = getMockRelatedCompanies(params.id, 6) as unknown as Business[]
   } else {
     // Fetch from database for real companies
     const supabase = await createClient()
@@ -172,7 +173,7 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
             metadata: companyProfile,
             companies_house_data: companyProfile,
             companies_house_last_updated: new Date().toISOString(),
-          } as Business
+          } as unknown as Business
 
           relatedBusinesses = []
         } catch (apiError) {
@@ -206,7 +207,6 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // @ts-expect-error - Supabase type inference issue
         await supabase.from('events').insert({
           user_id: user.id,
           event_type: 'business_view',
@@ -232,6 +232,11 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
             { label: business.name }
           ]}
         />
+      </div>
+
+      {/* Team Presence - Show who's viewing this company */}
+      <div className="container max-w-7xl mx-auto px-4 pb-4">
+        <TeamPresence entityType="company" entityId={business.id} />
       </div>
 
       <div className="container max-w-7xl mx-auto px-4 pb-12">

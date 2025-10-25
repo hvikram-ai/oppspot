@@ -9,7 +9,7 @@ export interface StreamMemberInvite {
   role: 'owner' | 'editor' | 'viewer' | 'guest'
 }
 
-export interface StreamWizardData {
+export interface StreamWizardData extends Record<string, unknown> {
   // Step 1: Basics
   name: string
   description: string

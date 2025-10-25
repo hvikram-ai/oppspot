@@ -127,6 +127,7 @@ function CompanyNode({ match, position, onSelect, selected, targetCompany }: Com
           <bufferGeometry>
             <bufferAttribute
               attach="attributes-position"
+              args={[new Float32Array([0, 0, 0, -position[0], -position[1], -position[2]]), 3]}
               array={new Float32Array([0, 0, 0, -position[0], -position[1], -position[2]])}
               count={2}
               itemSize={3}
@@ -372,7 +373,7 @@ export function Similarity3DSpace({
                 targetCompany={targetCompany}
                 onCompanySelect={handleCompanySelect}
                 dimensions={currentDimensions}
-                selectedCompany={selectedCompany}
+                selectedCompany={selectedCompany ?? undefined}
               />
             </Suspense>
           </Canvas>

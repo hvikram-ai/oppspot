@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Refresh signal aggregates for a company or all companies
 export async function POST(request: NextRequest) {
@@ -22,7 +21,6 @@ export async function POST(request: NextRequest) {
 
     if (company_id) {
       // Refresh single company
-      // @ts-expect-error - Type inference issue
       const { error } = await supabase.rpc('refresh_signal_aggregates', {
         p_company_id: company_id
       })
@@ -44,14 +42,14 @@ export async function POST(request: NextRequest) {
 
       if (companiesError) throw companiesError
 
-      const unique_companies = [...new Set(companies?.map(c => c.company_id) || [])]
+      const unique_companies = [...new Set(companies?.map((c: { company_id: string }) => c.company_id) || [])]
 
       let refreshed = 0
       let errors = 0
 
       for (const cid of unique_companies) {
         try {
-          await supabase.rpc('refresh_signal_aggregates', { p_company_id: cid })
+          await supabase.rpc('refresh_signal_aggregates', { p_company_id: cid } as any)
           refreshed++
         } catch (err) {
           console.error(`Failed to refresh ${cid}:`, err)

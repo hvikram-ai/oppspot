@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { TargetIntelligenceService, type TargetCompanyInput } from '@/lib/target-intelligence/target-intelligence-service'
 import { CompanyEnrichmentService, type CompanyEnrichmentRequest } from '@/lib/target-intelligence/company-enrichment-service'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface AnalyzeRequest {
   company_name: string
@@ -150,16 +149,15 @@ export async function POST(request: NextRequest) {
       try {
         const { error: storageError } = await supabase
           .from('target_intelligence_profiles')
-          // @ts-expect-error - Supabase type inference issue
           .upsert({
-            user_id: user.id,
+            user_id: user?.id || '',
             company_name: body.company_name,
             profile_data: integratedProfile,
             enrichment_data: enrichmentResult,
             analysis_options: body.options,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }, {
+          } as never, {
             onConflict: 'user_id,company_name'
           })
 
@@ -231,7 +229,7 @@ export async function GET(request: NextRequest) {
     const { data: profile, error } = await supabase
       .from('target_intelligence_profiles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user?.id || '')
       .eq('company_name', companyName)
       .single()
 

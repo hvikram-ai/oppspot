@@ -179,7 +179,6 @@ export class ExecutiveChangeDetector {
       // Store the signal in database
       const { data: signal, error } = await supabase
         .from('buying_signals')
-        // @ts-expect-error - Supabase type inference issue
         .insert({
           ...executiveSignal,
           signal_data: executiveSignal.change_data,
@@ -190,7 +189,6 @@ export class ExecutiveChangeDetector {
 
       if (error) throw error;
 
-      // @ts-expect-error - Supabase type inference issue
       // Store executive-specific details
       await supabase.from('executive_change_signals').insert({
         signal_id: signal.id,

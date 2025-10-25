@@ -53,16 +53,16 @@ export function MultiDimensionalRadar({
   const size = 400
   const center = size / 2
   const maxRadius = center - 60
-  const dimensions = [
+  const dimensions = useMemo(() => [
     { key: 'financial_score', label: 'Financial', angle: 0 },
     { key: 'strategic_score', label: 'Strategic', angle: Math.PI * 2 / 5 },
     { key: 'operational_score', label: 'Operational', angle: Math.PI * 4 / 5 },
     { key: 'market_score', label: 'Market', angle: Math.PI * 6 / 5 },
     { key: 'risk_score', label: 'Risk', angle: Math.PI * 8 / 5 }
-  ]
+  ], [])
 
   // Color palette for companies
-  const companyColors = [
+  const companyColors = useMemo(() => [
     '#3b82f6', // blue-500
     '#10b981', // green-500
     '#f59e0b', // yellow-500
@@ -71,7 +71,7 @@ export function MultiDimensionalRadar({
     '#06b6d4', // cyan-500
     '#f97316', // orange-500
     '#ec4899'  // pink-500
-  ]
+  ], [])
 
   // Prepare radar data
   const radarData = useMemo(() => {
@@ -120,7 +120,7 @@ export function MultiDimensionalRadar({
     }
 
     return { companies: companyData, average: averageData }
-  }, [matches, selectedCompanies, showAverage, maxRadius, center])
+  }, [matches, selectedCompanies, showAverage, maxRadius, center, companyColors, dimensions])
 
   // Get radar axis points
   const getAxisPoints = () => {
@@ -387,7 +387,7 @@ export function MultiDimensionalRadar({
                     cx={point.x}
                     cy={point.y}
                     r="3"
-                    fill={radarData.average.color}
+                    fill={radarData.average?.color}
                   />
                 ))}
               </g>
@@ -495,16 +495,16 @@ export function MultiDimensionalRadar({
                     </div>
                   </td>
                   <td className="text-center py-2">-</td>
-                  {radarData.average.points.map((point, pointIndex) => (
+                  {radarData.average?.points.map((point, pointIndex) => (
                     <td key={pointIndex} className="text-center py-2">
-                      <span style={{ color: radarData.average.color }}>
+                      <span style={{ color: radarData.average?.color }}>
                         {point.value.toFixed(1)}
                       </span>
                     </td>
                   ))}
                   <td className="text-center py-2">
-                    <span style={{ color: radarData.average.color }}>
-                      {(radarData.average.points.reduce((sum, p) => sum + p.value, 0) / radarData.average.points.length).toFixed(1)}
+                    <span style={{ color: radarData.average?.color }}>
+                      {((radarData.average?.points.reduce((sum, p) => sum + p.value, 0) ?? 0) / (radarData.average?.points.length ?? 1)).toFixed(1)}
                     </span>
                   </td>
                 </tr>

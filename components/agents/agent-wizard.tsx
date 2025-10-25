@@ -263,7 +263,7 @@ export function AgentWizard({ open, onOpenChange, onComplete }: AgentWizardProps
                 </Button>
               </div>
 
-              <StepIndicator steps={WIZARD_STEPS} currentStep={currentStep} />
+              <StepIndicator steps={WIZARD_STEPS as any} currentStep={currentStep} />
             </div>
 
             {/* Step content */}
@@ -350,7 +350,7 @@ export function AgentWizard({ open, onOpenChange, onComplete }: AgentWizardProps
                       <div>
                         <h3 className="text-xl font-semibold mb-2">Configure Your Agent</h3>
                         <p className="text-muted-foreground">
-                          Customize the agent's name, description, and parameters
+                          Customize the agent&apos;s name, description, and parameters
                         </p>
                       </div>
 

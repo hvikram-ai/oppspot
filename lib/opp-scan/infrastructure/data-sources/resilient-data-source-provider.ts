@@ -11,7 +11,6 @@ import {
 } from '../../core/interfaces'
 import { ResilienceDecorator, ResilienceConfigurations } from '../resilience/resilience-decorator'
 
-  // @ts-ignore - Interface implementation mismatch
 export class ResilientDataSourceProvider implements IDataSourceProvider {
   private readonly searchResilience: ResilienceDecorator
   private readonly detailResilience: ResilienceDecorator

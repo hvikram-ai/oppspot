@@ -8,7 +8,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { StreamService } from '@/lib/streams/stream-service'
 import type { CreateStreamRequest, StreamFilters } from '@/types/streams'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     // If user doesn't have org_id, return empty streams
     if (profileError || !profile?.org_id) {
@@ -73,11 +72,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    let { data: profile } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     // If user doesn't have org_id, create one
     if (profileError || !profile?.org_id) {
@@ -85,23 +84,23 @@ export async function POST(request: NextRequest) {
       const adminClient = createAdminClient()
       const { data: newOrg, error: orgError } = await adminClient
         .from('organizations')
-        // @ts-expect-error - Supabase type inference issue
+        // @ts-expect-error - organizations insert type mismatch
         .insert({
           name: 'My Organization',
           slug: `org-${user.id.substring(0, 8)}`
         })
         .select()
-        .single()
+        .single() as { data: { id: string } | null; error: unknown };
 
       if (orgError || !newOrg) {
         console.error('Error creating organization:', orgError)
-        return NextResponse.json({ error: 'Failed to create organization', details: orgError?.message }, { status: 500 })
+        return NextResponse.json({ error: 'Failed to create organization', details: (orgError as { message?: string })?.message }, { status: 500 })
       }
 
       // Update profile with new org_id
       const { error: updateError } = await supabase
         .from('profiles')
-        // @ts-expect-error - Type inference issue
+        // @ts-expect-error - profiles update type mismatch
         .update({ org_id: newOrg.id })
         .eq('id', user.id)
 
@@ -124,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Creating stream with:', { userId: user.id, orgId: profile.org_id, body })
-    const stream = await StreamService.createStream(user.id, profile.org_id, body)
+    const stream = await StreamService.createStream(user.id, profile.org_id ?? '', body)
 
     return NextResponse.json(stream, { status: 201 })
   } catch (error) {

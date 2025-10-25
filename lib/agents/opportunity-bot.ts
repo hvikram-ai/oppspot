@@ -31,7 +31,7 @@ export class OpportunityBot extends BaseAgent {
       }
 
       // Create progress broadcaster
-      const broadcaster = createProgressBroadcaster(stream_id)
+      const broadcaster = createProgressBroadcaster(stream_id as string)
 
       // Broadcast agent started
       await broadcaster.broadcastAgentStarted(
@@ -53,8 +53,10 @@ export class OpportunityBot extends BaseAgent {
       }
 
       // Extract goal criteria
-      const criteria = goal_context?.goal_criteria || stream.goal_criteria || {}
-      const targetMetrics = goal_context?.target_metrics || stream.target_metrics || {}
+      const streamData = stream as any;
+      const goalContext = (goal_context || {}) as any;
+      const criteria = goalContext.goal_criteria || streamData.goal_criteria || {}
+      const targetMetrics = goalContext.target_metrics || streamData.target_metrics || {}
 
       const targetCount = targetMetrics.companies_to_find || 50
       const minQualityScore = targetMetrics.min_quality_score || 3.0
@@ -100,7 +102,7 @@ export class OpportunityBot extends BaseAgent {
       // Add qualified companies to stream with progress updates
       for (let i = 0; i < qualifiedCompanies.length; i++) {
         const company = qualifiedCompanies[i]
-        await this.addCompanyToStream(stream_id, company, context.executionId)
+        await this.addCompanyToStream(stream_id as string, company, context.executionId)
         itemsCreated++
 
         // Broadcast progress every 5 companies
@@ -180,7 +182,7 @@ export class OpportunityBot extends BaseAgent {
       // Generate AI insights after execution
       try {
         const { InsightGenerator } = await import('./insight-generator')
-        await InsightGenerator.generateInsights(stream_id, context.executionId)
+        await InsightGenerator.generateInsights(stream_id as string, context.executionId)
         this.log('Generated insights for stream')
       } catch (error) {
         this.log(`Failed to generate insights: ${error instanceof Error ? error.message : 'Unknown error'}`, 'warn')
@@ -204,25 +206,26 @@ export class OpportunityBot extends BaseAgent {
         }
       }
 
-    } catch (error: any) {
-      this.log(`Execution failed: ${error.message}`, 'error')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      this.log(`Execution failed: ${errorMessage}`, 'error')
 
       // Broadcast failure
       const { stream_id } = context.input
       if (stream_id) {
-        const broadcaster = createProgressBroadcaster(stream_id)
+        const broadcaster = createProgressBroadcaster(stream_id as string)
         await broadcaster.broadcastAgentFailed(
           this.config.id,
           this.config.name,
           this.config.type,
-          error.message
+          errorMessage
         )
       }
 
       return {
         success: false,
         output: {},
-        error: error.message,
+        error: errorMessage,
         metrics: {
           durationMs: Date.now() - startTime,
           itemsProcessed,
@@ -238,7 +241,7 @@ export class OpportunityBot extends BaseAgent {
    * Search for companies matching criteria
    */
   private async searchCompanies(
-    criteria: Record<string, any>,
+    criteria: Record<string, unknown>,
     limit: number
   ): Promise<any[]> {
     const supabase = await createClient()
@@ -283,8 +286,8 @@ export class OpportunityBot extends BaseAgent {
    */
   private async scoreCompany(
     company: any,
-    criteria: Record<string, any>,
-    targetMetrics: Record<string, any>
+    criteria: Record<string, unknown>,
+    targetMetrics: Record<string, unknown>
   ): Promise<number> {
     let score = 3.0 // Base score
 
@@ -367,12 +370,13 @@ export class OpportunityBot extends BaseAgent {
       .eq('id', streamId)
       .single() as { data: Row<'streams'> | null; error: any }
 
-    const firstStage = stream?.stages?.[0]
+    const streamData = stream as any;
+    const stages = Array.isArray(streamData?.stages) ? streamData.stages : [];
+    const firstStage = stages.length > 0 ? stages[0] : null;
 
     // Add to stream
     await supabase
       .from('stream_items')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         item_type: 'company',
@@ -391,7 +395,7 @@ export class OpportunityBot extends BaseAgent {
           region: company.region
         },
         added_by: this.config.id // Agent ID as added_by
-      })
+      } as any)
 
     this.log(`Added ${company.name} to stream (score: ${company.quality_score.toFixed(1)})`)
   }
@@ -474,12 +478,12 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
 
   const config: AgentConfig = {
     id: agent.id,
-    orgId: agent.org_id,
-    name: agent.name,
-    type: agent.agent_type,
-    configuration: agent.configuration || {},
+    orgId: agent.org_id || '',
+    name: agent.name || 'OpportunityBot',
+    type: agent.agent_type as any,
+    configuration: (agent.configuration as any) || {},
     isActive: agent.is_active,
-    scheduleCron: agent.schedule_cron
+    scheduleCron: agent.schedule_cron || undefined
   }
 
   return new OpportunityBot(config)

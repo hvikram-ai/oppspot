@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -43,12 +43,7 @@ export function BusinessActions({ business }: BusinessActionsProps) {
   const [saving, setSaving] = useState(false)
   const supabase = createClient()
 
-  // Check if business is already saved on mount
-  useEffect(() => {
-    checkIfSaved()
-  }, [business.id])
-
-  const checkIfSaved = async () => {
+  const checkIfSaved = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -65,7 +60,12 @@ export function BusinessActions({ business }: BusinessActionsProps) {
       // Business not saved, which is fine
       setIsSaved(false)
     }
-  }
+  }, [business.id, supabase])
+
+  // Check if business is already saved on mount
+  useEffect(() => {
+    checkIfSaved()
+  }, [checkIfSaved])
 
   const handleSave = async () => {
     setSaving(true)
@@ -153,7 +153,7 @@ export function BusinessActions({ business }: BusinessActionsProps) {
         if (navigator.share) {
           navigator.share({
             title: business.name,
-            text: business.description,
+            text: business.description || undefined,
             url: url,
           }).catch(() => {
             // User cancelled share

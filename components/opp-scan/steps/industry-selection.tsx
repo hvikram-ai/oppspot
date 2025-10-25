@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -66,7 +66,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
   const supabase = createClient()
 
   // Predefined industry categories with icons and consolidation data
-  const predefinedIndustries: IndustryCategory[] = [
+  const predefinedIndustries: IndustryCategory[] = useMemo(() => [
     {
       id: 'manufacturing',
       name: 'Manufacturing',
@@ -202,11 +202,11 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
         { id: 'water-services', name: 'Water Services', description: 'Water treatment and supply', sic_code: '36' }
       ]
     }
-  ]
+  ], [])
 
   useEffect(() => {
     setIndustries(predefinedIndustries)
-  }, [])
+  }, [predefinedIndustries])
 
   const filteredIndustries = industries.filter(industry =>
     industry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -305,11 +305,11 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
         <CardHeader>
           <CardTitle className="text-lg">Market Maturity Preferences</CardTitle>
           <CardDescription>
-            Select the market stages you're interested in for acquisition opportunities
+            Select the market stages you&apos;re interested in for acquisition opportunities
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { id: 'emerging', label: 'Emerging', description: 'Early stage markets with high growth potential' },
               { id: 'scaling', label: 'Scaling', description: 'Growing markets with established players' },
@@ -364,10 +364,10 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
                 variant="secondary"
                 className="flex items-center gap-2"
               >
-                {item.subcategory ? `${item.industry} - ${item.subcategory}` : item.industry}
+                {(item as { subcategory?: string; industry?: string }).subcategory ? `${(item as { industry?: string }).industry} - ${(item as { subcategory?: string }).subcategory}` : (item as { industry?: string }).industry}
                 <button
                   onClick={() => {
-                    const newSelection = config.selectedIndustries.filter((_: unknown, i: number) => i !== index)
+                    const newSelection = (config.selectedIndustries ?? []).filter((_: unknown, i: number) => i !== index)
                     onChange('selectedIndustries', newSelection)
                   }}
                   className="ml-1 hover:text-destructive"
@@ -470,7 +470,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
           <CardContent className="p-8 text-center">
             <Building2 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-muted-foreground">
-              No industries found matching "{searchTerm}"
+              No industries found matching &quot;{searchTerm}&quot;
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               Try different search terms or browse the categories above

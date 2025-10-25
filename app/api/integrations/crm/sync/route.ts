@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getSmartSyncOrchestrator } from '@/lib/integrations/crm/smartsync-orchestrator';
 import { z } from 'zod';
-import type { Row } from '@/lib/supabase/helpers'
 
 const SyncContactSchema = z.object({
   integration_id: z.string().uuid().optional(),
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
@@ -120,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
@@ -142,7 +141,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)

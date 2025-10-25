@@ -92,7 +92,7 @@ export function GoalCriteriaBuilder({
             <div>
               <CardTitle>ICP Criteria</CardTitle>
               <CardDescription>
-                Define the ideal company profile you're looking for
+                Define the ideal company profile you&apos;re looking for
               </CardDescription>
             </div>
           </div>

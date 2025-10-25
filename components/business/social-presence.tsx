@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -106,11 +106,7 @@ export function SocialPresence({
   const [websiteData, setWebsiteData] = useState<WebsiteData | null>(null)
   const [socialScore, setSocialScore] = useState<SocialScore | null>(null)
 
-  useEffect(() => {
-    fetchSocialData()
-  }, [businessId])
-
-  const fetchSocialData = async () => {
+  const fetchSocialData = useCallback(async () => {
     try {
       const response = await fetch(`/api/businesses/social?businessId=${businessId}`)
       const data = await response.json()
@@ -125,7 +121,11 @@ export function SocialPresence({
     } finally {
       setLoading(false)
     }
-  }
+  }, [businessId])
+
+  useEffect(() => {
+    fetchSocialData()
+  }, [fetchSocialData])
 
   const scrapeSocialData = async () => {
     setScraping(true)

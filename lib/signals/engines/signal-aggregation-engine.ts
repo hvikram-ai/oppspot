@@ -64,18 +64,20 @@ export class SignalAggregationEngine {
         return null;
       }
 
+      const buyingSignals = signals as unknown as BuyingSignal[]
+
       // Calculate aggregate scores
-      const compositeScore = this.calculateCompositeScore(signals);
-      const intentScore = this.calculateIntentScore(signals);
-      const timingScore = this.calculateTimingScore(signals);
-      const fitScore = this.calculateFitScore(signals);
+      const compositeScore = this.calculateCompositeScore(buyingSignals);
+      const intentScore = this.calculateIntentScore(buyingSignals);
+      const timingScore = this.calculateTimingScore(buyingSignals);
+      const fitScore = this.calculateFitScore(buyingSignals);
 
       // Count signals by type and strength
-      const signalCounts = this.countSignalsByType(signals);
-      const strengthDistribution = this.countSignalsByStrength(signals);
+      const signalCounts = this.countSignalsByType(buyingSignals);
+      const strengthDistribution = this.countSignalsByStrength(buyingSignals);
 
       // Calculate velocity metrics
-      const velocityMetrics = this.calculateVelocityMetrics(signals);
+      const velocityMetrics = this.calculateVelocityMetrics(buyingSignals);
 
       // Determine engagement priority and recommendations
       const engagementPriority = this.determineEngagementPriority(
@@ -85,7 +87,7 @@ export class SignalAggregationEngine {
       );
 
       const recommendations = this.generateRecommendations(
-        signals,
+        buyingSignals,
         engagementPriority,
         compositeScore
       );
@@ -94,14 +96,14 @@ export class SignalAggregationEngine {
       const aggregation: SignalAggregation = {
         id: '', // Will be set by database
         company_id: companyId,
-        total_signals: signals.length,
+        total_signals: buyingSignals.length,
         composite_score: compositeScore,
         intent_score: intentScore,
         timing_score: timingScore,
         fit_score: fitScore,
         signal_counts: signalCounts,
         strength_distribution: strengthDistribution,
-        most_recent_signal: signals[0].detected_at,
+        most_recent_signal: buyingSignals[0].detected_at,
         signal_velocity: velocityMetrics.velocity,
         signal_acceleration: velocityMetrics.acceleration,
         engagement_priority: engagementPriority,
@@ -118,14 +120,14 @@ export class SignalAggregationEngine {
         .upsert({
           ...aggregation,
           company_id: companyId
-        })
+        } as any)
         .select()
         .single();
 
       if (saveError) throw saveError;
 
       // Trigger alerts if thresholds are met
-      await this.checkAndTriggerAlerts(savedAggregation, signals);
+      await this.checkAndTriggerAlerts(savedAggregation, buyingSignals);
 
       return savedAggregation;
 
@@ -453,9 +455,9 @@ export class SignalAggregationEngine {
 
     // Get active alert configurations
     const { data: alertConfigs } = await supabase
-      .from('signal_alert_configs')
+      .from('signal_alert_configs' as any)
       .select('*')
-      .eq('is_active', true) as { data: Row<'signal_alert_configs'>[] | null; error: any };
+      .eq('is_active', true) as { data: SignalAlertConfig[] | null; error: any };
 
     if (!alertConfigs || alertConfigs.length === 0) return;
 
@@ -527,7 +529,7 @@ export class SignalAggregationEngine {
       status: 'triggered'
     };
 
-    await supabase.from('threshold_alerts').insert(alert);
+    await supabase.from('threshold_alerts' as any).insert(alert as any);
 
     // Execute alert actions based on channels
     if (config.alert_channels.includes('in_app')) {
@@ -560,7 +562,7 @@ export class SignalAggregationEngine {
         composite_score: aggregation.composite_score,
         priority: aggregation.engagement_priority
       }
-    });
+    } as any);
   }
 
   private async sendEmailAlert(config: SignalAlertConfig, aggregation: SignalAggregation) {
@@ -613,8 +615,8 @@ export class SignalAggregationEngine {
       };
 
       const { data, error } = await supabase
-        .from('signal_actions')
-        .insert(action)
+        .from('signal_actions' as any)
+        .insert(action as any)
         .select()
         .single();
 

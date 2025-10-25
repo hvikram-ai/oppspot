@@ -12,12 +12,13 @@
  */
 
 import { config } from 'dotenv'
-import { 
-  getLLMProvider, 
-  warmUpProviders, 
-  healthCheckProviders, 
+import readline from 'readline'
+import {
+  getLLMProvider,
+  warmUpProviders,
+  healthCheckProviders,
   getActiveProviderType,
-  getProviderConfig 
+  getProviderConfig
 } from '../lib/ai/llm-factory'
 import { getGlobalMetrics, createMonitoredProvider } from '../lib/ai/llm-metrics'
 import { OllamaClient } from '../lib/ai/ollama'
@@ -242,7 +243,7 @@ async function displayStatus(): Promise<void> {
     
     // Show cache stats if available
     if ('getCacheStats' in provider) {
-      const cacheStats = (provider as unknown).getCacheStats()
+      const cacheStats = (provider as any).getCacheStats()
       console.log(`   Cache: ${cacheStats.size} entries, ${(cacheStats.hitRate * 100).toFixed(1)}% hit rate`)
     }
     
@@ -259,17 +260,16 @@ async function displayStatus(): Promise<void> {
 async function startInteractiveMode(): Promise<void> {
   console.log('\n🎮 Starting interactive test mode...')
   console.log('Type "help" for commands, "exit" to quit\n')
-  
+
   const provider = getLLMProvider()
-  
+
   // Simple REPL for testing
-  const readline = require('readline')
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
   })
   
-  const prompt = () => rl.question('> ', async (input) => {
+  const prompt = () => rl.question('> ', async (input: any) => {
     const trimmed = input.trim().toLowerCase()
     
     switch (trimmed) {
@@ -308,7 +308,7 @@ async function startInteractiveMode(): Promise<void> {
         
       case 'models':
         if ('listModels' in provider) {
-          const models = await (provider as unknown).listModels()
+          const models = await (provider as any).listModels()
           console.log('Available models:')
           models.forEach((m: any) => console.log(`  - ${m.name} (${m.size})`))
         } else {

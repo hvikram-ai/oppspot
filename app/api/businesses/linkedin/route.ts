@@ -5,6 +5,8 @@ import { Database } from '@/lib/supabase/database.types'
 import type { Row } from '@/lib/supabase/helpers'
 
 type Business = Database['public']['Tables']['businesses']['Row']
+type BusinessUpdate = Database['public']['Tables']['businesses']['Update']
+type EventInsert = Database['public']['Tables']['events']['Insert']
 
 // Proxycurl API response interface
 interface ProxycurlCompanyProfile {
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -209,8 +211,7 @@ export async function POST(request: NextRequest) {
     // Update the business
     const { error: updateError } = await supabase
       .from('businesses')
-      // @ts-expect-error - Supabase query builder typing issue
-      .update(updates)
+      .update(updates as any)
       .eq('id', businessId)
 
     if (updateError) {
@@ -222,7 +223,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the enrichment event
-    // @ts-expect-error - Supabase query builder typing issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'linkedin_enrichment',
@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
         data_source: dataSource,
         auto_searched: autoSearch
       }
-    })
+    } as any)
 
     return NextResponse.json({
       message: 'LinkedIn data enriched successfully',
@@ -263,7 +263,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -354,8 +354,7 @@ export async function PUT(request: NextRequest) {
 
             const { error: updateError } = await supabase
               .from('businesses')
-              // @ts-expect-error - Supabase query builder typing issue
-              .update(updates)
+              .update(updates as any)
               .eq('id', business.id)
 
             if (updateError) {
@@ -386,7 +385,6 @@ export async function PUT(request: NextRequest) {
     }
 
     // Log the bulk enrichment event
-    // @ts-expect-error - Supabase query builder typing issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'bulk_linkedin_enrichment',
@@ -396,7 +394,7 @@ export async function PUT(request: NextRequest) {
         success_count: successCount,
         error_count: errorCount
       }
-    })
+    } as any)
 
     return NextResponse.json({
       message: 'Bulk LinkedIn enrichment completed',

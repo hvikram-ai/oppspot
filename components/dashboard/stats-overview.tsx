@@ -52,14 +52,14 @@ export function StatsOverview() {
   ]
 
   return (
-    <>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => {
         const Icon = stat.icon
         const TrendIcon = stat.trend === 'up' ? ArrowUp : stat.trend === 'down' ? ArrowDown : null
         const trendColor = stat.trend === 'up' ? 'text-green-600' : stat.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-        
+
         return (
-          <HelpTooltip 
+          <HelpTooltip
             key={stat.title}
             content={stat.tooltip}
             side="top"
@@ -90,6 +90,6 @@ export function StatsOverview() {
           </HelpTooltip>
         )
       })}
-    </>
+    </div>
   )
 }

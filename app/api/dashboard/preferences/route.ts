@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/dashboard/preferences
@@ -34,7 +33,7 @@ export async function GET(_request: NextRequest) {
     if (fetchError && fetchError.code === 'PGRST116') {
       const { data: newPrefs, error: createError } = await supabase
         .from('dashboard_preferences')
-        // @ts-expect-error - Supabase type inference issue
+        // @ts-expect-error - dashboard_preferences insert type mismatch
         .insert({
           user_id: user.id
         })
@@ -120,28 +119,28 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate enum fields
-    if (updateData.metric_format && !['absolute', 'relative'].includes(updateData.metric_format)) {
+    if (updateData.metric_format && !['absolute', 'relative'].includes(updateData.metric_format as string)) {
       return NextResponse.json(
         { error: 'Bad Request', message: 'Invalid metric_format. Must be "absolute" or "relative"' },
         { status: 400 }
       )
     }
 
-    if (updateData.time_period && !['day', 'week', 'month'].includes(updateData.time_period)) {
+    if (updateData.time_period && !['day', 'week', 'month'].includes(updateData.time_period as string)) {
       return NextResponse.json(
         { error: 'Bad Request', message: 'Invalid time_period. Must be "day", "week", or "month"' },
         { status: 400 }
       )
     }
 
-    if (updateData.theme && !['light', 'dark', 'system'].includes(updateData.theme)) {
+    if (updateData.theme && !['light', 'dark', 'system'].includes(updateData.theme as string)) {
       return NextResponse.json(
         { error: 'Bad Request', message: 'Invalid theme. Must be "light", "dark", or "system"' },
         { status: 400 }
       )
     }
 
-    if (updateData.digest_frequency && !['daily', 'realtime', 'off'].includes(updateData.digest_frequency)) {
+    if (updateData.digest_frequency && !['daily', 'realtime', 'off'].includes(updateData.digest_frequency as string)) {
       return NextResponse.json(
         { error: 'Bad Request', message: 'Invalid digest_frequency. Must be "daily", "realtime", or "off"' },
         { status: 400 }
@@ -151,7 +150,7 @@ export async function PUT(request: NextRequest) {
     // Update preferences
     const { data: updatedPrefs, error: updateError } = await supabase
       .from('dashboard_preferences')
-      // @ts-expect-error - Type inference issue
+      // @ts-expect-error - dashboard_preferences update type mismatch
       .update(updateData)
       .eq('user_id', user.id)
       .select()

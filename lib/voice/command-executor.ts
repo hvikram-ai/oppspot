@@ -53,7 +53,7 @@ export class CommandExecutor {
   /**
    * Handle navigation commands
    */
-  private async handleNavigation(params: Record<string, any>): Promise<ExecutionResult> {
+  private async handleNavigation(params: Record<string, unknown>): Promise<ExecutionResult> {
     const page = params.page as string
 
     const routes: Record<string, string> = {
@@ -87,7 +87,7 @@ export class CommandExecutor {
   /**
    * Handle search commands
    */
-  private async handleSearch(params: Record<string, any>): Promise<ExecutionResult> {
+  private async handleSearch(params: Record<string, unknown>): Promise<ExecutionResult> {
     // Build search query
     const queryParts: string[] = []
 
@@ -120,7 +120,7 @@ export class CommandExecutor {
   /**
    * Handle query commands
    */
-  private async handleQuery(params: Record<string, any>): Promise<ExecutionResult> {
+  private async handleQuery(params: Record<string, unknown>): Promise<ExecutionResult> {
     // TODO: Integrate with ChatSpot or analytics API
     return {
       success: true,
@@ -132,7 +132,7 @@ export class CommandExecutor {
   /**
    * Handle action commands
    */
-  private async handleAction(params: Record<string, any>): Promise<ExecutionResult> {
+  private async handleAction(params: Record<string, unknown>): Promise<ExecutionResult> {
     // TODO: Implement actions (add to list, send email, etc.)
     return {
       success: true,

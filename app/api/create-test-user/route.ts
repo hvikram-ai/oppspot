@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
           }
         },
         status: 'active'
-      })
+      } as never)
       .select()
       .single() as { data: { id: string } & Record<string, unknown> | null; error: unknown }
 
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
             dashboard_layout: 'standard'
           }
         }
-      })
+      } as never)
       .select()
       .single()
 
@@ -165,7 +164,7 @@ async function createSampleData(supabase: DbClient, userId: string, orgId?: stri
           size: 'small'
         },
         results_count: 25
-      })
+      } as never)
 
     // Create a sample business list
     await supabase
@@ -180,7 +179,7 @@ async function createSampleData(supabase: DbClient, userId: string, orgId?: stri
           visibility: 'private',
           auto_update: false
         }
-      })
+      } as never)
 
     console.log('Sample data created successfully')
   } catch (error) {

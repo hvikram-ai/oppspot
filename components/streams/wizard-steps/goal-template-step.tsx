@@ -129,7 +129,7 @@ export function GoalTemplateStep({ data, onUpdate }: GoalTemplateStepProps) {
             <Alert>
               <Sparkles className="h-4 w-4" />
               <AlertDescription>
-                ✨ Great choice! You'll be able to set goals, define success criteria, and assign AI agents to work toward your objectives.
+                ✨ Great choice! You&apos;ll be able to set goals, define success criteria, and assign AI agents to work toward your objectives.
               </AlertDescription>
             </Alert>
           )}

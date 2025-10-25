@@ -69,7 +69,7 @@ export function SimilarityNetwork({
   maxNodes = 25 
 }: SimilarityNetworkProps) {
   const svgRef = useRef<SVGSVGElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
   
   const [isRunning, setIsRunning] = useState(true)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
@@ -129,7 +129,7 @@ export function SimilarityNetwork({
     }
 
     return { nodes, edges }
-  }, [matches, maxNodes, clusterBy, edgeThreshold])
+  }, [matches, maxNodes, clusterBy, edgeThreshold, centerX, centerY])
 
   // Calculate similarity between two companies
   const calculateSimilarity = (match1: SimilarityMatch, match2: SimilarityMatch): number => {
@@ -258,15 +258,15 @@ export function SimilarityNetwork({
     if (isRunning) {
       animationRef.current = requestAnimationFrame(simulationStep)
     }
-  }, [networkData, isRunning, showEdges, forceStrength])
+  }, [networkData, isRunning, showEdges, forceStrength, centerX, centerY])
 
   // Start/stop animation
   useEffect(() => {
     if (isRunning && !animationRef.current) {
-      animationRef.current = requestAnimationFrame(simulationStep)
+      animationRef.current = requestAnimationFrame(simulationStep) as any as any
     } else if (!isRunning && animationRef.current) {
       cancelAnimationFrame(animationRef.current)
-      animationRef.current = undefined
+      animationRef.current = undefined as any
     }
 
     return () => {
@@ -611,7 +611,7 @@ export function SimilarityNetwork({
         </div>
 
         {/* Network Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div className="text-center p-3 bg-muted rounded-md">
             <div className="font-semibold">{networkData.nodes.length}</div>
             <div className="text-muted-foreground text-sm">Companies</div>

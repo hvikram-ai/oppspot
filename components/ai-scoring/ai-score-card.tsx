@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,11 +35,7 @@ export function AIScoreCard({ companyId, companyName, onScoreUpdate }: AIScoreCa
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    fetchScore();
-  }, [companyId]);
-
-  const fetchScore = async () => {
+  const fetchScore = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -61,7 +57,11 @@ export function AIScoreCard({ companyId, companyName, onScoreUpdate }: AIScoreCa
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, onScoreUpdate]);
+
+  useEffect(() => {
+    fetchScore();
+  }, [fetchScore]);
 
   const calculateScore = async () => {
     try {

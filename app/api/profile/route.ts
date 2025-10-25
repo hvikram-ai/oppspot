@@ -6,7 +6,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(_request: NextRequest) {
   try {
@@ -91,7 +90,6 @@ export async function PUT(request: NextRequest) {
     // Update profile
     const { data: profile, error: updateError } = await supabase
       .from('profiles')
-      // @ts-expect-error - Type inference issue
       .update({
         ...updateData,
         updated_at: new Date().toISOString()

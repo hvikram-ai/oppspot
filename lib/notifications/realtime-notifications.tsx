@@ -85,7 +85,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     try {
       const { error } = await supabase
         .from('notifications')
-        // @ts-expect-error - Type inference issue
         .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId)
         .eq('user_id', user?.id)

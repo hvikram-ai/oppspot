@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
@@ -40,7 +40,6 @@ import {
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface ScanData {
   id: string
@@ -80,6 +79,24 @@ function ScanDetailPageContent() {
   const [user, setUser] = useState<User | null>(null)
   const [startingScan, setStartingScan] = useState(false)
 
+  const loadScanDetails = useCallback(async (scanId: string) => {
+    try {
+      const { data: scanData, error: scanError } = await supabase
+        .from('acquisition_scans')
+        .select('*')
+        .eq('id', scanId)
+        .single()
+
+      if (scanError) throw scanError
+      setScanData(scanData)
+    } catch (error) {
+      console.error('Error loading scan details:', error)
+      toast.error('Failed to load scan details')
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase])
+
   useEffect(() => {
     const loadData = async () => {
       if (isDemoMode) {
@@ -104,25 +121,8 @@ function ScanDetailPageContent() {
     }
 
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemoMode, scanId])
-
-  const loadScanDetails = async (scanId: string) => {
-    try {
-      const { data: scanData, error: scanError } = await supabase
-        .from('acquisition_scans')
-        .select('*')
-        .eq('id', scanId)
-        .single()
-
-      if (scanError) throw scanError
-      setScanData(scanData)
-    } catch (error) {
-      console.error('Error loading scan details:', error)
-      toast.error('Failed to load scan details')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {

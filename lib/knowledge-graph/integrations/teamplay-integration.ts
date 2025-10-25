@@ -16,7 +16,7 @@ export class TeamPlayKnowledgeIntegration {
     entityType: string,
     entityId: string,
     entityName: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) {
     try {
       const supabase = createClient()
@@ -113,7 +113,7 @@ export class TeamPlayKnowledgeIntegration {
     entityId: string,
     activityType: ActivityType,
     userId: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) {
     const supabase = createClient()
 
@@ -210,7 +210,7 @@ export class TeamPlayKnowledgeIntegration {
    */
   private static generateActivityFactText(
     activityType: ActivityType,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): string {
     const baseTexts: Partial<Record<ActivityType, string>> = {
       'company_viewed': 'Team member viewed this company',

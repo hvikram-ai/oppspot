@@ -66,13 +66,14 @@ export class EnrichmentAgent extends BaseAgent {
         }
       }
 
-    } catch (error: any) {
-      this.log(`Execution failed: ${error.message}`, 'error')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      this.log(`Execution failed: ${errorMessage}`, 'error')
 
       return {
         success: false,
         output: {},
-        error: error.message,
+        error: errorMessage,
         metrics: {
           durationMs: Date.now() - startTime,
           itemsProcessed,
@@ -114,7 +115,7 @@ export class EnrichmentAgent extends BaseAgent {
   /**
    * Enrich company with additional data
    */
-  private async enrichCompany(businessId: string): Promise<Record<string, any> | null> {
+  private async enrichCompany(businessId: string): Promise<Record<string, unknown> | null> {
     const supabase = await createClient()
 
     // Fetch company
@@ -131,7 +132,7 @@ export class EnrichmentAgent extends BaseAgent {
       return null
     }
 
-    const enrichedData: Record<string, any> = {
+    const enrichedData: Record<string, unknown> = {
       enriched_at: new Date().toISOString()
     }
 
@@ -234,7 +235,7 @@ export class EnrichmentAgent extends BaseAgent {
    */
   private async updateStreamItemMetadata(
     itemId: string,
-    enrichedData: Record<string, any>
+    enrichedData: Record<string, unknown>
   ): Promise<void> {
     const supabase = await createClient()
 
@@ -256,7 +257,6 @@ export class EnrichmentAgent extends BaseAgent {
     // Update item
     await supabase
       .from('stream_items')
-      // @ts-expect-error - Type inference issue
       .update({
         metadata: updatedMetadata
       })

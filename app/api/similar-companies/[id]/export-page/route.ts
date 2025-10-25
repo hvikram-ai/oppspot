@@ -78,7 +78,7 @@ export async function POST(
       )
 
       // Return PDF directly as download
-      return new NextResponse(buffer, {
+      return new NextResponse(buffer.buffer as unknown as BodyInit, {
         status: 200,
         headers: {
           'Content-Type': contentType,

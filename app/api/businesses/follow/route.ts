@@ -1,272 +1,261 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/lib/supabase/database.types'
-import type { Row } from '@/lib/supabase/helpers'
+import { Database } from '@/types/database'
+
+// Type definitions for database operations
+type BusinessRow = Database['public']['Tables']['businesses']['Row']
+type BusinessFollowerRow = Database['public']['Tables']['business_followers']['Row']
+type BusinessFollowerInsert = Database['public']['Tables']['business_followers']['Insert']
+type BusinessFollowerUpdate = Database['public']['Tables']['business_followers']['Update']
+
+// Business update type (table may not exist in current schema)
+interface BusinessUpdate {
+  business_id: string
+  [key: string]: unknown
+}
+
+// Extended type for business follower with joined business data
+interface BusinessFollowerWithBusiness extends BusinessFollowerRow {
+  business: BusinessRow
+}
 
 // POST: Follow or unfollow a business
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    
+
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
     const body = await request.json()
     const { businessId, action = 'follow', notificationPreference = 'all' } = body
-    
+
     if (!businessId) {
       return NextResponse.json(
         { error: 'Business ID is required' },
         { status: 400 }
       )
     }
-    
+
     // Check if business exists
-    // @ts-ignore - businesses table
     const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('id, name')
       .eq('id', businessId)
       .single()
 
-    const typedBusiness = business as unknown as { id: string; name: string } | null
-
-    if (businessError || !typedBusiness) {
+    if (businessError || !business) {
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       )
     }
-    
+
     if (action === 'unfollow') {
       // Unfollow the business
-      // @ts-ignore - business_followers table
       const { error: unfollowError } = await supabase
         .from('business_followers')
         .delete()
         .eq('business_id', businessId)
         .eq('user_id', user.id)
 
-      if (unfollowError) throw unfollowError
-
-      // Log event
-      // @ts-ignore - events table insert
-      await supabase.from('events').insert({
-        user_id: user.id,
-        event_type: 'business_unfollowed',
-        event_data: {
-          business_id: businessId,
-          business_name: typedBusiness.name
-        }
-      } as Database['public']['Tables']['events']['Insert'])
+      if (unfollowError) {
+        console.error('Error unfollowing business:', unfollowError)
+        return NextResponse.json(
+          { error: 'Failed to unfollow business' },
+          { status: 500 }
+        )
+      }
 
       return NextResponse.json({
-        following: false,
-        message: `Unfollowed ${typedBusiness.name}`
-      })
-    } else {
-      // Follow the business
-      // @ts-ignore - business_followers table upsert
-      const { error: followError } = await supabase
-        .from('business_followers')
-        .upsert({
-          business_id: businessId,
-          user_id: user.id,
-          notification_preference: notificationPreference
-        }, {
-          onConflict: 'business_id,user_id'
-        })
-
-      if (followError) throw followError
-
-      // Log event
-      // @ts-ignore - events table insert
-      await supabase.from('events').insert({
-        user_id: user.id,
-        event_type: 'business_followed',
-        event_data: {
-          business_id: businessId,
-          business_name: typedBusiness.name,
-          notification_preference: notificationPreference
-        }
-      } as Database['public']['Tables']['events']['Insert'])
-
-      return NextResponse.json({
-        following: true,
-        message: `Following ${typedBusiness.name}`,
-        notification_preference: notificationPreference
+        success: true,
+        message: 'Successfully unfollowed business'
       })
     }
-    
+
+    // Follow the business (default action)
+    // Check if already following
+    const { data: existingFollow, error: checkError } = await supabase
+      .from('business_followers')
+      .select('id')
+      .eq('business_id', businessId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (existingFollow) {
+      return NextResponse.json({
+        success: true,
+        message: 'Already following this business',
+        isFollowing: true
+      })
+    }
+
+    // Create new follow
+    const followData: BusinessFollowerInsert = {
+      business_id: businessId,
+      user_id: user.id,
+      notification_preference: notificationPreference
+    }
+
+    const { error: followError } = await supabase
+      .from('business_followers')
+      .insert(followData)
+
+    if (followError) {
+      console.error('Error following business:', followError)
+      return NextResponse.json(
+        { error: 'Failed to follow business' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Successfully followed business',
+      isFollowing: true
+    })
+
   } catch (error) {
-    console.error('Follow/unfollow error:', error)
+    console.error('Error in follow route:', error)
     return NextResponse.json(
-      { error: 'Failed to update follow status' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
-// GET: Get user's followed businesses or check follow status
+// GET: Get followed businesses for current user
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    
+
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
+    // Get query parameters
     const searchParams = request.nextUrl.searchParams
-    const businessId = searchParams.get('businessId')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = (page - 1) * limit
-    
-    if (businessId) {
-      // Check if user follows a specific business
-      // @ts-ignore - business_followers table
-      const { data: follow, error: followError } = await supabase
-        .from('business_followers')
-        .select('notification_preference, created_at')
-        .eq('business_id', businessId)
-        .eq('user_id', user.id)
-        .single()
+    const includeUpdates = searchParams.get('includeUpdates') === 'true'
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const offset = parseInt(searchParams.get('offset') || '0')
 
-      const typedFollow = follow as unknown as { notification_preference: string; created_at: string } | null
+    const query = supabase
+      .from('business_followers')
+      .select(`
+        *,
+        business:businesses (
+          id,
+          name,
+          description,
+          categories,
+          rating,
+          verified
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
-      // Ignore error if not following (expected case)
+    const { data: follows, error: followsError } = await query
 
-      // Get follower count for the business
-      // @ts-ignore - business_followers count
-      const { count: followerCount } = await supabase
-        .from('business_followers')
-        .select('*', { count: 'exact', head: true })
-        .eq('business_id', businessId)
+    if (followsError) {
+      console.error('Error fetching followed businesses:', followsError)
+      return NextResponse.json(
+        { error: 'Failed to fetch followed businesses' },
+        { status: 500 }
+      )
+    }
 
-      return NextResponse.json({
-        following: !!typedFollow,
-        notification_preference: typedFollow?.notification_preference || null,
-        followed_at: typedFollow?.created_at || null,
-        follower_count: followerCount || 0
-      })
-    } else {
-      // Get all businesses the user follows
-      // @ts-ignore - business_followers with join
-      const { data: follows, error, count } = await supabase
-        .from('business_followers')
-        .select(`
-          *,
-          business:businesses!business_id (
-            id,
-            name,
-            description,
-            categories,
-            rating,
-            verified
-          )
-        `, { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) throw error
-
-      const typedFollows = (follows || []) as unknown as Array<{ business_id: string; [key: string]: unknown }>
-
-      // Get recent updates count for each followed business
-      const businessIds = typedFollows.map(f => f.business_id as string)
-      const recentUpdates: Record<string, number> = {}
+    // If requested, fetch recent updates for followed businesses
+    let updates: BusinessUpdate[] = []
+    if (includeUpdates && follows && follows.length > 0) {
+      const businessIds = follows
+        .map((f: BusinessFollowerWithBusiness) => f.business?.id)
+        .filter(Boolean)
 
       if (businessIds.length > 0) {
-        const oneWeekAgo = new Date()
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-
-        // @ts-ignore - business_updates table
-        const { data: updateCounts, error: updateCountsError } = await supabase
+        const { data: updatesData, error: updatesError } = await supabase
           .from('business_updates')
-          .select('business_id')
+          .select('*')
           .in('business_id', businessIds)
-          .gte('published_at', oneWeekAgo.toISOString())
+          .order('published_at', { ascending: false })
+          .limit(20)
 
-        const typedUpdateCounts = (updateCounts || []) as unknown as Array<{ business_id: string }>
-
-        // Count updates per business
-        typedUpdateCounts.forEach(update => {
-          recentUpdates[update.business_id] = (recentUpdates[update.business_id] || 0) + 1
-        })
-      }
-
-      // Combine follows with recent update counts
-      const followsWithUpdates = typedFollows.map(follow => ({
-        ...follow,
-        recent_updates_count: recentUpdates[follow.business_id] || 0
-      }))
-
-      return NextResponse.json({
-        follows: followsWithUpdates,
-        pagination: {
-          page,
-          limit,
-          total: count || 0,
-          hasMore: typedFollows.length === limit
+        if (!updatesError && updatesData) {
+          updates = updatesData as BusinessUpdate[]
         }
-      })
+      }
     }
-    
+
+    return NextResponse.json({
+      success: true,
+      follows: follows || [],
+      updates: includeUpdates ? updates : undefined,
+      pagination: {
+        limit,
+        offset,
+        total: follows?.length || 0
+      }
+    })
+
   } catch (error) {
-    console.error('Error fetching follows:', error)
+    console.error('Error in GET follow route:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch follow information' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
-// PATCH: Update notification preferences for a followed business
-export async function PATCH(request: NextRequest) {
+// DELETE: Unfollow a business (alternative to POST with action=unfollow)
+export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
-    
+
     // Check authentication
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
-    const body = await request.json()
-    const { businessId, notificationPreference } = body
-    
-    if (!businessId || !notificationPreference) {
+
+    const searchParams = request.nextUrl.searchParams
+    const businessId = searchParams.get('businessId')
+
+    if (!businessId) {
       return NextResponse.json(
-        { error: 'Business ID and notification preference are required' },
+        { error: 'Business ID is required' },
         { status: 400 }
       )
     }
 
-    // Update notification preference
-    // @ts-ignore - business_followers table update
-    const { error: updateError } = await supabase
+    const { error: unfollowError } = await supabase
       .from('business_followers')
-      .update({ notification_preference: notificationPreference })
+      .delete()
       .eq('business_id', businessId)
       .eq('user_id', user.id)
 
-    if (updateError) throw updateError
-    
+    if (unfollowError) {
+      console.error('Error unfollowing business:', unfollowError)
+      return NextResponse.json(
+        { error: 'Failed to unfollow business' },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json({
-      message: 'Notification preference updated',
-      notification_preference: notificationPreference
+      success: true,
+      message: 'Successfully unfollowed business'
     })
-    
+
   } catch (error) {
-    console.error('Error updating preferences:', error)
+    console.error('Error in DELETE follow route:', error)
     return NextResponse.json(
-      { error: 'Failed to update notification preference' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

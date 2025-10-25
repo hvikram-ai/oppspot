@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 // POST: Create a business comparison
 export async function POST(request: NextRequest) {
@@ -50,7 +49,6 @@ export async function POST(request: NextRequest) {
     // Save comparison
     const { data: comparison, error: saveError } = await supabase
       .from('business_comparisons')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         business_ids: businessIds,
@@ -67,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Return comparison with business details
     return NextResponse.json({
       comparison: {
-        ...comparison,
+        ...(comparison as any),
         businesses
       }
     })
@@ -97,7 +95,7 @@ export async function GET(request: NextRequest) {
         .eq('id', comparisonId)
         .single() as { data: { is_public: boolean; user_id: string; business_ids: string[] } & Record<string, unknown> | null; error: unknown }
 
-      if (error) throw error
+      if (error || !comparison) throw error
 
       // Check access permissions
       const { data: { user } } = await supabase.auth.getUser()
@@ -107,7 +105,7 @@ export async function GET(request: NextRequest) {
           { status: 403 }
         )
       }
-      
+
       // Fetch business details
       const { data: businesses, error: businessesError } = await supabase
         .from('businesses')
@@ -213,7 +211,7 @@ function calculateComparisonMetrics(businesses: Business[]): ComparisonMetrics {
   }
   
   // Price level comparison
-  const priceLevels = businesses.map(b => b.price_level).filter(p => p)
+  const priceLevels = businesses.map(b => b.price_level).filter((p): p is number => p !== null && p !== undefined)
   if (priceLevels.length > 0) {
     metrics.pricing = {
       highest: Math.max(...priceLevels),
@@ -259,8 +257,8 @@ async function generateComparisonInsights(businesses: Business[]) {
 
 function determineStrengths(business: Business): string[] {
   const strengths = []
-  if (business.rating >= 4.5) strengths.push('Excellent customer ratings')
-  if (business.review_count > 100) strengths.push('Strong review volume')
+  if ((business.rating ?? 0) >= 4.5) strengths.push('Excellent customer ratings')
+  if ((business.review_count ?? 0) > 100) strengths.push('Strong review volume')
   if (business.verified) strengths.push('Verified business')
   if (business.website) strengths.push('Strong online presence')
   return strengths
@@ -268,8 +266,8 @@ function determineStrengths(business: Business): string[] {
 
 function determineOpportunities(business: Business): string[] {
   const opportunities = []
-  if (business.rating < 4.0) opportunities.push('Improve customer satisfaction')
-  if (business.review_count < 50) opportunities.push('Increase review volume')
+  if ((business.rating ?? 0) < 4.0) opportunities.push('Improve customer satisfaction')
+  if ((business.review_count ?? 0) < 50) opportunities.push('Increase review volume')
   if (!business.website) opportunities.push('Establish online presence')
   if (!business.description) opportunities.push('Add detailed description')
   return opportunities

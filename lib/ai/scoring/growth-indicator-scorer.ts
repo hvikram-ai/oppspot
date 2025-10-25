@@ -195,8 +195,8 @@ export class GrowthIndicatorScorer {
 
     for (const sicCode of sicCodes) {
       const prefix = sicCode.substring(0, 2)
-      if (innovativeSectors[prefix]) {
-        maxScore = Math.max(maxScore, innovativeSectors[prefix])
+      if (prefix in innovativeSectors) {
+        maxScore = Math.max(maxScore, innovativeSectors[prefix as keyof typeof innovativeSectors])
       }
     }
 

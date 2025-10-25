@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Row } from '@/lib/supabase/helpers'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -153,13 +152,13 @@ export class QualificationNotificationService {
       score_change: {
         title: '📊 Score Update',
         message: `Qualification score changed for ${data.companyName || 'lead'}.`,
-        description: `${data.previousScore}% → ${data.newScore}% (${data.change > 0 ? '+' : ''}${data.change}%)`,
+        description: `${data.previousScore}% → ${data.newScore}% (${typeof data.change === 'number' && data.change > 0 ? '+' : ''}${data.change}%)`,
         action: {
           label: 'View Details',
           url: `/qualification?lead=${data.leadId}`
         },
         priority: 'low',
-        icon: data.change > 0 ? '📈' : '📉'
+        icon: typeof data.change === 'number' && data.change > 0 ? '📈' : '📉'
       },
 
       action_required: {
@@ -247,7 +246,6 @@ export class QualificationNotificationService {
           <div class="container">
             <div class="header">
               <div class="icon">${template.icon}</div>
-              // @ts-expect-error - Supabase type inference issue
               <div class="title">${template.title.replace(template.icon, '').trim()}</div>
             </div>
             <div class="content">

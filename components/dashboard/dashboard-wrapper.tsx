@@ -29,8 +29,10 @@ import { ImpactMetrics } from '@/components/dashboard-v2/impact-metrics'
 import { FeatureSpotlight } from '@/components/dashboard-v2/feature-spotlight'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles, X, Activity } from 'lucide-react'
 import Link from 'next/link'
+import { ActivityFeed } from '@/components/collaboration/ActivityFeed'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function DashboardWrapper() {
   const { isDemoMode, demoData } = useDemoMode()
@@ -48,10 +50,10 @@ export function DashboardWrapper() {
     const getUser = async () => {
       if (isDemoMode) {
         // Use demo user data
-        setUser(demoData.user)
-        setProfile({ 
-          onboarding_completed: true, 
-          org_id: null 
+        setUser(demoData.user as any)
+        setProfile({
+          onboarding_completed: true,
+          org_id: null
         })
         setLoading(false)
         return
@@ -145,7 +147,7 @@ export function DashboardWrapper() {
 
   return (
     <ProtectedLayout>
-      <DashboardHeader user={user} profile={profile} />
+      <DashboardHeader user={user} profile={profile as any} />
 
       <div className="container mx-auto px-4 py-8" data-testid="dashboard-wrapper">
         {/* Onboarding Prompt */}
@@ -156,7 +158,7 @@ export function DashboardWrapper() {
               <div>
                 <strong>Personalize your experience!</strong>
                 <p className="text-sm mt-1">
-                  Take a moment to tell us about your business goals and we'll tailor oppSpot just for you.
+                  Take a moment to tell us about your business goals and we&apos;ll tailor oppSpot just for you.
                 </p>
               </div>
               <div className="flex items-center gap-2 ml-4">
@@ -222,6 +224,24 @@ export function DashboardWrapper() {
         <div className="grid gap-6 lg:grid-cols-2 mt-8">
           <BusinessInsights userId={user.id} />
           <UpcomingTasks userId={user.id} />
+        </div>
+
+        {/* Team Activity Feed */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-500" />
+                <CardTitle>Team Activity</CardTitle>
+              </div>
+              <CardDescription>
+                See what your teammates are working on in real-time
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ActivityFeed limit={20} showLoadMore={true} />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </ProtectedLayout>

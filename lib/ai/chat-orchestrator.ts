@@ -54,6 +54,13 @@ export interface StreamChunk {
   timestamp: Date
 }
 
+interface LLMResponse {
+  content: string
+  confidence?: number
+  tokens_used?: number
+  [key: string]: unknown
+}
+
 // Tool definitions
 const AVAILABLE_TOOLS = {
   search_web: {
@@ -180,16 +187,17 @@ export class ChatOrchestrator {
       )
       
       // Add assistant message to history
+      const llmResponse = response as LLMResponse
       const assistantMsg: ChatMessage = {
         role: 'assistant',
-        content: (response as any).content,
+        content: llmResponse.content,
         tool_calls: toolResults.length > 0 ? toolResults : undefined,
         citations: citations.length > 0 ? citations : undefined,
-        confidence: (response as any).confidence,
+        confidence: llmResponse.confidence,
         metadata: {
           timestamp: new Date().toISOString(),
           model: 'mistral:7b',
-          tokens_used: (response as any).tokens_used
+          tokens_used: llmResponse.tokens_used
         }
       }
       this.conversationHistory.push(assistantMsg)
@@ -360,7 +368,7 @@ Response (JSON only):`;
       query: args.query,
       filters: {},
       limit: args.num_results || 5
-    }) as unknown as { companies: any[]; total: number }
+    }) as { companies: Array<{ name: string; website?: string; description?: string; [key: string]: unknown }>; total: number }
 
     // Convert to citations
     const citations: Citation[] = results.companies.map((company, index) => ({
@@ -400,7 +408,6 @@ Response (JSON only):`;
     
     // Add search filter
     if (args.query) {
-      // @ts-expect-error - Supabase type inference issue
       query = query.textSearch('name', args.query)
     }
     
@@ -602,17 +609,27 @@ Response:`;
       .select('*')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true })
-      .limit(50) as { data: Row<'chat_messages'>[] | null; error: any }
-    
+      .limit(50)
+
     if (!error && data) {
-      this.conversationHistory = data.map(msg => ({
-        role: (msg as any).role as ChatMessage['role'],
-        content: (msg as any).content,
-        tool_calls: (msg as any).tool_calls,
-        citations: (msg as any).citations,
-        confidence: (msg as any).confidence_score,
-        metadata: (msg as any).metadata
-      }))
+      this.conversationHistory = data.map(msg => {
+        const dbMsg = msg as unknown as {
+          role: string;
+          content: string;
+          tool_calls?: ToolCall[];
+          citations?: Citation[];
+          confidence_score?: number;
+          metadata?: Record<string, unknown>;
+        }
+        return {
+          role: dbMsg.role as ChatMessage['role'],
+          content: dbMsg.content,
+          tool_calls: dbMsg.tool_calls,
+          citations: dbMsg.citations,
+          confidence: dbMsg.confidence_score,
+          metadata: dbMsg.metadata
+        }
+      })
     }
   }
   

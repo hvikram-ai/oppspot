@@ -67,9 +67,14 @@ interface AgentConfigDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   streamId?: string
-  existingAgent?: any
-  existingAgents?: any[] // All agents in the stream
-  onSave?: (agentConfig: any) => void
+  existingAgent?: Record<string, unknown>
+  existingAgents?: Array<{
+    id: string
+    name: string
+    agent_type: string
+    execution_order?: number
+  }> // All agents in the stream
+  onSave?: (agentConfig: Record<string, unknown>) => void
 }
 
 export function AgentConfigDialog({
@@ -80,36 +85,36 @@ export function AgentConfigDialog({
   existingAgents = [],
   onSave
 }: AgentConfigDialogProps) {
-  const [selectedType, setSelectedType] = useState<string>(existingAgent?.agent_type || 'opportunity_bot')
+  const [selectedType, setSelectedType] = useState<string>((existingAgent?.agent_type as string) || 'opportunity_bot')
   const [step, setStep] = useState<'select-type' | 'configure'>('select-type')
   const [isSaving, setIsSaving] = useState(false)
 
   // Basic agent info
-  const [agentName, setAgentName] = useState(existingAgent?.name || '')
-  const [agentDescription, setAgentDescription] = useState(existingAgent?.description || '')
-  const [isActive, setIsActive] = useState(existingAgent?.is_active ?? true)
-  const [autoExecute, setAutoExecute] = useState(existingAgent?.auto_execute ?? false)
-  const [executionOrder, setExecutionOrder] = useState(existingAgent?.execution_order || 1)
+  const [agentName, setAgentName] = useState((existingAgent?.name as string) || '')
+  const [agentDescription, setAgentDescription] = useState((existingAgent?.description as string) || '')
+  const [isActive, setIsActive] = useState((existingAgent?.is_active as boolean) ?? true)
+  const [autoExecute, setAutoExecute] = useState((existingAgent?.auto_execute as boolean) ?? false)
+  const [executionOrder, setExecutionOrder] = useState((existingAgent?.execution_order as number) || 1)
   const [dependsOnAgentIds, setDependsOnAgentIds] = useState<string[]>(
-    existingAgent?.depends_on_agent_ids || []
+    (existingAgent?.depends_on_agent_ids as string[]) || []
   )
 
   // Agent-specific configuration
   const [configuration, setConfiguration] = useState<Record<string, any>>(
-    existingAgent?.configuration || {}
+    (existingAgent?.configuration as Record<string, any>) || {}
   )
 
   useEffect(() => {
     if (existingAgent) {
       setStep('configure')
-      setSelectedType(existingAgent.agent_type)
-      setAgentName(existingAgent.name)
-      setAgentDescription(existingAgent.description || '')
-      setIsActive(existingAgent.is_active ?? true)
-      setAutoExecute(existingAgent.auto_execute ?? false)
-      setExecutionOrder(existingAgent.execution_order || 1)
-      setDependsOnAgentIds(existingAgent.depends_on_agent_ids || [])
-      setConfiguration(existingAgent.configuration || {})
+      setSelectedType(existingAgent.agent_type as string)
+      setAgentName(existingAgent.name as string)
+      setAgentDescription((existingAgent.description as string) || '')
+      setIsActive((existingAgent.is_active as boolean) ?? true)
+      setAutoExecute((existingAgent.auto_execute as boolean) ?? false)
+      setExecutionOrder((existingAgent.execution_order as number) || 1)
+      setDependsOnAgentIds((existingAgent.depends_on_agent_ids as string[]) || [])
+      setConfiguration((existingAgent.configuration as Record<string, any>) || {})
     }
   }, [existingAgent])
 

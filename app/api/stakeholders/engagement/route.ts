@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { engagementTracker } from '@/lib/stakeholder-tracking/engagement/engagement-tracker';
 import type { TrackEngagementRequest } from '@/lib/stakeholder-tracking/types/stakeholder';
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,14 +27,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     // Add metadata
-    body.engagement.org_id = profile?.org_id;
+    body.engagement.org_id = profile?.org_id || undefined;
     body.engagement.created_by = user.id;
     body.engagement.initiated_by = user.id;
 
@@ -54,7 +53,6 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'stakeholder_tracking',
         endpoint: '/api/stakeholders/engagement',
@@ -106,11 +104,11 @@ export async function GET(request: NextRequest) {
     const days = searchParams.get('days');
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     // Build query
     let query = supabase

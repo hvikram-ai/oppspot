@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -117,8 +117,7 @@ export async function POST(request: NextRequest) {
     if (Object.keys(updates).length > 0) {
       const { error: updateError } = await supabase
         .from('businesses')
-        // @ts-expect-error - Type inference issue
-        .update(updates)
+        .update(updates as any)
         .eq('id', businessId)
 
       if (updateError) {
@@ -131,7 +130,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the enhancement event
-    // @ts-expect-error - Supabase type inference issue
     await supabase.from('events').insert({
       user_id: user.id,
       event_type: 'business_enhanced',
@@ -141,7 +139,7 @@ export async function POST(request: NextRequest) {
         enhancements,
         results: Object.keys(results)
       }
-    } as Database['public']['Tables']['events']['Insert'])
+    } as any)
 
     return NextResponse.json({
       message: 'Business enhanced successfully',
@@ -171,7 +169,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check admin role
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: _profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -291,7 +289,7 @@ export async function PUT(request: NextRequest) {
         if (Object.keys(updates).length > 0) {
           const { error: updateError } = await supabase
             .from('businesses')
-            .update(updates)
+            .update(updates as never)
             .eq('id', business.id)
 
           if (updateError) {
@@ -317,7 +315,6 @@ export async function PUT(request: NextRequest) {
       results.push(businessResult)
     }
 
-    // @ts-expect-error - Supabase type inference issue
     // Log the bulk enhancement event
     await supabase.from('events').insert({
       user_id: user.id,
@@ -329,7 +326,7 @@ export async function PUT(request: NextRequest) {
         success_count: successCount,
         error_count: errorCount
       }
-    } as Database['public']['Tables']['events']['Insert'])
+    } as any)
 
     // Check remaining AI credits
     const usage = await aiClient.checkUsage()

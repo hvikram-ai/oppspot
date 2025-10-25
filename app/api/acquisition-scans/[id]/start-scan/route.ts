@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { OppScanEngine } from '@/lib/opp-scan/scanning-engine'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 type Scan = Database['public']['Tables']['acquisition_scans']['Row']
@@ -34,7 +33,7 @@ export async function POST(
     const scanId = awaitedParams.id
 
     // Get the scan configuration
-    const { data: scan, error: scanError } = await supabase
+    const { data: scan, error: _scanError } = await supabase
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
@@ -78,7 +77,7 @@ export async function POST(
     // Update scan status to starting
     const { error: updateError } = await supabase
       .from('acquisition_scans')
-      // @ts-expect-error - Complex JSONB metadata type
+      // @ts-expect-error - acquisition_scans update type mismatch
       .update({
         status: 'scanning',
         current_step: 'initializing',
@@ -108,7 +107,7 @@ export async function POST(
      
     const { error: auditError } = await supabase
       .from('scan_audit_log')
-      // @ts-expect-error - Complex audit log type
+      // @ts-expect-error - scan_audit_log insert type mismatch
       .insert(auditLogData)
 
     if (auditError) {
@@ -208,7 +207,7 @@ function getEstimatedCompletion(scan: Scan): string {
 async function checkOrgAccess(supabase: DbClient, userId: string, orgId: string): Promise<boolean> {
   try {
     type ProfileOrgId = Pick<Database['public']['Tables']['profiles']['Row'], 'org_id'>
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', userId)

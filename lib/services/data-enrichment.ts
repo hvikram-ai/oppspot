@@ -97,7 +97,8 @@ export class DataEnrichmentService {
     if (!business.company_number) {
       // Try to find by name
       const searchResults = await this.companiesHouseService.searchCompanies(business.name, 1)
-      if (searchResults.length === 0) {
+      const firstResult = Array.isArray(searchResults) ? searchResults[0] : null
+      if (!firstResult) {
         return {
           source: 'companies_house',
           success: false,
@@ -105,7 +106,7 @@ export class DataEnrichmentService {
         }
       }
 
-      const companyNumber = searchResults[0].company_number
+      const companyNumber = firstResult.company_number
       const profile = await this.companiesHouseService.getCompanyProfile(companyNumber)
       
       if (profile) {
@@ -290,7 +291,6 @@ export class DataEnrichmentService {
       if (Object.keys(merged).length > 0) {
         await supabase
           .from('businesses')
-          // @ts-expect-error - Type inference issue
           .update(merged)
           .eq('id', business.id)
       }
@@ -337,7 +337,6 @@ export class DataEnrichmentService {
     }
 
     // Check social media enrichment
-    // @ts-expect-error - Supabase type inference issue
     if (business.social_links && Object.keys(business.social_links as unknown).length > 0) {
       enrichedSources.push('social_media')
     }

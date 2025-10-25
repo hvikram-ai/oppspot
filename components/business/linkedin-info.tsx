@@ -81,7 +81,7 @@ export function LinkedInInfo({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessId,
-          linkedinUrl: linkedinUrl || searchResult?.linkedin_url,
+          linkedinUrl: linkedinUrl || (searchResult as { linkedin_url?: string })?.linkedin_url,
           autoSearch: !linkedinUrl
         })
       })
@@ -300,12 +300,12 @@ export function LinkedInInfo({
                       <CheckCircle className="h-4 w-4 text-green-500" />
                     </div>
                     <a
-                      href={searchResult.linkedin_url}
+                      href={(searchResult as { linkedin_url?: string }).linkedin_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-primary hover:underline flex items-center"
                     >
-                      {searchResult.linkedin_url}
+                      {(searchResult as { linkedin_url?: string }).linkedin_url}
                       <ExternalLink className="h-3 w-3 ml-1" />
                     </a>
                   </div>

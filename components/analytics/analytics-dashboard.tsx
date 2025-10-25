@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -112,13 +112,7 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [marketMetrics, setMarketMetrics] = useState<MarketMetrics | null>(null)
 
-  useEffect(() => {
-    if (category) {
-      fetchAnalytics()
-    }
-  }, [category, locationId, selectedPeriod])
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -156,7 +150,13 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [category, locationId, selectedPeriod])
+
+  useEffect(() => {
+    if (category) {
+      fetchAnalytics()
+    }
+  }, [category, fetchAnalytics])
 
   const refreshAnalytics = async () => {
     setRefreshing(true)
@@ -262,10 +262,10 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
   return (
     <div className="space-y-6">
       {/* Header Controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -275,20 +275,21 @@ export function AnalyticsDashboard({ category, locationId }: AnalyticsDashboardP
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={refreshAnalytics}
             disabled={refreshing}
+            className="h-9"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="h-9">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>

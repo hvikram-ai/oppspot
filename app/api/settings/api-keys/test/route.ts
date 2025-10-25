@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Use same encryption as main route
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-change-in-production'
@@ -143,19 +142,18 @@ export async function POST(request: NextRequest) {
     // Decrypt the key
     let decryptedKey: string
     try {
-      decryptedKey = decrypt(apiKey.encrypted_key)
+      decryptedKey = decrypt((apiKey as { encrypted_key: string }).encrypted_key)
     } catch (error) {
       return NextResponse.json({ error: 'Failed to decrypt API key' }, { status: 500 })
     }
 
     // Test the key
-    const testResult = await testApiKey(apiKey.provider, decryptedKey)
+    const testResult = await testApiKey((apiKey as { provider: string }).provider, decryptedKey)
 
     // Update last_used timestamp if test was successful
     if (testResult.success) {
       await supabase
         .from('api_keys')
-        // @ts-expect-error - Type inference issue
         .update({ last_used: new Date().toISOString() })
         .eq('id', keyId)
         .eq('user_id', user.id)

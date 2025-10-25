@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { InsightGenerator } from '@/lib/agents/insight-generator'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * POST /api/streams/[id]/insights/generate
@@ -25,7 +24,7 @@ export async function POST(
     }
 
     // Verify user has access to this stream
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
@@ -46,7 +45,6 @@ export async function POST(
     // Log activity
     await supabase
       .from('stream_activities')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         stream_id: streamId,
         user_id: user.id,

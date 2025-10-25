@@ -4,7 +4,6 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 import type {
   BenchmarkComparison,
   CompanyMetrics,
@@ -184,7 +183,7 @@ export class BenchmarkEngine {
     if (!this.supabase) await this.ensureClient()
 
     const { data, error } = await this.supabase!
-      .from('company_metrics' as any)
+      .from('company_metrics')
       .select('*')
       .eq('company_id', companyId)
       .order('metric_date', { ascending: false })
@@ -263,7 +262,7 @@ export class BenchmarkEngine {
     if (!this.supabase) await this.ensureClient()
 
     const { data, error } = await this.supabase!
-      .from('industry_benchmarks' as any)
+      .from('industry_benchmarks')
       .select('*')
       .eq('industry_code', industryCode)
       .order('metric_date', { ascending: false })
@@ -692,7 +691,7 @@ export class BenchmarkEngine {
     if (!this.supabase) await this.ensureClient()
 
     const { data } = await this.supabase!
-      .from('benchmark_comparisons' as any)
+      .from('benchmark_comparisons')
       .select('*')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
@@ -740,7 +739,7 @@ export class BenchmarkEngine {
     if (!this.supabase) await this.ensureClient()
 
     const { data } = await this.supabase!
-      .from('peer_groups' as any)
+      .from('peer_groups')
       .select('*')
       .eq('id', peerGroupId)
       .single()
@@ -786,7 +785,7 @@ export class BenchmarkEngine {
     if (!this.supabase) await this.ensureClient()
 
     const { data: members } = await this.supabase!
-      .from('peer_group_members' as any)
+      .from('peer_group_members')
       .select('company_id')
       .eq('peer_group_id', peerGroupId)
       .eq('is_active', true)
@@ -796,7 +795,7 @@ export class BenchmarkEngine {
     const companyIds = members.map((m: any) => m.company_id)
 
     const { data: metrics } = await this.supabase!
-      .from('company_metrics' as any)
+      .from('company_metrics')
       .select('*')
       .in('company_id', companyIds)
       .order('metric_date', { ascending: false })
@@ -819,7 +818,7 @@ export class BenchmarkEngine {
     if (!this.supabase) await this.ensureClient()
 
     await this.supabase!
-      .from('benchmark_comparisons' as any)
+      .from('benchmark_comparisons')
       .upsert(comparison as any)
   }
 

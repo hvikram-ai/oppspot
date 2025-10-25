@@ -28,7 +28,7 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
             <p>
-              By accessing and using oppSpot ("the Service"), you agree to be bound by these Terms of Service. 
+              By accessing and using oppSpot (&quot;the Service&quot;), you agree to be bound by these Terms of Service.
               If you do not agree to these terms, please do not use our Service.
             </p>
           </section>

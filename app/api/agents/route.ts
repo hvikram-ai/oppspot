@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import type { Row, Insert, Update } from '@/lib/supabase/helpers'
+import type { Insert, Update } from '@/lib/supabase/helpers'
 
 const createAgentSchema = z.object({
   agent_type: z.enum([
@@ -24,7 +24,7 @@ const createAgentSchema = z.object({
   ]),
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  configuration: z.record(z.any()),
+  configuration: z.record(z.string(), z.any()),
   is_active: z.boolean().default(true),
   schedule_cron: z.string().optional()
 })
@@ -39,19 +39,19 @@ export async function GET(_request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await (supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: { org_id: string } | null; error: unknown }
+      .single()) as { data: { org_id: string } | null; error: unknown }
 
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
     // Get agents for this organization
-    const { data: agents, error } = await supabase
-      .from('ai_agents')
+    const { data: agents, error } = await (supabase
+      .from('ai_agents') as any)
       .select('*')
       .eq('org_id', profile.org_id)
       .order('created_at', { ascending: false })
@@ -85,11 +85,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's org_id
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await (supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: { org_id: string } | null; error: unknown }
+      .single()) as { data: { org_id: string } | null; error: unknown }
 
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
@@ -100,9 +100,8 @@ export async function POST(request: NextRequest) {
     const validated = createAgentSchema.parse(body)
 
     // Create agent
-    const { data: agent, error } = await supabase
-      .from('ai_agents')
-      // @ts-expect-error - Supabase type inference issue with insert
+    const { data: agent, error } = await (supabase
+      .from('ai_agents') as any)
       .insert([{
         org_id: profile.org_id,
         agent_type: validated.agent_type,

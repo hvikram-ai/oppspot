@@ -5,7 +5,7 @@
  * View documents, activity, and team for a specific data room
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,20 +25,39 @@ import {
   Loader2,
   FolderOpen,
   Clock,
-  Download
+  Download,
+  MessageCircle
 } from 'lucide-react'
 import type { DataRoom } from '@/lib/data-room/types'
 import { UploadZone } from '@/components/data-room/upload-zone'
 import { DocumentList } from '@/components/data-room/document-list'
 import { ActivityFeed } from '@/components/data-room/activity-feed'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import { TeamPresence } from '@/components/collaboration/TeamPresence'
+import { CommentThread } from '@/components/collaboration/CommentThread'
 
 interface DataRoomWithDetails extends DataRoom {
   owner_name: string
   my_permission: string | null
-  data_room_access?: any[]
-  documents?: any[]
-  activity_logs?: any[]
+  data_room_access?: Array<{
+    id: string
+    invite_email: string
+    permission_level: string
+    accepted_at?: string
+  }>
+  documents?: Array<{
+    id: string
+    name: string
+    size_bytes: number
+    content_type: string
+    created_at: string
+  }>
+  activity_logs?: Array<{
+    id: string
+    action: string
+    user_name?: string
+    created_at: string
+  }>
 }
 
 export default function DataRoomDetailPage() {
@@ -48,11 +67,7 @@ export default function DataRoomDetailPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('documents')
 
-  useEffect(() => {
-    fetchDataRoom()
-  }, [params.id])
-
-  const fetchDataRoom = async () => {
+  const fetchDataRoom = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/data-rooms/${params.id}`)
@@ -70,7 +85,11 @@ export default function DataRoomDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id, router])
+
+  useEffect(() => {
+    fetchDataRoom()
+  }, [fetchDataRoom])
 
   const handleArchive = async () => {
     if (!confirm('Archive this data room? You can restore it later.')) return
@@ -195,6 +214,11 @@ export default function DataRoomDetailPage() {
         </div>
       </div>
 
+      {/* Team Presence */}
+      <div className="mb-6">
+        <TeamPresence entityType="data_room" entityId={params.id as string} />
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
@@ -236,7 +260,7 @@ export default function DataRoomDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="documents" className="gap-2">
             <FileText className="h-4 w-4" />
             Documents
@@ -244,6 +268,10 @@ export default function DataRoomDetailPage() {
           <TabsTrigger value="activity" className="gap-2">
             <Activity className="h-4 w-4" />
             Activity
+          </TabsTrigger>
+          <TabsTrigger value="comments" className="gap-2">
+            <MessageCircle className="h-4 w-4" />
+            Comments
           </TabsTrigger>
           <TabsTrigger value="team" className="gap-2">
             <Users className="h-4 w-4" />
@@ -261,7 +289,7 @@ export default function DataRoomDetailPage() {
           )}
           <DocumentList
             dataRoomId={dataRoom.id}
-            documents={dataRoom.documents || []}
+            documents={(dataRoom.documents || []) as any}
             onDocumentDeleted={fetchDataRoom}
           />
         </TabsContent>
@@ -269,8 +297,21 @@ export default function DataRoomDetailPage() {
         {/* Activity Tab */}
         <TabsContent value="activity">
           <ActivityFeed
-            activities={dataRoom.activity_logs || []}
+            activities={(dataRoom.activity_logs || []) as any}
           />
+        </TabsContent>
+
+        {/* Comments Tab */}
+        <TabsContent value="comments">
+          <Card>
+            <CardContent className="pt-6">
+              <CommentThread
+                entityType="data_room"
+                entityId={dataRoom.id}
+                entityName={dataRoom.name}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Team Tab */}

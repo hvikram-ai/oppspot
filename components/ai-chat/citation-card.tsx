@@ -118,9 +118,9 @@ export function CitationCard({ citation, index, compact = false }: CitationCardP
 
             {citation.metadata?.source && (
               <span className="text-[10px]">
-                Source: {citation.metadata.source}
+                Source: {citation.metadata.source as any as any}
               </span>
-            )}
+            ) as any}
           </div>
         </div>
       </div>

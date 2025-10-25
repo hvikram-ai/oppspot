@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Type definitions for stream-related data
 interface StreamRow {
@@ -195,9 +194,8 @@ export async function GET(
     }, 0) || 0
 
     // Update stream progress in database
-    const updateProgressResult = await supabase
+    await supabase
       .from('streams')
-      // @ts-expect-error - Complex JSONB type
       .update({
         current_progress: {
           completed: totalItems,
@@ -207,8 +205,8 @@ export async function GET(
           items_by_stage: itemsByStage,
           quality_score: avgQualityScore,
           signals_detected: signalsDetected
-        }
-      })
+        } as any
+      } as any)
       .eq('id', streamId)
 
     // Get recent agent executions
@@ -282,16 +280,14 @@ export async function GET(
 
     // Update goal status if changed
     if (goalStatus !== stream.goal_status) {
-      const updateStatusResult = await supabase
+      await supabase
         .from('streams')
-        // @ts-expect-error - JSONB field type
-        .update({ goal_status: goalStatus })
+        .update({ goal_status: goalStatus } as any as any)
         .eq('id', streamId)
 
       // Create insight for status change
       const insertInsightResult = await supabase
         .from('stream_insights')
-        // @ts-expect-error - Complex insert type
         .insert({
           stream_id: streamId,
           insight_type: 'progress_update',
@@ -306,7 +302,7 @@ export async function GET(
           generated_by: 'system',
           is_read: false,
           is_actionable: false
-        })
+        } as any)
     }
 
     return NextResponse.json({

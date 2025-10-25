@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 // DELETE /api/settings/api-keys/[id] - Delete specific API key
 export async function DELETE(
@@ -15,6 +14,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const awaitedParams = await params
     const keyId = awaitedParams.id
 
     if (!keyId) {

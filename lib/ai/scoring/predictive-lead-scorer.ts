@@ -6,6 +6,56 @@
 import { createClient } from '@/lib/supabase/server';
 import { OpenRouterService } from '@/lib/ai/openrouter';
 
+// Internal data type definitions
+interface BuyingSignal {
+  signal_strength: number;
+  detected_at: string;
+  signal_type?: string;
+  [key: string]: unknown;
+}
+
+interface Stakeholder {
+  role?: string;
+  influence_level?: number;
+  [key: string]: unknown;
+}
+
+interface EngagementHistory {
+  type?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+}
+
+interface CompanyData {
+  name?: string;
+  industry?: string;
+  employee_count_min?: number;
+  employee_count_max?: number;
+  [key: string]: unknown;
+}
+
+interface CompetitorData {
+  [key: string]: unknown;
+}
+
+interface ScoresData {
+  buying_signals?: number;
+  financial_health?: number;
+  technology_fit?: number;
+  engagement?: number;
+  stakeholder?: number;
+  market_timing?: number;
+  [key: string]: number | undefined;
+}
+
+interface AIPredictions {
+  deal_probability?: number;
+  optimal_timing?: string;
+  key_strengths?: string[];
+  risk_factors?: string[];
+  [key: string]: unknown;
+}
+
 export interface PredictiveLeadScore {
   company_id: string;
   company_name: string;
@@ -128,12 +178,12 @@ export class PredictiveLeadScorer {
 
     // Calculate component scores
     const scores = {
-      buying_signals: await this.scoreBuyingSignals(buyingSignals as any),
+      buying_signals: await this.scoreBuyingSignals(buyingSignals as BuyingSignal[]),
       financial_health: await this.scoreFinancialHealth(companyData),
       technology_fit: await this.scoreTechnologyFit(companyData),
-      engagement: await this.scoreEngagement(engagementHistory as any),
+      engagement: await this.scoreEngagement(engagementHistory as EngagementHistory[]),
       stakeholder: await this.scoreStakeholders(stakeholders),
-      market_timing: await this.scoreMarketTiming(companyData, buyingSignals as any)
+      market_timing: await this.scoreMarketTiming(companyData, buyingSignals as BuyingSignal[])
     };
 
     // Calculate overall score with weighted average
@@ -166,14 +216,14 @@ export class PredictiveLeadScorer {
     const deal_probability = this.calculateDealProbability(
       overall_score,
       scores,
-      buyingSignals as any,
+      buyingSignals as BuyingSignal[],
       stakeholders,
       aiPredictions || {}
     );
 
     // Determine optimal timing
     const optimal_engagement_timing = this.determineOptimalTiming(
-      buyingSignals as any,
+      buyingSignals as BuyingSignal[],
       scores,
       aiPredictions || {}
     );
@@ -182,7 +232,7 @@ export class PredictiveLeadScorer {
     const insights = await this.generateInsights(
       companyData,
       scores,
-      buyingSignals as any,
+      buyingSignals as BuyingSignal[],
       stakeholders,
       competitorData,
       aiPredictions || {}
@@ -191,9 +241,9 @@ export class PredictiveLeadScorer {
     // Identify success predictors and warnings
     const predictors = this.identifyPredictors(
       scores,
-      buyingSignals as any,
+      buyingSignals as BuyingSignal[],
       stakeholders,
-      engagementHistory as any
+      engagementHistory as EngagementHistory[]
     );
 
     // Estimate deal size and close date
@@ -203,7 +253,7 @@ export class PredictiveLeadScorer {
     // Prepare the complete score object
     const predictiveScore: PredictiveLeadScore = {
       company_id: companyId,
-      company_name: (companyData as any).name || 'Unknown',
+      company_name: (companyData as CompanyData).name || 'Unknown',
       overall_score: Math.round(overall_score),
       deal_probability,
       conversion_likelihood: this.getConversionLikelihood(deal_probability),
@@ -211,8 +261,8 @@ export class PredictiveLeadScorer {
       estimated_deal_size,
       estimated_close_date,
       scores,
-      insights: insights as any,
-      predictors: predictors as any,
+      insights: insights as PredictiveLeadScore['insights'],
+      predictors: predictors as PredictiveLeadScore['predictors'],
       metadata: {
         model_confidence: this.calculateConfidence(companyData, buyingSignals, stakeholders),
         data_completeness: this.calculateDataCompleteness(companyData, buyingSignals, stakeholders),
@@ -230,11 +280,11 @@ export class PredictiveLeadScorer {
   /**
    * Get AI predictions using OpenRouter
    */
-  private async getAIPredictions(data: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const companyData = data.companyData as any;
-    const scores = data.scores as any;
-    const buyingSignals = data.buyingSignals as any;
-    const stakeholders = data.stakeholders as any;
+  private async getAIPredictions(data: Record<string, unknown>): Promise<AIPredictions> {
+    const companyData = data.companyData as CompanyData;
+    const scores = data.scores as ScoresData;
+    const buyingSignals = data.buyingSignals as BuyingSignal[];
+    const stakeholders = data.stakeholders as Stakeholder[];
 
     const prompt = `
       Analyze this B2B lead data and provide predictive insights:
@@ -726,7 +776,6 @@ export class PredictiveLeadScorer {
 
     await supabase
       .from('ai_lead_scores')
-      // @ts-expect-error - Supabase type inference issue with upsert options
       .upsert(dbScore, {
         onConflict: 'company_id,org_id'
       });
@@ -735,7 +784,6 @@ export class PredictiveLeadScorer {
     for (const rec of score.insights.recommended_actions) {
       await supabase
         .from('ai_engagement_recommendations')
-        // @ts-expect-error - Supabase type inference issue with insert() method
         .insert({
           company_id: score.company_id,
           recommendation_type: rec.type,

@@ -90,7 +90,7 @@ async function sendPageView(data: PageViewData) {
  */
 export function trackEvent(
   eventName: string,
-  properties?: Record<string, any>
+  properties?: Record<string, unknown>
 ) {
   try {
     fetch('/api/dashboard/analytics/event', {

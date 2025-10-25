@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -22,17 +22,17 @@ export function VerifyEmailForm() {
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    // Check if user is already logged in
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user && !user.email_confirmed_at) {
       setEmail(user.email || '')
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    // Check if user is already logged in
+    checkUser()
+  }, [checkUser])
 
   const handleSendVerification = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -81,7 +81,7 @@ export function VerifyEmailForm() {
           </div>
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
-            We've sent a verification link to {email}
+            We&apos;ve sent a verification link to {email}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -93,7 +93,7 @@ export function VerifyEmailForm() {
           </Alert>
           
           <div className="space-y-2 text-sm text-muted-foreground">
-            <p className="font-medium">Didn't receive the email?</p>
+            <p className="font-medium">Didn&apos;t receive the email?</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Check your spam or junk folder</li>
               <li>Make sure {email} is correct</li>
@@ -128,7 +128,7 @@ export function VerifyEmailForm() {
       <CardHeader>
         <CardTitle>Verify your email</CardTitle>
         <CardDescription>
-          We'll send you a link to verify your email address
+          We&apos;ll send you a link to verify your email address
         </CardDescription>
       </CardHeader>
       <CardContent>

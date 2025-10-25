@@ -121,7 +121,7 @@ export function VoiceCommandModal({ open, onOpenChange }: Props) {
             <ul className="space-y-1">
               {examples.map((example, i) => (
                 <li key={i} className="text-sm text-muted-foreground">
-                  • "{example}"
+                  • &quot;{example}&quot;
                 </li>
               ))}
             </ul>

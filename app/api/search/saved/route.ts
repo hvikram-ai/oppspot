@@ -7,7 +7,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { AdvancedFilters } from '@/types/filters'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface SavedSearch {
   id: string
@@ -111,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has a search with this name
-    const { data: existing, error: existingError } = await supabase
+    const { data: existing, error: _existingError } = await supabase
       .from('saved_searches')
       .select('id')
       .eq('user_id', user.id)
@@ -128,7 +127,6 @@ export async function POST(request: NextRequest) {
     // Create saved search
     const { data: search, error } = await supabase
       .from('saved_searches')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         user_id: user.id,
         name: name.trim(),

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { PredictiveLeadScorer } from '@/lib/ai/scoring/predictive-lead-scorer';
-import type { Row } from '@/lib/supabase/helpers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,11 +16,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await (supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: { org_id: string } | null; error: unknown }
+      .single()) as { data: { org_id: string } | null; error: unknown }
 
     const body = await request.json();
     const { company_id, include_recommendations = true, use_ai = true } = body;
@@ -44,9 +43,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Log API usage
-    await supabase
-      .from('api_audit_log')
-      // @ts-expect-error - Supabase type inference issue
+    await (supabase
+      .from('api_audit_log') as any)
       .insert({
         api_name: 'ai_predictive_scoring',
         endpoint: '/api/ai-scoring/predictive',
@@ -88,11 +86,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await (supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single() as { data: { org_id: string } | null; error: unknown }
+      .single()) as { data: { org_id: string } | null; error: unknown }
 
     const searchParams = request.nextUrl.searchParams;
     const company_id = searchParams.get('company_id');

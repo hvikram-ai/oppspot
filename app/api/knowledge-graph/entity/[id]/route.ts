@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(
   request: NextRequest,
@@ -25,7 +24,7 @@ export async function GET(
     }
 
     // Get user's org
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
@@ -54,7 +53,6 @@ export async function GET(
     }
 
     // Get relationships
-    // @ts-expect-error - Type inference issue
     const { data: relationships, error: relationshipsError } = await supabase.rpc('find_related_entities', {
       p_entity_id: id,
       p_relationship_type: null,
@@ -65,7 +63,7 @@ export async function GET(
     const { data: facts, error: factsError } = await supabase.rpc('get_entity_facts', {
       p_entity_id: id,
       p_include_historical: false
-    })
+    } as any)
 
     return NextResponse.json({
       success: true,

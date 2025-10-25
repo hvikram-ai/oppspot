@@ -48,7 +48,7 @@ async function testCompaniesHouseService() {
         console.log(`✅ Got profile for ${profile.company_name}`)
         console.log(`   Status: ${profile.company_status}`)
         console.log(`   Type: ${profile.type}`)
-        console.log(`   Incorporated: ${profile.date_of_creation}`)
+        console.log(`   Incorporated: ${(profile as any).date_of_creation}`)
         
         // Test formatting for database
         console.log('\n3️⃣ Testing database formatting...')

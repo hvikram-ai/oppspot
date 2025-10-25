@@ -273,7 +273,7 @@ export function ChatInterface({ conversationId, onConversationCreated }: ChatInt
       <div className="border-t p-4">
         <div className="flex gap-2">
           <Input
-            placeholder="Ask anything... 'Find fintech companies in London' or 'Research Revolut'"
+            placeholder="Ask anything... &apos;Find fintech companies in London&apos; or &apos;Research Revolut&apos;"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
@@ -292,7 +292,7 @@ export function ChatInterface({ conversationId, onConversationCreated }: ChatInt
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Try: "Find SaaS companies that raised Series A" or "Who should I contact at Stripe?"
+          Try: &quot;Find SaaS companies that raised Series A&quot; or &quot;Who should I contact at Stripe?&quot;
         </p>
       </div>
     </div>

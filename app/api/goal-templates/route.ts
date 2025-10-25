@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/goal-templates
@@ -107,7 +106,6 @@ export async function POST(request: NextRequest) {
     // Insert template
     const { data: template, error } = await supabase
       .from('goal_templates')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         id,
         name,

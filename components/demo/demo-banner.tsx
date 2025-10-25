@@ -145,7 +145,7 @@ export function DemoRestrictionModal({
         </div>
 
         <p className="text-muted-foreground mb-6">
-          The "{feature}" feature is not available in demo mode. 
+          The &quot;{feature}&quot; feature is not available in demo mode.
           Create a free account to unlock all features and start using real data.
         </p>
 

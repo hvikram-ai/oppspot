@@ -206,9 +206,9 @@ export function RecentActivity({ userId }: RecentActivityProps) {
                       {activity.metadata?.location && (
                         <Badge variant="outline" className="text-xs">
                           <MapPin className="h-3 w-3 mr-1" />
-                          {activity.metadata.location}
+                          {activity.metadata.location as any as any}
                         </Badge>
-                      )}
+                      ) as any}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {activity.description}

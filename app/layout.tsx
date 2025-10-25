@@ -9,6 +9,11 @@ import { ChatWidget } from "@/components/ai-chat/chat-widget";
 import { ServiceWorkerRegistration, InstallPrompt } from "@/components/pwa/service-worker-registration";
 import { MobileBottomNav, MobileFAB } from "@/components/layout/mobile-nav";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LiveNotifications } from "@/components/collaboration/LiveNotifications";
+import { RBACProvider } from "@/lib/rbac/rbac-context";
+import { CommandBar } from "@/components/command-bar/command-bar";
+import { CommandBarProvider } from "@/hooks/use-command-bar";
+import { CommandBarHint } from "@/components/command-bar/command-bar-hint";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -91,17 +96,24 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider defaultTheme="system" storageKey="oppspot-ui-theme">
-          <DemoModeProvider>
-            <NotificationProvider>
-              <ServiceWorkerRegistration />
-              <InstallPrompt />
-              <DemoBanner />
-              {children}
-              <MobileBottomNav />
-              <MobileFAB />
-              <ChatWidget position="bottom-right" />
-            </NotificationProvider>
-          </DemoModeProvider>
+          <RBACProvider>
+            <DemoModeProvider>
+              <NotificationProvider>
+                <CommandBarProvider>
+                  <ServiceWorkerRegistration />
+                  <InstallPrompt />
+                  <DemoBanner />
+                  <LiveNotifications />
+                  <CommandBar />
+                  <CommandBarHint />
+                  {children}
+                  <MobileBottomNav />
+                  <MobileFAB />
+                  <ChatWidget position="bottom-right" />
+                </CommandBarProvider>
+              </NotificationProvider>
+            </DemoModeProvider>
+          </RBACProvider>
           <Toaster position="bottom-right" richColors />
         </ThemeProvider>
       </body>

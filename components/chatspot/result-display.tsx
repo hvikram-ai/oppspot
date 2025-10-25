@@ -26,7 +26,7 @@ import { CreateListDialog } from './create-list-dialog'
 
 interface ResultDisplayProps {
   result: ChatResult
-  onAction?: (action: string, data: any) => void
+  onAction?: (action: string, data: Record<string, unknown>) => void
 }
 
 export function ResultDisplay({ result, onAction }: ResultDisplayProps) {

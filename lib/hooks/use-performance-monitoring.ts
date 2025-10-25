@@ -52,6 +52,39 @@ export function usePerformanceMonitoring() {
       console.warn('Performance observer failed:', e)
     }
 
+    // Define sendMetrics inside the effect
+    const sendMetrics = async (metricsToSend: PerformanceMetrics) => {
+      // Log to console in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📊 Performance Metrics:', {
+          page: pathname,
+          ...metricsToSend,
+          ratings: {
+            fcp: metricsToSend.fcp ? (metricsToSend.fcp < 1000 ? 'good' : metricsToSend.fcp < 2500 ? 'needs improvement' : 'poor') : 'N/A',
+            lcp: metricsToSend.lcp ? (metricsToSend.lcp < 2000 ? 'good' : metricsToSend.lcp < 4000 ? 'needs improvement' : 'poor') : 'N/A',
+            fid: metricsToSend.fid ? (metricsToSend.fid < 100 ? 'good' : metricsToSend.fid < 300 ? 'needs improvement' : 'poor') : 'N/A',
+            cls: metricsToSend.cls ? (metricsToSend.cls < 0.1 ? 'good' : metricsToSend.cls < 0.25 ? 'needs improvement' : 'poor') : 'N/A',
+          }
+        })
+      }
+
+      // Send to analytics endpoint
+      try {
+        await fetch('/api/dashboard/analytics/view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            page: pathname,
+            metrics: metricsToSend,
+            timestamp: new Date().toISOString(),
+          }),
+        })
+      } catch (error) {
+        // Silently fail - don't disrupt user experience
+        console.error('Failed to send performance metrics:', error)
+      }
+    }
+
     // Get navigation timing metrics
     const getNavigationMetrics = () => {
       const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
@@ -78,38 +111,6 @@ export function usePerformanceMonitoring() {
       window.removeEventListener('load', getNavigationMetrics)
     }
   }, [pathname])
-
-  const sendMetrics = async (metrics: PerformanceMetrics) => {
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📊 Performance Metrics:', {
-        page: pathname,
-        ...metrics,
-        ratings: {
-          fcp: metrics.fcp ? (metrics.fcp < 1000 ? 'good' : metrics.fcp < 2500 ? 'needs improvement' : 'poor') : 'N/A',
-          lcp: metrics.lcp ? (metrics.lcp < 2000 ? 'good' : metrics.lcp < 4000 ? 'needs improvement' : 'poor') : 'N/A',
-          fid: metrics.fid ? (metrics.fid < 100 ? 'good' : metrics.fid < 300 ? 'needs improvement' : 'poor') : 'N/A',
-          cls: metrics.cls ? (metrics.cls < 0.1 ? 'good' : metrics.cls < 0.25 ? 'needs improvement' : 'poor') : 'N/A',
-        }
-      })
-    }
-
-    // Send to analytics endpoint
-    try {
-      await fetch('/api/dashboard/analytics/view', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          page: pathname,
-          metrics,
-          timestamp: new Date().toISOString(),
-        }),
-      })
-    } catch (error) {
-      // Silently fail - don't disrupt user experience
-      console.error('Failed to send performance metrics:', error)
-    }
-  }
 }
 
 /**

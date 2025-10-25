@@ -4,19 +4,26 @@
  */
 
 import { ScanEntity } from '../../domain/entities/scan.entity'
-import { IScanRepository, ScanStatus, ScanStage } from '../../core/interfaces'
+import {
+  IScanRepository,
+  ScanStatus,
+  ScanStage,
+  ScanConfiguration,
+  ScanError,
+  CostBreakdown
+} from '../../core/interfaces'
 
 // Database row type
 interface ScanRow {
   id: string
-  configuration: any
+  configuration: ScanConfiguration
   status: ScanStatus
   progress: number
   current_stage: ScanStage
   companies_discovered: number
   companies_analyzed: number
-  errors: any[]
-  costs: any
+  errors: ScanError[]
+  costs: CostBreakdown
   created_at: string
   updated_at: string
   started_at?: string
@@ -24,7 +31,6 @@ interface ScanRow {
   estimated_completion?: string
 }
 
-  // @ts-ignore - Interface implementation mismatch
 export class ScanRepository implements IScanRepository {
   constructor(
     private readonly db: { query: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }
@@ -34,14 +40,14 @@ export class ScanRepository implements IScanRepository {
     try {
       const result = await this.db.query(
         'SELECT * FROM scans WHERE id = $1',
-        [id as any]
+        [id]
       )
 
       if (result.rows.length === 0) {
         return null
       }
 
-      const row = result.rows[0] as unknown as ScanRow
+      const row = result.rows[0] as ScanRow
       return ScanEntity.fromSnapshot(
         row.id,
         row.configuration,
@@ -103,24 +109,25 @@ export class ScanRepository implements IScanRepository {
         [status]
       )
 
-      return result.rows.map((row: unknown) => 
-        ScanEntity.fromSnapshot(
-          (row as any).id,
-          (row as any).configuration,
-          (row as any).status,
-          (row as any).progress,
-          (row as any).current_stage,
-          (row as any).companies_discovered,
-          (row as any).companies_analyzed,
-          (row as any).errors || [],
-          (row as any).costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
-          new Date((row as any).created_at),
-          new Date((row as any).updated_at),
-          (row as any).started_at ? new Date((row as any).started_at) : undefined,
-          (row as any).completed_at ? new Date((row as any).completed_at) : undefined,
-          (row as any).estimated_completion ? new Date((row as any).estimated_completion) : undefined
+      return result.rows.map((row) => {
+        const scanRow = row as ScanRow
+        return ScanEntity.fromSnapshot(
+          scanRow.id,
+          scanRow.configuration,
+          scanRow.status,
+          scanRow.progress,
+          scanRow.current_stage,
+          scanRow.companies_discovered,
+          scanRow.companies_analyzed,
+          scanRow.errors || [],
+          scanRow.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
+          new Date(scanRow.created_at),
+          new Date(scanRow.updated_at),
+          scanRow.started_at ? new Date(scanRow.started_at) : undefined,
+          scanRow.completed_at ? new Date(scanRow.completed_at) : undefined,
+          scanRow.estimated_completion ? new Date(scanRow.estimated_completion) : undefined
         )
-      )
+      })
     } catch (error) {
       console.error('Error finding scans by status:', error)
       throw new Error(`Failed to find scans with status ${status}`)
@@ -232,24 +239,25 @@ export class ScanRepository implements IScanRepository {
         [limit]
       )
 
-      return result.rows.map((row: unknown) => 
-        ScanEntity.fromSnapshot(
-          (row as any).id,
-          (row as any).configuration,
-          (row as any).status,
-          (row as any).progress,
-          (row as any).current_stage,
-          (row as any).companies_discovered,
-          (row as any).companies_analyzed,
-          (row as any).errors || [],
-          (row as any).costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
-          new Date((row as any).created_at),
-          new Date((row as any).updated_at),
-          (row as any).started_at ? new Date((row as any).started_at) : undefined,
-          (row as any).completed_at ? new Date((row as any).completed_at) : undefined,
-          (row as any).estimated_completion ? new Date((row as any).estimated_completion) : undefined
+      return result.rows.map((row) => {
+        const scanRow = row as ScanRow
+        return ScanEntity.fromSnapshot(
+          scanRow.id,
+          scanRow.configuration,
+          scanRow.status,
+          scanRow.progress,
+          scanRow.current_stage,
+          scanRow.companies_discovered,
+          scanRow.companies_analyzed,
+          scanRow.errors || [],
+          scanRow.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
+          new Date(scanRow.created_at),
+          new Date(scanRow.updated_at),
+          scanRow.started_at ? new Date(scanRow.started_at) : undefined,
+          scanRow.completed_at ? new Date(scanRow.completed_at) : undefined,
+          scanRow.estimated_completion ? new Date(scanRow.estimated_completion) : undefined
         )
-      )
+      })
     } catch (error) {
       console.error('Error finding recent scans:', error)
       throw new Error('Failed to find recent scans')
@@ -277,24 +285,25 @@ export class ScanRepository implements IScanRepository {
         [startDate.toISOString(), endDate.toISOString()]
       )
 
-      return result.rows.map((row: unknown) => 
-        ScanEntity.fromSnapshot(
-          (row as any).id,
-          (row as any).configuration,
-          (row as any).status,
-          (row as any).progress,
-          (row as any).current_stage,
-          (row as any).companies_discovered,
-          (row as any).companies_analyzed,
-          (row as any).errors || [],
-          (row as any).costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
-          new Date((row as any).created_at),
-          new Date((row as any).updated_at),
-          (row as any).started_at ? new Date((row as any).started_at) : undefined,
-          (row as any).completed_at ? new Date((row as any).completed_at) : undefined,
-          (row as any).estimated_completion ? new Date((row as any).estimated_completion) : undefined
+      return result.rows.map((row) => {
+        const scanRow = row as ScanRow
+        return ScanEntity.fromSnapshot(
+          scanRow.id,
+          scanRow.configuration,
+          scanRow.status,
+          scanRow.progress,
+          scanRow.current_stage,
+          scanRow.companies_discovered,
+          scanRow.companies_analyzed,
+          scanRow.errors || [],
+          scanRow.costs || { totalCost: 0, currency: 'GBP', costBySource: {}, requestCounts: {} },
+          new Date(scanRow.created_at),
+          new Date(scanRow.updated_at),
+          scanRow.started_at ? new Date(scanRow.started_at) : undefined,
+          scanRow.completed_at ? new Date(scanRow.completed_at) : undefined,
+          scanRow.estimated_completion ? new Date(scanRow.estimated_completion) : undefined
         )
-      )
+      })
     } catch (error) {
       console.error('Error finding scans by date range:', error)
       throw new Error('Failed to find scans in date range')

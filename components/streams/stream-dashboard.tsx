@@ -5,7 +5,7 @@
  * Comprehensive dashboard showing stream progress, insights, and agent activity
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  Plus,
   Activity,
   Zap,
   Star,
@@ -92,7 +93,7 @@ export function StreamDashboard({ streamId, initialData }: StreamDashboardProps)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false)
 
-  const fetchDashboardData = async (refresh = false) => {
+  const fetchDashboardData = useCallback(async (refresh = false) => {
     if (refresh) setIsRefreshing(true)
     else setIsLoading(true)
 
@@ -108,7 +109,7 @@ export function StreamDashboard({ streamId, initialData }: StreamDashboardProps)
       setIsLoading(false)
       setIsRefreshing(false)
     }
-  }
+  }, [streamId])
 
   const generateInsights = async () => {
     setIsGeneratingInsights(true)
@@ -135,7 +136,7 @@ export function StreamDashboard({ streamId, initialData }: StreamDashboardProps)
     if (!initialData) {
       fetchDashboardData()
     }
-  }, [streamId])
+  }, [streamId, fetchDashboardData, initialData])
 
   if (isLoading || !data) {
     return (
@@ -163,34 +164,37 @@ export function StreamDashboard({ streamId, initialData }: StreamDashboardProps)
   return (
     <div className="space-y-6">
       {/* Dashboard Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <BarChart3 className="h-6 w-6" />
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6" />
             Stream Dashboard
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Real-time insights, progress tracking, and agent activity
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
             onClick={generateInsights}
             disabled={isGeneratingInsights}
+            className="h-9"
           >
             <Brain className={cn("h-4 w-4 mr-2", isGeneratingInsights && "animate-pulse")} />
-            {isGeneratingInsights ? 'Generating...' : 'Generate Insights'}
+            <span className="hidden sm:inline">{isGeneratingInsights ? 'Generating...' : 'Generate Insights'}</span>
+            <span className="sm:hidden">Insights</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => fetchDashboardData(true)}
             disabled={isRefreshing}
+            className="h-9"
           >
             <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
@@ -273,25 +277,27 @@ export function StreamDashboard({ streamId, initialData }: StreamDashboardProps)
 
       {/* Main Dashboard Content */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="insights">
-            <Lightbulb className="h-4 w-4 mr-2" />
-            Insights
-            {(unreadInsights > 0 || actionableInsights > 0) && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                {unreadInsights + actionableInsights}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="agents">
-            <Brain className="h-4 w-4 mr-2" />
-            Agent Activity
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-auto min-w-max sm:w-full sm:min-w-0">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">
+              <BarChart3 className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="text-xs sm:text-sm">
+              <Lightbulb className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Insights</span>
+              {(unreadInsights > 0 || actionableInsights > 0) && (
+                <Badge variant="destructive" className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5 p-0 flex items-center justify-center text-[10px] sm:text-xs">
+                  {unreadInsights + actionableInsights}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="agents" className="text-xs sm:text-sm">
+              <Brain className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Agents</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">

@@ -42,7 +42,7 @@ export function useChat(options: UseChatOptions = {}) {
   // Initialize session on mount
   useEffect(() => {
     initializeSession()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const initializeSession = async () => {
     try {
@@ -144,8 +144,8 @@ export function useChat(options: UseChatOptions = {}) {
         console.log('Stream aborted')
       } else {
         console.error('Chat error:', err)
-        setError(err)
-        options.onError?.(err)
+        setError(err as Error)
+        options.onError?.(err as Error)
         
         toast.error((err as Error).message || 'Failed to send message')
 
@@ -162,7 +162,7 @@ export function useChat(options: UseChatOptions = {}) {
       setIsStreaming(false)
       abortControllerRef.current = null
     }
-  }, [sessionId, options, toast])
+  }, [sessionId, options, toast]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStreamResponse = async (response: Response, signal: AbortSignal) => {
     const reader = response.body?.getReader()
@@ -210,7 +210,15 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }
 
-  const handleStreamChunk = (chunk: any, messageIndex: number) => {
+  interface StreamChunk {
+    type: 'text' | 'citation' | 'done' | 'error'
+    content?: string
+    confidence?: number
+    session_id?: string
+    citations?: Citation[]
+  }
+
+  const handleStreamChunk = (chunk: StreamChunk, messageIndex: number) => {
     switch (chunk.type) {
       case 'text':
         streamBufferRef.current += chunk.content
@@ -228,7 +236,7 @@ export function useChat(options: UseChatOptions = {}) {
 
       case 'citation':
         if (chunk.citations) {
-          setCitations(prev => [...prev, ...chunk.citations])
+          setCitations(prev => [...prev, ...(chunk.citations || [])])
           options.onCitation?.(chunk.citations)
         }
         break

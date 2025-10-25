@@ -43,7 +43,7 @@ export function SimilarTargetsFilterSection({
       }))
       setSelectedCompanies(companies)
     }
-  }, [filters.similarTargets?.similarToCompanyIds])
+  }, [filters.similarTargets?.similarToCompanyIds]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCompaniesChange = (companies: Company[]) => {
     setSelectedCompanies(companies)

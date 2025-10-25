@@ -121,7 +121,7 @@ export function EnrichmentAgentConfig({ configuration, onChange }: EnrichmentAge
             <div className="space-y-0.5">
               <Label htmlFor="auto-enrich">Auto-Enrich New Companies</Label>
               <p className="text-xs text-muted-foreground">
-                Automatically enrich companies as they're added to the stream
+                Automatically enrich companies as they&apos;re added to the stream
               </p>
             </div>
             <Switch

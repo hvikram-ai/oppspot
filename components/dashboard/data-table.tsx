@@ -132,7 +132,7 @@ export function DataTable<T extends Record<string, unknown>>({
               <TableRow key={index}>
                 {columns.map((column) => (
                   <TableCell key={column.id} className={column.className}>
-                    {getCellValue(row, column)}
+                    {getCellValue(row, column) as any}
                   </TableCell>
                 ))}
               </TableRow>

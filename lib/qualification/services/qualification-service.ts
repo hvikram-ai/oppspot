@@ -6,7 +6,6 @@ import { LeadRoutingEngine } from '../routing/lead-routing-engine'
 import { ThresholdAlertSystem } from '../alerts/threshold-alert-system'
 import { ChecklistEngine } from '../checklists/checklist-engine'
 import { LeadRecyclingEngine } from '../recycling/lead-recycling-engine'
-import type { Row } from '@/lib/supabase/helpers'
 import type {
   BANTQualification,
   MEDDICQualification,
@@ -181,34 +180,34 @@ export class QualificationService {
           lead_id: leadId,
           company_id: companyId,
           ...data
-        } as any) as any
+        })
       } else if (framework === 'MEDDIC') {
         qualification = await this.meddicFramework.calculateMEDDIC({
           lead_id: leadId,
           company_id: companyId,
           ...data
-        } as any) as any
+        })
       }
 
       if (qualification) {
         // Check for alerts
-        alerts = await this.checkQualificationAlerts(leadId, qualification as any)
+        alerts = await this.checkQualificationAlerts(leadId, qualification)
 
         // Route the lead if qualified
         const isMEDDIC = 'forecast_category' in qualification
-        const qualStatus = (qualification as any).qualification_status
+        const qualStatus = qualification.qualification_status
         const isQualified = qualStatus === 'qualified' ||
-                           (isMEDDIC && (qualification as any).forecast_category === 'commit')
+                           (isMEDDIC && qualification.forecast_category === 'commit')
 
         if (isQualified) {
           assignment = await this.routingEngine.routeLead({
             lead_id: leadId,
             company_id: companyId,
-            overall_score: (qualification as any).overall_score,
+            overall_score: qualification.overall_score,
             framework,
             status: qualStatus ||
-                    (isMEDDIC ? (qualification as any).forecast_category : undefined)
-          } as any) as any
+                    (isMEDDIC ? qualification.forecast_category : undefined)
+          })
         }
 
         // Create or update checklist (simplified - would need checklist ID in real implementation)
@@ -216,14 +215,14 @@ export class QualificationService {
 
         // Check if lead needs recycling
         const needsRecycling = qualStatus === 'disqualified' ||
-                              (isMEDDIC && (qualification as any).forecast_category === 'omitted')
+                              (isMEDDIC && qualification.forecast_category === 'omitted')
 
         if (needsRecycling) {
           await this.recyclingEngine.recycleLead({
             lead_id: leadId,
             reason: qualStatus || 'disqualified',
-            score: (qualification as any).overall_score
-          } as any)
+            score: qualification.overall_score
+          })
         }
       }
 
@@ -274,7 +273,7 @@ export class QualificationService {
       }
 
       // Extract metadata fields
-      const metadata = company.metadata as Record<string, any> || {}
+      const metadata = company.metadata as Record<string, unknown> || {}
       const employeeCount = typeof metadata.employee_count === 'number' ? metadata.employee_count : 0
       const revenue = typeof metadata.revenue === 'number' ? metadata.revenue : 0
       const industry = typeof metadata.industry === 'string' ? metadata.industry : ''
@@ -356,21 +355,21 @@ export class QualificationService {
 
       // Get BANT qualifications
       const { data: bantQualifications } = await supabase
-        .from('bant_qualifications' as any)
+        .from('bant_qualifications')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100)
 
       // Get MEDDIC qualifications
       const { data: meddicQualifications } = await supabase
-        .from('meddic_qualifications' as any)
+        .from('meddic_qualifications')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100)
 
       // Get active assignments
       const { data: assignments } = await supabase
-        .from('lead_assignments' as any)
+        .from('lead_assignments')
         .select('*')
         .in('status', ['assigned', 'accepted', 'working'])
         .order('created_at', { ascending: false })
@@ -378,7 +377,7 @@ export class QualificationService {
 
       // Get recent alerts
       const { data: recentAlerts } = await supabase
-        .from('alert_history' as any)
+        .from('alert_history')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20)
@@ -578,12 +577,12 @@ export class QualificationService {
         try {
           // Get existing qualification data
           const { data: bantData } = await supabase
-            .from('bant_qualifications' as any)
+            .from('bant_qualifications')
             .select('*')
             .eq('lead_id', lead.id)
             .single()
 
-          const typedBantData = bantData as any
+          const typedBantData = bantData as unknown as { budget_score?: number; authority_score?: number; need_score?: number; timeline_score?: number }
 
           if (typedBantData) {
             // Recalculate with existing data
@@ -688,7 +687,7 @@ export class QualificationService {
       // Analyze MEDDIC scores
       if (history.meddic.length > 0) {
         const latest = history.meddic[0]
-        const economicBuyer = latest.economic_buyer_details as any
+        const economicBuyer = latest.economic_buyer_details as { identified?: boolean }
 
         if (!economicBuyer?.identified) {
           recommendations.push({
@@ -724,7 +723,7 @@ export class QualificationService {
       // Check for stalled deals
       if (history.assignments.length > 0) {
         const latestAssignment = history.assignments[0]
-        const createdAt = (latestAssignment as any).created_at
+        const createdAt = latestAssignment.created_at ?? new Date().toISOString()
         const daysSinceAssignment = Math.floor(
           (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
         )

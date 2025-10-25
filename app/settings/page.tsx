@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,7 @@ interface SettingSection {
   title: string
   description: string
   href: string
-  icon: React.ElementType
+  icon: React.ComponentType<{ className?: string }>
   status?: 'complete' | 'incomplete' | 'attention'
   badge?: string
 }
@@ -38,11 +38,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [completionPercentage, setCompletionPercentage] = useState(0)
 
-  useEffect(() => {
-    loadUserData()
-  }, [])
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -54,26 +50,32 @@ export default function SettingsPage() {
           .eq('id', user.id)
           .single()
 
-        setUser({ ...user, profile: profile as Row<'profiles'> })
-        calculateCompletion(profile as Row<'profiles'>)
+        setUser({ ...user, profile: profile as unknown as Row<'profiles'> })
+        calculateCompletion(profile as unknown as Row<'profiles'>)
       }
     } catch (error) {
       console.error('Error loading user data:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const calculateCompletion = (profile: any) => {
+  useEffect(() => {
+    loadUserData()
+  }, [loadUserData])
+
+  const calculateCompletion = (profile: Row<'profiles'> | null) => {
     let completed = 0
     const total = 8
-    
+
     if (profile?.full_name) completed++
     if (profile?.avatar_url) completed++
-    if (profile?.preferences?.email_notifications !== undefined) completed++
-    if (profile?.preferences?.theme) completed++
+
+    const preferences = profile?.preferences as Record<string, unknown> | undefined
+    if (preferences?.email_notifications !== undefined) completed++
+    if (preferences?.theme) completed++
     // Add more checks as needed
-    
+
     setCompletionPercentage(Math.round((completed / total) * 100))
   }
 
@@ -98,7 +100,7 @@ export default function SettingsPage() {
       description: 'Control email alerts and notification preferences',
       href: '/settings/notifications',
       icon: Bell,
-      status: user?.profile?.preferences?.email_notifications !== undefined ? 'complete' : 'incomplete'
+      status: (user?.profile?.preferences as { email_notifications?: boolean })?.email_notifications !== undefined ? 'complete' : 'incomplete'
     },
     {
       title: 'Appearance',

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +37,6 @@ export async function GET(request: NextRequest) {
     if (user) {
       await supabase
         .from('profiles')
-        // @ts-expect-error - Type inference issue
         .update({ 
           email_verified_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -46,7 +44,6 @@ export async function GET(request: NextRequest) {
         .eq('id', user.id)
 
       // Log the verification event
-      // @ts-expect-error - Supabase type inference issue
       await supabase.from('events').insert({
         user_id: user.id,
         event_type: 'email_verified',

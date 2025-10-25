@@ -29,15 +29,6 @@ export default function AdvancedSearchPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([])
 
-  // Auto-search on filter changes (with debounce)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      handleSearch()
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
-  }, [filters])
-
   const handleSearch = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -72,6 +63,15 @@ export default function AdvancedSearchPage() {
       setIsLoading(false)
     }
   }, [filters])
+
+  // Auto-search on filter changes (with debounce)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleSearch()
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [handleSearch, filters])
 
   const handleSaveSearch = useCallback(
     async (name: string, searchFilters: AdvancedFilters, description?: string) => {
@@ -175,7 +175,15 @@ export default function AdvancedSearchPage() {
                   {results.executionTimeMs}ms
                 </p>
               </div>
-              <SearchResults businesses={results.businesses} />
+              <SearchResults
+                results={results.businesses}
+                loading={isLoading}
+                selectedResults={new Set()}
+                onSelectionChange={() => {}}
+                currentPage={1}
+                totalPages={Math.ceil(results.total / 20)}
+                onPageChange={() => {}}
+              />
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center">

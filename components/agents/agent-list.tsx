@@ -448,7 +448,7 @@ export function AgentList({
           if (!open) setEditingAgent(null)
         }}
         streamId={streamId}
-        existingAgent={editingAgent}
+        existingAgent={editingAgent as unknown as Record<string, unknown> | undefined}
         existingAgents={agents}
         onSave={editingAgent ? handleUpdateAgent : handleAddAgent}
       />
@@ -459,7 +459,7 @@ export function AgentList({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Agent?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingAgent?.name}"? This action cannot be
+              Are you sure you want to delete &quot;{deletingAgent?.name}&quot;? This action cannot be
               undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -113,12 +113,13 @@ export class OpportunityBot extends BaseAgent {
         },
         metrics
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       metrics.durationMs = Date.now() - startTime
       return {
         success: false,
         output: {},
-        error: error.message,
+        error: errorMessage,
         metrics
       }
     }

@@ -23,7 +23,6 @@ interface CompanyAnalysisResult {
 }
 import { ScanEntity } from '../../domain/entities/scan.entity'
 
-  // @ts-ignore - Interface implementation mismatch
 export class ScanOrchestrationService implements IScanOrchestrationService {
   constructor(
     private readonly dataCollectionService: IDataCollectionService,

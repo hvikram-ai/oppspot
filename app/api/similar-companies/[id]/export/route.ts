@@ -9,7 +9,6 @@ import { generateSimilarityAnalysisPDF } from '@/lib/pdf/services/similarity-pdf
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -110,7 +109,7 @@ export async function POST(
       strategic_recommendations?: string[];
     }
 
-    type AnalysisData = Row<'similarity_analyses'> & AnalysisMetadata & {
+    type AnalysisData = any & AnalysisMetadata & {
       similar_company_matches?: Array<{
         company_name: string;
         overall_score: number;
@@ -163,7 +162,7 @@ export async function POST(
     // Prepare export data
     const matches = analysis?.similar_company_matches || []
     const topMatches = matches
-      .sort((a, b) => (b as CompanyMatch).overall_score - (a as CompanyMatch).overall_score)
+      .sort((a: any, b: any) => (b as unknown as CompanyMatch).overall_score - (a as unknown as CompanyMatch).overall_score)
       .slice(0, maxMatches)
 
     const exportData = {
@@ -210,7 +209,7 @@ export async function POST(
         break
 
       case 'csv':
-        exportContent = generateCSV(topMatches)
+        exportContent = generateCSV(topMatches as unknown as CompanyMatch[])
         fileName = `similar-companies-${analysis?.target_company_name || 'analysis'}-${analysisId.slice(0, 8)}.csv`
         contentType = 'text/csv'
         break
@@ -410,7 +409,7 @@ async function generatePDFExport(
     )
 
     // Return PDF directly as download
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer.buffer as unknown as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': contentType,
@@ -438,7 +437,7 @@ async function generatePDFExport(
         generation_status: 'failed',
         template_version: 'v1.0',
         error_message: getErrorMessage(error)
-      })
+      } as never)
       .select()
       .single();
 
@@ -449,7 +448,7 @@ async function generatePDFExport(
     return NextResponse.json({
       error: 'PDF generation temporarily unavailable',
       message: 'Please try again in a few minutes or contact support',
-      exportId: exportRecord?.id,
+      exportId: (exportRecord as { id: string } | null)?.id,
       details: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
     }, { status: 500 })
   }
@@ -474,26 +473,26 @@ async function generatePowerPointExport(
       export_content: exportData as Record<string, unknown>,
       generation_status: 'pending',
       template_version: 'v1.0'
-    })
+    } as never)
     .select()
     .single();
 
-  const exportRecord = exportRecordData as Row<'similarity_analysis_exports'> | null
+  const exportRecord = exportRecordData as any
 
   if (error) {
     console.error('[Export API] Error creating PowerPoint export record:', error);
   }
 
-  if (error) {
+  if (error || !exportRecord) {
     throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)
   }
 
   return NextResponse.json({
-    exportId: exportRecord!.id,
+    exportId: (exportRecord as { id: string }).id,
     status: 'generating',
     message: 'PowerPoint export is being generated. Check back in a few minutes.',
     estimatedCompletion: '3-5 minutes',
-    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${exportRecord!.id}`
+    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${(exportRecord as { id: string }).id}`
   }, { status: 202 })
 }
 
@@ -516,26 +515,26 @@ async function generateExcelExport(
       export_content: exportData as Record<string, unknown>,
       generation_status: 'pending',
       template_version: 'v1.0'
-    })
+    } as never)
     .select()
     .single();
 
-  const exportRecord = exportRecordData as Row<'similarity_analysis_exports'> | null
+  const exportRecord = exportRecordData as any
 
   if (error) {
     console.error('[Export API] Error creating Excel export record:', error);
   }
 
-  if (error) {
+  if (error || !exportRecord) {
     throw new Error(`Failed to create export record: ${getErrorMessage(error)}`)
   }
 
   return NextResponse.json({
-    exportId: exportRecord!.id,
+    exportId: (exportRecord as { id: string }).id,
     status: 'generating',
     message: 'Excel export is being generated. Check back in a few minutes.',
     estimatedCompletion: '1-2 minutes',
-    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${exportRecord!.id}`
+    checkUrl: `/api/similar-companies/${analysisId}/export?exportId=${(exportRecord as { id: string }).id}`
   }, { status: 202 })
 }
 

@@ -67,7 +67,7 @@ export function FirmographicsFilterSection({
       }))
       setSelectedLocations(locations)
     }
-  }, [filters.firmographics?.locations])
+  }, [filters.firmographics?.locations]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationsChange = (locations: Location[]) => {
     setSelectedLocations(locations)

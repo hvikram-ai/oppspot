@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/database.types'
-import type { Row } from '@/lib/supabase/helpers'
 
 type DbClient = SupabaseClient<Database>
 
@@ -71,7 +70,6 @@ export async function GET(request: NextRequest) {
     // Save analysis
     const { data: savedAnalysis, error: saveError } = await supabase
       .from('market_analysis')
-      // @ts-expect-error - Supabase type inference issue with insert() method
       .insert(analysis)
       .select()
       .single()
@@ -142,7 +140,7 @@ export async function POST(request: NextRequest) {
         ...swot,
         ai_generated: true,
         is_public: isPublic
-      })
+      } as never)
       .select()
       .single()
 
@@ -350,7 +348,7 @@ async function generateSWOTAnalysis(supabase: DbClient, business: BusinessData) 
   }
   
   // Fetch market context for opportunities and threats
-  const { data: competitors, error: competitorsError } = await supabase
+  const { data: competitors, error: _competitorsError } = await supabase
     .from('businesses')
     .select('rating, review_count')
     .contains('categories', business.categories?.[0] ? [business.categories[0]] : [])

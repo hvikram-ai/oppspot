@@ -59,8 +59,8 @@ export function BusinessLocation({ business }: BusinessLocationProps) {
       setL(leaflet.default)
       
       // Fix Leaflet icon issue
-       
-      delete (leaflet.default.Icon.Default.prototype as unknown)._getIconUrl
+
+      delete (leaflet.default.Icon.Default.prototype as any)._getIconUrl
       leaflet.default.Icon.Default.mergeOptions({
         iconRetinaUrl: '/leaflet/marker-icon-2x.png',
         iconUrl: '/leaflet/marker-icon.png',

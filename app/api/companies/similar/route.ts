@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { z } from 'zod'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 const querySchema = z.object({
   companyId: z.string().uuid(),
@@ -72,10 +71,10 @@ export async function GET(request: NextRequest) {
     const { data: companies, error: fetchError } = await supabase
       .from('businesses')
       .select('id, name, description, website, categories, sic_codes, address, logo_url')
-      .in('id', companyIds)
+      .in('id', companyIds) as { data: Array<{ id: string; name: string; description: string | null; website: string | null; categories: unknown; sic_codes: unknown; address: unknown; logo_url: string | null }> | null; error: unknown }
 
     if (fetchError) {
-      throw new Error(`Failed to fetch company details: ${fetchError.message}`)
+      throw new Error(`Failed to fetch company details: ${(fetchError as { message: string }).message}`)
     }
 
     // Merge similarity scores with company data
@@ -115,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request', details: error.errors },
+        { error: 'Invalid request', details: error.issues },
         { status: 400 }
       )
     }

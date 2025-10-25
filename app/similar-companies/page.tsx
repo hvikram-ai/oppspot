@@ -110,6 +110,7 @@ function SimilarCompaniesPageContent() {
       }
     }
     getUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemoMode, demoData.user])
 
   const loadAnalyses = async (userId: string) => {

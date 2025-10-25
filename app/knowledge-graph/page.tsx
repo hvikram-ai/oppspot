@@ -96,7 +96,7 @@ export default function KnowledgeGraphPage() {
           Knowledge Graph™
         </h1>
         <p className="text-muted-foreground mt-1">
-          Your team's collective intelligence, searchable and connected
+          Your team&apos;s collective intelligence, searchable and connected
         </p>
       </div>
 
@@ -107,7 +107,7 @@ export default function KnowledgeGraphPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Ask anything... 'Find fintech companies we researched' or 'Who knows someone at Revolut?'"
+                placeholder="Ask anything... &apos;Find fintech companies we researched&apos; or &apos;Who knows someone at Revolut?&apos;"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -206,7 +206,7 @@ export default function KnowledgeGraphPage() {
             <CardHeader>
               <CardTitle>Welcome to Knowledge Graph™</CardTitle>
               <CardDescription>
-                Your team's living memory - capturing everything you learn about companies, stakeholders, and opportunities
+                Your team&apos;s living memory - capturing everything you learn about companies, stakeholders, and opportunities
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -236,8 +236,8 @@ export default function KnowledgeGraphPage() {
                       3
                     </div>
                     <span>
-                      <strong>Instant Recall:</strong> Search using natural language - "What do we know about
-                      companies using AWS?" gets answered in seconds
+                      <strong>Instant Recall:</strong> Search using natural language - &quot;What do we know about
+                      companies using AWS?&quot; gets answered in seconds
                     </span>
                   </li>
                 </ul>
@@ -317,7 +317,7 @@ export default function KnowledgeGraphPage() {
             <CardHeader>
               <CardTitle>Extract Knowledge from Content</CardTitle>
               <CardDescription>
-                Paste any text (research report, meeting notes, email) and we'll extract entities, relationships, and facts
+                Paste any text (research report, meeting notes, email) and we&apos;ll extract entities, relationships, and facts
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

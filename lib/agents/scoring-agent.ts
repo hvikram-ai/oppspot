@@ -48,11 +48,11 @@ export class ScoringAgent extends BaseAgent {
         goal_criteria?: unknown
         target_metrics?: unknown
       } | undefined
-      const criteria = goalContextTyped?.goal_criteria || stream.goal_criteria || {}
-      const targetMetrics = goalContextTyped?.target_metrics || stream.target_metrics || {}
+      const criteria = (goalContextTyped?.goal_criteria || stream.goal_criteria || {}) as Record<string, unknown>
+      const targetMetrics = (goalContextTyped?.target_metrics || stream.target_metrics || {}) as Record<string, unknown>
 
       // Fetch stream items to score
-      const items = await this.getItemsToScore(stream_id)
+      const items = await this.getItemsToScore(stream_id as string)
       itemsProcessed = items.length
 
       this.log(`Scoring ${items.length} companies...`)
@@ -89,7 +89,7 @@ export class ScoringAgent extends BaseAgent {
       }
 
       // Reorder items by score
-      await this.reorderStreamItems(stream_id)
+      await this.reorderStreamItems(stream_id as string)
 
       const avgQualityScore = qualityScores.length > 0
         ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
@@ -116,13 +116,14 @@ export class ScoringAgent extends BaseAgent {
         }
       }
 
-    } catch (error: any) {
-      this.log(`Execution failed: ${error.message}`, 'error')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      this.log(`Execution failed: ${errorMessage}`, 'error')
 
       return {
         success: false,
         output: {},
-        error: error.message,
+        error: errorMessage,
         metrics: {
           durationMs: Date.now() - startTime,
           itemsProcessed,
@@ -160,9 +161,9 @@ export class ScoringAgent extends BaseAgent {
    */
   private async calculateQualityScore(
     company: any,
-    criteria: Record<string, any>,
-    targetMetrics: Record<string, any>,
-    itemMetadata: Record<string, any>
+    criteria: Record<string, unknown>,
+    targetMetrics: Record<string, unknown>,
+    itemMetadata: Record<string, unknown>
   ): Promise<number> {
     let score = 0
     const weights = {
@@ -198,7 +199,7 @@ export class ScoringAgent extends BaseAgent {
   /**
    * Score criteria match
    */
-  private scoreCriteriaMatch(company: any, criteria: Record<string, any>): number {
+  private scoreCriteriaMatch(company: any, criteria: Record<string, unknown>): number {
     let score = 0.5 // Base score
     let matches = 0
     let total = 0
@@ -225,8 +226,9 @@ export class ScoringAgent extends BaseAgent {
     if (criteria.employee_count) {
       total++
       const employeeCount = company.employee_count || 0
-      const min = criteria.employee_count.min || 0
-      const max = criteria.employee_count.max || Number.MAX_SAFE_INTEGER
+      const employeeRange = criteria.employee_count as { min?: number; max?: number }
+      const min = employeeRange.min || 0
+      const max = employeeRange.max || Number.MAX_SAFE_INTEGER
 
       if (employeeCount >= min && employeeCount <= max) {
         matches++
@@ -238,8 +240,9 @@ export class ScoringAgent extends BaseAgent {
     if (criteria.revenue) {
       total++
       const revenue = company.revenue || 0
-      const min = criteria.revenue.min || 0
-      const max = criteria.revenue.max || Number.MAX_SAFE_INTEGER
+      const revenueRange = criteria.revenue as { min?: number; max?: number }
+      const min = revenueRange.min || 0
+      const max = revenueRange.max || Number.MAX_SAFE_INTEGER
 
       if (revenue >= min && revenue <= max) {
         matches++
@@ -250,7 +253,8 @@ export class ScoringAgent extends BaseAgent {
     // Growth rate match
     if (criteria.growth_rate && company.growth_rate) {
       total++
-      if (company.growth_rate >= (criteria.growth_rate.min || 0)) {
+      const growthRange = criteria.growth_rate as { min?: number }
+      if (company.growth_rate >= (growthRange.min || 0)) {
         matches++
         score += 0.3
       }
@@ -285,14 +289,14 @@ export class ScoringAgent extends BaseAgent {
   /**
    * Score enrichment quality
    */
-  private scoreEnrichmentQuality(metadata: Record<string, any>): number {
+  private scoreEnrichmentQuality(metadata: Record<string, unknown>): number {
     let score = 0
 
     if (metadata?.enriched_at) score += 0.2
-    if (metadata?.tech_stack && metadata.tech_stack.length > 0) score += 0.2
+    if (metadata?.tech_stack && Array.isArray(metadata.tech_stack) && metadata.tech_stack.length > 0) score += 0.2
     if (metadata?.companies_house_data) score += 0.2
-    if (metadata?.social_media_score && metadata.social_media_score > 50) score += 0.2
-    if (metadata?.employee_growth_rate && metadata.employee_growth_rate > 10) score += 0.2
+    if (metadata?.social_media_score && typeof metadata.social_media_score === 'number' && metadata.social_media_score > 50) score += 0.2
+    if (metadata?.employee_growth_rate && typeof metadata.employee_growth_rate === 'number' && metadata.employee_growth_rate > 10) score += 0.2
 
     return score
   }
@@ -362,11 +366,11 @@ export class ScoringAgent extends BaseAgent {
     // Update item
     await supabase
       .from('stream_items')
-      // @ts-expect-error - Type inference issue
+      // @ts-expect-error - Supabase type inference issue
       .update({
         priority: priority as any,
         metadata: {
-          ...metadata,
+          ...(metadata as Record<string, unknown>),
           quality_score: qualityScore,
           scored_at: new Date().toISOString()
         }
@@ -403,6 +407,7 @@ export class ScoringAgent extends BaseAgent {
     for (let i = 0; i < items.length; i++) {
       await supabase
         .from('stream_items')
+        // @ts-expect-error - Supabase type inference issue
         .update({ position: i })
         .eq('id', items[i].id)
     }
@@ -433,13 +438,13 @@ export async function createScoringAgent(agentId: string): Promise<ScoringAgent>
   }
 
   const config: AgentConfig = {
-    id: agent.id,
-    orgId: agent.org_id,
+    id: agent.id ?? '',
+    orgId: agent.org_id ?? '',
     name: agent.name,
     type: agent.agent_type,
-    configuration: agent.configuration || {},
+    configuration: (agent.configuration as Record<string, unknown>) || {},
     isActive: agent.is_active,
-    scheduleCron: agent.schedule_cron
+    scheduleCron: agent.schedule_cron ?? undefined
   }
 
   return new ScoringAgent(config)

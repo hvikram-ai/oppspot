@@ -181,7 +181,6 @@ export class TechnologyAdoptionDetector {
       // Store the signal in database
       const { data: signal, error } = await supabase
         .from('buying_signals')
-        // @ts-expect-error - Supabase type inference issue
         .insert({
           ...technologySignal,
           signal_data: technologySignal.technology_data,
@@ -192,7 +191,6 @@ export class TechnologyAdoptionDetector {
 
       if (error) throw error;
 
-      // @ts-expect-error - Supabase type inference issue
       // Store technology-specific details
       await supabase.from('technology_adoption_signals').insert({
         signal_id: signal.id,

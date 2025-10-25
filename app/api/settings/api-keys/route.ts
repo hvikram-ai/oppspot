@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Define api_keys table structure
 interface ApiKey {
@@ -134,7 +133,6 @@ export async function POST(request: NextRequest) {
 
     const { data: keyData, error } = await supabase
       .from('api_keys')
-      // @ts-expect-error - Supabase type inference issue with encryption
       .insert(insertData)
       .select()
       .single()

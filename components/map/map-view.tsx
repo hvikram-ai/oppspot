@@ -71,8 +71,8 @@ export function MapView({
       setL(leaflet.default)
       
       // Fix Leaflet icon issue
-       
-      delete (leaflet.default.Icon.Default.prototype as unknown)._getIconUrl
+
+      delete (leaflet.default.Icon.Default.prototype as any)._getIconUrl
       leaflet.default.Icon.Default.mergeOptions({
         iconRetinaUrl: '/leaflet/marker-icon-2x.png',
         iconUrl: '/leaflet/marker-icon.png',
@@ -196,7 +196,6 @@ export function MapView({
             <Marker
               key={business.id}
               position={[business.latitude, business.longitude]}
-              // @ts-expect-error - Supabase type inference issue
               icon={createCustomIcon(business)}
               eventHandlers={{
                 click: () => onBusinessSelect(business)

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Mock similar companies data
 const MOCK_SIMILAR_COMPANIES = [
@@ -82,8 +81,8 @@ export async function GET(
     }
 
     // Check in-memory storage first (for demo/dev)
-    if (global.similarityAnalyses && global.similarityAnalyses[analysisId]) {
-      const analysis = global.similarityAnalyses[analysisId]
+    if ((global as any).similarityAnalyses && (global as any).similarityAnalyses[analysisId]) {
+      const analysis = (global as any).similarityAnalyses[analysisId]
 
       // Add some progress simulation
       if (analysis.status === 'processing') {
@@ -146,10 +145,10 @@ export async function GET(
 
     if (!error && analysis) {
       // If found in database, check if we have results
-      if (analysis.status === 'completed' && !analysis.results) {
+      if ((analysis as { status: string; results?: unknown }).status === 'completed' && !(analysis as { status: string; results?: unknown }).results) {
         // Add mock results if missing
-        analysis.results = MOCK_SIMILAR_COMPANIES
-        analysis.metrics = {
+        (analysis as { results: unknown; metrics: unknown }).results = MOCK_SIMILAR_COMPANIES;
+        (analysis as { results: unknown; metrics: unknown }).metrics = {
           totalCompaniesAnalyzed: 150,
           averageSimilarityScore: 85,
           topSimilarityScore: 92,
@@ -175,6 +174,6 @@ export async function GET(
 }
 
 // Initialize global storage for demo
-if (typeof global.similarityAnalyses === 'undefined') {
-  global.similarityAnalyses = {}
+if (typeof (global as any).similarityAnalyses === 'undefined') {
+  (global as any).similarityAnalyses = {}
 }

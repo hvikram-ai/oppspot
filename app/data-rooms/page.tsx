@@ -5,7 +5,7 @@
  * View all accessible data rooms with create option
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,11 +39,7 @@ export default function DataRoomsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'active' | 'archived'>('active')
 
-  useEffect(() => {
-    fetchDataRooms()
-  }, [statusFilter])
-
-  const fetchDataRooms = async () => {
+  const fetchDataRooms = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/data-rooms?status=${statusFilter}`)
@@ -57,7 +53,11 @@ export default function DataRoomsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter])
+
+  useEffect(() => {
+    fetchDataRooms()
+  }, [fetchDataRooms])
 
   const filteredRooms = dataRooms.filter(room =>
     room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

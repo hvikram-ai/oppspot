@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server';
 import { HubSpotConnector } from './hubspot-connector';
 import { BaseCRMConnector } from './base-connector';
 import { CRMEnrichmentService } from './enrichment-service';
-import type { Row } from '@/lib/supabase/helpers'
 import {
   CRMIntegration,
   Contact,
@@ -17,6 +16,38 @@ import {
   EnrichmentResult,
   CRMIntegrationError,
 } from './types';
+
+// Database types for CRM tables (not in main database.types.ts)
+type CRMIntegrationRow = {
+  id: string;
+  crm_type: string;
+  is_active: boolean;
+  auto_enrich: boolean;
+  auto_create_tasks: boolean;
+  access_token: string;
+  refresh_token: string;
+  [key: string]: unknown;
+};
+
+type CRMFieldMappingRow = {
+  oppspot_field: string;
+  crm_field: string;
+  transform_function?: string;
+  default_value?: string;
+  [key: string]: unknown;
+};
+
+type CRMEntityMappingRow = {
+  id: string;
+  crmEntityId: string;
+  sync_count: number;
+  [key: string]: unknown;
+};
+
+type ProfileRow = {
+  organization_id: string;
+  [key: string]: unknown;
+};
 
 // =====================================================
 // SmartSync Orchestrator
@@ -62,7 +93,7 @@ export class SmartSyncOrchestrator {
         .from('crm_integrations')
         .select('*')
         .eq('id', integrationId)
-        .single() as { data: (Row<'crm_integrations'> & { is_active?: boolean; auto_enrich?: boolean; auto_create_tasks?: boolean }) | null; error: any };
+        .single() as { data: CRMIntegrationRow | null; error: unknown };
 
       if (integrationError || !integration || !integration.is_active) {
         throw new CRMIntegrationError('Integration not found or inactive');
@@ -81,7 +112,7 @@ export class SmartSyncOrchestrator {
           .from('profiles')
           .select('organization_id')
           .eq('id', user?.id || '')
-          .single() as { data: (Row<'profiles'> & { organization_id?: string }) | null; error: any };
+          .single() as { data: ProfileRow | null; error: unknown };
 
         enrichment = await this.enrichmentService.enrichContact({
           ...contactData,
@@ -187,8 +218,8 @@ export class SmartSyncOrchestrator {
           oppspotEntityId: contactData.companyId,
           oppspotEntityType: 'business',
           crmEntityId: crmContact.id,
-          payload: contactPayload,
-          enrichments: enrichment,
+          payload: contactPayload as unknown as Record<string, unknown>,
+          enrichments: enrichment || undefined,
           enrichmentTimeMs: enrichmentTime,
           status: 'success',
           durationMs: Date.now() - startTime,
@@ -199,7 +230,9 @@ export class SmartSyncOrchestrator {
         success: true,
         crmContactId: crmContact.id,
       };
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      const errorCode = error instanceof Error && 'code' in error ? (error as Error & { code?: string }).code : undefined
       // Log failed sync
       await this.logSync(
         integrationId,
@@ -209,8 +242,8 @@ export class SmartSyncOrchestrator {
           operation: 'create',
           payload: contactData,
           status: 'failed',
-          errorMessage: error.message,
-          errorCode: error.code,
+          errorMessage: errorMessage,
+          errorCode: errorCode,
           durationMs: Date.now() - startTime,
         }
       );
@@ -219,7 +252,7 @@ export class SmartSyncOrchestrator {
 
       return {
         success: false,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }
@@ -243,7 +276,7 @@ export class SmartSyncOrchestrator {
         .from('crm_integrations')
         .select('*')
         .eq('id', integrationId)
-        .single() as { data: (Row<'crm_integrations'> & { is_active?: boolean; auto_enrich?: boolean; auto_create_tasks?: boolean }) | null; error: any };
+        .single() as { data: CRMIntegrationRow | null; error: unknown };
 
       if (!integration || !integration.is_active) {
         throw new CRMIntegrationError('Integration not found or inactive');
@@ -281,7 +314,7 @@ export class SmartSyncOrchestrator {
         oppspotEntityId: companyData.companyId,
         oppspotEntityType: 'business',
         crmEntityId: crmCompany.id,
-        payload: companyData,
+        payload: companyData as unknown as Record<string, unknown>,
         status: 'success',
         durationMs: Date.now() - startTime,
       });
@@ -290,20 +323,21 @@ export class SmartSyncOrchestrator {
         success: true,
         crmCompanyId: crmCompany.id,
       };
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       await this.logSync(integrationId, {
         syncType: 'company',
         direction: 'to_crm',
         operation: 'create',
-        payload: companyData,
+        payload: companyData as unknown as Record<string, unknown>,
         status: 'failed',
-        errorMessage: error.message,
+        errorMessage: errorMessage,
         durationMs: Date.now() - startTime,
       });
 
       return {
         success: false,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }
@@ -315,7 +349,7 @@ export class SmartSyncOrchestrator {
   /**
    * Get or create CRM connector
    */
-  private async getConnector(integration: any): Promise<BaseCRMConnector> {
+  private async getConnector(integration: CRMIntegrationRow): Promise<BaseCRMConnector> {
     const cacheKey = integration.id;
 
     if (this.connectors.has(cacheKey)) {
@@ -326,7 +360,7 @@ export class SmartSyncOrchestrator {
 
     switch (integration.crm_type) {
       case 'hubspot':
-        connector = new HubSpotConnector();
+        connector = new HubSpotConnector() as unknown as BaseCRMConnector;
         break;
       // case 'salesforce':
       //   connector = new SalesforceConnector();
@@ -353,8 +387,8 @@ export class SmartSyncOrchestrator {
   private async applyFieldMappings(
     integrationId: string,
     entityType: string,
-    payload: any
-  ): Promise<any> {
+    payload: Record<string, unknown> & { customFields?: Record<string, unknown> }
+  ): Promise<Record<string, unknown>> {
     const supabase = await createClient();
 
     const { data: mappings } = await supabase
@@ -362,32 +396,32 @@ export class SmartSyncOrchestrator {
       .select('*')
       .eq('integration_id', integrationId)
       .eq('entity_type', entityType)
-      .eq('is_active', true) as { data: Row<'crm_field_mappings'>[] | null; error: any };
+      .eq('is_active', true) as { data: CRMFieldMappingRow[] | null; error: unknown };
 
     if (!mappings || mappings.length === 0) {
       return payload; // No custom mappings
     }
 
-    const mapped: any = { ...payload };
+    const mapped: Record<string, unknown> = { ...payload };
 
     for (const mapping of mappings) {
-      const value = payload[(mapping as any).oppspot_field] || payload.customFields?.[(mapping as any).oppspot_field];
+      const value = payload[mapping.oppspot_field] || payload.customFields?.[mapping.oppspot_field];
 
       if (value !== undefined && value !== null) {
         // Apply transformation if specified
-        if ((mapping as any).transform_function) {
+        if (mapping.transform_function) {
           try {
             // TODO: Implement safe function execution
-            mapped[(mapping as any).crm_field] = value;
+            mapped[mapping.crm_field] = value;
           } catch (error) {
             console.error('Transform error:', error);
-            mapped[(mapping as any).crm_field] = value;
+            mapped[mapping.crm_field] = value;
           }
         } else {
-          mapped[(mapping as any).crm_field] = value;
+          mapped[mapping.crm_field] = value;
         }
-      } else if ((mapping as any).default_value) {
-        mapped[(mapping as any).crm_field] = (mapping as any).default_value;
+      } else if (mapping.default_value) {
+        mapped[mapping.crm_field] = mapping.default_value;
       }
     }
 
@@ -431,7 +465,7 @@ export class SmartSyncOrchestrator {
   private async createDealFromContact(
     connector: BaseCRMConnector,
     contactId: string,
-    contactData: any,
+    contactData: { company?: string; firstName?: string; lastName?: string; [key: string]: unknown },
     enrichment: EnrichmentResult
   ): Promise<void> {
     try {
@@ -470,9 +504,9 @@ export class SmartSyncOrchestrator {
       .eq('oppspot_entity_id', oppspotEntityId)
       .eq('oppspot_entity_type', entityType === 'contact' ? 'contact' : 'business')
       .eq('is_active', true)
-      .single() as { data: Row<'crm_entity_mappings'> | null; error: any };
+      .single() as { data: CRMEntityMappingRow | null; error: unknown };
 
-    return data;
+    return data as EntityMapping | null;
   }
 
   /**
@@ -487,7 +521,6 @@ export class SmartSyncOrchestrator {
   ): Promise<void> {
     const supabase = await createClient();
 
-    // @ts-expect-error - Supabase type inference issue
     await supabase.from('crm_entity_mappings').insert({
       integration_id: integrationId,
       oppspot_entity_id: oppspotEntityId,
@@ -497,7 +530,7 @@ export class SmartSyncOrchestrator {
       last_synced_at: new Date().toISOString(),
       sync_count: 1,
       is_active: true,
-    });
+    } as Record<string, unknown>);
   }
 
   /**
@@ -506,14 +539,20 @@ export class SmartSyncOrchestrator {
   private async updateEntityMapping(mappingId: string): Promise<void> {
     const supabase = await createClient();
 
+    // First get current sync_count
+    const { data: current } = await supabase
+      .from('crm_entity_mappings')
+      .select('sync_count')
+      .eq('id', mappingId)
+      .single() as { data: { sync_count: number } | null; error: unknown };
+
     await supabase
       .from('crm_entity_mappings')
-      // @ts-expect-error - Type inference issue
       .update({
         last_synced_at: new Date().toISOString(),
-        sync_count: supabase.rpc('increment', { row_id: mappingId }),
+        sync_count: (current?.sync_count || 0) + 1,
         updated_at: new Date().toISOString(),
-      })
+      } as Record<string, unknown>)
       .eq('id', mappingId);
   }
 
@@ -525,7 +564,6 @@ export class SmartSyncOrchestrator {
     logData: Partial<SyncLog>
   ): Promise<void> {
     const supabase = await createClient();
-// @ts-expect-error - Supabase type inference issue
 
     await supabase.from('crm_sync_logs').insert({
       integration_id: integrationId,
@@ -544,7 +582,7 @@ export class SmartSyncOrchestrator {
       retry_count: logData.retryCount || 0,
       completed_at: new Date().toISOString(),
       duration_ms: logData.durationMs,
-    });
+    } as Record<string, unknown>);
   }
 }
 

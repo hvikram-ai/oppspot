@@ -185,7 +185,7 @@ async function testEnrichmentService() {
       if (enrichResponse.ok) {
         const result = await enrichResponse.json()
         console.log('✅ Enrichment completed:')
-        result.results.forEach((r) => {
+        result.results.forEach((r: any) => {
           console.log(`   ${r.source}: ${r.success ? '✅' : '❌'} ${r.error || ''}`)
         })
       } else {

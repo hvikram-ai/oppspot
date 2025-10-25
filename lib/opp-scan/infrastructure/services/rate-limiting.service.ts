@@ -48,7 +48,6 @@ export class RateLimitingService implements IRateLimitingService {
     setInterval(() => this.cleanupExpiredLimits(), 60000) // Every minute
   }
 
-  // @ts-ignore - Return type mismatch
   async checkLimit(sourceId: string): Promise<RateLimitInfo> {
     const config = this.sourceConfigs.get(sourceId) || this.defaultConfig
     const limit = this.getOrCreateSourceLimit(sourceId, config)

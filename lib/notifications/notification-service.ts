@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
 import { Resend } from 'resend'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface NotificationData {
   userId: string
@@ -23,6 +22,56 @@ interface NotificationPreferences {
   quiet_hours_end?: string
   timezone?: string
   type_preferences?: Record<string, unknown>
+}
+
+// Extended notification type for database operations
+// Note: Schema mismatch exists between code expectations and current database.ts types
+interface NotificationRow {
+  id: string
+  user_id: string
+  type: string
+  title: string
+  body: string
+  data: Record<string, unknown>
+  priority: string
+  action_url?: string
+  image_url?: string
+  delivered_channels: string[]
+  is_read: boolean
+  read_at?: string
+  email_sent?: boolean
+  email_sent_at?: string
+  is_archived: boolean
+  created_at: string
+}
+
+interface ProfileRow {
+  id: string
+  email?: string
+  [key: string]: unknown
+}
+
+interface PushToken {
+  token: string
+  platform: 'web' | 'ios' | 'android'
+  user_id: string
+  is_active: boolean
+}
+
+interface NotificationQueueRow {
+  id: string
+  user_id: string
+  notification_type: string
+  notification_data: NotificationData
+  scheduled_for: string
+  channels: string[]
+}
+
+interface NotificationTemplate {
+  title: string
+  body_template: string
+  email_template?: string
+  email_subject?: string
 }
 
 export class NotificationService {
@@ -78,7 +127,7 @@ export class NotificationService {
 
   // Create in-app notification
   private async createInAppNotification(data: NotificationData): Promise<string> {
-    const insertData: Record<string, unknown> = {
+    const insertData = {
       user_id: data.userId,
       type: data.type,
       title: data.title,
@@ -88,23 +137,22 @@ export class NotificationService {
       action_url: data.actionUrl,
       image_url: data.imageUrl,
       delivered_channels: ['in_app']
-    }
+    } as const
 
-    // @ts-ignore - Supabase typing issue with insert data
     const { data: notification, error } = await this.supabase
       .from('notifications')
-      .insert(insertData as any)
+      .insert(insertData)
       .select()
-      .single()
+      .single() as { data: NotificationRow | null, error: Error | null }
 
     if (error) throw error
 
-    const typedNotification = notification as unknown as (Record<string, unknown> & { id: string }) | null
-
     // Trigger real-time update
-    await this.triggerRealtimeUpdate(data.userId, typedNotification as Record<string, unknown>)
+    if (notification) {
+      await this.triggerRealtimeUpdate(data.userId, notification as unknown as Record<string, unknown>)
+    }
 
-    return (typedNotification?.id || '') as string
+    return notification?.id || ''
   }
 
   // Send email notification
@@ -122,14 +170,13 @@ export class NotificationService {
       userEmail = authUser.email
     } else {
       // Fallback: get from profiles if available
-      // @ts-ignore - profiles table type inference
       const { data: profile } = await this.supabase
         .from('profiles')
         .select('*')
         .eq('id', data.userId)
-        .single()
-      const typedProfile = profile as unknown as (Record<string, unknown> & { email?: string }) | null
-      userEmail = typedProfile?.email as string | undefined
+        .single() as { data: ProfileRow | null }
+
+      userEmail = profile?.email
     }
 
     if (!userEmail) return
@@ -156,26 +203,23 @@ export class NotificationService {
       // Update notification status
       if (data.data?.notification_id) {
         // Fetch current delivered_channels
-        // @ts-ignore - notifications table type inference
         const { data: currentNotif } = await this.supabase
           .from('notifications')
           .select('delivered_channels')
           .eq('id', data.data.notification_id)
-          .single()
+          .single() as { data: Pick<NotificationRow, 'delivered_channels'> | null }
 
-        const typedNotif = currentNotif as unknown as (Record<string, unknown> & { delivered_channels?: string[] }) | null
-        const channels = (typedNotif?.delivered_channels || []) as string[]
+        const channels = currentNotif?.delivered_channels || []
         if (!channels.includes('email')) {
           channels.push('email')
         }
 
-        const updateData: Record<string, unknown> = {
+        const updateData = {
           email_sent: true,
           email_sent_at: new Date().toISOString(),
           delivered_channels: channels
-        }
+        } as Partial<NotificationRow>
 
-        // @ts-ignore - Supabase typing issue
         await this.supabase
           .from('notifications')
           .update(updateData)
@@ -189,30 +233,29 @@ export class NotificationService {
   // Send push notification
   private async sendPushNotification(data: NotificationData): Promise<void> {
     // Get user's push tokens
-    // @ts-ignore - push_tokens table may not be in current schema
+    // Note: push_tokens table may not exist in current schema
     const { data: tokens } = await this.supabase
       .from('push_tokens')
       .select('token, platform')
       .eq('user_id', data.userId)
-      .eq('is_active', true)
+      .eq('is_active', true) as { data: PushToken[] | null }
 
     if (!tokens || tokens.length === 0) return
 
     for (const token of tokens) {
       try {
-        if ((token as any).platform === 'web') {
-          await this.sendWebPush((token as any).token, data)
-        } else if ((token as any).platform === 'ios' || (token as any).platform === 'android') {
-          await this.sendMobilePush((token as any).token, (token as any).platform, data)
+        if (token.platform === 'web') {
+          await this.sendWebPush(token.token, data)
+        } else if (token.platform === 'ios' || token.platform === 'android') {
+          await this.sendMobilePush(token.token, token.platform, data)
         }
       } catch (error) {
-        console.error(`Push notification failed for token ${(token as any).token}:`, error)
+        console.error(`Push notification failed for token ${token.token}:`, error)
         // Mark token as inactive if it fails
-        // @ts-ignore - push_tokens table
         await this.supabase
           .from('push_tokens')
           .update({ is_active: false })
-          .eq('token', (token as any).token)
+          .eq('token', token.token)
       }
     }
   }
@@ -238,21 +281,21 @@ export class NotificationService {
 
   // Get user preferences
   private async getUserPreferences(userId: string): Promise<NotificationPreferences> {
-    // @ts-ignore - notification_preferences table
+    // Note: notification_preferences table may not exist in current schema
     const { data } = await this.supabase
       .from('notification_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single()
+      .single() as { data: NotificationPreferences | null }
 
     // Return defaults if no preferences exist
-    return (data || {
+    return data || {
       email_enabled: true,
       sms_enabled: false,
       push_enabled: true,
       in_app_enabled: true,
       quiet_hours_enabled: false
-    }) as NotificationPreferences
+    }
   }
 
   // Check if user is in quiet hours
@@ -307,7 +350,7 @@ export class NotificationService {
   // Queue notification for later delivery
   private async queueNotification(data: NotificationData, scheduledFor: Date): Promise<string> {
     const userPreferences = await this.getUserPreferences(data.userId)
-    // @ts-ignore - notification_queue table
+    // Note: notification_queue table may not exist in current schema
     const { data: queued, error } = await this.supabase
       .from('notification_queue')
       .insert({
@@ -320,20 +363,19 @@ export class NotificationService {
         )
       })
       .select()
-      .single()
+      .single() as { data: NotificationQueueRow | null, error: Error | null }
 
     if (error) throw error
-    const typedQueued = queued as unknown as (Record<string, unknown> & { id: string }) | null
-    return (typedQueued?.id || '') as string
+    return queued?.id || ''
   }
 
   // Check if should send via specific channel
   private shouldSendChannel(channel: string, type: string, preferences: NotificationPreferences): boolean {
     const typePrefs = preferences.type_preferences?.[type] as Record<string, unknown> | undefined
-    if (typePrefs && typeof (typePrefs as any)[channel] === 'boolean') {
-      return (typePrefs as any)[channel] as boolean
+    if (typePrefs && channel in typePrefs && typeof typePrefs[channel] === 'boolean') {
+      return typePrefs[channel] as boolean
     }
-    
+
     switch (channel) {
       case 'email': return preferences.email_enabled
       case 'push': return preferences.push_enabled
@@ -356,27 +398,15 @@ export class NotificationService {
   }
 
   // Get email template
-  private async getEmailTemplate(type: string): Promise<{
-    title: string
-    body_template: string
-    email_template?: string
-    email_subject?: string
-  }> {
-    // @ts-ignore - notification_templates table
+  private async getEmailTemplate(type: string): Promise<NotificationTemplate> {
+    // Note: notification_templates table may not exist in current schema
     const { data } = await this.supabase
       .from('notification_templates')
       .select('*')
       .eq('type', type)
-      .single()
+      .single() as { data: NotificationTemplate | null }
 
-    const typedData = data as unknown as {
-      title: string
-      body_template: string
-      email_template?: string
-      email_subject?: string
-    } | null
-
-    return typedData || {
+    return data || {
       title: 'Notification',
       body_template: '{{body}}',
       email_subject: 'OppSpot Notification'

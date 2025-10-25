@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Create competitor set
     const { data: competitorSet, error: createError } = await supabase
       .from('competitor_sets')
-      // @ts-expect-error - Supabase type inference issue
+      // @ts-expect-error - competitor_sets insert type mismatch
       .insert({
         user_id: user.id,
         name,
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     if (createError) throw createError
     
     // Fetch competitor details
-    const { data: competitors, error: competitorsError } = await supabase
+    const { data: competitors, error: _competitorsError } = await supabase
       .from('businesses')
       .select('id, name, rating, review_count, categories')
       .in('id', finalCompetitorIds)
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
         .in('id', allBusinessIds)
       
       // Fetch competitive metrics
-      const { data: metrics, error: metricsError } = await supabase
+      const { data: metrics, error: _metricsError } = await supabase
         .from('competitive_metrics')
         .select('*')
         .in('business_id', allBusinessIds)
@@ -157,11 +157,11 @@ export async function GET(request: NextRequest) {
       
       // Organize data
       const primaryBusiness = businesses?.find(
-        b => b.id === competitorSet.primary_business_id
+        (b: { id: string }) => b.id === competitorSet.primary_business_id
       )
       const competitorIds = Array.isArray(competitorSet.competitor_ids) ? competitorSet.competitor_ids : []
       const competitors = businesses?.filter(
-        b => competitorIds.includes(b.id)
+        (b: { id: string }) => competitorIds.includes(b.id)
       )
       
       return NextResponse.json({
@@ -227,7 +227,7 @@ export async function PATCH(request: NextRequest) {
     // Update competitor set
     const { data: updated, error } = await supabase
       .from('competitor_sets')
-      // @ts-expect-error - Type inference issue
+      // @ts-expect-error - competitor_sets update type mismatch
       .update({
         ...updates,
         updated_at: new Date().toISOString()
@@ -311,12 +311,12 @@ async function discoverCompetitors(
     }
 
     // Find similar businesses nearby
-    const { data: competitors, error: competitorsError } = await supabase
+    const { data: competitors, error: _competitorsError } = await supabase
       .rpc('nearby_businesses', {
         lat: primaryBusiness.latitude,
         lng: primaryBusiness.longitude,
         radius_km: 10
-      })
+      } as any)
       .contains('categories', categories)
       .neq('id', primaryBusinessId)
       .order('rating', { ascending: false })

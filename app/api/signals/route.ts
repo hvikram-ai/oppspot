@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { signalDetector } from '@/lib/signals/buying-signal-detector'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +64,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get intent scores for companies
-    const companyIds = [...new Set(signals?.map(s => s.company_id) || [])]
+    const companyIds = [...new Set(signals?.map((s: { company_id: string }) => s.company_id) || [])]
     const intentScores = await Promise.all(
       companyIds.map(id => signalDetector.calculateIntentScore(id))
     )
@@ -120,7 +119,6 @@ export async function POST(request: NextRequest) {
     // Log API usage
     await supabase
       .from('api_audit_log')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         api_name: 'buying_signals',
         endpoint: '/api/signals',

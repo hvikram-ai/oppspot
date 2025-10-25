@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sampleBusinesses } from './sample-data'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST() {
   try {
@@ -38,7 +37,6 @@ export async function POST() {
     
     const { data, error } = await supabase
       .from('businesses')
-      // @ts-expect-error - Supabase type inference issue
       .insert(businessesToInsert)
       .select()
     

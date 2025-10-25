@@ -177,7 +177,7 @@ serve(async (req) => {
   }
 })
 
-function generateRecommendations(recentSearches: any[]): Array<{
+function generateRecommendations(recentSearches: Array<{ query: string; created_at: string }>): Array<{
   type: string
   title: string
   reason: string

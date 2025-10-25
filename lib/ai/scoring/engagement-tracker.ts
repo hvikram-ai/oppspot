@@ -4,7 +4,6 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export interface EngagementScore {
   score: number
@@ -133,7 +132,6 @@ export class EngagementTracker {
 
     const { error } = await supabase
       .from('engagement_events')
-      // @ts-expect-error - Supabase type inference issue
       .insert({
         company_id: companyId,
         event_type: eventType,

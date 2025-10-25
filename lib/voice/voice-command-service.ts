@@ -9,7 +9,7 @@ export interface VoiceCommand {
   transcript: string
   intent: string
   confidence: number
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
   timestamp: Date
 }
 
@@ -208,7 +208,7 @@ export class VoiceCommandService {
    */
   private matchPattern(text: string): {
     intent: string;
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   } | null {
     // Navigation patterns
     if (/go to|open|show me (the )?(dashboard|streams|search|map|settings)/.test(text)) {
@@ -221,7 +221,7 @@ export class VoiceCommandService {
 
     // Search patterns
     if (/find|search|show me|looking for/.test(text)) {
-      const params: Record<string, any> = {}
+      const params: Record<string, unknown> = {}
 
       // Extract industry
       const industryMatch = text.match(/(tech|fintech|healthcare|retail|manufacturing|saas)/i)

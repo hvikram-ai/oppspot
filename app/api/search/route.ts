@@ -392,7 +392,7 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
 
       if (existing && !fetchError) {
         // Check if cache is still valid
-        if (companiesService.isCacheValid(existing.companies_house_last_updated)) {
+        if (companiesService.isCacheValid(existing.companies_house_last_updated ?? null)) {
           companiesHouseResults.push(existing)
         } else {
           // Refresh stale data
@@ -406,7 +406,7 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
                   ...formatted,
                   companies_house_last_updated: new Date().toISOString(),
                   cache_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-                })
+                } as never)
                 .eq('id', existing.id)
                 .select()
                 .single()
@@ -434,7 +434,7 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
                 ...formatted,
                 companies_house_last_updated: new Date().toISOString(),
                 cache_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-              })
+              } as never)
               .select()
 
             if (insertError) {
@@ -464,10 +464,10 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
         } catch (err) {
           console.error('Failed to fetch/insert company profile:', err)
           // Add the basic search result data without full profile
-          const resultData = result as typeof result & { snippet?: string; description?: string; address_snippet?: string }
+          const resultData = result as typeof result & { snippet?: string; description?: string; address_snippet?: string; company_name?: string }
           const basicCompany: Business = {
             id: `ch-${result.company_number}`,
-            name: result.title || result.company_name || 'Unknown',
+            name: result.title || resultData.company_name || 'Unknown',
             company_number: result.company_number,
             description: resultData.snippet || resultData.description || '',
             address: resultData.address_snippet ? { formatted: resultData.address_snippet } : {},
@@ -475,7 +475,7 @@ async function searchCompaniesHouse(query: string, supabase: SupabaseClient<Data
             categories: [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          } as Business
+          } as unknown as Business
           companiesHouseResults.push(basicCompany)
         }
       }
@@ -707,7 +707,7 @@ export async function GET(request: Request) {
             verified
           },
           results_count: formattedResults.length
-        } as Database['public']['Tables']['searches']['Insert'])
+        } as never)
     }
 
     // Calculate total count including Companies House results

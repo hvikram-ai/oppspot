@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { CompanyCard } from '@/components/companies/company-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -75,7 +75,7 @@ export default function CompaniesPage() {
   const [useRealData, setUseRealData] = useState(true)
 
   // Function to fetch enriched company data
-  const fetchEnrichedData = async (companyNumber: string) => {
+  const fetchEnrichedData = useCallback(async (companyNumber: string) => {
     try {
       const response = await fetch(`/api/companies/${companyNumber}/enrich`, {
         method: 'GET',
@@ -122,7 +122,7 @@ export default function CompaniesPage() {
         [companyNumber]: 'failed'
       }))
     }
-  }
+  }, [selectedCompany, setSearchResults])
 
   // Poll for enrichment status after search
   useEffect(() => {
@@ -149,7 +149,7 @@ export default function CompaniesPage() {
       clearInterval(interval)
       clearTimeout(timeout)
     }
-  }, [searchResults]) // Remove enrichmentStatus to avoid infinite loop
+  }, [searchResults, enrichmentStatus, fetchEnrichedData])
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return

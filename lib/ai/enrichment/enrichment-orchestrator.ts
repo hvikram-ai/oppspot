@@ -13,7 +13,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createLinkedInScraperAgent } from '@/lib/ai/agents/linkedin-scraper-agent'
 import { createWebsiteAnalyzerAgent } from '@/lib/ai/agents/website-analyzer-agent'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Database row interfaces for enrichment tables
 interface EnrichmentJobRow {
@@ -40,7 +39,7 @@ interface AgentRow {
   org_id: string
   name: string
   agent_type: string
-  configuration: Record<string, any>
+  configuration: Record<string, unknown>
   is_active: boolean
   created_at?: string
   updated_at?: string
@@ -230,11 +229,12 @@ export class EnrichmentOrchestrator {
 
       console.log(`Enrichment job ${job.id} completed in ${Date.now() - startTime}ms`)
 
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       console.error(`Enrichment job ${job.id} failed:`, error)
 
       job.status = 'failed'
-      job.error = error.message
+      job.error = errorMessage
       job.completedAt = new Date()
       await this.saveJob(job)
     }
@@ -301,7 +301,8 @@ export class EnrichmentOrchestrator {
 
       await this.saveJob(job)
 
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       console.error('LinkedIn enrichment failed:', error)
 
       // Mark all as failed
@@ -310,7 +311,7 @@ export class EnrichmentOrchestrator {
           companyId,
           enrichmentType: 'linkedin',
           status: 'failed',
-          error: error.message,
+          error: errorMessage,
           duration: 0
         })
 
@@ -348,7 +349,8 @@ export class EnrichmentOrchestrator {
 
       await this.saveJob(job)
 
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       console.error('Website enrichment failed:', error)
 
       // Mark all as failed
@@ -357,7 +359,7 @@ export class EnrichmentOrchestrator {
           companyId,
           enrichmentType: 'website',
           status: 'failed',
-          error: error.message,
+          error: errorMessage,
           duration: 0
         })
 

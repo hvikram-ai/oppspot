@@ -363,12 +363,12 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                     timeline: '1-2 weeks'
                   }
                 ].map((depth) => (
-                  <Card 
+                  <Card
                     key={depth.id}
                     className={`cursor-pointer transition-all ${
                       config.scanDepth === depth.id ? 'ring-2 ring-primary' : 'hover:shadow-md'
                     }`}
-                    onClick={() => handleScanDepthChange(depth.id as unknown)}
+                    onClick={() => handleScanDepthChange(depth.id as 'basic' | 'detailed' | 'comprehensive')}
                   >
                     <CardHeader>
                       <div className="flex items-center gap-2">
@@ -485,7 +485,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                               <div>
                                 <p className="font-medium mb-1">Typical Cost</p>
                                 <p className="text-muted-foreground">{source.typical_cost_per_search}</p>
@@ -564,12 +564,12 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                     <div
                       key={size.id}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        config.companySizeFilter?.includes(size.id)
+                        (config.companySizeFilter as string[] | undefined)?.includes(size.id)
                           ? 'bg-primary/10 border-primary'
                           : 'bg-muted hover:bg-muted/80'
                       }`}
                       onClick={() => {
-                        const current = config.companySizeFilter || []
+                        const current = (config.companySizeFilter as string[] | undefined) || []
                         const newFilter = current.includes(size.id)
                           ? current.filter((s: string) => s !== size.id)
                           : [...current, size.id]
@@ -577,8 +577,8 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
                       }}
                     >
                       <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          checked={config.companySizeFilter?.includes(size.id) || false}
+                        <Checkbox
+                          checked={(config.companySizeFilter as string[] || [])?.includes(size.id) || false}
                           onCheckedChange={() => {}}
                         />
                         <div className="text-sm">
@@ -614,7 +614,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
               {/* Age Filters */}
               <div className="space-y-3">
                 <Label>Company Age Range</Label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="min-age" className="text-sm">Minimum Age (years)</Label>
                     <Input
@@ -753,7 +753,7 @@ export function ScanConfigurationStep({ config, onChange }: ScanConfigurationPro
 
               <div className="space-y-3">
                 <Label>Data Retention Period</Label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {[
                     { id: '30', label: '30 days', description: 'Basic compliance' },
                     { id: '90', label: '90 days', description: 'Standard retention' },

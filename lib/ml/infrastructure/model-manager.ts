@@ -460,7 +460,6 @@ export class ModelManager {
     try {
       const supabase = await createClient()
 
-      // @ts-expect-error - Supabase type inference issue
       await supabase.from('ml_predictions').insert({
         model_id: prediction.model_id,
         input_data: prediction.input,

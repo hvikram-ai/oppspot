@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDemoMode } from '@/lib/demo/demo-context'
@@ -62,7 +62,7 @@ function OppScanPageContent() {
       if (isDemoMode) {
         // Use demo user and demo scans
         console.log('OppScan: Setting demo mode data')
-        setUser(demoData.user)
+        setUser(demoData.user as any)
         setScans(getDemoScans())
         setLoading(false)
         return
@@ -77,9 +77,10 @@ function OppScanPageContent() {
       await loadScans(user.id)
     }
     getUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemoMode, demoData.user])
 
-  const loadScans = async (userId: string) => {
+  const loadScans = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('acquisition_scans')
@@ -95,7 +96,7 @@ function OppScanPageContent() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
 
   const getStatusIcon = (status: string) => {
     switch (status) {

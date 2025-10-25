@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * GET /api/streams/[id]/agents
@@ -24,7 +23,7 @@ export async function GET(
     }
 
     // Verify user has access to this stream
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
@@ -98,12 +97,12 @@ export async function POST(
     }
 
     // Verify user has editor/owner access
-    const { data: membership, error: membershipError } = await supabase
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', user.id)
-      .single();
+      .single() as { data: { role: string } | null; error: unknown };
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(
@@ -129,11 +128,11 @@ export async function POST(
     } = body
 
     // Get user's org_id
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { org_id: string | null } | null; error: unknown };
 
     let finalAgentId = agent_id
 
@@ -147,7 +146,7 @@ export async function POST(
         scoring_agent: 'Scoring Agent'
       }
 
-      const { data: newAgent, error: agentError } = await supabase
+      const { data: newAgent, error: _agentError } = await supabase
         .from('ai_agents')
         .insert({
           org_id: profile?.org_id,
@@ -158,9 +157,9 @@ export async function POST(
           configuration: configuration || execution_config || {},
           is_active: is_active !== undefined ? is_active : true,
           created_by: user.id
-        })
+        } as never)
         .select('id')
-        .single()
+        .single() as { data: { id: string } | null; error: unknown };
 
       if (agentError) {
         console.error('Error creating agent:', agentError)
@@ -170,7 +169,7 @@ export async function POST(
         )
       }
 
-      finalAgentId = newAgent.id
+      finalAgentId = newAgent!.id
     }
 
     if (!finalAgentId) {
@@ -193,7 +192,7 @@ export async function POST(
         execution_frequency: execution_frequency || 'on_demand',
         execution_config: execution_config || {},
         depends_on_agent_ids: depends_on_agent_ids || []
-      })
+      } as never)
       .select(`
         *,
         agent:ai_agents (
@@ -203,7 +202,7 @@ export async function POST(
           is_active
         )
       `)
-      .single()
+      .single() as { data: { agent?: { name?: string } } | null; error: unknown };
 
     if (assignError) {
       console.error('Error assigning agent:', assignError)
@@ -220,10 +219,10 @@ export async function POST(
         stream_id: streamId,
         user_id: user.id,
         activity_type: 'ai_update',
-        description: `Assigned ${assignment.agent?.name || 'agent'} to stream`,
+        description: `Assigned ${assignment?.agent?.name || 'agent'} to stream`,
         is_system: false,
         importance: 'normal'
-      })
+      } as never)
 
     return NextResponse.json(assignment, { status: 201 })
 

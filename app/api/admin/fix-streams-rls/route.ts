@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 /**
  * POST /api/admin/fix-streams-rls
@@ -36,8 +35,7 @@ export async function POST(_request: NextRequest) {
       END $$;
     `
 
-    // @ts-expect-error - Type inference issue
-    const { error: dropError } = await supabase.rpc('exec_sql', { sql: dropPoliciesSQL })
+    const { error: dropError } = await (supabase.rpc as any)('exec_sql', { sql: dropPoliciesSQL })
 
     if (dropError) {
       // Try direct execution if RPC doesn't exist
@@ -48,7 +46,7 @@ export async function POST(_request: NextRequest) {
     // Disable RLS on streams
     const disableRLSSQL = 'ALTER TABLE streams DISABLE ROW LEVEL SECURITY;'
 
-    const { error: disableError } = await supabase.rpc('exec_sql', { sql: disableRLSSQL })
+    const { error: disableError } = await (supabase.rpc as any)('exec_sql', { sql: disableRLSSQL })
 
     if (disableError) {
       console.error('[Fix Streams RLS] Error disabling RLS:', disableError)
@@ -101,15 +99,14 @@ export async function GET(_request: NextRequest) {
     }
 
     // Try to query streams table
-    const { data: streams, error: queryError } = await supabase
-      .from('streams')
+    const { data: streams, error: queryError } = await (supabase
+      .from('streams') as any)
       .select('id, name')
       .limit(5)
 
     // Try to insert a test stream (will rollback)
-    const { error: insertError } = await supabase
-      .from('streams')
-      // @ts-expect-error - Supabase type inference issue
+    const { error: insertError } = await (supabase
+      .from('streams') as any)
       .insert({
         name: 'RLS_TEST_STREAM_DELETE_ME',
         org_id: 'test',

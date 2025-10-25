@@ -5,7 +5,6 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET() {
   const checks = {
@@ -30,7 +29,7 @@ export async function GET() {
 
         // Check if mistral:7b model is available
         checks.mistral_model = data.models?.some((m: unknown) =>
-          m.name === 'mistral:7b' || m.model === 'mistral:7b'
+          (m as any).name === 'mistral:7b' || (m as any).model === 'mistral:7b'
         ) || false
 
         if (!checks.mistral_model) {

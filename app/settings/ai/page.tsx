@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,7 +29,6 @@ import {
 } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
-import type { Row } from '@/lib/supabase/helpers'
 import {
   Brain,
   Plus,
@@ -152,12 +151,7 @@ export default function AISettingsPage() {
   const [newKey, setNewKey] = useState({ provider: '', name: '', key: '' })
   const [testingKey, setTestingKey] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadSettings()
-    checkOllamaStatus()
-  }, [])
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -169,12 +163,12 @@ export default function AISettingsPage() {
 
       // Load user settings
       const { data: settings } = await supabase
-        .from('user_settings')
+        .from('user_settings' as any)
         .select('*')
         .eq('user_id', user.id)
-        .single() as { data: Row<'user_settings'> | null; error: any }
+        .single() as any
 
-      const typedSettings = settings as Row<'user_settings'> | null
+      const typedSettings = settings as any
       if (typedSettings) {
         setSelectedProvider((typedSettings as { default_ai_provider?: string }).default_ai_provider || 'openrouter')
         if ((typedSettings as { local_llm_config?: { ollama_url?: string } }).local_llm_config?.ollama_url) {
@@ -184,13 +178,13 @@ export default function AISettingsPage() {
 
       // Load API keys (masked)
       const { data: keys } = await supabase
-        .from('api_keys')
+        .from('api_keys' as any)
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false }) as { data: Row<'api_keys'>[] | null; error: any }
+        .order('created_at', { ascending: false }) as any
 
       if (keys) {
-        setApiKeys(keys.map(key => ({
+        setApiKeys(keys.map((key: any) => ({
           id: (key as any).id,
           provider: (key as any).provider,
           keyName: (key as any).key_name,
@@ -206,14 +200,14 @@ export default function AISettingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const maskApiKey = (provider: string) => {
     // Return a masked version for display
     return `${provider.slice(0, 3)}-****-****-****`
   }
 
-  const checkOllamaStatus = async () => {
+  const checkOllamaStatus = useCallback(async () => {
     try {
       const response = await fetch(`/api/ollama/status?url=${encodeURIComponent(ollamaUrl)}`)
       if (response.ok) {
@@ -226,7 +220,12 @@ export default function AISettingsPage() {
     } catch (error) {
       setOllamaStatus('offline')
     }
-  }
+  }, [ollamaUrl])
+
+  useEffect(() => {
+    loadSettings()
+    checkOllamaStatus()
+  }, [loadSettings, checkOllamaStatus])
 
   const handleAddApiKey = async () => {
     if (!newKey.provider || !newKey.name || !newKey.key) {
@@ -316,7 +315,6 @@ export default function AISettingsPage() {
 
       const { error } = await supabase
         .from('user_settings')
-        // @ts-expect-error - Supabase type inference issue
         .upsert({
           user_id: user.id,
           default_ai_provider: selectedProvider,

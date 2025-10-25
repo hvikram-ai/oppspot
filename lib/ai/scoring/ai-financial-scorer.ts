@@ -7,7 +7,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getOllamaClient, isOllamaEnabled } from '@/lib/ai/ollama'
 import { FinancialScore } from './financial-health-scorer'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Type definitions for company data
 interface CompanyData {
@@ -20,10 +19,43 @@ interface CompanyData {
   sic_codes?: string[]
   registered_office_address?: {
     locality?: string
-    [key: string]: any
+    [key: string]: unknown
   }
-  companies_house_data?: any
-  [key: string]: any
+  companies_house_data?: CompaniesHouseData
+  [key: string]: unknown
+}
+
+interface CompaniesHouseData {
+  accounts?: {
+    next_due?: string
+    overdue?: boolean
+    last_accounts?: {
+      made_up_to?: string
+      type?: string
+    }
+  }
+  confirmation_statement?: {
+    next_due?: string
+    overdue?: boolean
+  }
+  jurisdiction?: string
+  has_charges?: boolean
+  has_insolvency_history?: boolean
+  officers?: {
+    active_count?: number
+    resigned_count?: number
+  }
+}
+
+interface FinancialMetrics {
+  revenue?: number
+  revenue_growth_rate?: number
+  ebitda?: number
+  ebitda_margin?: number
+  net_income?: number
+  current_ratio?: number
+  debt_to_equity_ratio?: number
+  employee_count?: number
 }
 
 // Type definitions for AI analysis response
@@ -108,9 +140,9 @@ export class AIFinancialScorer {
     const { data: metrics } = await supabase
       .from('financial_metrics')
       .select('*')
-      .eq('company_id', companyData.id as any)
+      .eq('company_id', companyData.id || '')
       .order('fiscal_year', { ascending: false })
-      .limit(3) as { data: Row<'financial_metrics'>[] | null; error: any } // Get last 3 years
+      .limit(3) // Get last 3 years
 
     // Build comprehensive context
     let context = `
@@ -127,7 +159,7 @@ export class AIFinancialScorer {
 
     // Add Companies House data if available
     if (companyData.companies_house_data) {
-      const ch = companyData.companies_house_data as any
+      const ch = companyData.companies_house_data
       context += `
 
     REGULATORY COMPLIANCE:
@@ -156,15 +188,15 @@ export class AIFinancialScorer {
 
     FINANCIAL METRICS (Latest Available):
     `
-      const latest = metrics[0]
-      if ((latest as any).revenue) context += `Revenue: £${((latest as any).revenue / 1000000).toFixed(2)}M\n`
-      if ((latest as any).revenue_growth_rate) context += `Revenue Growth: ${(latest as any).revenue_growth_rate}%\n`
-      if ((latest as any).ebitda) context += `EBITDA: £${((latest as any).ebitda / 1000000).toFixed(2)}M\n`
-      if ((latest as any).ebitda_margin) context += `EBITDA Margin: ${(latest as any).ebitda_margin}%\n`
-      if ((latest as any).net_income) context += `Net Income: £${((latest as any).net_income / 1000000).toFixed(2)}M\n`
-      if ((latest as any).current_ratio) context += `Current Ratio: ${(latest as any).current_ratio}\n`
-      if ((latest as any).debt_to_equity_ratio) context += `Debt/Equity: ${(latest as any).debt_to_equity_ratio}\n`
-      if ((latest as any).employee_count) context += `Employees: ${(latest as any).employee_count}\n`
+      const latest = metrics[0] as unknown as FinancialMetrics
+      if (latest.revenue) context += `Revenue: £${(latest.revenue / 1000000).toFixed(2)}M\n`
+      if (latest.revenue_growth_rate) context += `Revenue Growth: ${latest.revenue_growth_rate}%\n`
+      if (latest.ebitda) context += `EBITDA: £${(latest.ebitda / 1000000).toFixed(2)}M\n`
+      if (latest.ebitda_margin) context += `EBITDA Margin: ${latest.ebitda_margin}%\n`
+      if (latest.net_income) context += `Net Income: £${(latest.net_income / 1000000).toFixed(2)}M\n`
+      if (latest.current_ratio) context += `Current Ratio: ${latest.current_ratio}\n`
+      if (latest.debt_to_equity_ratio) context += `Debt/Equity: ${latest.debt_to_equity_ratio}\n`
+      if (latest.employee_count) context += `Employees: ${latest.employee_count}\n`
 
       // Add trend analysis if multiple years available
       if (metrics.length > 1) {
@@ -172,13 +204,13 @@ export class AIFinancialScorer {
 
     TRENDS (Year-over-Year):
     `
-        const previous = metrics[1]
-        if ((latest as any).revenue && (previous as any).revenue) {
-          const revChange = (((latest as any).revenue - (previous as any).revenue) / (previous as any).revenue * 100).toFixed(1)
+        const previous = metrics[1] as unknown as FinancialMetrics
+        if (latest.revenue && previous.revenue) {
+          const revChange = ((latest.revenue - previous.revenue) / previous.revenue * 100).toFixed(1)
           context += `Revenue Change: ${revChange}%\n`
         }
-        if ((latest as any).employee_count && (previous as any).employee_count) {
-          const empChange = (latest as any).employee_count - (previous as any).employee_count
+        if (latest.employee_count && previous.employee_count) {
+          const empChange = latest.employee_count - previous.employee_count
           context += `Employee Change: ${empChange > 0 ? '+' : ''}${empChange}\n`
         }
       }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Navbar } from '@/components/layout/navbar'
 import { MetricCard } from '@/components/dashboard/metric-card'
@@ -80,11 +80,7 @@ export default function SignalsPage() {
     conversion_rate: 0
   })
 
-  useEffect(() => {
-    fetchSignals()
-  }, [timeRange, signalTypeFilter, minStrength])
-
-  const fetchSignals = async () => {
+  const fetchSignals = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -110,7 +106,11 @@ export default function SignalsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [timeRange, signalTypeFilter, minStrength])
+
+  useEffect(() => {
+    fetchSignals()
+  }, [fetchSignals])
 
   const calculateMetrics = (signalData: Signal[], intentData: Record<string, IntentScore>) => {
     const today = new Date().toISOString().split('T')[0]

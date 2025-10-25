@@ -189,7 +189,7 @@ export function SignalCard({ signal, onAction, compact = false }: SignalCardProp
       <CardContent>
         <div className="space-y-4">
           {/* Metrics */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground">Signal Strength</p>
               <Badge className={getStrengthColor()}>
@@ -212,7 +212,7 @@ export function SignalCard({ signal, onAction, compact = false }: SignalCardProp
           {signal.impact_assessment && (
             <div className="space-y-2 pt-2 border-t">
               <p className="text-sm font-medium">Impact Assessment</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 {signal.impact_assessment.revenue_impact && (
                   <div className="flex items-center gap-2">
                     <ArrowUp className="h-3 w-3 text-green-500" />

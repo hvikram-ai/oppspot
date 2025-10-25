@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Database } from '@/lib/supabase/database.types'
-import type { Row } from '@/lib/supabase/helpers'
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Format businesses for the map
-    const formattedBusinesses = (businesses || []).map((business: Business) => ({
+    const formattedBusinesses = (businesses || []).map((business: Business & { rating?: number; verified?: boolean }) => ({
       id: business.id,
       name: business.name,
       description: business.description,

@@ -22,7 +22,7 @@ export interface AgentActivity {
   agent_type: string
   activity_type: 'started' | 'progress' | 'completed' | 'failed'
   message: string
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 }
 
 export class ProgressBroadcaster {
@@ -92,7 +92,7 @@ export class ProgressBroadcaster {
     type: string
     title: string
     description: string
-    data?: Record<string, any>
+    data?: Record<string, unknown>
   }): Promise<void> {
     try {
       const channel = this.supabase.channel(this.channelName)
@@ -135,7 +135,7 @@ export class ProgressBroadcaster {
     agentName: string,
     agentType: string,
     message: string,
-    data?: Record<string, any>
+    data?: Record<string, unknown>
   ): Promise<void> {
     await this.broadcastActivity({
       agent_id: agentId,
@@ -155,7 +155,7 @@ export class ProgressBroadcaster {
     agentName: string,
     agentType: string,
     message: string,
-    data?: Record<string, any>
+    data?: Record<string, unknown>
   ): Promise<void> {
     await this.broadcastActivity({
       agent_id: agentId,

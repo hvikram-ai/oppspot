@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import signalAggregator from '@/lib/signals/engines/signal-aggregation-engine';
 import { ActionType } from '@/lib/signals/types/buying-signals';
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
           action_status: 'completed',
           executed_at: new Date().toISOString(),
           response_data: result.data
-        })
+        } as never)
         .eq('id', action.id);
     } else {
       await supabase
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
           action_status: 'failed',
           executed_at: new Date().toISOString(),
           response_data: { error: result.error }
-        })
+        } as never)
         .eq('id', action.id);
     }
 
@@ -206,7 +205,7 @@ export async function PATCH(request: NextRequest) {
 
     const { data: action, error } = await supabase
       .from('signal_actions')
-      .update(updates)
+      .update(updates as never)
       .eq('id', action_id)
       .select()
       .single();
@@ -246,7 +245,7 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
           priority: signal.signal_strength === 'very_strong' ? 'high' : 'medium',
           related_company_id: signal.company_id,
           related_signal_id: signal.id
-        })
+        } as never)
         .select()
         .single();
 
@@ -268,7 +267,7 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
             company_id: signal.company_id,
             signal_type: signal.signal_type
           }
-        })
+        } as never)
         .select()
         .single();
 
@@ -288,7 +287,7 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
           created_by: userId,
           source: `Signal: ${signal.signal_type}`,
           signal_id: signal.id
-        })
+        } as never)
         .select()
         .single();
 
@@ -306,7 +305,7 @@ async function executeAction(actionType: string, signal: Record<string, unknown>
           enrolled_by: userId,
           trigger_signal: signal.id,
           status: 'active'
-        })
+        } as never)
         .select()
         .single();
 

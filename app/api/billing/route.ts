@@ -59,7 +59,7 @@ export async function GET(_request: NextRequest) {
       .eq('id', profile.org_id)
       .single()
 
-    const org = orgData as Pick<Row<'organizations'>, 'subscription_tier' | 'trial_ends_at' | 'stripe_customer_id' | 'stripe_subscription_id'> | null
+    const org = orgData as any
 
     if (orgError) {
       console.error('Error fetching organization billing:', orgError)
@@ -70,7 +70,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // Check if in trial period
-    const isTrial = org?.trial_ends_at ? new Date(org.trial_ends_at) > new Date() : false
+    const isTrial = org?.trial_ends_at ? new Date(org.trial_ends_at as string | number | Date) > new Date() : false
 
     // Count organization members
     const { count: seatsUsed } = await supabase

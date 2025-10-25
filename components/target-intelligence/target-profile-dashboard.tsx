@@ -339,8 +339,8 @@ export function TargetProfileDashboard({
             <div>
               <h4 className="font-medium mb-3">Funding & Investment</h4>
               <div className="space-y-3">
-                {profile?.financial_profile?.funding_history?.length > 0 ? (
-                  profile.financial_profile.funding_history.slice(0, 3).map((round, index) => (
+                {(profile?.financial_profile?.funding_history?.length ?? 0) > 0 ? (
+                  profile?.financial_profile?.funding_history?.slice(0, 3).map((round, index) => (
                     <div key={index} className="flex justify-between">
                       <span className="text-sm capitalize">{round.round_type}:</span>
                       <span className="font-medium">
@@ -399,11 +399,11 @@ export function TargetProfileDashboard({
                 {profile?.market_position?.competitive_position?.toUpperCase() || 'UNKNOWN'}
               </Badge>
               
-              {profile?.market_position?.key_competitors?.length > 0 && (
+              {(profile?.market_position?.key_competitors?.length ?? 0) > 0 && (
                 <div>
                   <h5 className="text-sm font-medium mb-2">Key Competitors</h5>
                   <div className="space-y-2">
-                    {profile.market_position.key_competitors.slice(0, 5).map((competitor, index) => (
+                    {profile?.market_position?.key_competitors?.slice(0, 5).map((competitor, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm">{competitor.name}</span>
                         <Badge 
@@ -498,16 +498,16 @@ export function TargetProfileDashboard({
             
             <div>
               <h4 className="font-medium mb-3">Technology Stack</h4>
-              {profile?.technology_profile?.tech_stack?.length > 0 ? (
+              {(profile?.technology_profile?.tech_stack?.length ?? 0) > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {profile.technology_profile.tech_stack.slice(0, 8).map((tech, index) => (
+                  {profile?.technology_profile?.tech_stack?.slice(0, 8).map((tech, index) => (
                     <Badge key={index} variant="outline">
                       {tech}
                     </Badge>
                   ))}
-                  {profile.technology_profile.tech_stack.length > 8 && (
+                  {(profile?.technology_profile?.tech_stack?.length ?? 0) > 8 && (
                     <Badge variant="outline">
-                      +{profile.technology_profile.tech_stack.length - 8} more
+                      +{(profile?.technology_profile?.tech_stack?.length ?? 0) - 8} more
                     </Badge>
                   )}
                 </div>
@@ -608,11 +608,11 @@ export function TargetProfileDashboard({
           </div>
           
           {/* ESG Initiatives */}
-          {profile?.esg_assessment?.sustainability_initiatives?.length > 0 && (
+          {(profile?.esg_assessment?.sustainability_initiatives?.length ?? 0) > 0 && (
             <div className="mt-6">
               <h4 className="font-medium mb-3">Sustainability Initiatives</h4>
               <div className="flex flex-wrap gap-2">
-                {profile.esg_assessment.sustainability_initiatives.map((initiative, index) => (
+                {profile?.esg_assessment?.sustainability_initiatives?.map((initiative, index) => (
                   <Badge key={index} variant="outline" className="text-green-700 border-green-300">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     {initiative}

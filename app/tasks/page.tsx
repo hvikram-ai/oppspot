@@ -57,7 +57,7 @@ export default function TasksPage() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">You're all caught up!</p>
+            <p className="text-muted-foreground mb-4">You&apos;re all caught up!</p>
             <Button>Create Task</Button>
           </div>
         </CardContent>

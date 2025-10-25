@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import type { Row } from '@/lib/supabase/helpers'
 import type {
   Stakeholder,
   InfluenceScores,
@@ -16,6 +15,17 @@ interface StakeholderWithRelations extends Stakeholder {
   stakeholder_relationships?: StakeholderRelationship[];
   stakeholder_engagement?: StakeholderEngagement[];
   champion_tracking?: ChampionTracking[];
+}
+
+// Extended types for database operations
+interface InfluenceScoresWithId extends InfluenceScores {
+  id: string;
+  last_calculated: string;
+}
+
+interface StakeholderUpdate {
+  influence_level: number;
+  updated_at: string;
 }
 
 export class InfluenceScorer {
@@ -42,7 +52,6 @@ export class InfluenceScorer {
       const supabase = await this.getSupabase();
 
       // Get stakeholder data
-      // @ts-ignore - stakeholders table with joins
       const { data: stakeholder, error } = await supabase
         .from('stakeholders')
         .select(`
@@ -52,11 +61,9 @@ export class InfluenceScorer {
           stakeholder_engagement!left(*)
         `)
         .eq('id', request.stakeholder_id)
-        .single();
+        .single() as { data: StakeholderWithRelations | null, error: Error | null };
 
-      const typedStakeholder = stakeholder as unknown as StakeholderWithRelations | null
-
-      if (error || !typedStakeholder) {
+      if (error || !stakeholder) {
         console.error('Error fetching stakeholder:', error);
         return {
           success: false,
@@ -65,10 +72,10 @@ export class InfluenceScorer {
       }
 
       // Check if we should recalculate or use existing
-      const existing = typedStakeholder.influence_scores?.[0];
+      const existing = stakeholder.influence_scores?.[0] as InfluenceScoresWithId | undefined;
       if (existing && !request.recalculate) {
         const hoursSinceCalculation =
-          (Date.now() - new Date((existing as any).last_calculated).getTime()) / (1000 * 60 * 60);
+          (Date.now() - new Date(existing.last_calculated).getTime()) / (1000 * 60 * 60);
 
         if (hoursSinceCalculation < 24) {
           // Use cached scores if less than 24 hours old
@@ -86,10 +93,10 @@ export class InfluenceScorer {
       }
 
       // Calculate individual influence dimensions
-      const hierarchicalInfluence = await this.calculateHierarchicalInfluence(typedStakeholder);
-      const socialInfluence = await this.calculateSocialInfluence(typedStakeholder);
-      const technicalInfluence = await this.calculateTechnicalInfluence(typedStakeholder);
-      const politicalInfluence = await this.calculatePoliticalInfluence(typedStakeholder);
+      const hierarchicalInfluence = await this.calculateHierarchicalInfluence(stakeholder);
+      const socialInfluence = await this.calculateSocialInfluence(stakeholder);
+      const technicalInfluence = await this.calculateTechnicalInfluence(stakeholder);
+      const politicalInfluence = await this.calculatePoliticalInfluence(stakeholder);
 
       // Calculate composite score with weighted average
       const overallInfluence = Math.round(
@@ -102,20 +109,20 @@ export class InfluenceScorer {
       // Calculate decision weight (0-1 scale)
       const decisionWeight = this.calculateDecisionWeight(
         overallInfluence,
-        typedStakeholder.decision_authority as boolean | undefined,
-        typedStakeholder.budget_authority as boolean | undefined
+        stakeholder.decision_authority as boolean | undefined,
+        stakeholder.budget_authority as boolean | undefined
       );
 
       // Network metrics
-      const networkMetrics = await this.calculateNetworkMetrics(typedStakeholder);
+      const networkMetrics = await this.calculateNetworkMetrics(stakeholder);
 
       // Behavioral indicators
-      const behavioralIndicators = this.analyzeBehavioralIndicators(typedStakeholder);
+      const behavioralIndicators = this.analyzeBehavioralIndicators(stakeholder);
 
       // Prepare influence scores
       const influenceScores: Partial<InfluenceScores> = {
         stakeholder_id: request.stakeholder_id,
-        org_id: typedStakeholder.org_id as string,
+        org_id: stakeholder.org_id as string,
         hierarchical_influence: hierarchicalInfluence,
         social_influence: socialInfluence,
         technical_influence: technicalInfluence,
@@ -124,60 +131,57 @@ export class InfluenceScorer {
         decision_weight: decisionWeight,
         network_centrality: networkMetrics.centrality,
         connection_count: networkMetrics.connectionCount,
-        influence_reach: networkMetrics.reach as any,
+        influence_reach: networkMetrics.reach,
         opinion_leader: behavioralIndicators.opinionLeader,
         early_adopter: behavioralIndicators.earlyAdopter,
         change_agent: behavioralIndicators.changeAgent,
         calculation_method: 'multi_dimensional_v1',
-        confidence_score: this.calculateConfidenceScore(typedStakeholder),
+        confidence_score: this.calculateConfidenceScore(stakeholder),
         last_calculated: new Date().toISOString()
       };
 
       // Save or update influence scores
       let savedScores: InfluenceScores;
       if (existing) {
-        // @ts-ignore - influence_scores table update
         const { data, error: updateError } = await supabase
           .from('influence_scores')
           .update(influenceScores)
-          .eq('id', (existing as any).id)
+          .eq('id', existing.id)
           .select()
-          .single()
+          .single() as { data: InfluenceScores | null, error: Error | null };
 
-        if (updateError) {
+        if (updateError || !data) {
           console.error('Error updating influence scores:', updateError);
           return {
             success: false,
             influence_scores: {} as InfluenceScores
           };
         }
-        savedScores = data as unknown as InfluenceScores;
+        savedScores = data;
       } else {
-        // @ts-ignore - influence_scores table insert
         const { data, error: insertError } = await supabase
           .from('influence_scores')
           .insert(influenceScores)
           .select()
-          .single()
+          .single() as { data: InfluenceScores | null, error: Error | null };
 
-        if (insertError) {
+        if (insertError || !data) {
           console.error('Error inserting influence scores:', insertError);
           return {
             success: false,
             influence_scores: {} as InfluenceScores
           };
         }
-        savedScores = data as unknown as InfluenceScores;
+        savedScores = data;
       }
 
       // Update stakeholder influence level
-      // @ts-ignore - stakeholders table update
       await supabase
         .from('stakeholders')
         .update({
           influence_level: Math.ceil(overallInfluence / 10),
           updated_at: new Date().toISOString()
-        })
+        } as StakeholderUpdate)
         .eq('id', request.stakeholder_id);
 
       // Prepare response
@@ -492,7 +496,6 @@ export class InfluenceScorer {
       const supabase = await this.getSupabase();
 
       // Get all relationships
-      // @ts-ignore - stakeholder_relationships with join
       const { data: relationships } = await supabase
         .from('stakeholder_relationships')
         .select(`
@@ -503,9 +506,9 @@ export class InfluenceScorer {
             influence_level
           )
         `)
-        .eq('stakeholder_id', stakeholder_id)
+        .eq('stakeholder_id', stakeholder_id) as { data: (StakeholderRelationship & { related_stakeholder?: Stakeholder })[] | null };
 
-      const connections = (relationships || []) as unknown as (StakeholderRelationship & { related_stakeholder?: Stakeholder })[];
+      const connections = relationships || [];
 
       // Calculate centrality score (simplified PageRank-like approach)
       const centralityScore = connections.length > 0
@@ -570,19 +573,18 @@ export class InfluenceScorer {
         query = query.eq('org_id', org_id);
       }
 
-      // @ts-ignore - stakeholders with joins
-      const { data: stakeholders } = await query;
+      const { data: stakeholders } = await query as { data: StakeholderWithRelations[] | null };
 
-      const typedStakeholders = (stakeholders || []) as unknown as StakeholderWithRelations[]
+      const stakeholdersList = stakeholders || [];
 
-      if (typedStakeholders.length === 0) {
+      if (stakeholdersList.length === 0) {
         return [];
       }
 
       // Group by department as a simple clustering approach
       const clusters = new Map<string, StakeholderWithRelations[]>();
 
-      typedStakeholders.forEach((stakeholder: StakeholderWithRelations) => {
+      stakeholdersList.forEach((stakeholder: StakeholderWithRelations) => {
         const dept = (stakeholder.department as string) || 'Unknown';
         if (!clusters.has(dept)) {
           clusters.set(dept, []);

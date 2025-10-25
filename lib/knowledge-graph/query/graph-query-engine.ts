@@ -140,7 +140,6 @@ export class GraphQueryEngine {
       // Get preview facts for each entity
       const enrichedResults = await Promise.all(
         (results || []).map(async (r) => {
-          // @ts-expect-error - Type inference issue
           const { data: facts } = await supabase.rpc('get_entity_facts', {
             p_entity_id: r.entity_id,
             p_include_historical: false
@@ -258,7 +257,7 @@ export class GraphQueryEngine {
   ): Promise<{
     query_type: 'pattern_match' | 'semantic_search' | 'traversal' | 'aggregation'
     description: string
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   }> {
     // Simple heuristic-based interpretation
     // In production, this would use AI for better interpretation

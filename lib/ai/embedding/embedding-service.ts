@@ -95,9 +95,10 @@ export class EmbeddingService {
         model,
         tokenCount: response.usage.total_tokens
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       console.error('[Embedding Service] Error generating embedding:', error)
-      throw new Error(`Failed to generate embedding: ${error.message}`)
+      throw new Error(`Failed to generate embedding: ${errorMessage}`)
     }
   }
 
@@ -136,9 +137,10 @@ export class EmbeddingService {
         if (companies.length > batchSize) {
           console.log(`[Embedding Service] Processed ${Math.min(i + batchSize, companies.length)}/${companies.length} companies`)
         }
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
         console.error(`[Embedding Service] Error in batch ${i}-${i + batchSize}:`, error)
-        throw new Error(`Batch embedding failed: ${error.message}`)
+        throw new Error(`Batch embedding failed: ${errorMessage}`)
       }
     }
 
@@ -156,7 +158,6 @@ export class EmbeddingService {
 
     const { error } = await supabase
       .from('businesses')
-      // @ts-expect-error - Type inference issue
       .update({
         embedding: JSON.stringify(embeddingResult.embedding),
         embedding_model: embeddingResult.model,

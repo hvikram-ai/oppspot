@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
 
 interface CompanyMatch {
   overall_score: number
@@ -93,7 +92,8 @@ export async function GET(
       .single() as {
         data: (Record<string, unknown> & {
           similar_company_matches?: unknown[]
-        }) | null
+        }) | null;
+        error: { code?: string } | null
       }
 
     if (error) {
@@ -205,7 +205,7 @@ export async function PUT(
     // Update analysis
     const { data: updated, error: updateError } = await supabase
       .from('similarity_analyses')
-      // @ts-expect-error - Type inference issue
+      // @ts-expect-error - similarity_analyses update type mismatch
       .update(updateData)
       .eq('id', analysisId)
       .eq('user_id', user.id)
@@ -277,12 +277,12 @@ export async function DELETE(
     // Record deletion in feature usage
     await supabase
       .from('similarity_feature_usage')
-      // @ts-expect-error - Supabase type inference issue
+      // @ts-expect-error - similarity_feature_usage insert type mismatch
       .insert({
         user_id: user.id,
         event_type: 'analysis_deleted',
         similarity_analysis_id: analysisId,
-        target_company_name: existing.target_company_name,
+        target_company_name: (existing as { target_company_name: string }).target_company_name,
         feature_version: 'v1.0'
       })
 

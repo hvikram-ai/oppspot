@@ -198,7 +198,7 @@ export function RealtimeAnalyticsProvider({ children }: { children: ReactNode })
         supabase.removeChannel(channel)
       })
     }
-  }, [])
+  }, [channels, supabase])
 
   return (
     <RealtimeAnalyticsContext.Provider

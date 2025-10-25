@@ -235,7 +235,6 @@ export class ProxycurlClient {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
         },
-        // @ts-expect-error
         params: {
           url: linkedinUrl,
           resolve_numeric_id: true,

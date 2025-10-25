@@ -13,7 +13,7 @@ export interface ExtendedGoalTemplate extends GoalTemplate {
     company: string
     result: string
   }>
-  example_criteria?: Record<string, any>
+  example_criteria?: Record<string, unknown>
 }
 
 /**

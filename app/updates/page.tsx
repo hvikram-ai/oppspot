@@ -135,7 +135,7 @@ function UpdatesPageContent() {
   useEffect(() => {
     setLoading(true)
     fetchUpdates(true)
-  }, [feedType, filterType])
+  }, [fetchUpdates, feedType, filterType])
 
   // Load more functionality
   const loadMore = () => {
@@ -148,7 +148,7 @@ function UpdatesPageContent() {
     if (page > 1) {
       fetchUpdates()
     }
-  }, [page])
+  }, [page, fetchUpdates])
 
   // Refresh feed
   const refreshFeed = async () => {

@@ -440,7 +440,6 @@ class OppScanEngine {
       try {
         const { data: target, error } = await supabase
           .from('target_companies')
-          // @ts-expect-error - Supabase type inference issue
           .insert({
             scan_id: scanId,
             company_name: company.name,
@@ -475,7 +474,6 @@ class OppScanEngine {
     }
 
     // Update scan targets count
-    // @ts-expect-error - Type inference issue
     await supabase.rpc('increment_scan_targets', {
       scan_id: scanId,
       increment: targetIds.length

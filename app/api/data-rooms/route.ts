@@ -7,7 +7,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { CreateDataRoomRequest, DataRoom } from '@/lib/data-room/types'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,12 +30,13 @@ export async function GET(request: NextRequest) {
         data_room_access!inner(permission_level)
       `)
       .eq('status', status)
-      .order('created_at', { ascending: false }) as {
-        data: Array<Row<'data_rooms'> & {
+      .order('created_at', { ascending: false }) as any as {
+        data: Array<any & {
           user_id: string
           profiles?: { name?: string; email?: string }
           data_room_access?: Array<{ permission_level?: string }>
         }> | null
+        error: { message: string } | null
       }
 
     if (error) {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     // Create data room
     const { data: dataRoom, error } = await supabase
       .from('data_rooms')
-      // @ts-expect-error - Supabase type inference issue
+      // @ts-expect-error - data_rooms insert type mismatch
       .insert({
         user_id: user.id,
         name: body.name.trim(),
@@ -102,15 +102,15 @@ export async function POST(request: NextRequest) {
         metadata: body.metadata || {}
       })
       .select()
-      .single() as { data: { id: string; name: string } & Record<string, unknown> | null; error: unknown }
+      .single() as { data: { id: string; name: string } & Record<string, unknown> | null; error: { message: string } | null }
 
     if (error) {
       console.error('[Data Rooms API] Create error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // @ts-expect-error - Supabase type inference issue
     // Log activity
+    // @ts-expect-error - activity_logs insert type mismatch
     await supabase.from('activity_logs').insert({
       data_room_id: dataRoom!.id,
       actor_id: user.id,

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { LeadScoringService } from '@/lib/ai/scoring/lead-scoring-service'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest) {
       {
         force_refresh,
         include_explanations,
-        org_id: profile?.org_id,
+        org_id: (profile as unknown as { org_id?: string | null })?.org_id || undefined,
         use_ai,
         ai_depth: ai_depth as 'quick' | 'detailed'
       }

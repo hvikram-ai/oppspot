@@ -74,11 +74,11 @@ export async function POST(request: NextRequest) {
         description: result.company.description,
         relevanceScore: result.relevanceScore,
         source: result.source,
-        snippet: result.snippet,
+        snippet: (result.additionalData?.snippet as string) || result.company.description,
         industryCodes: result.company.industryCodes,
         foundingYear: result.company.foundingYear,
-        employees: result.company.employees,
-        revenue: result.company.revenue
+        employees: result.company.employeeCount,
+        revenue: result.company.revenueEstimate
       }))
     })
 

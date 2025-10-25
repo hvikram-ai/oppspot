@@ -119,9 +119,9 @@ export class FundingSignalDetector {
           currency: fundingData.currency || 'USD',
           valuation: fundingData.valuation,
           investors: fundingData.investors || [],
-          lead_investor: fundingData.lead_investor,
-          announcement_date: fundingData.announcement_date,
-          close_date: fundingData.close_date
+          lead_investor: fundingData.lead_investor ? { name: fundingData.lead_investor, type: 'vc' } : undefined,
+          announcement_date: fundingData.announcement_date || new Date(),
+          close_date: fundingData.closing_date
         },
 
         context: {
@@ -134,9 +134,9 @@ export class FundingSignalDetector {
 
         insights: {
           budget_availability: budgetEstimate,
-          expansion_plans: insights.expansion_plans,
+          expansion_plans: insights.expansion_plans || [],
           investment_focus: insights.investment_focus,
-          hiring_intentions: insights.hiring_intentions,
+          hiring_intentions: insights.hiring_intentions && insights.hiring_intentions.length > 0,
           technology_upgrade_likely: insights.technology_upgrade_likely
         },
 
@@ -153,12 +153,11 @@ export class FundingSignalDetector {
       // Store the signal in database
       const { data: signal, error } = await supabase
         .from('buying_signals')
-        // @ts-expect-error - Supabase type inference issue
         .insert({
           ...fundingSignal,
           signal_data: fundingSignal.funding_data,
           detected_at: new Date()
-        })
+        } as any)
         .select()
         .single();
 
@@ -166,31 +165,9 @@ export class FundingSignalDetector {
 
       const typedSignal = signal as Row<'buying_signals'>
 
-      // @ts-expect-error - Supabase type inference issue
-      // Store funding-specific details
-      await supabase.from('funding_signals').insert({
-        signal_id: typedSignal.id,
-        company_id: companyId,
-        round_type: fundingData.round_type,
-        amount: fundingData.amount,
-        currency: fundingData.currency || 'USD',
-        valuation: fundingData.valuation,
-        investors: fundingData.investors,
-        lead_investor: fundingData.lead_investor,
-        investor_count: fundingData.investors?.length || 0,
-        announcement_date: fundingData.announcement_date,
-        close_date: fundingData.close_date,
-        previous_rounds: fundingSignal.context?.previous_rounds,
-        total_raised: fundingSignal.context?.total_raised,
-        burn_rate_estimate: fundingSignal.context?.burn_rate_estimate,
-        runway_months: fundingSignal.context?.runway_months,
-        growth_stage: fundingSignal.context?.growth_stage,
-        budget_availability: budgetEstimate,
-        expansion_plans: insights.expansion_plans,
-        investment_focus: insights.investment_focus,
-        hiring_intentions: insights.hiring_intentions,
-        technology_upgrade_likely: insights.technology_upgrade_likely
-      });
+      // Note: funding_signals table doesn't exist in current schema
+      // All funding data is stored in buying_signals.signal_data
+      // If you need a separate funding_signals table, create a migration first
 
       return signal as FundingSignal;
 
@@ -248,35 +225,49 @@ export class FundingSignalDetector {
     const amount = fundingData.amount || 0;
     const roundType = fundingData.round_type;
 
-    const insights = {
-      expansion_plans: [] as string[],
-      investment_focus: [] as string[],
-      hiring_intentions: false,
+    const insights: FundingInsights = {
+      investment_focus: [],
+      expected_initiatives: [],
+      buyer_readiness_score: 50,
+      competitive_window: 90,
+      likely_tech_investments: [],
+      expansion_plans: [],
+      hiring_intentions: [],
       technology_upgrade_likely: false
     };
 
     // Expansion plans based on round type and size
     if (roundType === 'series_a' || roundType === 'series_b') {
       insights.expansion_plans = ['Product development', 'Market expansion', 'Team growth'];
-      insights.hiring_intentions = true;
+      insights.hiring_intentions = ['Hiring planned'];
+      insights.expected_initiatives = ['Build team', 'Scale operations'];
     } else if (roundType === 'series_c' || roundType === 'series_d_plus') {
       insights.expansion_plans = ['International expansion', 'M&A activity', 'Enterprise features'];
+      insights.expected_initiatives = ['Market expansion', 'Enterprise sales'];
     }
 
     // Investment focus
     if (amount > 10000000) {
       insights.investment_focus = ['Technology infrastructure', 'Sales & Marketing', 'R&D'];
+      insights.likely_tech_investments = ['Cloud infrastructure', 'Security tools', 'Analytics'];
       insights.technology_upgrade_likely = true;
+      insights.buyer_readiness_score = 80;
+      insights.competitive_window = 60;
     } else if (amount > 5000000) {
       insights.investment_focus = ['Product development', 'Customer acquisition', 'Operations'];
+      insights.likely_tech_investments = ['Development tools', 'CRM', 'Marketing automation'];
       insights.technology_upgrade_likely = true;
+      insights.buyer_readiness_score = 70;
     } else {
       insights.investment_focus = ['Core product', 'Initial team', 'Market validation'];
+      insights.likely_tech_investments = ['Basic tools', 'Productivity software'];
+      insights.buyer_readiness_score = 60;
     }
 
     // Technology upgrade likelihood
     if (company.industry === 'Technology' || company.industry === 'SaaS') {
       insights.technology_upgrade_likely = true;
+      insights.buyer_readiness_score += 10;
     }
 
     return insights;
@@ -356,7 +347,7 @@ export class FundingSignalDetector {
 
     // Increase confidence based on data completeness
     if (fundingData.amount) confidence += 10;
-    if (fundingData.investors?.length > 0) confidence += 10;
+    if (fundingData.investors && fundingData.investors.length > 0) confidence += 10;
     if (fundingData.valuation) confidence += 10;
     if (fundingData.source_reliability === 'verified') confidence += 10;
 
@@ -416,44 +407,52 @@ export class FundingSignalDetector {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const { data: existing } = await supabase
-      .from('funding_signals')
+      .from('buying_signals')
       .select('*')
       .eq('company_id', companyId)
-      .eq('round_type', fundingData.round_type)
-      .eq('amount', fundingData.amount)
-      .gte('created_at', thirtyDaysAgo.toISOString() as { data: Row<'funding_signals'>[] | null; error: any });
+      .eq('signal_type', 'funding_round')
+      .gte('detected_at', thirtyDaysAgo.toISOString());
 
-    return existing && existing.length > 0;
+    return (existing && existing.length > 0) || false;
   }
 
   private async getPreviousFundingRounds(companyId: string): Promise<FundingRound[]> {
     const supabase = await createClient();
 
     const { data: previousRounds } = await supabase
-      .from('funding_signals')
-      .select('round_type, amount, announcement_date')
+      .from('buying_signals')
+      .select('signal_type, signal_data, signal_date')
       .eq('company_id', companyId)
-      .order('announcement_date', { ascending: false })
-      .limit(5) as { data: Row<'funding_signals'>[] | null; error: any };
+      .eq('signal_type', 'funding_round')
+      .order('signal_date', { ascending: false })
+      .limit(5) as { data: any[] | null; error: any };
 
     if (!previousRounds) return [];
 
-    return previousRounds.map(round => ({
-      round_type: (round as any).round_type as RoundType,
-      amount: (round as any).amount,
-      date: (round as any).announcement_date
-    }));
+    return previousRounds.map((signal: any) => {
+      const data = signal.signal_data as any;
+      return {
+        round_type: data?.round_type as RoundType || 'seed',
+        amount: data?.amount || 0,
+        date: signal.signal_date
+      };
+    });
   }
 
   private async calculateTotalRaised(companyId: string, currentAmount: number): Promise<number> {
     const supabase = await createClient();
 
     const { data: rounds } = await supabase
-      .from('funding_signals')
-      .select('amount')
-      .eq('company_id', companyId) as { data: Row<'funding_signals'>[] | null; error: any };
+      .from('buying_signals')
+      .select('signal_data')
+      .eq('company_id', companyId)
+      .eq('signal_type', 'funding_round') as { data: any[] | null; error: any };
 
-    const previousTotal = rounds?.reduce((sum, round) => sum + ((round as any).amount || 0), 0) || 0;
+    const previousTotal = rounds?.reduce((sum: number, signal: any) => {
+      const data = signal.signal_data as any;
+      return sum + (data?.amount || 0);
+    }, 0) || 0;
+
     return previousTotal + currentAmount;
   }
 

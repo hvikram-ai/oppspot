@@ -57,15 +57,15 @@ export function BusinessInfo({ business }: BusinessInfoProps) {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="hours">Hours</TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="hours" className="text-xs sm:text-sm">Hours</TabsTrigger>
+            <TabsTrigger value="details" className="text-xs sm:text-sm">Details</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-4 mt-4">
             {/* Company Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {business.founded_year && (
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-muted-foreground">

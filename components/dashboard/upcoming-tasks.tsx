@@ -184,7 +184,7 @@ export function UpcomingTasks({ userId }: UpcomingTasksProps) {
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Today's Progress</span>
+            <span className="text-sm text-muted-foreground">Today&apos;s Progress</span>
             <span className="text-sm font-medium">{completedCount}/{tasks.length} completed</span>
           </div>
           <Progress value={completionRate} className="h-2" />

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Webhook event types (enum not exported due to Next.js route constraints)
 enum QualificationWebhookEvent {
@@ -119,8 +118,8 @@ export async function GET(request: NextRequest) {
       availableEvents: Object.values(QualificationWebhookEvent),
       statistics: {
         total: webhooks?.length || 0,
-        active: webhooks?.filter(w => w.is_active).length || 0,
-        inactive: webhooks?.filter(w => !w.is_active).length || 0
+        active: webhooks?.filter((w: { is_active: boolean }) => w.is_active).length || 0,
+        inactive: webhooks?.filter((w: { is_active: boolean }) => !w.is_active).length || 0
       }
     })
   } catch (error) {
@@ -166,7 +165,7 @@ export async function PUT(request: NextRequest) {
         events,
         is_active: true,
         created_at: new Date().toISOString()
-      })
+      } as never)
       .select()
       .single()
 
@@ -267,8 +266,8 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           status: 'qualified',
           qualified_at: new Date().toISOString(),
           metadata: { ...payload.data }
-        })
-        .eq('id', payload.data.lead_id)
+        } as never)
+        .eq('id', payload.data.lead_id as string)
       break
 
     case QualificationWebhookEvent.LEAD_DISQUALIFIED:
@@ -279,8 +278,8 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           status: 'disqualified',
           disqualified_at: new Date().toISOString(),
           disqualification_reason: payload.data.reason
-        })
-        .eq('id', payload.data.lead_id)
+        } as never)
+        .eq('id', payload.data.lead_id as string)
       break
 
     case QualificationWebhookEvent.LEAD_ASSIGNED:
@@ -295,7 +294,7 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           sla_deadline: payload.data.sla_deadline,
           status: 'assigned',
           created_at: new Date().toISOString()
-        })
+        } as never)
       break
 
     case QualificationWebhookEvent.SCORE_UPDATED:
@@ -306,16 +305,16 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           .update({
             overall_score: payload.data.score,
             updated_at: new Date().toISOString()
-          })
-          .eq('lead_id', payload.data.lead_id)
+          } as never)
+          .eq('lead_id', payload.data.lead_id as string)
       } else if (payload.data.framework === 'MEDDIC') {
         await supabase
           .from('meddic_qualifications')
           .update({
             overall_score: payload.data.score,
             updated_at: new Date().toISOString()
-          })
-          .eq('lead_id', payload.data.lead_id)
+          } as never)
+          .eq('lead_id', payload.data.lead_id as string)
       }
       break
 
@@ -330,7 +329,7 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           trigger_value: payload.data.trigger_value,
           status: 'triggered',
           created_at: new Date().toISOString()
-        })
+        } as never)
       break
 
     case QualificationWebhookEvent.CHECKLIST_COMPLETED:
@@ -341,8 +340,8 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           status: 'completed',
           completed_at: new Date().toISOString(),
           completion_percentage: 100
-        })
-        .eq('id', payload.data.checklist_id)
+        } as never)
+        .eq('id', payload.data.checklist_id as string)
       break
 
     case QualificationWebhookEvent.LEAD_RECYCLED:
@@ -356,7 +355,7 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           new_status: payload.data.new_status,
           recycling_reason: payload.data.reason,
           created_at: new Date().toISOString()
-        })
+        } as never)
       break
 
     case QualificationWebhookEvent.SLA_BREACH:
@@ -367,8 +366,8 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
           sla_breached: true,
           breached_at: new Date().toISOString(),
           status: 'escalated'
-        })
-        .eq('id', payload.data.assignment_id)
+        } as never)
+        .eq('id', payload.data.assignment_id as string)
       break
 
     default:
@@ -383,7 +382,7 @@ async function processWebhookEvent(payload: WebhookPayload): Promise<unknown> {
       payload: payload.data,
       metadata: payload.metadata,
       processed_at: new Date().toISOString()
-    })
+    } as never)
 
   return { processed: true, event: payload.event }
 }
@@ -459,7 +458,11 @@ async function _triggerQualificationWebhook(
 
     // Send to all registered webhooks
     for (const webhook of webhooks) {
-      await sendWebhook(webhook.url, webhook.secret, payload)
+      await sendWebhook(
+        (webhook as { url: string; secret: string }).url,
+        (webhook as { url: string; secret: string }).secret,
+        payload
+      )
     }
   } catch (error) {
     console.error('Error triggering webhooks:', error)

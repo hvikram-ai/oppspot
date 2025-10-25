@@ -784,12 +784,13 @@ export class JobPostingAnalyzer {
     const technologyTrends: { [key: string]: number } = {};
 
     postings.forEach(posting => {
+      const postingAny = posting as any
       // Department trends
-      const dept = (posting as any).department || 'Unknown';
+      const dept = postingAny.department || 'Unknown';
       departmentGrowth[dept] = (departmentGrowth[dept] || 0) + 1;
 
       // Technology trends
-      posting.technologies_mentioned?.forEach((tech: string) => {
+      postingAny.technologies_mentioned?.forEach((tech: string) => {
         technologyTrends[tech] = (technologyTrends[tech] || 0) + 1;
       });
     });

@@ -70,9 +70,10 @@ export class OllamaEmbeddingService {
         model,
         dimensions: data.embedding.length
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       console.error('[Ollama Embeddings] Error:', error)
-      throw new Error(`Failed to generate embedding: ${error.message}`)
+      throw new Error(`Failed to generate embedding: ${errorMessage}`)
     }
   }
 
@@ -127,7 +128,6 @@ export class OllamaEmbeddingService {
 
     const { error } = await supabase
       .from('businesses')
-      // @ts-expect-error - Type inference issue
       .update({
         embedding: JSON.stringify(embedding),
         embedding_model: embeddingResult.model,

@@ -56,21 +56,6 @@ export function LocationAutocomplete({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Debounced search
-  useEffect(() => {
-    if (query.length < 2) {
-      setResults([])
-      setShowResults(false)
-      return
-    }
-
-    const timeoutId = setTimeout(() => {
-      searchLocations(query)
-    }, 300)
-
-    return () => clearTimeout(timeoutId)
-  }, [query])
-
   const searchLocations = useCallback(async (searchQuery: string) => {
     setIsSearching(true)
     setError(null)
@@ -107,6 +92,21 @@ export function LocationAutocomplete({
       setIsSearching(false)
     }
   }, [selectedLocations])
+
+  // Debounced search
+  useEffect(() => {
+    if (query.length < 2) {
+      setResults([])
+      setShowResults(false)
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      searchLocations(query)
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [query, searchLocations])
 
   const handleSelectLocation = (location: Location) => {
     if (maxSelections && selectedLocations.length >= maxSelections) {
@@ -184,7 +184,7 @@ export function LocationAutocomplete({
             onFocus={() => {
               if (results.length > 0) setShowResults(true)
             }}
-            disabled={isMaxReached}
+            disabled={isMaxReached || false}
             className="pl-9 pr-9"
           />
           {isSearching && (

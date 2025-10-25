@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -67,13 +67,7 @@ export function CompanyCard({
   const [leadScore, setLeadScore] = useState<number | null>(null)
   const [scoreLoading, setScoreLoading] = useState(false)
 
-  useEffect(() => {
-    if (showScore && company.company_number) {
-      fetchLeadScore()
-    }
-  }, [showScore, company.company_number])
-
-  const fetchLeadScore = async () => {
+  const fetchLeadScore = useCallback(async () => {
     if (!company.company_number) return
 
     setScoreLoading(true)
@@ -90,7 +84,13 @@ export function CompanyCard({
     } finally {
       setScoreLoading(false)
     }
-  }
+  }, [company.company_number])
+
+  useEffect(() => {
+    if (showScore && company.company_number) {
+      fetchLeadScore()
+    }
+  }, [showScore, company.company_number, fetchLeadScore])
 
   const calculateScore = async () => {
     if (!company.company_number) return

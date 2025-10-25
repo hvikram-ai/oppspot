@@ -59,6 +59,7 @@ function SearchPageContent() {
   const [selectedResults, setSelectedResults] = useState<Set<string>>(new Set())
 
   // Debounced search function
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const performSearch = useCallback(
     debounce(async (query: string, searchFilters: SearchFilters) => {
       // Always perform search, even with empty query to show all results
@@ -102,7 +103,7 @@ function SearchPageContent() {
   // Effect to trigger search
   useEffect(() => {
     performSearch(searchQuery, filters)
-  }, [searchQuery, filters, currentPage])
+  }, [performSearch, searchQuery, filters, currentPage])
 
   // Handle save to list
   const handleSaveToList = async () => {
@@ -243,7 +244,7 @@ function SearchPageContent() {
           <div className="lg:col-span-1">
             <SearchFilters
               filters={filters}
-              onChange={setFilters}
+              onChange={setFilters as any}
               resultCount={totalResults}
             />
           </div>

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { executeStreamWorkflow } from '@/lib/agents/workflow-orchestrator'
 import { getErrorMessage } from '@/lib/utils/error-handler'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function POST(
   request: NextRequest,
@@ -13,12 +12,16 @@ export async function POST(
     const supabase = await createClient()
 
     // Verify user has access to stream
-    const { data: membership, error: membershipError } = await supabase
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { data: membership, error: _membershipError } = await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-      .single()
+      .eq('user_id', userId)
+      .single() as { data: { role: string } | null; error: unknown };
 
     if (!membership || !['owner', 'editor'].includes(membership.role)) {
       return NextResponse.json(

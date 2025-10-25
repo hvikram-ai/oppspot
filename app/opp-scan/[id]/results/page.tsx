@@ -67,7 +67,7 @@ function ScanResultsPageContent() {
         const currentScan = demoScans.find(scan => scan.id === scanId)
         if (currentScan) {
           const demoResults = demoResultsDataGenerator.generateDemoScanResults(
-            scanId, 
+            scanId,
             currentScan.name
           )
           setScanResults(demoResults)
@@ -83,7 +83,7 @@ function ScanResultsPageContent() {
         return
       }
       setUser(user)
-      
+
       // Load comprehensive scan results
       const results = await scanResultsDataService.loadScanResults(scanId)
       if (results) {
@@ -95,6 +95,7 @@ function ScanResultsPageContent() {
     }
 
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemoMode, scanId])
 
   const formatCurrency = (amount: number) => {

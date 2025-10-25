@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCompaniesHouseService } from '@/lib/services/companies-house'
-import type { Row } from '@/lib/supabase/helpers'
 
 export async function GET(
   request: NextRequest,
@@ -161,7 +160,7 @@ export async function POST(
         // Update existing company
         const { data: updatedCompany, error: updateError } = await supabase
           .from('businesses')
-          // @ts-expect-error - Type inference issue
+          // @ts-expect-error - businesses update type mismatch
           .update(enrichedCompany)
           .eq('company_number', companyNumber)
           .select()
@@ -187,7 +186,7 @@ export async function POST(
         // Insert new company
         const { data: newCompany, error: insertError } = await supabase
           .from('businesses')
-          // @ts-expect-error - Supabase type inference issue
+          // @ts-expect-error - businesses insert type mismatch
           .insert({
             ...enrichedCompany,
             id: crypto.randomUUID(),

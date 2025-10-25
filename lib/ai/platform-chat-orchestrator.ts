@@ -259,7 +259,6 @@ export class PlatformChatOrchestrator {
         .select('*')
       
       if (query) {
-        // @ts-expect-error - Supabase type inference issue
         searchQuery = searchQuery.textSearch('name', query)
       }
       
@@ -488,25 +487,27 @@ export class PlatformChatOrchestrator {
     
     if (action.type === 'company_search' && result.data) {
       const { companies = [], totalFound = 0 } = result.data
-      
-      if ((companies as any).length === 0) {
+      const companiesArray = Array.isArray(companies) ? companies : []
+      const totalFoundNum = typeof totalFound === 'number' ? totalFound : 0
+
+      if (companiesArray.length === 0) {
         return `No companies found matching your search criteria. Try adjusting your search terms or filters.`
       }
-      
-      let response = `I found **${totalFound || (companies as any).length} companies** matching your search criteria:\n\n`
-      
-      companies.slice(0, 5).forEach((company: Record<string, unknown>, index: number) => {
+
+      let response = `I found **${totalFoundNum || companiesArray.length} companies** matching your search criteria:\n\n`
+
+      companiesArray.slice(0, 5).forEach((company: Record<string, unknown>, index: number) => {
         response += `${index + 1}. **${company.name}**\n`
         if (company.industry) response += `   • Industry: ${company.industry}\n`
         if (company.location) response += `   • Location: ${company.location}\n`
         if (company.description) response += `   • ${company.description}\n`
         response += '\n'
       })
-      
-      if (totalFound > 5 || (companies as any).length > 5) {
-        response += `*Showing top 5 of ${totalFound || (companies as any).length} results. Use filters to refine your search.*`
+
+      if (totalFoundNum > 5 || companiesArray.length > 5) {
+        response += `*Showing top 5 of ${totalFoundNum || companiesArray.length} results. Use filters to refine your search.*`
       }
-      
+
       return response
     }
     

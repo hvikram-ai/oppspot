@@ -26,7 +26,11 @@ interface CreateListDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onListCreated?: (listId: string, listName: string) => void
-  companies?: any[]
+  companies?: Array<{
+    id: string
+    name?: string
+    company_name?: string
+  }>
 }
 
 export function CreateListDialog({
@@ -67,7 +71,7 @@ export function CreateListDialog({
           user_id: user.id,
           name: listName.trim(),
           description: description.trim() || null,
-        })
+        } as never)
         .select()
         .single()
 
@@ -76,16 +80,16 @@ export function CreateListDialog({
       // If companies are provided, add them to the list
       if (companies.length > 0 && list) {
         console.log('💾 Adding companies to list:', {
-          listId: list.id,
-          listName: list.name,
+          listId: (list as { id: string; name: string }).id,
+          listName: (list as { id: string; name: string }).name,
           companyCount: companies.length,
-          companies: companies.map(c => ({ id: c.id, name: c.name || c.company_name }))
+          companies: companies.map((c: { id: string; name?: string; company_name?: string }) => ({ id: c.id, name: c.name || c.company_name }))
         })
 
-        const savedBusinesses = companies.map(company => ({
+        const savedBusinesses = companies.map((company: { id: string }) => ({
           user_id: user.id,
           business_id: company.id,
-          list_id: list.id,
+          list_id: (list as { id: string }).id,
           tags: [],
         }))
 
@@ -93,7 +97,7 @@ export function CreateListDialog({
 
         const { error: saveError, data: savedData } = await supabase
           .from('saved_businesses')
-          .upsert(savedBusinesses, {
+          .upsert(savedBusinesses as never, {
             onConflict: 'user_id,business_id',
             ignoreDuplicates: false
           })
@@ -116,7 +120,7 @@ export function CreateListDialog({
 
       // Notify parent
       if (list) {
-        onListCreated?.(list.id, list.name)
+        onListCreated?.((list as { id: string; name: string }).id, (list as { id: string; name: string }).name)
       }
 
       // Close dialog

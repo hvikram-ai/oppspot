@@ -159,13 +159,14 @@ export class DemandForecaster {
     const businessCount = businesses.length
     const avgRating = businesses.reduce((sum, b) => sum + ((b as any).rating || 0), 0) / businessCount
     const totalReviews = businesses.reduce((sum, b) => sum + ((b as any).review_count || 0), 0)
-    
+    const totalReviewsNum = typeof totalReviews === 'number' ? totalReviews : 0
+
     // Demand formula (simplified)
-    const demand = baselineDemand * 
-      (1 + avgRating / 5) * 
-      (1 + Math.log10(totalReviews + 1) / 10) *
+    const demand = baselineDemand *
+      (1 + avgRating / 5) *
+      (1 + Math.log10(totalReviewsNum + 1) / 10) *
       (1 + Math.random() * 0.2 - 0.1) // Add some randomness
-    
+
     return Math.max(0, demand)
   }
 

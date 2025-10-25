@@ -101,8 +101,9 @@ export class LinkedInScraperAgent extends BaseAgent {
           // Rate limiting - wait between requests
           await this.delay(2000 + Math.random() * 3000) // 2-5 seconds
 
-        } catch (error: any) {
-          this.log(`Error scraping company ${company.name}: ${error.message}`, 'warn')
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          this.log(`Error scraping company ${company.name}: ${errorMessage}`, 'warn')
         }
       }
 
@@ -118,12 +119,13 @@ export class LinkedInScraperAgent extends BaseAgent {
         },
         metrics
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       metrics.durationMs = Date.now() - startTime
       return {
         success: false,
         output: {},
-        error: error.message,
+        error: errorMessage,
         metrics
       }
     } finally {
@@ -282,8 +284,9 @@ export class LinkedInScraperAgent extends BaseAgent {
         ...companyData
       }
 
-    } catch (error: any) {
-      this.log(`Error scraping ${linkedInUrl}: ${error.message}`, 'error')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      this.log(`Error scraping ${linkedInUrl}: ${errorMessage}`, 'error')
       return null
     } finally {
       await page.close()
@@ -324,13 +327,11 @@ export class LinkedInScraperAgent extends BaseAgent {
     if (Object.keys(updateData).length > 0) {
       await supabase
         .from('businesses')
-        // @ts-expect-error - Type inference issue
         .update(updateData)
         .eq('id', data.companyId)
     }
 
     // Store enrichment metadata
-    // @ts-expect-error - Supabase type inference issue
     await supabase.from('enrichment_data').insert({
       company_id: data.companyId,
       source: 'linkedin',

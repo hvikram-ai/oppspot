@@ -27,20 +27,27 @@ import {
   Zap,
   Activity,
   TrendingUp,
-  Bookmark
+  Bookmark,
+  ShieldCheck,
+  Shield,
+  AlertTriangle,
+  GitBranch
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
+import { useIsOrgAdmin } from '@/lib/rbac/hooks'
 import { SidebarItem } from './sidebar-item'
 import { SidebarSection } from './sidebar-section'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { CommandBarTrigger } from '@/components/command-bar/command-bar-trigger'
 import Link from 'next/link'
 
 export function Sidebar() {
   const { isCollapsed, isMobileOpen, toggleCollapsed, setMobileOpen } = useSidebar()
   const router = useRouter()
+  const isOrgAdmin = useIsOrgAdmin()
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -78,6 +85,13 @@ export function Sidebar() {
 
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-6">
+          {/* Quick Search - Pinned Top */}
+          <div className="px-1">
+            <CommandBarTrigger variant={isCollapsed ? 'compact' : 'compact'} />
+          </div>
+
+          <Separator />
+
           {/* Dashboard - Pinned Top */}
           <div className="space-y-1">
             <SidebarItem
@@ -86,6 +100,14 @@ export function Sidebar() {
               label="Dashboard"
               tooltip="Your command center with insights and metrics"
               isCollapsed={isCollapsed}
+            />
+            <SidebarItem
+              href="/monitoring"
+              icon={Activity}
+              label="Live Monitoring"
+              tooltip="Real-time monitoring of streams, scans, and system activity"
+              isCollapsed={isCollapsed}
+              isPremium
             />
             <SidebarItem
               href="/chatspot"
@@ -303,14 +325,51 @@ export function Sidebar() {
 
       {/* Settings - Pinned Bottom */}
       <div className="p-3 border-t bg-background/50 backdrop-blur space-y-1">
-        <SidebarItem
-          href="/admin/agents"
-          icon={Zap}
-          label="AI Agents"
-          tooltip="Manage autonomous AI agents (OpportunityBot, Scout Agent)"
-          isCollapsed={isCollapsed}
-          isPremium
-        />
+        {/* Admin-only links */}
+        {isOrgAdmin && (
+          <>
+            <SidebarItem
+              href="/admin"
+              icon={Shield}
+              label="Admin Dashboard"
+              tooltip="System administration and management hub"
+              isCollapsed={isCollapsed}
+            />
+            <SidebarItem
+              href="/admin/alerts"
+              icon={AlertTriangle}
+              label="System Alerts"
+              tooltip="Monitor and manage critical system failures and health"
+              isCollapsed={isCollapsed}
+            />
+            <SidebarItem
+              href="/admin/agents"
+              icon={Zap}
+              label="AI Agents"
+              tooltip="Manage autonomous AI agents (OpportunityBot, Scout Agent)"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
+              href="/agent-workflows"
+              icon={GitBranch}
+              label="Workflow Builder"
+              tooltip="Build and execute multi-agent workflows with visual editor"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
+              href="/agents/analytics"
+              icon={BarChart3}
+              label="Agent Analytics"
+              tooltip="Monitor agent performance, costs, and reliability"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+          </>
+        )}
+
+        {/* User links */}
         <SidebarItem
           href="/profile"
           icon={User}
@@ -325,6 +384,19 @@ export function Sidebar() {
           tooltip="Invite team members and manage permissions"
           isCollapsed={isCollapsed}
         />
+
+        {/* Admin-only Role Management */}
+        {isOrgAdmin && (
+          <SidebarItem
+            href="/admin/roles"
+            icon={ShieldCheck}
+            label="Role Management"
+            tooltip="Manage user roles and permissions (Enterprise Admin only)"
+            isCollapsed={isCollapsed}
+          />
+        )}
+
+        {/* User links */}
         <SidebarItem
           href="/settings"
           icon={Settings}

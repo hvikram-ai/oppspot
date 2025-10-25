@@ -18,7 +18,7 @@ type Events = {
     data: {
       agentId: string
       orgId: string
-      input?: Record<string, any>
+      input?: Record<string, unknown>
     }
   }
 

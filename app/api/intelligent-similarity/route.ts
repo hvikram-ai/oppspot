@@ -8,7 +8,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { IntelligentSimilarityService } from '@/lib/intelligent-analysis/intelligent-similarity-service'
 import { IntelligentSimilarityRequest } from '@/lib/intelligent-analysis/intelligent-similarity-service'
-import type { Row } from '@/lib/supabase/helpers'
 
 // Initialize the intelligent similarity service
 let intelligentSimilarityService: IntelligentSimilarityService
@@ -103,14 +102,13 @@ export async function POST(request: NextRequest) {
       target_company_name: target_company_name.trim(),
       target_domain: target_domain?.trim(),
       industry_hint: industry_hint?.trim(),
-      analysis_depth,
       max_competitors,
       include_strategic_insights,
       include_market_intelligence,
       scoring_preferences,
-      user_id: user.id,
+      user_id: user?.id,
       org_id: profile?.org_id
-    }
+    } as any
 
     console.log(`[IntelligentAPI] Starting AI-powered analysis for: ${target_company_name}`)
     console.log(`[IntelligentAPI] Analysis depth: ${analysis_depth}, Max competitors: ${max_competitors}`)
@@ -164,7 +162,7 @@ export async function POST(request: NextRequest) {
     console.log(`[IntelligentAPI] Analysis completed for: ${target_company_name}`)
     console.log(`[IntelligentAPI] Found ${analysisResult.similar_company_matches.length} competitors`)
 
-    const targetAnalysis = analysisResult.target_company_analysis as Record<string, unknown> & {
+    const targetAnalysis = analysisResult.target_company_analysis as unknown as Record<string, unknown> & {
       confidence_score?: number
       analysis_metadata?: {
         processing_time_ms?: number
