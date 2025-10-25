@@ -74,7 +74,7 @@ export interface EnrichmentResult {
   companyId: string
   enrichmentType: EnrichmentType
   status: 'success' | 'failed'
-  data?: any
+  data?: Record<string, unknown>
   error?: string
   duration: number
 }
@@ -129,7 +129,7 @@ export class EnrichmentOrchestrator {
       .select('*')
       .eq('id', jobId)
       .eq('org_id', this.orgId)
-      .single() as { data: EnrichmentJobRow | null; error: any }
+      .single() as { data: EnrichmentJobRow | null; error: unknown }
 
     if (error || !data) {
       return null
@@ -159,7 +159,7 @@ export class EnrichmentOrchestrator {
       .select('*')
       .eq('org_id', this.orgId)
       .order('created_at', { ascending: false })
-      .limit(limit) as { data: EnrichmentJobRow[] | null; error: any }
+      .limit(limit) as { data: EnrichmentJobRow[] | null; error: unknown }
 
     if (error || !data) {
       return []
@@ -191,7 +191,7 @@ export class EnrichmentOrchestrator {
     }
 
     const { error } = await (supabase
-      .from('enrichment_jobs') as any)
+      .from('enrichment_jobs'))
       .update(updateData)
       .eq('id', jobId)
       .eq('org_id', this.orgId)
@@ -382,7 +382,7 @@ export class EnrichmentOrchestrator {
       .select('id')
       .eq('org_id', this.orgId)
       .eq('agent_type', 'linkedin_scraper_agent')
-      .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
+      .single() as { data: Pick<AgentRow, 'id'> | null; error: unknown }
 
     if (!linkedInAgent) {
       const insertData: Omit<AgentRow, 'id' | 'created_at' | 'updated_at'> = {
@@ -399,9 +399,9 @@ export class EnrichmentOrchestrator {
 
       const { data: newAgent } = await supabase
         .from('ai_agents')
-        .insert(insertData as any)
+        .insert(insertData as Record<string, unknown>)
         .select('id')
-        .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
+        .single() as { data: Pick<AgentRow, 'id'> | null; error: unknown }
 
       linkedInAgent = newAgent
     }
@@ -412,7 +412,7 @@ export class EnrichmentOrchestrator {
       .select('id')
       .eq('org_id', this.orgId)
       .eq('agent_type', 'website_analyzer_agent')
-      .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
+      .single() as { data: Pick<AgentRow, 'id'> | null; error: unknown }
 
     if (!websiteAgent) {
       const insertData: Omit<AgentRow, 'id' | 'created_at' | 'updated_at'> = {
@@ -429,9 +429,9 @@ export class EnrichmentOrchestrator {
 
       const { data: newAgent } = await supabase
         .from('ai_agents')
-        .insert(insertData as any)
+        .insert(insertData as Record<string, unknown>)
         .select('id')
-        .single() as { data: Pick<AgentRow, 'id'> | null; error: any }
+        .single() as { data: Pick<AgentRow, 'id'> | null; error: unknown }
 
       websiteAgent = newAgent
     }
@@ -464,7 +464,7 @@ export class EnrichmentOrchestrator {
     // Upsert job
     await supabase
       .from('enrichment_jobs')
-      .upsert(jobData as any)
+      .upsert(jobData as Record<string, unknown>)
   }
 }
 

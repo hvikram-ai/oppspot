@@ -53,8 +53,8 @@ export class OpportunityBot extends BaseAgent {
       }
 
       // Extract goal criteria
-      const streamData = stream as any;
-      const goalContext = (goal_context || {}) as any;
+      const streamData = stream;
+      const goalContext = (goal_context || {});
       const criteria = goalContext.goal_criteria || streamData.goal_criteria || {}
       const targetMetrics = goalContext.target_metrics || streamData.target_metrics || {}
 
@@ -285,7 +285,7 @@ export class OpportunityBot extends BaseAgent {
    * Score a company based on criteria and metrics
    */
   private async scoreCompany(
-    company: any,
+    company: unknown,
     criteria: Record<string, unknown>,
     targetMetrics: Record<string, unknown>
   ): Promise<number> {
@@ -345,7 +345,7 @@ export class OpportunityBot extends BaseAgent {
    */
   private async addCompanyToStream(
     streamId: string,
-    company: any,
+    company: unknown,
     executionId: string
   ): Promise<void> {
     const supabase = await createClient()
@@ -370,7 +370,7 @@ export class OpportunityBot extends BaseAgent {
       .eq('id', streamId)
       .single() as { data: Row<'streams'> | null; error: unknown }
 
-    const streamData = stream as any;
+    const streamData = stream;
     const stages = Array.isArray(streamData?.stages) ? streamData.stages : [];
     const firstStage = stages.length > 0 ? stages[0] : null;
 
@@ -409,7 +409,7 @@ export class OpportunityBot extends BaseAgent {
       type: string
       strength: string
       confidence: number
-      data: any
+      data: unknown
     }> = []
 
     // Job posting signal
@@ -443,7 +443,7 @@ export class OpportunityBot extends BaseAgent {
       await this.createBuyingSignal(
         company.id,
         signal.type,
-        signal.strength as any,
+        signal.strength,
         signal.confidence,
         signal.data
       )
@@ -480,8 +480,8 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
     id: agent.id,
     orgId: agent.org_id || '',
     name: agent.name || 'OpportunityBot',
-    type: agent.agent_type as any,
-    configuration: (agent.configuration as any) || {},
+    type: agent.agent_type,
+    configuration: (agent.configuration) || {},
     isActive: agent.is_active,
     scheduleCron: agent.schedule_cron || undefined
   }

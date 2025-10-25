@@ -38,7 +38,7 @@ export class ScoringAgent extends BaseAgent {
         .single() as { data: (Row<'streams'> & {
           goal_criteria?: unknown
           target_metrics?: unknown
-        }) | null; error: any }
+        }) | null; error: unknown }
 
       if (!stream) {
         throw new Error(`Stream not found: ${stream_id}`)
@@ -66,7 +66,7 @@ export class ScoringAgent extends BaseAgent {
           .from('businesses')
           .select('*')
           .eq('id', item.business_id)
-          .single() as { data: Row<'businesses'> | null; error: any }
+          .single() as { data: Row<'businesses'> | null; error: unknown }
 
         if (!company) continue
 
@@ -146,7 +146,7 @@ export class ScoringAgent extends BaseAgent {
       .select('*')
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
-      .not('business_id', 'is', null) as { data: Row<'stream_items'>[] | null; error: any }
+      .not('business_id', 'is', null) as { data: Row<'stream_items'>[] | null; error: unknown }
 
     if (error) {
       this.log(`Error fetching stream items: ${error.message}`, 'error')
@@ -160,7 +160,7 @@ export class ScoringAgent extends BaseAgent {
    * Calculate quality score for a company
    */
   private async calculateQualityScore(
-    company: any,
+    company: Record<string, unknown>,
     criteria: Record<string, unknown>,
     targetMetrics: Record<string, unknown>,
     itemMetadata: Record<string, unknown>
@@ -199,7 +199,7 @@ export class ScoringAgent extends BaseAgent {
   /**
    * Score criteria match
    */
-  private scoreCriteriaMatch(company: any, criteria: Record<string, unknown>): number {
+  private scoreCriteriaMatch(company: Record<string, unknown>, criteria: Record<string, unknown>): number {
     let score = 0.5 // Base score
     let matches = 0
     let total = 0
@@ -266,7 +266,7 @@ export class ScoringAgent extends BaseAgent {
   /**
    * Score data completeness
    */
-  private scoreDataCompleteness(company: any): number {
+  private scoreDataCompleteness(company: Record<string, unknown>): number {
     let score = 0
     const fields = [
       'name',
@@ -311,7 +311,7 @@ export class ScoringAgent extends BaseAgent {
       .from('buying_signals')
       .select('signal_strength, confidence_score')
       .eq('company_id', companyId)
-      .eq('status', 'active') as { data: Row<'buying_signals'>[] | null; error: any }
+      .eq('status', 'active') as { data: Row<'buying_signals'>[] | null; error: unknown }
 
     if (!signals || signals.length === 0) return 0
 
@@ -359,7 +359,7 @@ export class ScoringAgent extends BaseAgent {
       .from('stream_items')
       .select('metadata')
       .eq('id', itemId)
-      .single() as { data: Row<'stream_items'> | null; error: any }
+      .single() as { data: Row<'stream_items'> | null; error: unknown }
 
     const metadata = item?.metadata || {}
 
@@ -368,7 +368,7 @@ export class ScoringAgent extends BaseAgent {
       .from('stream_items')
       // @ts-expect-error - Supabase type inference issue
       .update({
-        priority: priority as any,
+        priority,
         metadata: {
           ...(metadata as Record<string, unknown>),
           quality_score: qualityScore,
@@ -390,7 +390,7 @@ export class ScoringAgent extends BaseAgent {
       .select('id, metadata')
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
-      .order('priority', { ascending: false }) as { data: Row<'stream_items'>[] | null; error: any }
+      .order('priority', { ascending: false }) as { data: Row<'stream_items'>[] | null; error: unknown }
 
     if (!items) return
 
@@ -431,7 +431,7 @@ export async function createScoringAgent(agentId: string): Promise<ScoringAgent>
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single() as { data: Row<'ai_agents'> | null; error: any }
+    .single() as { data: Row<'ai_agents'> | null; error: unknown }
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)

@@ -55,7 +55,7 @@ export class DemoResultsDataGenerator {
       selected_industries: [
         { code: 'technology:fintech', name: 'Technology - FinTech' },
         { code: 'technology:healthtech', name: 'Technology - HealthTech' }
-      ] as any,
+      ] as unknown[],
       selected_regions: [
         { id: 'london', name: 'Greater London', country: 'England' },
         { id: 'manchester', name: 'Manchester', country: 'England' },
@@ -141,7 +141,7 @@ export class DemoResultsDataGenerator {
           city: this.getRandomCity(),
           postal_code: this.generateRandomPostcode(),
           country: 'UK'
-        } as any,
+        } as Record<string, unknown>,
         phone: `+44 ${Math.floor(Math.random() * 9000000000) + 1000000000}`,
         email: `contact@${company.website}`,
         discovery_source: this.getRandomDiscoverySource(),
@@ -286,7 +286,7 @@ export class DemoResultsDataGenerator {
           { name: 'Stripe', market_share: 0.15, type: 'international' },
           { name: 'GoCardless', market_share: 0.08, type: 'domestic' },
           { name: 'Wise', market_share: 0.06, type: 'domestic' }
-        ] as any,
+        ] as unknown[],
         barriers_to_entry: 'high',
         key_trends: [
           'Open banking adoption',
@@ -308,7 +308,7 @@ export class DemoResultsDataGenerator {
         recent_transactions: [
           { acquirer: 'JPMorgan', target: 'Nutmeg', value: 700000000, date: '2021-06' },
           { acquirer: 'Visa', target: 'Currencycloud', value: 963000000, date: '2021-12' }
-        ] as any,
+        ] as unknown[],
         average_valuation_multiples: {
           revenue_multiple: { median: 4.5, range: [2.2, 12.8] },
           ebitda_multiple: { median: 18.5, range: [8.2, 45.2] }

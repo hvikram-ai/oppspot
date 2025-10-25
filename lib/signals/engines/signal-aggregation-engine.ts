@@ -57,7 +57,7 @@ export class SignalAggregationEngine {
         .select('*')
         .eq('company_id', companyId)
         .eq('status', 'detected')
-        .order('detected_at', { ascending: false }) as { data: Row<'buying_signals'>[] | null; error: any };
+        .order('detected_at', { ascending: false }) as { data: Row<'buying_signals'>[] | null; error: unknown };
 
       if (error || !signals || signals.length === 0) {
         console.log('No signals found for company:', companyId);
@@ -120,7 +120,7 @@ export class SignalAggregationEngine {
         .upsert({
           ...aggregation,
           company_id: companyId
-        } as any)
+        } as Record<string, unknown>)
         .select()
         .single();
 
@@ -356,7 +356,7 @@ export class SignalAggregationEngine {
     priority: EngagementPriority,
     compositeScore: number
   ) {
-    const recommendations: any = {
+    const recommendations: Record<string, unknown> = {
       approach: '',
       talking_points: [] as string[],
       optimal_contact_date: new Date()
@@ -455,9 +455,9 @@ export class SignalAggregationEngine {
 
     // Get active alert configurations
     const { data: alertConfigs } = await supabase
-      .from('signal_alert_configs' as any)
+      .from('signal_alert_configs')
       .select('*')
-      .eq('is_active', true) as { data: SignalAlertConfig[] | null; error: any };
+      .eq('is_active', true) as { data: SignalAlertConfig[] | null; error: unknown };
 
     if (!alertConfigs || alertConfigs.length === 0) return;
 
@@ -529,7 +529,7 @@ export class SignalAggregationEngine {
       status: 'triggered'
     };
 
-    await supabase.from('threshold_alerts' as any).insert(alert as any);
+    await supabase.from('threshold_alerts').insert(alert as Record<string, unknown>);
 
     // Execute alert actions based on channels
     if (config.alert_channels.includes('in_app')) {
@@ -562,7 +562,7 @@ export class SignalAggregationEngine {
         composite_score: aggregation.composite_score,
         priority: aggregation.engagement_priority
       }
-    } as any);
+    } as Record<string, unknown>);
   }
 
   private async sendEmailAlert(config: SignalAlertConfig, aggregation: SignalAggregation) {
@@ -615,8 +615,8 @@ export class SignalAggregationEngine {
       };
 
       const { data, error } = await supabase
-        .from('signal_actions' as any)
-        .insert(action as any)
+        .from('signal_actions')
+        .insert(action as Record<string, unknown>)
         .select()
         .single();
 
@@ -640,7 +640,7 @@ export class SignalAggregationEngine {
         .from('businesses')
         .select('id')
         .eq('status', 'active')
-        .limit(100) as { data: Row<'businesses'>[] | null; error: any };
+        .limit(100) as { data: Row<'businesses'>[] | null; error: unknown };
 
       if (!companies) return;
 

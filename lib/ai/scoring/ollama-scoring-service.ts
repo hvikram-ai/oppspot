@@ -218,7 +218,7 @@ export class OllamaScoringService {
       .select('*')
       .eq('company_id', company.id)
       .order('created_at', { ascending: false })
-      .limit(50) as { data: Row<'engagement_events'>[] | null; error: any }
+      .limit(50) as { data: Row<'engagement_events'>[] | null; error: unknown }
 
     const prompt = this.buildEngagementAnalysisPrompt(company, engagementEvents || [])
 
@@ -237,7 +237,7 @@ export class OllamaScoringService {
    */
   private async calculateOverallScore(
     scores: Record<string, AIScore>,
-    company: any,
+    company: Record<string, unknown>,
     model: string
   ): Promise<AIScore> {
     const prompt = `
@@ -284,7 +284,7 @@ export class OllamaScoringService {
    * Generate executive summary
    */
   private async generateExecutiveSummary(
-    company: any,
+    company: Record<string, unknown>,
     scores: Record<string, AIScore>,
     model: string
   ): Promise<string> {
@@ -317,7 +317,7 @@ export class OllamaScoringService {
    * Generate actionable next steps
    */
   private async generateActionItems(
-    company: any,
+    company: Record<string, unknown>,
     overallScore: AIScore,
     model: string
   ): Promise<string[]> {
@@ -358,7 +358,7 @@ export class OllamaScoringService {
   /**
    * Build prompt for financial analysis
    */
-  private buildFinancialAnalysisPrompt(company: any) {
+  private buildFinancialAnalysisPrompt(company: Record<string, unknown>) {
     const systemPrompt = `You are a financial analyst specializing in UK company assessment.
     Evaluate financial health and provide scoring based on available data.
     Be conservative in your assessments and highlight any data gaps.`
@@ -407,7 +407,7 @@ export class OllamaScoringService {
   /**
    * Build prompt for technology analysis
    */
-  private buildTechnologyAnalysisPrompt(company: any) {
+  private buildTechnologyAnalysisPrompt(company: Record<string, unknown>) {
     const systemPrompt = `You are a technology analyst evaluating digital maturity and tech compatibility.
     Focus on indicators of technology adoption and innovation potential.`
 
@@ -441,7 +441,7 @@ export class OllamaScoringService {
   /**
    * Build prompt for industry analysis
    */
-  private buildIndustryAnalysisPrompt(company: any) {
+  private buildIndustryAnalysisPrompt(company: Record<string, unknown>) {
     const systemPrompt = `You are an industry analyst specializing in UK B2B markets.
     Evaluate industry alignment and market potential for B2B sales.`
 
@@ -471,7 +471,7 @@ export class OllamaScoringService {
   /**
    * Build prompt for growth analysis
    */
-  private buildGrowthAnalysisPrompt(company: any) {
+  private buildGrowthAnalysisPrompt(company: Record<string, unknown>) {
     const systemPrompt = `You are a growth analyst identifying expansion signals and potential.
     Focus on indicators of business growth and future opportunities.`
 
@@ -508,7 +508,7 @@ export class OllamaScoringService {
   /**
    * Build prompt for engagement analysis
    */
-  private buildEngagementAnalysisPrompt(company: any, events: any[]) {
+  private buildEngagementAnalysisPrompt(company: Record<string, unknown>, events: unknown[]) {
     const systemPrompt = `You are a sales intelligence analyst evaluating buyer engagement and intent.
     Analyze interaction patterns to identify buying signals and engagement quality.`
 
@@ -626,7 +626,7 @@ export class OllamaScoringService {
     return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
   }
 
-  private summarizeEngagementEvents(events: any[]): string {
+  private summarizeEngagementEvents(events: unknown[]): string {
     const summary: Record<string, number> = {}
     events.forEach(event => {
       summary[event.event_type] = (summary[event.event_type] || 0) + 1
@@ -658,7 +658,7 @@ export class OllamaScoringService {
       .from('ai_scoring_cache')
       .select('*')
       .eq('company_id', companyId)
-      .single() as { data: Row<'ai_scoring_cache'> | null; error: any }
+      .single() as { data: Row<'ai_scoring_cache'> | null; error: unknown }
 
     if (data && data.cached_at) {
       const age = Date.now() - new Date(data.cached_at).getTime()

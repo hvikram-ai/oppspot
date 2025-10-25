@@ -118,7 +118,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single() as { data: Row<'research_reports'> | null; error: any };
+        .single() as { data: Row<'research_reports'> | null; error: unknown };
 
       return research;
     } catch (error) {
@@ -129,7 +129,7 @@ export class CRMEnrichmentService {
   /**
    * Generate AI summary from research data
    */
-  private async generateSummary(research: any): Promise<string> {
+  private async generateSummary(research: Record<string, unknown>): Promise<string> {
     try {
       // Extract key information
       const name = research.snapshot?.name || 'Company';
@@ -159,15 +159,15 @@ export class CRMEnrichmentService {
   /**
    * Extract high-priority buying signals
    */
-  private extractBuyingSignals(research: any): string[] {
+  private extractBuyingSignals(research: Record<string, unknown>): string[] {
     try {
       if (!research.signals || !Array.isArray(research.signals)) {
         return [];
       }
 
       return research.signals
-        .filter((s: any) => s.priority === 'high' || s.strength === 'strong')
-        .map((s: any) => s.signal || s.description || 'Positive signal detected')
+        .filter((s: Record<string, unknown>) => s.priority === 'high' || s.strength === 'strong')
+        .map((s: Record<string, unknown>) => s.signal || s.description || 'Positive signal detected')
         .slice(0, 5); // Max 5 signals
     } catch (error) {
       return [];
@@ -187,7 +187,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single() as { data: Row<'lead_scores'> | null; error: any };
+        .single() as { data: Row<'lead_scores'> | null; error: unknown };
 
       return scoring?.total_score || 50;
     } catch (error) {
@@ -213,7 +213,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single() as { data: Row<'lead_scores'> | null; error: any };
+        .single() as { data: Row<'lead_scores'> | null; error: unknown };
 
       const breakdown = scoring?.score_breakdown || {};
 
@@ -254,7 +254,7 @@ export class CRMEnrichmentService {
    * Generate suggested actions based on intelligence
    */
   private async generateActions(
-    contactData: any,
+    contactData: Record<string, unknown>,
     score: number,
     signals: string[]
   ): Promise<string[]> {
@@ -332,7 +332,7 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single() as { data: Row<'research_reports'> | null; error: any };
+        .single() as { data: Row<'research_reports'> | null; error: unknown };
 
       const analysis = research?.analysis || {};
 
@@ -350,7 +350,7 @@ export class CRMEnrichmentService {
    * Auto-assign contact to sales rep
    * Based on territory, industry, or round-robin
    */
-  private async assignToRep(contactData: any): Promise<string | undefined> {
+  private async assignToRep(contactData: Record<string, unknown>): Promise<string | undefined> {
     const supabase = await createClient();
 
     try {
@@ -360,7 +360,7 @@ export class CRMEnrichmentService {
         .select('id, full_name, role, metadata')
         .eq('organization_id', contactData.organizationId)
         .eq('role', 'sales')
-        .limit(10) as { data: Row<'profiles'>[] | null; error: any };
+        .limit(10) as { data: Row<'profiles'>[] | null; error: unknown };
 
       if (!teamMembers || teamMembers.length === 0) {
         return undefined; // No sales reps available

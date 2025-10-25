@@ -56,7 +56,7 @@ export class EngagementTracker {
 
       // Validate and save engagement
       const { data: engagement, error } = await (supabase
-        .from('stakeholder_engagement') as any)
+        .from('stakeholder_engagement'))
         .insert(request.engagement)
         .select()
         .single();
@@ -120,7 +120,7 @@ export class EngagementTracker {
 
       // Get recent engagements for score calculation
       const { data: recentEngagements } = await (supabase
-        .from('stakeholder_engagement') as any)
+        .from('stakeholder_engagement'))
         .select('outcome, sentiment_score, engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
@@ -162,7 +162,7 @@ export class EngagementTracker {
 
       // Update stakeholder
       await (supabase
-        .from('stakeholders') as any)
+        .from('stakeholders'))
         .update({
           last_contact_date: engagement.engagement_date,
           engagement_score: engagementScore,
@@ -185,7 +185,7 @@ export class EngagementTracker {
       const supabase = await this.getSupabase();
 
       const { data: engagements } = await (supabase
-        .from('stakeholder_engagement') as any)
+        .from('stakeholder_engagement'))
         .select('sentiment_score, engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
@@ -317,7 +317,7 @@ export class EngagementTracker {
 
       // Get stakeholder info
       const { data: stakeholder } = await (supabase
-        .from('stakeholders') as any)
+        .from('stakeholders'))
         .select('*, champion_tracking!left(*)')
         .eq('id', stakeholder_id)
         .single();
@@ -356,7 +356,7 @@ export class EngagementTracker {
 
       // Check for engagement drop
       const { data: recentEngagements } = await (supabase
-        .from('stakeholder_engagement') as any)
+        .from('stakeholder_engagement'))
         .select('engagement_date')
         .eq('stakeholder_id', stakeholder_id)
         .order('engagement_date', { ascending: false })
@@ -386,7 +386,7 @@ export class EngagementTracker {
       // Save alerts
       if (alerts.length > 0) {
         await (supabase
-          .from('stakeholder_alerts') as any)
+          .from('stakeholder_alerts'))
           .insert(alerts);
       }
 
@@ -434,7 +434,7 @@ export class EngagementTracker {
         if (roleChange) {
           // Save role change
           const { data: savedChange } = await (supabase
-            .from('role_changes') as any)
+            .from('role_changes'))
             .insert(roleChange)
             .select()
             .single();
@@ -455,7 +455,7 @@ export class EngagementTracker {
             };
 
             const { data: savedAlert } = await (supabase
-              .from('stakeholder_alerts') as any)
+              .from('stakeholder_alerts'))
               .insert(alert)
               .select()
               .single();
@@ -653,7 +653,7 @@ export class EngagementTracker {
       const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
       const { data: engagements } = await (supabase
-        .from('stakeholder_engagement') as any)
+        .from('stakeholder_engagement'))
         .select('*')
         .eq('stakeholder_id', stakeholder_id)
         .gte('engagement_date', startDate)
