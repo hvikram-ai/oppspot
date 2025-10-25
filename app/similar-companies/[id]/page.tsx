@@ -52,7 +52,7 @@ import { TargetProfileDashboard } from '@/components/target-intelligence/target-
 interface SimilarityAnalysis {
   id: string
   target_company_name: string
-  target_company_data: any
+  target_company_data: Record<string, unknown>
   status: 'pending' | 'processing' | 'completed' | 'failed'
   total_companies_analyzed: number
   average_similarity_score: number
@@ -61,7 +61,7 @@ interface SimilarityAnalysis {
   key_opportunities: string[]
   risk_highlights: string[]
   strategic_recommendations: string[]
-  analysis_configuration: any
+  analysis_configuration: Record<string, unknown>
   created_at: string
   completed_at: string
   similar_company_matches: SimilarityMatch[]
@@ -86,7 +86,7 @@ interface SimilarityAnalysis {
 interface SimilarityMatch {
   id: string
   company_name: string
-  company_data: any
+  company_data: Record<string, unknown>
   overall_score: number
   confidence: number
   rank: number
@@ -100,11 +100,11 @@ interface SimilarityMatch {
   operational_confidence: number
   market_confidence: number
   risk_confidence: number
-  financial_factors: any
-  strategic_factors: any
-  operational_factors: any
-  market_factors: any
-  risk_factors: any
+  financial_factors: Record<string, unknown>
+  strategic_factors: Record<string, unknown>
+  operational_factors: Record<string, unknown>
+  market_factors: Record<string, unknown>
+  risk_factors: Record<string, unknown>
   market_position: string
   risk_factors_identified: string[]
   opportunity_areas: string[]
@@ -592,7 +592,7 @@ function SimilarCompanyDetailContent() {
     const { target_analysis, intelligent_competitors, market_intelligence, strategic_insights } = intelligentAnalysis
 
     // Transform competitors to similarity matches
-    const similarityMatches: SimilarityMatch[] = (intelligent_competitors as any).map((competitor: any, index: number) => ({
+    const similarityMatches: SimilarityMatch[] = intelligent_competitors.map((competitor, index: number) => ({
       id: `match_${index}`,
       company_name: competitor.company_name,
       company_data: {
@@ -663,8 +663,8 @@ function SimilarCompanyDetailContent() {
         totalMatches: similarityMatches.length,
         averageScore: Math.round(similarityMatches.reduce((sum, m) => sum + m.overall_score, 0) / similarityMatches.length * 10) / 10,
         topScore: Math.max(...similarityMatches.map(m => m.overall_score)),
-        scoreDistribution: {} as any, // calculateScoreDistribution(similarityMatches),
-        confidenceDistribution: {} as any // calculateConfidenceDistribution(similarityMatches)
+        scoreDistribution: {}, // calculateScoreDistribution(similarityMatches),
+        confidenceDistribution: {} // calculateConfidenceDistribution(similarityMatches)
       }
     }
   }
@@ -1106,8 +1106,8 @@ function SimilarCompanyDetailContent() {
   }
 
   const handleCompanySelect = (company: unknown) => {
-    setSelectedCompany((company as any).id)
-    setSelectedMatch((company as any).id)
+    setSelectedCompany(company.id)
+    setSelectedMatch(company.id)
   }
 
   const getScoreColor = (score: number) => {
@@ -1904,7 +1904,7 @@ function SimilarCompanyDetailContent() {
                                 style={{ width: `${weight as number * 2}%` }}
                               />
                             </div>
-                            <span className="text-sm font-medium w-8">{weight as any}%</span>
+                            <span className="text-sm font-medium w-8">{weight}%</span>
                           </div>
                         </div>
                       ))}

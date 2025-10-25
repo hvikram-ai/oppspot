@@ -40,7 +40,7 @@ export class AdvancedFilterService {
         .select('*')
         .filter(query)
         .order(request.sorting.field, { ascending: request.sorting.direction === 'asc' })
-        .range(offset, offset + request.pagination.perPage - 1) as { data: Row<'searchable_businesses'>[] | null; error: any };
+        .range(offset, offset + request.pagination.perPage - 1) as { data: Row<'searchable_businesses'>[] | null; error: unknown };
 
       if (error) throw error;
 
@@ -513,34 +513,34 @@ export class AdvancedFilterService {
       const { data, error } = await supabase
         .from('filter_options')
         .select('*')
-        .single() as { data: Row<'filter_options'> | null; error: any };
+        .single() as { data: Row<'filter_options'> | null; error: unknown };
 
       if (error) throw error;
 
       return {
-        industries: (data as any).available_industries || [],
+        industries: data.available_industries || [],
         ownershipTypes: ['private', 'public', 'vc_backed', 'pe_backed', 'family_owned', 'government', 'nonprofit'],
         fundingRounds: ['pre_seed', 'seed', 'series_a', 'series_b', 'series_c', 'series_d', 'series_e', 'growth', 'private_equity', 'debt'],
-        investors: (data as any).available_investors || [],
-        productsServices: (data as any).available_products || [],
-        endMarkets: (data as any).available_end_markets || [],
+        investors: data.available_investors || [],
+        productsServices: data.available_products || [],
+        endMarkets: data.available_end_markets || [],
         employeeRanges: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1001-5000', '5001+'],
         priorities: ['high', 'medium', 'low'],
         crmSyncStatuses: ['synced', 'not_synced', 'pending', 'failed'],
         employeeCountRange: {
-          min: (data as any).min_employee_count || 0,
-          max: (data as any).max_employee_count || 10000,
+          min: data.min_employee_count || 0,
+          max: data.max_employee_count || 10000,
         },
         revenueRange: {
-          min: (data as any).min_revenue || 0,
-          max: (data as any).max_revenue || 1000000000,
+          min: data.min_revenue || 0,
+          max: data.max_revenue || 1000000000,
         },
         fundingRange: {
-          min: (data as any).min_funding || 0,
-          max: (data as any).max_funding || 1000000000,
+          min: data.min_funding || 0,
+          max: data.max_funding || 1000000000,
         },
         foundedYearRange: {
-          min: (data as any).min_founded_year || 1900,
+          min: data.min_founded_year || 1900,
           max: new Date().getFullYear(),
         },
       };
@@ -558,7 +558,7 @@ export class AdvancedFilterService {
     let count = 0;
 
     // Helper to count non-empty values in an object
-    const countNonEmpty = (obj: any): number => {
+    const countNonEmpty = (obj: Record<string, unknown>): number => {
       if (!obj) return 0;
       return Object.values(obj).filter(v => {
         if (Array.isArray(v)) return v.length > 0;

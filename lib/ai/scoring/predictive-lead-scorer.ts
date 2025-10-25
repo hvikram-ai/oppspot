@@ -349,18 +349,18 @@ export class PredictiveLeadScorer {
     else if (recentStrongSignals.length > 1) probability += 8;
 
     // Boost for champion stakeholder
-    const hasChampion = stakeholders.some((s: any) => s.role_type === 'champion');
+    const hasChampion = stakeholders.some((s) => s.role_type === 'champion');
     if (hasChampion) probability += 10;
 
     // Boost for decision maker engagement
-    const hasEngagedDecisionMaker = stakeholders.some((s: any) =>
+    const hasEngagedDecisionMaker = stakeholders.some((s) =>
       s.decision_authority && s.engagement_score > 50
     );
     if (hasEngagedDecisionMaker) probability += 12;
 
     // AI adjustment if available
-    if (aiPredictions?.deal_probability && typeof (aiPredictions as any).deal_probability === 'number') {
-      probability = (probability + (aiPredictions as any).deal_probability) / 2;
+    if (aiPredictions?.deal_probability && typeof aiPredictions.deal_probability === 'number') {
+      probability = (probability + aiPredictions.deal_probability) / 2;
     }
 
     return Math.min(100, Math.max(0, probability));
@@ -452,7 +452,7 @@ export class PredictiveLeadScorer {
     if (scores.financial_health >= 80) {
       insights.key_strengths.push('Excellent financial health ensures budget availability');
     }
-    if (stakeholders.some((s: any) => s.role_type === 'champion' && s.champion_score >= 70)) {
+    if (stakeholders.some((s) => s.role_type === 'champion' && s.champion_score >= 70)) {
       insights.key_strengths.push('Internal champion actively supporting');
     }
 
@@ -460,10 +460,10 @@ export class PredictiveLeadScorer {
     if (scores.engagement < 30) {
       insights.risk_factors.push('Low engagement requires immediate attention');
     }
-    if (stakeholders.some((s: any) => s.role_type === 'detractor')) {
+    if (stakeholders.some((s) => s.role_type === 'detractor')) {
       insights.risk_factors.push('Active detractor may block progress');
     }
-    if (!stakeholders.some((s: any) => s.decision_authority)) {
+    if (!stakeholders.some((s) => s.decision_authority)) {
       insights.risk_factors.push('No decision maker identified yet');
     }
 
@@ -492,11 +492,11 @@ export class PredictiveLeadScorer {
 
     // Merge with AI predictions if available
     if (aiPredictions) {
-      if (Array.isArray((aiPredictions as any).key_strengths)) {
-        insights.key_strengths.push(...(aiPredictions as any).key_strengths);
+      if (Array.isArray(aiPredictions.key_strengths)) {
+        insights.key_strengths.push(...aiPredictions.key_strengths);
       }
-      if ((aiPredictions as any).competitive_position) {
-        insights.competitive_position = (aiPredictions as any).competitive_position as CompetitivePosition;
+      if (aiPredictions.competitive_position) {
+        insights.competitive_position = aiPredictions.competitive_position as CompetitivePosition;
       }
     }
 
@@ -531,7 +531,7 @@ export class PredictiveLeadScorer {
       });
     }
 
-    if (stakeholders.some((s: any) => s.role_type === 'champion' && s.engagement_score >= 70)) {
+    if (stakeholders.some((s) => s.role_type === 'champion' && s.engagement_score >= 70)) {
       predictors.success_indicators.push({
         indicator: 'Engaged champion advocate',
         strength: 'strong',
@@ -540,7 +540,7 @@ export class PredictiveLeadScorer {
     }
 
     // Warning signs
-    if (engagementHistory.filter((e: any) =>
+    if (engagementHistory.filter((e) =>
       new Date(e.date as string) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     ).length === 0) {
       predictors.failure_warnings.push({
@@ -554,7 +554,7 @@ export class PredictiveLeadScorer {
     const hasDecisionMaker = stakeholders.some(s => s.decision_authority);
     const hasBudget = scores.financial_health >= 60;
     const hasNeed = scores.buying_signals >= 50;
-    const hasTiming = buyingSignals.some((s: any) => s.signal_type === 'budget_allocated');
+    const hasTiming = buyingSignals.some((s) => s.signal_type === 'budget_allocated');
 
     predictors.critical_requirements_met =
       hasDecisionMaker && hasBudget && hasNeed && hasTiming;

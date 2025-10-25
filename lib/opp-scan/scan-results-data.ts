@@ -331,7 +331,7 @@ export class ScanResultsDataService {
       .from('acquisition_scans')
       .select('*')
       .eq('id', scanId)
-      .single() as { data: Row<'acquisition_scans'> | null; error: any }
+      .single() as { data: Row<'acquisition_scans'> | null; error: unknown }
 
     if (error) {
       console.error('Error loading scan data:', error)
@@ -346,7 +346,7 @@ export class ScanResultsDataService {
       .from('target_companies')
       .select('*')
       .eq('scan_id', scanId)
-      .order('overall_score', { ascending: false }) as { data: Row<'target_companies'>[] | null; error: any }
+      .order('overall_score', { ascending: false }) as { data: Row<'target_companies'>[] | null; error: unknown }
 
     if (error) {
       console.error('Error loading target companies:', error)
@@ -361,7 +361,7 @@ export class ScanResultsDataService {
     const { data: targets, error: targetsError } = await this.supabase
       .from('target_companies')
       .select('id')
-      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: any }
+      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: unknown }
 
     if (targetsError || !targets) return []
 
@@ -371,7 +371,7 @@ export class ScanResultsDataService {
     const { data, error } = await this.supabase
       .from('financial_analysis')
       .select('*')
-      .in('target_company_id', targetIds) as { data: Row<'financial_analysis'>[] | null; error: any }
+      .in('target_company_id', targetIds) as { data: Row<'financial_analysis'>[] | null; error: unknown }
 
     if (error) {
       console.error('Error loading financial analysis:', error)
@@ -386,7 +386,7 @@ export class ScanResultsDataService {
     const { data: targets, error: targetsError } = await this.supabase
       .from('target_companies')
       .select('id')
-      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: any }
+      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: unknown }
 
     if (targetsError || !targets) return []
 
@@ -396,7 +396,7 @@ export class ScanResultsDataService {
     const { data, error } = await this.supabase
       .from('risk_assessments')
       .select('*')
-      .in('target_company_id', targetIds) as { data: Row<'risk_assessments'>[] | null; error: any }
+      .in('target_company_id', targetIds) as { data: Row<'risk_assessments'>[] | null; error: unknown }
 
     if (error) {
       console.error('Error loading risk assessments:', error)
@@ -410,7 +410,7 @@ export class ScanResultsDataService {
     const { data, error } = await this.supabase
       .from('market_intelligence')
       .select('*')
-      .eq('scan_id', scanId) as { data: Row<'market_intelligence'>[] | null; error: any }
+      .eq('scan_id', scanId) as { data: Row<'market_intelligence'>[] | null; error: unknown }
 
     if (error) {
       console.error('Error loading market intelligence:', error)
@@ -425,7 +425,7 @@ export class ScanResultsDataService {
     const { data: targets, error: targetsError } = await this.supabase
       .from('target_companies')
       .select('id')
-      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: any }
+      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: unknown }
 
     if (targetsError || !targets) return []
 
@@ -435,7 +435,7 @@ export class ScanResultsDataService {
     const { data, error } = await this.supabase
       .from('due_diligence')
       .select('*')
-      .in('target_company_id', targetIds) as { data: Row<'due_diligence'>[] | null; error: any }
+      .in('target_company_id', targetIds) as { data: Row<'due_diligence'>[] | null; error: unknown }
 
     if (error) {
       console.error('Error loading due diligence:', error)
@@ -450,7 +450,7 @@ export class ScanResultsDataService {
     const { data: targets, error: targetsError } = await this.supabase
       .from('target_companies')
       .select('id')
-      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: any }
+      .eq('scan_id', scanId) as { data: Row<'target_companies'>[] | null; error: unknown }
 
     if (targetsError || !targets) return []
 
@@ -460,7 +460,7 @@ export class ScanResultsDataService {
     const { data, error } = await this.supabase
       .from('valuation_models')
       .select('*')
-      .in('target_company_id', targetIds) as { data: Row<'valuation_models'>[] | null; error: any }
+      .in('target_company_id', targetIds) as { data: Row<'valuation_models'>[] | null; error: unknown }
 
     if (error) {
       console.error('Error loading valuation models:', error)
@@ -475,7 +475,7 @@ export class ScanResultsDataService {
       .from('scan_reports')
       .select('*')
       .eq('scan_id', scanId)
-      .order('created_at', { ascending: false }) as { data: Row<'scan_reports'>[] | null; error: any }
+      .order('created_at', { ascending: false }) as { data: Row<'scan_reports'>[] | null; error: unknown }
 
     if (error) {
       console.error('Error loading scan reports:', error)

@@ -148,14 +148,14 @@ export class ICPLearningEngine {
         version: newVersion,
         name: `ICP v${newVersion} (Auto-learned)`,
         description: `Automatically learned from ${wonDeals.length} won deals and ${lostDeals.length} lost deals`,
-        criteria: criteria as any,
-        confidence_scores: confidenceScores as any,
-        metrics: metrics as any,
-        learned_from: deals.map(d => d.id) as any,
+        criteria: criteria as Record<string, unknown>,
+        confidence_scores: confidenceScores as Record<string, unknown>,
+        metrics: metrics as Record<string, unknown>,
+        learned_from: deals.map(d => d.id) as string[],
         training_data_count: deals.length,
         last_trained_at: new Date().toISOString(),
         is_active: true // Will auto-deactivate others via trigger
-      } as any)
+      } as Record<string, unknown>)
       .select()
       .single()
 
@@ -457,9 +457,9 @@ Focus on patterns that appear in >30% of won deals.`
     orgId: string,
     icpId: string,
     changeType: string,
-    beforeData: any,
-    afterData: any,
-    triggerData: any
+    beforeData: Record<string, unknown>,
+    afterData: Record<string, unknown>,
+    triggerData: Record<string, unknown>
   ) {
     const supabase = await createClient()
 
@@ -473,12 +473,12 @@ Focus on patterns that appear in >30% of won deals.`
       org_id: orgId,
       icp_profile_id: icpId,
       change_type: changeType,
-      before_data: beforeData as any,
-      after_data: afterData as any,
+      before_data: beforeData as Record<string, unknown>,
+      after_data: afterData as Record<string, unknown>,
       trigger_type: 'auto_learning',
-      trigger_data: triggerData as any,
+      trigger_data: triggerData as Record<string, unknown>,
       insights
-    } as any)
+    } as Record<string, unknown>)
   }
 
   /**
@@ -506,7 +506,7 @@ Focus on patterns that appear in >30% of won deals.`
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single() as { data: Row<'businesses'> | null; error: unknown }
 
     if (!companyData) {
       throw new Error('Company not found')
@@ -562,7 +562,7 @@ Focus on patterns that appear in >30% of won deals.`
       mismatch_reasons: [],
       calculated_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h cache
-    } as any)
+    } as Record<string, unknown>)
 
     return finalScore
   }

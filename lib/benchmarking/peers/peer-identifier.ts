@@ -133,7 +133,7 @@ export class PeerIdentifier {
 
       // Create peer group
       const result = await (this.supabase!
-        .from('peer_groups') as any)
+        .from('peer_groups'))
         .insert({
           name,
           description,
@@ -149,7 +149,7 @@ export class PeerIdentifier {
       if (groupError || !peerGroup) throw groupError || new Error('Failed to create peer group')
 
       // Type assertion for peer group
-      const typedPeerGroup = peerGroup as any
+      const typedPeerGroup = peerGroup
 
       // Add members
       const members = companyIds.map(companyId => ({
@@ -161,7 +161,7 @@ export class PeerIdentifier {
       if (!this.supabase) await this.initializeClient()
 
       const { error: memberError } = await (this.supabase!
-        .from('peer_group_members') as any)
+        .from('peer_group_members'))
         .insert(members)
 
       if (memberError) throw memberError
@@ -184,7 +184,7 @@ export class PeerIdentifier {
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single() as { data: Row<'businesses'> | null; error: unknown }
 
     if (!company) return null
 
@@ -219,7 +219,7 @@ export class PeerIdentifier {
       location: address?.city || registeredOffice?.locality,
       business_model: this.inferBusinessModel(company),
       incorporation_date: company.incorporation_date || undefined,
-      metrics: metrics as any
+      metrics: metrics as Record<string, unknown>
     }
   }
 
@@ -257,7 +257,7 @@ export class PeerIdentifier {
     // Exclude the target company
     query = query.neq('id', targetCompany.company_id)
 
-    const { data: companies } = await query.limit(100) as { data: Row<'businesses'>[] | null; error: any }
+    const { data: companies } = await query.limit(100) as { data: Row<'businesses'>[] | null; error: unknown }
 
     if (!companies) return []
 
@@ -295,7 +295,7 @@ export class PeerIdentifier {
           location: address?.city || registeredOffice?.locality,
           business_model: this.inferBusinessModel(company),
           incorporation_date: company.incorporation_date || undefined,
-          metrics: metrics as any
+          metrics: metrics as Record<string, unknown>
         }
       })
     )
@@ -560,7 +560,7 @@ export class PeerIdentifier {
     let totalWeight = 0
 
     for (const [feature, weight] of Object.entries(weights)) {
-      const value = (features as any)[feature]
+      const value = features[feature]
       if (value !== undefined) {
         weightedSum += value * weight
         totalWeight += weight
@@ -675,7 +675,7 @@ export class PeerIdentifier {
   /**
    * Infer business model from company data
    */
-  private inferBusinessModel(company: any): string {
+  private inferBusinessModel(company: Record<string, unknown>): string {
     const sicCode = company.sic_codes?.[0] || ''
 
     // Simple heuristic based on SIC code
@@ -700,7 +700,7 @@ export class PeerIdentifier {
 
       // Deactivate existing members
       await (this.supabase!
-        .from('peer_group_members') as any)
+        .from('peer_group_members'))
         .update({ is_active: false })
         .eq('peer_group_id', peerGroupId)
 
@@ -715,7 +715,7 @@ export class PeerIdentifier {
       if (!this.supabase) await this.initializeClient()
 
       await (this.supabase!
-        .from('peer_group_members') as any)
+        .from('peer_group_members'))
         .upsert(members, {
           onConflict: 'peer_group_id,company_id'
         })
@@ -724,7 +724,7 @@ export class PeerIdentifier {
       if (!this.supabase) await this.initializeClient()
 
       await (this.supabase!
-        .from('peer_groups') as any)
+        .from('peer_groups'))
         .update({
           member_count: companyIds.length,
           updated_at: new Date().toISOString()
@@ -744,7 +744,7 @@ export class PeerIdentifier {
     if (!this.supabase) await this.initializeClient()
 
     const { data } = await (this.supabase!
-      .from('peer_groups') as any)
+      .from('peer_groups'))
       .select('*')
       .eq('id', peerGroupId)
       .single()
@@ -759,7 +759,7 @@ export class PeerIdentifier {
     if (!this.supabase) await this.initializeClient()
 
     const { data } = await (this.supabase!
-      .from('peer_group_members') as any)
+      .from('peer_group_members'))
       .select('*')
       .eq('peer_group_id', peerGroupId)
       .eq('is_active', true)
