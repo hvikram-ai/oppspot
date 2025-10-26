@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
+import { getRAGQueryService } from '@/lib/ai/rag/rag-query-service'
 import { z } from 'zod'
 import { getErrorMessage } from '@/lib/utils/error-handler'
 
@@ -21,7 +22,10 @@ const searchSchema = z.object({
   query: z.string().min(1).max(500),
   limit: z.number().int().min(1).max(100).default(20),
   threshold: z.number().min(0).max(1).default(0.7),
-  includeDetails: z.boolean().default(true)
+  includeDetails: z.boolean().default(true),
+  use_rag: z.boolean().default(false), // NEW: Enable RAG
+  max_context: z.number().int().min(1).max(20).default(10), // NEW: Max context items
+  include_explanation: z.boolean().default(true) // NEW: Include RAG explanation
 })
 
 export async function POST(request: NextRequest) {
@@ -40,9 +44,50 @@ export async function POST(request: NextRequest) {
 
     // Parse request
     const body = await request.json()
-    const { query, limit, threshold, includeDetails } = searchSchema.parse(body)
+    const { query, limit, threshold, includeDetails, use_rag, max_context, include_explanation } = searchSchema.parse(body)
 
-    console.log(`[Semantic Search] Query: "${query}", limit: ${limit}, threshold: ${threshold}`)
+    console.log(`[Semantic Search] Query: "${query}", limit: ${limit}, threshold: ${threshold}, RAG: ${use_rag}`)
+
+    // NEW: Retrieve user context if RAG enabled
+    let userContext: Array<{ type: string; content: string; similarity: number }> = []
+    let ragExplanation: string | undefined
+
+    if (use_rag) {
+      try {
+        const ragService = getRAGQueryService()
+
+        // Generate query embedding for context retrieval
+        const { embedding: queryEmbedding } = await embeddingService.generateCompanyEmbedding({
+          name: query
+        })
+
+        // Retrieve relevant user context
+        const { getPineconeClient } = await import('@/lib/ai/rag/pinecone-client')
+        const pinecone = getPineconeClient()
+
+        const contextResults = await pinecone.query(user.id, queryEmbedding, {
+          topK: max_context,
+          includeMetadata: true
+        })
+
+        userContext = contextResults.map(r => ({
+          type: r.metadata?.type || 'unknown',
+          content: r.metadata?.company_name || 'Unknown',
+          similarity: r.score
+        }))
+
+        if (include_explanation && userContext.length > 0) {
+          ragExplanation = `Based on your ${userContext.filter(c => c.type === 'saved_company').length} saved companies` +
+            (userContext.filter(c => c.type === 'won_deal').length > 0 ? ` and ${userContext.filter(c => c.type === 'won_deal').length} successful deals` : '') +
+            `, here are companies matching your preferences.`
+        }
+
+        console.log(`[Semantic Search] Retrieved ${userContext.length} context items`)
+      } catch (error) {
+        console.error('[Semantic Search] RAG error (continuing without):', error)
+        // Continue without RAG on error
+      }
+    }
 
     // Perform semantic search
     const results = await embeddingService.semanticSearch(query, {
@@ -98,8 +143,12 @@ export async function POST(request: NextRequest) {
         limit,
         averageSimilarity: enrichedResults.length > 0
           ? enrichedResults.reduce((sum, r) => sum + r.similarity, 0) / enrichedResults.length
-          : 0
-      }
+          : 0,
+        rag_enabled: use_rag, // NEW
+        context_items_retrieved: userContext.length // NEW
+      },
+      context_used: userContext, // NEW: User context that influenced results
+      explanation: ragExplanation // NEW: Why these results
     })
   } catch (error: unknown) {
     console.error('[Semantic Search] Error:', error)
@@ -138,7 +187,10 @@ export async function GET(request: NextRequest) {
       body: JSON.stringify({
         query,
         limit: parseInt(searchParams.get('limit') || '20'),
-        threshold: parseFloat(searchParams.get('threshold') || '0.7')
+        threshold: parseFloat(searchParams.get('threshold') || '0.7'),
+        use_rag: searchParams.get('rag') === 'true' || searchParams.get('use_rag') === 'true', // NEW
+        max_context: parseInt(searchParams.get('max_context') || '10'), // NEW
+        include_explanation: searchParams.get('include_explanation') !== 'false' // NEW
       })
     }) as NextRequest
   )

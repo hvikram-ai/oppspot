@@ -479,29 +479,95 @@ Response (JSON only):`;
       .slice(-5) // Last 5 messages
       .map(msg => `${msg.role}: ${msg.content}`)
       .join('\n')
-    
+
     // Build tool results context
-    const toolContext = toolResults.length > 0 
-      ? `\nTool Results:\n${toolResults.map(t => 
+    const toolContext = toolResults.length > 0
+      ? `\nTool Results:\n${toolResults.map(t =>
           `${t.name}: ${JSON.stringify(t.result, null, 2)}`
         ).join('\n\n')}`
       : ''
-    
+
+    // NEW: Retrieve RAG context if user is authenticated
+    let ragContext = ''
+    if (this.context?.user_id) {
+      try {
+        const { getRAGQueryService } = await import('./rag/rag-query-service')
+        const { embeddingService } = await import('./embedding/embedding-service')
+
+        // Generate embedding for the message
+        const { embedding } = await embeddingService.generateCompanyEmbedding({
+          name: userMessage
+        })
+
+        // Query user context
+        const { getPineconeClient } = await import('./rag/pinecone-client')
+        const pinecone = getPineconeClient()
+
+        const contextResults = await pinecone.query(this.context.user_id, embedding, {
+          topK: 5,
+          includeMetadata: true
+        })
+
+        if (contextResults.length > 0) {
+          ragContext = '\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+          ragContext += 'USER CONTEXT (use this to personalize your response):\n'
+          ragContext += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+
+          const savedCompanies = contextResults.filter(r => r.metadata?.type === 'saved_company')
+          if (savedCompanies.length > 0) {
+            ragContext += `\n**Saved Companies**:\n`
+            savedCompanies.slice(0, 3).forEach((r, i) => {
+              ragContext += `${i + 1}. ${r.metadata?.company_name || 'Unknown'}`
+              if (r.metadata?.user_notes) {
+                ragContext += ` - Notes: ${r.metadata.user_notes}`
+              }
+              ragContext += `\n`
+            })
+          }
+
+          const wonDeals = contextResults.filter(r => r.metadata?.type === 'won_deal')
+          if (wonDeals.length > 0) {
+            ragContext += `\n**Successful Deals**:\n`
+            wonDeals.slice(0, 2).forEach((r, i) => {
+              ragContext += `${i + 1}. $${r.metadata?.deal_value?.toLocaleString() || 'N/A'} deal`
+              if (r.metadata?.outcome_reason) {
+                ragContext += ` - Won because: ${r.metadata.outcome_reason}`
+              }
+              ragContext += `\n`
+            })
+          }
+
+          const icp = contextResults.find(r => r.metadata?.type === 'icp')
+          if (icp) {
+            ragContext += `\n**ICP Profile**: Win rate ${((icp.metadata?.win_rate || 0) * 100).toFixed(0)}%, `
+            ragContext += `Avg deal $${(icp.metadata?.avg_deal_size || 0).toLocaleString()}\n`
+          }
+
+          ragContext += '\n**IMPORTANT**: Reference this context when relevant to show you understand their preferences.\n'
+          ragContext += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+        }
+      } catch (error) {
+        console.error('[Chat] RAG context retrieval failed:', error)
+        // Continue without RAG on error
+      }
+    }
+
     const prompt = `You are OppSpot AI Assistant, a helpful AI chatbot that assists users with business intelligence, M&A analysis, and platform navigation.
 
 Conversation History:
 ${conversationContext}
 
 Current User Message: ${userMessage}
-${toolContext}
+${toolContext}${ragContext}
 
 Instructions:
 1. Provide a helpful, accurate response based on the information available
 2. If tool results are provided, use them to give specific, detailed answers
-3. Reference sources when available using [1], [2], etc. format
-4. Be conversational but professional
-5. If you're not sure about something, say so
-6. Suggest follow-up questions or actions when appropriate
+3. If user context is provided, PERSONALIZE your response based on their history and preferences
+4. Reference sources when available using [1], [2], etc. format
+5. Be conversational but professional
+6. If you're not sure about something, say so
+7. Suggest follow-up questions or actions when appropriate
 
 Response:`;
 
