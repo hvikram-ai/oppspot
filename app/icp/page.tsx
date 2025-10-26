@@ -5,7 +5,7 @@
  * View and manage Ideal Customer Profiles with auto-learning
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +19,6 @@ import {
   RefreshCw,
   CheckCircle,
   Clock,
-  Users,
   DollarSign,
   BarChart3
 } from 'lucide-react'
@@ -59,11 +58,7 @@ export default function ICPPage() {
   const [loading, setLoading] = useState(true)
   const [training, setTraining] = useState(false)
 
-  useEffect(() => {
-    loadProfiles()
-  }, [])
-
-  const loadProfiles = async () => {
+  const loadProfiles = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/icp')
@@ -80,7 +75,11 @@ export default function ICPPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadProfiles()
+  }, [loadProfiles])
 
   const trainNewICP = async () => {
     try {
