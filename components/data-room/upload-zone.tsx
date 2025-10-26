@@ -73,20 +73,47 @@ export function UploadZone({ dataRoomId, onUploadComplete }: UploadZoneProps) {
 
   const uploadFile = async (file: File, index: number) => {
     try {
-      // TODO: This is a placeholder. In production, you would:
-      // 1. Upload to Supabase Storage
-      // 2. Create document record in database
-      // 3. Trigger AI classification
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('data_room_id', dataRoomId)
+      formData.append('filename', file.name)
+      formData.append('folder_path', '/')
 
-      // Simulate upload progress
-      for (let progress = 0; progress <= 100; progress += 20) {
-        await new Promise(resolve => setTimeout(resolve, 200))
-        setUploadingFiles(prev =>
-          prev.map((f, i) =>
-            i === index ? { ...f, progress } : f
-          )
-        )
-      }
+      // Upload with progress tracking using XMLHttpRequest
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100)
+            setUploadingFiles(prev =>
+              prev.map((f, i) =>
+                i === index ? { ...f, progress } : f
+              )
+            )
+          }
+        })
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText))
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`))
+          }
+        })
+
+        // Handle error
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'))
+        })
+
+        // Send request
+        xhr.open('POST', '/api/data-room/documents')
+        xhr.send(formData)
+      })
 
       // Mark as complete
       setUploadingFiles(prev =>

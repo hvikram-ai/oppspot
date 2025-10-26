@@ -419,3 +419,286 @@ export interface DocumentListItem {
   processing_status: ProcessingStatus;
   confidence_score: number;
 }
+
+// ============================================================================
+// WORKFLOW TYPES (Phase 3.9)
+// ============================================================================
+
+export type WorkflowType = 'approval' | 'review' | 'checklist' | 'custom';
+
+export type WorkflowStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled';
+
+export type WorkflowStepStatus = 'pending' | 'in_progress' | 'completed' | 'skipped' | 'failed';
+
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export type ChecklistItemStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked' | 'not_applicable';
+
+export type ApprovalDecision = 'approved' | 'rejected' | 'needs_changes';
+
+// Workflow Definition
+export interface Workflow {
+  id: string;
+  data_room_id: string;
+
+  // Basic info
+  name: string;
+  description: string | null;
+  workflow_type: WorkflowType;
+  status: WorkflowStatus;
+
+  // Configuration
+  config: {
+    auto_start?: boolean;
+    require_all_approvals?: boolean;
+    allow_parallel_steps?: boolean;
+    due_date?: string;
+    reminder_days?: number[];
+  };
+
+  // Creator
+  created_by: string;
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+// Workflow Steps
+export interface WorkflowStep {
+  id: string;
+  workflow_id: string;
+
+  // Step info
+  name: string;
+  description: string | null;
+  step_order: number;
+  step_type: 'approval' | 'review' | 'task' | 'checklist' | 'notification';
+  status: WorkflowStepStatus;
+
+  // Assignees
+  assigned_to: string[];
+
+  // Dependencies
+  depends_on_step_id: string | null;
+
+  // Configuration
+  config: {
+    required_approvals?: number;
+    allow_delegation?: boolean;
+    auto_approve_timeout_hours?: number;
+  };
+
+  // Timestamps
+  started_at: string | null;
+  completed_at: string | null;
+  due_date: string | null;
+  created_at: string;
+}
+
+// Tasks
+export interface WorkflowTask {
+  id: string;
+  workflow_step_id: string;
+  document_id: string | null;
+
+  // Task info
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+
+  // Assignment
+  assigned_to: string;
+  assigned_by: string;
+
+  // Timestamps
+  due_date: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Document Review Checklist
+export interface ReviewChecklist {
+  id: string;
+  data_room_id: string;
+  workflow_id: string | null;
+
+  // Checklist info
+  name: string;
+  description: string | null;
+  checklist_type: DealType; // Uses same deal types
+
+  // Progress
+  total_items: number;
+  completed_items: number;
+
+  // Created by
+  created_by: string;
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+}
+
+// Checklist Items
+export interface ChecklistItem {
+  id: string;
+  checklist_id: string;
+
+  // Item info
+  category: string; // e.g., "Financial", "Legal", "HR"
+  item_name: string;
+  description: string | null;
+  status: ChecklistItemStatus;
+
+  // Optional document link
+  document_id: string | null;
+
+  // Assignment
+  assigned_to: string | null;
+
+  // Notes
+  notes: string | null;
+
+  // Timestamps
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Approval Request
+export interface ApprovalRequest {
+  id: string;
+  workflow_step_id: string;
+  document_id: string | null;
+
+  // Request info
+  title: string;
+  description: string | null;
+
+  // Approver
+  requested_from: string;
+  requested_by: string;
+
+  // Decision
+  decision: ApprovalDecision | null;
+  decision_notes: string | null;
+  decided_at: string | null;
+
+  // Timestamps
+  created_at: string;
+  expires_at: string | null;
+}
+
+// Workflow Template (Pre-defined workflows)
+export interface WorkflowTemplate {
+  id: string;
+  name: string;
+  description: string;
+  workflow_type: WorkflowType;
+  deal_types: DealType[]; // Which deal types this template applies to
+  steps: {
+    name: string;
+    step_type: string;
+    step_order: number;
+    description: string;
+    config: Record<string, unknown>;
+  }[];
+  created_at: string;
+}
+
+// Checklist Template
+export interface ChecklistTemplate {
+  id: string;
+  name: string;
+  description: string;
+  deal_type: DealType;
+  categories: {
+    name: string;
+    items: {
+      name: string;
+      description: string;
+      required: boolean;
+    }[];
+  }[];
+  created_at: string;
+}
+
+// ============================================================================
+// WORKFLOW API REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateWorkflowRequest {
+  data_room_id: string;
+  name: string;
+  description?: string;
+  workflow_type: WorkflowType;
+  template_id?: string;
+  config?: Workflow['config'];
+}
+
+export interface CreateChecklistRequest {
+  data_room_id: string;
+  name: string;
+  description?: string;
+  checklist_type: DealType;
+  template_id?: string;
+}
+
+export interface CreateTaskRequest {
+  workflow_step_id: string;
+  title: string;
+  description?: string;
+  assigned_to: string;
+  priority?: TaskPriority;
+  due_date?: string;
+  document_id?: string;
+}
+
+export interface CreateApprovalRequest {
+  workflow_step_id: string;
+  title: string;
+  description?: string;
+  requested_from: string;
+  document_id?: string;
+  expires_at?: string;
+}
+
+export interface UpdateChecklistItemRequest {
+  status: ChecklistItemStatus;
+  document_id?: string;
+  notes?: string;
+  assigned_to?: string;
+}
+
+export interface UpdateApprovalRequest {
+  decision: ApprovalDecision;
+  decision_notes?: string;
+}
+
+// ============================================================================
+// WORKFLOW UI TYPES
+// ============================================================================
+
+export interface WorkflowWithProgress extends Workflow {
+  total_steps: number;
+  completed_steps: number;
+  pending_approvals: number;
+  overdue_tasks: number;
+}
+
+export interface ChecklistWithItems extends ReviewChecklist {
+  items: ChecklistItem[];
+  categories: {
+    name: string;
+    items: ChecklistItem[];
+    completed: number;
+    total: number;
+  }[];
+}
