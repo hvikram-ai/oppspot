@@ -294,8 +294,8 @@ export class DataSourceFactory {
         const source = this.getDataSource(sourceId)
         
         // Test connection if method exists
-        if ((source as any).testConnection) {
-          const result = await (source as any).testConnection()
+        if (((source as Record<string, unknown>)).testConnection) {
+          const result = await ((source as Record<string, unknown>)).testConnection()
           results.push({
             sourceId,
             success: result.success,
@@ -451,7 +451,7 @@ export class DataSourceFactory {
       itemsPerPage: maxResults || 100
     })
 
-    const companies = searchResult.companies.map((company: any) => ({
+    const companies = searchResult.companies.map((company: Record<string, unknown>) => ({
       name: company.company_name as string,
       registration_number: company.company_number as string,
       country: 'UK',
@@ -461,7 +461,7 @@ export class DataSourceFactory {
       employee_count: undefined,
       revenue_estimate: undefined,
       founding_year: new Date(company.date_of_creation).getFullYear(),
-      address: company.registered_office_address as any,
+      address: company.registered_office_address,
       phone: undefined,
       email: undefined,
       confidence_score: 0.95,
@@ -497,14 +497,14 @@ export class DataSourceFactory {
     const industries = (criteria.industries as Array<{ sic_code: string; industry: string }> | undefined)
 
     const searchResult = await typedSource.searchAcquisitionTargets({
-      industries: industries?.map((i: any) => i.industry as string) || [],
+      industries: industries?.map((i: Record<string, unknown>) => i.industry as string) || [],
       minIncorporationYear: (criteria.minIncorporationYear || undefined) as number | undefined,
       maxIncorporationYear: (criteria.maxIncorporationYear || undefined) as number | undefined,
       companyTypes: (criteria.companyTypes || undefined) as string[] | undefined,
       pageSize: maxResults || 50
     })
 
-    const companies = searchResult.companies.map((company: any) =>
+    const companies = searchResult.companies.map((company: Record<string, unknown>) =>
       typedSource.convertToStandardFormat(company)
     )
 
@@ -544,10 +544,10 @@ export class DataSourceFactory {
         industry_codes: ['62020'],
         website: `https://company${i + 1}.com`,
         description: `Company found via ${config.name}`,
-        employee_count: '11-50' as any,
+        employee_count: '11-50',
         revenue_estimate: Math.floor(Math.random() * 5000000) + 500000,
         founding_year: 2010 + Math.floor(Math.random() * 14),
-        address: { street: '123 Business St', city: 'London', country: 'UK' } as any,
+        address: { street: '123 Business St', city: 'London', country: 'UK' },
         phone: undefined,
         email: undefined,
         confidence_score: Math.random() * 0.3 + 0.5, // 0.5 to 0.8

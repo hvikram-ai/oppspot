@@ -187,7 +187,7 @@ export class IndustryComparisonEngine {
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single() as { data: Row<'businesses'> | null; error: unknown }
 
     return data
   }
@@ -202,7 +202,7 @@ export class IndustryComparisonEngine {
       .eq('company_id', companyId)
       .order('metric_date', { ascending: false })
       .limit(1)
-      .single() as { data: Row<'company_metrics'> | null; error: any }
+      .single() as { data: Row<'company_metrics'> | null; error: unknown }
 
     if (!data) {
       // Generate from business data if no metrics exist
@@ -220,7 +220,7 @@ export class IndustryComparisonEngine {
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: any }
+      .single() as { data: Row<'businesses'> | null; error: unknown }
 
     const metrics: CompanyMetrics = {
       company_id: companyId,
@@ -257,7 +257,7 @@ export class IndustryComparisonEngine {
   /**
    * Get industry code for company
    */
-  private async getIndustryCode(company: any): Promise<string> {
+  private async getIndustryCode(company: Record<string, unknown>): Promise<string> {
     if (company?.sic_codes && company.sic_codes.length > 0) {
       // Return 2-digit SIC division
       return company.sic_codes[0].substring(0, 2)
@@ -348,7 +348,7 @@ export class IndustryComparisonEngine {
   private calculateMetricComparisons(
     companyMetrics: CompanyMetrics,
     benchmarks: IndustryBenchmark[]
-  ): any[] {
+  ): unknown[] {
     const comparisons = []
 
     for (const benchmark of benchmarks) {
@@ -418,7 +418,7 @@ export class IndustryComparisonEngine {
   /**
    * Calculate overall percentile
    */
-  private calculateOverallPercentile(comparisons: any[]): number {
+  private calculateOverallPercentile(comparisons: unknown[]): number {
     if (comparisons.length === 0) return 50
 
     const percentiles = comparisons.map(c => c.percentile)
@@ -429,7 +429,7 @@ export class IndustryComparisonEngine {
    * Perform SWOT analysis
    */
   private performSWOTAnalysis(
-    comparisons: any[],
+    comparisons: unknown[],
     industryCode: string,
     metrics: CompanyMetrics
   ): { strengths: string[], weaknesses: string[], opportunities: string[], threats: string[] } {
@@ -541,7 +541,7 @@ export class IndustryComparisonEngine {
       .select('*')
       .eq('industry_code', industryCode)
       .order('metric_date', { ascending: false })
-      .limit(100) as { data: Row<'industry_benchmarks'>[] | null; error: any }
+      .limit(100) as { data: Row<'industry_benchmarks'>[] | null; error: unknown }
 
     return data || []
   }
@@ -549,7 +549,7 @@ export class IndustryComparisonEngine {
   /**
    * Analyze market dynamics
    */
-  private analyzeMarketDynamics(stats: any[]): any {
+  private analyzeMarketDynamics(stats: unknown[]): unknown {
     // Analyze growth trends
     const growthMetrics = stats.filter(s => s.metric_name === 'revenue_growth_yoy')
     const avgGrowth = growthMetrics.length > 0

@@ -58,7 +58,7 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
       .from('businesses')
       .select('name, description, address')
       .eq('company_number', companyNumber)
-      .single() as { data: any; error: unknown }
+      .single() as { data: Row<'businesses'> | null; error: unknown }
 
     if (business) {
       const location = business.address?.city ? `, ${business.address.city}` : ''
@@ -79,7 +79,7 @@ export async function generateMetadata({ params: paramsPromise }: BusinessPagePr
     .from('businesses')
     .select('name, description, address')
     .eq('id', params.id)
-    .single() as { data: any; error: unknown }
+    .single() as { data: Row<'businesses'> | null; error: unknown }
 
   if (!business) {
     return {
@@ -141,7 +141,7 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
         try {
           const companiesHouse = getCompaniesHouseService()
           const companyNumber = params.id.replace('api-', '')
-          const companyProfile = await companiesHouse.getCompanyProfile(companyNumber) as any
+          const companyProfile = await companiesHouse.getCompanyProfile(companyNumber)
 
           // Format Companies House data to match business structure
           business = {
@@ -243,13 +243,13 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Left Side */}
           <div className="lg:col-span-2 space-y-6">
-            <BusinessHeader business={business as any} />
-            <BusinessInfo business={business as any} />
+            <BusinessHeader business={business} />
+            <BusinessInfo business={business} />
             <LinkedInInfo
               businessId={business.id}
               businessName={business.name}
               linkedinData={(() => {
-                const metadata = business.metadata as Record<string, unknown> & { linkedin?: any } | null | undefined
+                const metadata = business.metadata as Record<string, unknown> & { linkedin?: unknown } | null | undefined
                 const socialLinks = business.social_links as Record<string, unknown> & { linkedin?: string } | null | undefined
                 return metadata?.linkedin || socialLinks?.linkedin ? {
                   url: socialLinks?.linkedin,
@@ -268,11 +268,11 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
               websiteUrl={business.website}
               isAdmin={false}
             />
-            <BusinessLocation business={business as any} />
+            <BusinessLocation business={business} />
 
             {relatedBusinesses && relatedBusinesses.length > 0 && (
               <RelatedBusinesses
-                businesses={relatedBusinesses as any}
+                businesses={relatedBusinesses}
                 currentBusinessId={params.id}
               />
             )}
@@ -280,8 +280,8 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
 
           {/* Sidebar - Right Side */}
           <div className="space-y-6">
-            <BusinessContact business={business as any} />
-            <BusinessActions business={business as any} />
+            <BusinessContact business={business} />
+            <BusinessActions business={business} />
             {!params.id.startsWith('mock-') && (
               <>
                 <BusinessStakeholders

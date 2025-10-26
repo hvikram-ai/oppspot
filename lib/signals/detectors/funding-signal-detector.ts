@@ -81,7 +81,7 @@ export class FundingSignalDetector {
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single() as { data: Row<'businesses'> | null; error: any };
+        .single() as { data: Row<'businesses'> | null; error: unknown };
 
       if (!company) {
         throw new Error('Company not found');
@@ -157,7 +157,7 @@ export class FundingSignalDetector {
           ...fundingSignal,
           signal_data: fundingSignal.funding_data,
           detected_at: new Date()
-        } as any)
+        } as Record<string, unknown>)
         .select()
         .single();
 
@@ -425,12 +425,12 @@ export class FundingSignalDetector {
       .eq('company_id', companyId)
       .eq('signal_type', 'funding_round')
       .order('signal_date', { ascending: false })
-      .limit(5) as { data: any[] | null; error: any };
+      .limit(5) as { data: unknown[] | null; error: unknown };
 
     if (!previousRounds) return [];
 
-    return previousRounds.map((signal: any) => {
-      const data = signal.signal_data as any;
+    return previousRounds.map((signal: Record<string, unknown>) => {
+      const data = signal.signal_data;
       return {
         round_type: data?.round_type as RoundType || 'seed',
         amount: data?.amount || 0,
@@ -446,10 +446,10 @@ export class FundingSignalDetector {
       .from('buying_signals')
       .select('signal_data')
       .eq('company_id', companyId)
-      .eq('signal_type', 'funding_round') as { data: any[] | null; error: any };
+      .eq('signal_type', 'funding_round') as { data: unknown[] | null; error: unknown };
 
-    const previousTotal = rounds?.reduce((sum: number, signal: any) => {
-      const data = signal.signal_data as any;
+    const previousTotal = rounds?.reduce((sum: number, signal: Record<string, unknown>) => {
+      const data = signal.signal_data;
       return sum + (data?.amount || 0);
     }, 0) || 0;
 

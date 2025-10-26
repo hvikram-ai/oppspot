@@ -33,7 +33,7 @@ interface Business {
   verified?: boolean
   website?: string
   phone?: string
-  address?: any
+  address?: Record<string, unknown>
   description?: string
   created_at?: string
 }
@@ -51,14 +51,14 @@ interface ComparisonMetrics {
     total: number
     winner: string
   }
-  categories?: any
-  pricing?: any
+  categories?: unknown
+  pricing?: unknown
 }
 
 interface BusinessComparisonProps {
   businesses: Business[]
   metrics?: ComparisonMetrics
-  insights?: any
+  insights?: unknown
 }
 
 export function BusinessComparison({ 
@@ -425,14 +425,14 @@ export function BusinessComparison({
                     <h4 className="font-semibold mb-2">Market Position</h4>
                     <div className="space-y-2">
                       {insights.market_position.map((pos: unknown) => (
-                        <div key={(pos as any).id} className="flex items-center justify-between">
-                          <span className="text-sm">{(pos as any).name}</span>
+                        <div key={pos?.id} className="flex items-center justify-between">
+                          <span className="text-sm">{pos?.name}</span>
                           <Badge variant={
-                            (pos as any).position === 'Market leader' ? 'default' :
-                            (pos as any).position === 'Top competitor' ? 'secondary' :
+                            pos?.position === 'Market leader' ? 'default' :
+                            pos?.position === 'Top competitor' ? 'secondary' :
                             'outline'
                           }>
-                            {(pos as any).position}
+                            {pos?.position}
                           </Badge>
                         </div>
                       ))}

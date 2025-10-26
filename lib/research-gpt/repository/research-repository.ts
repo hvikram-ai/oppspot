@@ -55,7 +55,7 @@ export class ResearchRepository {
 
     const { data, error } = await supabase
       .from('research_reports')
-      .insert(insertData as any)
+      .insert(insertData as Record<string, unknown>)
       .select()
       .single();
 
@@ -137,7 +137,7 @@ export class ResearchRepository {
       confidence_score?: number;
       generated_at?: string;
       cached_until?: string;
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     }
   ): Promise<void> {
     const supabase = await createClient();
@@ -165,7 +165,7 @@ export class ResearchRepository {
   async upsertSection(
     reportId: string,
     sectionType: SectionType,
-    content: any,
+    content: unknown,
     confidence: ConfidenceLevel,
     sourcesCount: number,
     generationTimeMs: number
@@ -185,7 +185,7 @@ export class ResearchRepository {
         expires_at: expiresAt,
         cached_at: new Date().toISOString(),
         generation_time_ms: generationTimeMs,
-      } as any)
+      } as Record<string, unknown>)
       .select()
       .single();
 
@@ -273,7 +273,7 @@ export class ResearchRepository {
         sources.map((source) => ({
           report_id: reportId,
           ...source,
-        })) as any
+        }))
       );
 
     if (error) {
@@ -334,7 +334,7 @@ export class ResearchRepository {
           researches_used: 0,
           researches_limit: 100,
           tier: 'standard' as const,
-        } as any)
+        } as Record<string, unknown>)
         .select()
         .single();
 
@@ -400,7 +400,7 @@ export class ResearchRepository {
     // Use database function for atomic increment
     const { error } = await supabase.rpc('increment_research_quota', {
       p_user_id: userId,
-    } as any);
+    } as Record<string, unknown>);
 
     if (error) {
       console.error('Failed to increment quota:', error);
@@ -479,13 +479,13 @@ export class ResearchRepository {
     }
 
     // Anonymize decision makers (remove contact info)
-    const reportIds = oldReports.map((r) => (r as any).id);
+    const reportIds = oldReports.map((r) => r.id);
 
     for (const reportId of reportIds) {
       const sections = await this.getSections(reportId);
 
       for (const section of sections) {
-        const content = section.content as any;
+        const content = section.content;
         if (section.section_type === 'decision_makers' && Array.isArray(content)) {
           // Remove personal contact info
           const anonymized = content.map((person: unknown) => ({

@@ -97,15 +97,15 @@ export async function POST(request: NextRequest) {
       }).then(() => {
         console.log(`Analysis ${analysisId} record created`)
         return Promise.resolve()
-      }) as any
+      })
     }
 
     // For demo/testing, store mock results in memory
     // In production, this would trigger an async job
     if (process.env.NODE_ENV === 'development' || !user) {
       // Simulate async processing by storing results that can be retrieved later
-      (global as any).similarityAnalyses = (global as any).similarityAnalyses || {}
-      ;(global as any).similarityAnalyses[analysisId] = {
+      ((global as Record<string, unknown>)).similarityAnalyses = ((global as Record<string, unknown>)).similarityAnalyses || {}
+      ;((global as Record<string, unknown>)).similarityAnalyses[analysisId] = {
         id: analysisId,
         status: 'processing',
         targetCompany: targetCompanyName.trim(),
@@ -115,9 +115,9 @@ export async function POST(request: NextRequest) {
 
       // Simulate completion after a delay (non-blocking)
       setTimeout(() => {
-        if ((global as any).similarityAnalyses[analysisId]) {
-          ;(global as any).similarityAnalyses[analysisId] = {
-            ...(global as any).similarityAnalyses[analysisId],
+        if (((global as Record<string, unknown>)).similarityAnalyses[analysisId]) {
+          ;((global as Record<string, unknown>)).similarityAnalyses[analysisId] = {
+            ...((global as Record<string, unknown>)).similarityAnalyses[analysisId],
             status: 'completed',
             completedAt: new Date().toISOString(),
             results: MOCK_SIMILAR_COMPANIES.slice(0, maxResults),
@@ -170,8 +170,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check in-memory storage first (for demo/dev)
-    if ((global as any).similarityAnalyses && (global as any).similarityAnalyses[analysisId]) {
-      const analysis = (global as any).similarityAnalyses[analysisId]
+    if (((global as Record<string, unknown>)).similarityAnalyses && ((global as Record<string, unknown>)).similarityAnalyses[analysisId]) {
+      const analysis = ((global as Record<string, unknown>)).similarityAnalyses[analysisId]
       return NextResponse.json(analysis)
     }
 
@@ -219,6 +219,6 @@ export async function GET(request: NextRequest) {
 }
 
 // Initialize global storage for demo
-if (typeof (global as any).similarityAnalyses === 'undefined') {
-  (global as any).similarityAnalyses = {}
+if (typeof ((global as Record<string, unknown>)).similarityAnalyses === 'undefined') {
+  ((global as Record<string, unknown>)).similarityAnalyses = {}
 }
