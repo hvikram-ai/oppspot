@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
 
     const profile = profileData as Row<'profiles'> | null
 
-    if (profileError) {
-      console.error('[Social API] Error fetching profile:', profileError);
+    if (_profileError) {
+      console.error('[Social API] Error fetching profile:', _profileError);
     }
 
     if (profile?.role !== 'admin' && profile?.role !== 'owner') {
@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
                 last_scraped_at: new Date().toISOString(),
                 scrape_status: 'success'
               } as never)
-            
-            if (!profileError) {
+
+            if (!_profileError) {
               results.social.push(profile)
             }
           }

@@ -109,12 +109,13 @@ export async function POST(
       strategic_recommendations?: string[];
     }
 
-    type AnalysisData = any & AnalysisMetadata & {
+    type AnalysisData = AnalysisMetadata & {
       similar_company_matches?: Array<{
         company_name: string;
         overall_score: number;
         [key: string]: unknown;
       }>;
+      [key: string]: unknown;
     }
     let analysis: AnalysisData | null
     if (!isDemoMode) {
@@ -162,7 +163,11 @@ export async function POST(
     // Prepare export data
     const matches = analysis?.similar_company_matches || []
     const topMatches = matches
-      .sort((a: any, b: any) => (b as unknown as CompanyMatch).overall_score - (a as unknown as CompanyMatch).overall_score)
+      .sort((a, b) => {
+        const matchA = a as unknown as CompanyMatch;
+        const matchB = b as unknown as CompanyMatch;
+        return matchB.overall_score - matchA.overall_score;
+      })
       .slice(0, maxMatches)
 
     const exportData = {
@@ -477,7 +482,7 @@ async function generatePowerPointExport(
     .select()
     .single();
 
-  const exportRecord = exportRecordData as any
+  const exportRecord = exportRecordData as { id: string } | null
 
   if (error) {
     console.error('[Export API] Error creating PowerPoint export record:', error);
@@ -519,7 +524,7 @@ async function generateExcelExport(
     .select()
     .single();
 
-  const exportRecord = exportRecordData as any
+  const exportRecord = exportRecordData as { id: string } | null
 
   if (error) {
     console.error('[Export API] Error creating Excel export record:', error);

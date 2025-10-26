@@ -40,8 +40,8 @@ export async function GET(
       .eq('id', scanId)
       .single();
 
-    if (scanError || !scanData) {
-      console.error('Error fetching scan:', scanError)
+    if (_scanError || !scanData) {
+      console.error('Error fetching scan:', _scanError)
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }

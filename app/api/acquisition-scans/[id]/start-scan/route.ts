@@ -39,7 +39,7 @@ export async function POST(
       .eq('id', scanId)
       .single<Scan>()
 
-    if (scanError || !scan) {
+    if (_scanError || !scan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }

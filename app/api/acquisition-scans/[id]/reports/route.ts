@@ -34,7 +34,7 @@ export async function GET(
       .eq('id', scanId)
       .single();
 
-    if (scanError || !scanData) {
+    if (_scanError || !scanData) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
@@ -67,8 +67,8 @@ export async function GET(
 
     const { data: reports, error: _reportsError } = await query
 
-    if (reportsError) {
-      console.error('Error fetching reports:', reportsError)
+    if (_reportsError) {
+      console.error('Error fetching reports:', _reportsError)
       return NextResponse.json(
         { error: 'Failed to fetch reports' },
         { status: 500 }
@@ -111,7 +111,7 @@ export async function POST(
       .eq('id', scanId)
       .single()
 
-    if (scanError || !scanData) {
+    if (_scanError || !scanData) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }
@@ -120,7 +120,7 @@ export async function POST(
 
     const scan = scanData as Scan;
 
-    if (scanError || !scan) {
+    if (_scanError || !scan) {
       return NextResponse.json(
         { error: 'Scan not found' },
         { status: 404 }

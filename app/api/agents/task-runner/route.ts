@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .single() as { data: { org_id: string; role: string } | null; error: unknown }
 
-    if (profileError || !profile?.org_id) {
+    if (_profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single() as { data: { org_id: string; role: string } | null; error: unknown }
 
-    if (profileError || !profile?.org_id) {
+    if (_profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 

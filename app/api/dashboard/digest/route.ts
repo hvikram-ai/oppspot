@@ -14,6 +14,16 @@ interface ResearchReport {
   status: string
 }
 
+interface RecentSearch {
+  business_id: string
+  created_at: string
+}
+
+interface StaleLead {
+  business_id: string
+  updated_at: string
+}
+
 interface DigestData {
   overnight_discoveries: Array<{
     type: string
@@ -215,14 +225,14 @@ async function generateDigestData(supabase: SupabaseClient, userId: string): Pro
 
   // Build digest structure
   const digestData: DigestData = {
-    overnight_discoveries: (recentSearches || []).map((search: { business_id: any; created_at: any }) => ({
+    overnight_discoveries: (recentSearches || []).map((search: RecentSearch) => ({
       type: 'opportunity',
       title: `New business matches found`,
       description: 'Companies matching your search criteria',
       action_url: `/business/${search.business_id}`,
       priority: 'medium'
     })),
-    urgent_alerts: (staleLeads || []).slice(0, 3).map((lead: { business_id: any; updated_at: any }) => ({
+    urgent_alerts: (staleLeads || []).slice(0, 3).map((lead: StaleLead) => ({
       type: 'follow_up',
       title: `Lead needs follow-up`,
       company_ids: [lead.business_id],
