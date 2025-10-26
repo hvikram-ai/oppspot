@@ -1,6 +1,6 @@
 /**
  * User Context Indexer
- * Extracts user-specific data and indexes it to Pinecone for RAG
+ * Extracts user-specific data and indexes it to pgvector (Supabase) for RAG
  *
  * Data sources:
  * 1. Saved companies (highest signal)
@@ -12,7 +12,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import { getPineconeClient, type PineconeVector, type PineconeMetadata } from './pinecone-client'
+import { getPgVectorClient as getPineconeClient, type PineconeVector, type PineconeMetadata } from './pgvector-client'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import type { Row } from '@/lib/supabase/helpers'
 

@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
         })
 
         // Retrieve relevant user context
-        const { getPineconeClient } = await import('@/lib/ai/rag/pinecone-client')
-        const pinecone = getPineconeClient()
+        const { getPgVectorClient } = await import('@/lib/ai/rag/pgvector-client')
+        const pinecone = getPgVectorClient()
 
         const contextResults = await pinecone.query(user.id, queryEmbedding, {
           topK: max_context,

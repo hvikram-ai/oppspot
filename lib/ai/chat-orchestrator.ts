@@ -500,8 +500,8 @@ Response (JSON only):`;
         })
 
         // Query user context
-        const { getPineconeClient } = await import('./rag/pinecone-client')
-        const pinecone = getPineconeClient()
+        const { getPgVectorClient } = await import('./rag/pgvector-client')
+        const pinecone = getPgVectorClient()
 
         const contextResults = await pinecone.query(this.context.user_id, embedding, {
           topK: 5,

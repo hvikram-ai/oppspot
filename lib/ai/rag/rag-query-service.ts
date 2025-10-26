@@ -1,17 +1,17 @@
 /**
  * RAG Query Service
- * Retrieves user context from Pinecone and enriches LLM queries
+ * Retrieves user context from pgvector (Supabase) and enriches LLM queries
  *
  * Flow:
  * 1. User submits query
  * 2. Generate embedding for query
- * 3. Search user's Pinecone namespace for relevant context
+ * 3. Search user's context vectors for relevant context
  * 4. Build enriched prompt with context
  * 5. Query LLM with full context
  * 6. Return personalized response
  */
 
-import { getPineconeClient, type QueryResult, type PineconeMetadata } from './pinecone-client'
+import { getPgVectorClient as getPineconeClient, type QueryResult, type PineconeMetadata } from './pgvector-client'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { getLLMProvider } from '@/lib/ai/llm-factory'
 import type { LLMMessage } from '@/lib/ai/llm-interface'

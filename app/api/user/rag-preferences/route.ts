@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getPineconeClient } from '@/lib/ai/rag/pinecone-client'
+import { getPgVectorClient as getPineconeClient } from '@/lib/ai/rag/pgvector-client'
 import { triggerUserIndexing } from '@/lib/ai/rag/trigger-indexing'
 import { z } from 'zod'
 

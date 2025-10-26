@@ -1,12 +1,12 @@
 /**
  * RAG Health Check API
- * Check Pinecone connection and system status
+ * Check pgvector (Supabase) connection and system status
  *
  * GET /api/rag/health
  */
 
 import { NextResponse } from 'next/server'
-import { getPineconeClient } from '@/lib/ai/rag/pinecone-client'
+import { getPgVectorClient as getPineconeClient } from '@/lib/ai/rag/pgvector-client'
 
 export async function GET() {
   try {
