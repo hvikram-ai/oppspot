@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,11 +24,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadBillingInfo()
-  }, [])
-
-  const loadBillingInfo = async () => {
+  const loadBillingInfo = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -46,7 +42,11 @@ export default function BillingPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadBillingInfo()
+  }, [loadBillingInfo])
 
   const getTierBadgeColor = (tier: string) => {
     switch (tier) {

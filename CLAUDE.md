@@ -148,6 +148,10 @@ Core tables include:
 - `business_lists`: Curated business lists
 - `market_metrics`: Time-series analytics data
 - `notifications`: User notifications system
+- `research_reports`: ResearchGPT™ intelligence reports
+- `research_sections`: ResearchGPT™ report sections with differential TTL
+- `research_sources`: Source attributions for GDPR compliance
+- `user_research_quotas`: Monthly research quota tracking
 
 ## Development Workflow
 
@@ -181,6 +185,7 @@ Core tables include:
 
 ## Key Features Implemented
 
+- **ResearchGPT™**: AI-powered company intelligence in <30 seconds
 - AI-powered business search with natural language
 - Interactive maps with clustering
 - Real-time notifications
@@ -190,7 +195,147 @@ Core tables include:
 - Predictive analytics engine
 - Competitive analysis tools
 
+### ResearchGPT™ - AI-Powered Company Intelligence
+
+**Location**: `lib/research-gpt/`
+
+ResearchGPT™ generates comprehensive company intelligence reports in under 30 seconds by aggregating data from multiple sources and analyzing with AI.
+
+**Architecture**:
+- **Data Sources** (`data-sources/`): Companies House, News API, Reed Jobs, Website Scraper
+- **Analyzers** (`analyzers/`): Snapshot, Signals, Decision Makers, Revenue, Recommendations
+- **Repository** (`repository/`): Database operations with smart caching
+- **Orchestration** (`research-gpt-service.ts`): Main service coordinating the pipeline
+
+**API Endpoints**:
+- `POST /api/research/[companyId]` - Initiate research generation
+- `GET /api/research/[companyId]` - Retrieve report
+- `GET /api/research/[companyId]/status` - Poll generation status
+- `GET /api/research/quota` - Check user quota
+
+**Key Features**:
+- Parallel data fetching from 4+ sources
+- Differential caching (7 days for snapshots, 6 hours for signals)
+- GDPR-compliant (source attribution, business emails only, 6-month auto-deletion)
+- Smart quota management
+- Performance target: 95% of requests complete in <30 seconds
+
+**UI Components** (`components/research/`):
+- `research-button.tsx` - Trigger research generation
+- `research-progress.tsx` - Real-time progress indicator
+- `research-report.tsx` - Full report display
+- `quota-display.tsx` - Quota management
+
+**Database Tables**:
+- `research_reports` - Main reports
+- `research_sections` - 6 section types (snapshot, signals, decision_makers, etc.)
+- `research_sources` - Source attributions
+- `user_research_quotas` - Monthly quota tracking
+
 This is a production SaaS application with real users - maintain high code quality and test thoroughly before making changes.
+
+### Data Room - AI-Powered Due Diligence Platform
+
+**Location**: `lib/data-room/`, `components/data-room/`, `supabase/functions/analyze-document/`
+
+The Data Room feature provides secure document management with AI-powered classification and metadata extraction for M&A and due diligence workflows.
+
+**Architecture**:
+- **Types** (`lib/data-room/types.ts`): TypeScript definitions for all data room entities
+- **AI Utilities** (`lib/data-room/ai/`): Document classification, metadata extraction, text processing
+- **State Management** (`lib/stores/data-room-store.ts`): Zustand store for client-side state
+- **Error Handling** (`lib/data-room/utils/error-handler.ts`): Standardized error handling
+- **Components** (`components/data-room/`): UI components including error boundaries, loading states
+- **Edge Function** (`supabase/functions/analyze-document/`): AI analysis pipeline
+
+**Core Features**:
+- **Document Upload**: Multi-file drag-and-drop with progress tracking
+- **AI Classification**: Automatic document type classification (financial, contract, legal, HR, due diligence, other)
+- **Metadata Extraction**: Structured data extraction (dates, amounts, parties, contract terms)
+- **Confidence Scoring**: AI confidence levels with human review flagging
+- **Secure Storage**: Encrypted document storage via Supabase Storage
+- **Access Control**: Role-based permissions (owner, editor, viewer, commenter)
+- **Activity Logging**: Comprehensive audit trail of all actions
+- **Document Viewer**: PDF viewer with AI insights sidebar
+
+**AI Pipeline**:
+1. Document upload → Supabase Storage
+2. Trigger Edge Function with document_id
+3. Download file from storage
+4. Extract text using pdf-parse
+5. Classify document type (OpenRouter API + Claude Sonnet 3.5)
+6. Extract structured metadata
+7. Update document record with results
+8. Performance target: <10s for 95% of documents
+
+**Database Tables**:
+- `data_rooms` - Main data room entities
+- `documents` - Uploaded documents with AI analysis results
+- `document_analysis` - Detailed AI analysis records
+- `data_room_access` - Permission grants and invitations
+- `activity_logs` - Audit trail (immutable)
+- `document_annotations` - User comments and highlights
+
+**State Management**:
+```typescript
+import { useDataRoomStore } from '@/lib/stores/data-room-store';
+
+// Access state
+const { currentDataRoomId, documentFilters, uploadProgress } = useDataRoomStore();
+
+// Update state
+const { setCurrentDataRoom, updateUploadProgress } = useDataRoomStore();
+```
+
+**Error Handling**:
+```typescript
+import { withErrorHandler, DataRoomError, DataRoomErrorCode } from '@/lib/data-room/utils';
+
+// In API routes
+export const POST = withErrorHandler(async (req) => {
+  // Your handler code
+  throw new DataRoomError('Not found', DataRoomErrorCode.NOT_FOUND, 404);
+});
+
+// In components
+import { DataRoomErrorBoundary } from '@/components/data-room/error-boundary';
+
+<DataRoomErrorBoundary>
+  <YourComponent />
+</DataRoomErrorBoundary>
+```
+
+**AI Utilities**:
+```typescript
+import { DocumentClassifier, MetadataExtractor, extractTextFromPDF } from '@/lib/data-room/ai';
+
+// Extract text from PDF
+const result = await extractTextFromPDF(buffer);
+
+// Classify document
+const classifier = new DocumentClassifier();
+const classification = await classifier.classify(result.text, filename);
+
+// Extract metadata
+const extractor = new MetadataExtractor();
+const metadata = await extractor.extract(result.text, classification.document_type);
+```
+
+**Key Files**:
+- `lib/data-room/types.ts` - TypeScript types and interfaces
+- `lib/data-room/ai/document-classifier.ts` - AI classification logic
+- `lib/data-room/ai/metadata-extractor.ts` - AI metadata extraction
+- `lib/data-room/ai/text-extractor.ts` - PDF text extraction utilities
+- `lib/stores/data-room-store.ts` - Zustand state management
+- `lib/data-room/utils/error-handler.ts` - Error handling utilities
+- `components/data-room/error-boundary.tsx` - React error boundary
+- `components/data-room/loading-states.tsx` - Loading skeletons and indicators
+- `supabase/functions/analyze-document/index.ts` - Document analysis Edge Function
+
+**Environment Variables Required**:
+- `OPENROUTER_API_KEY` - For AI classification and metadata extraction
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Service role key for Edge Functions
 
 ## Testing & Demo Access
 

@@ -27,10 +27,15 @@ import { AIDigestCard } from '@/components/dashboard-v2/ai-digest-card'
 import { PriorityQueue } from '@/components/dashboard-v2/priority-queue'
 import { ImpactMetrics } from '@/components/dashboard-v2/impact-metrics'
 import { FeatureSpotlight } from '@/components/dashboard-v2/feature-spotlight'
+import { EnhancedStatsGrid } from '@/components/dashboard-v2/enhanced-stats-grid'
+import { ResearchGPTLauncher } from '@/components/dashboard-v2/research-gpt-launcher'
+import { ErrorBoundary } from '@/components/dashboard-v2/error-boundary'
+import { DashboardCardSkeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Sparkles, X, Activity } from 'lucide-react'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { ActivityFeed } from '@/components/collaboration/ActivityFeed'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -179,14 +184,40 @@ export function DashboardWrapper() {
           </Alert>
         )}
 
-        {/* NEW: AI Digest (Hero Section) */}
-        <div className="mb-6" data-testid="dashboard-hero">
-          <AIDigestCard />
+        {/* Hero Section: AI Digest + ResearchGPT Launcher */}
+        <div className="grid gap-6 lg:grid-cols-3 mb-8" data-testid="dashboard-hero">
+          <div className="lg:col-span-2">
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardCardSkeleton />}>
+                <AIDigestCard />
+              </Suspense>
+            </ErrorBoundary>
+          </div>
+          <div>
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardCardSkeleton />}>
+                <ResearchGPTLauncher />
+              </Suspense>
+            </ErrorBoundary>
+          </div>
         </div>
 
-        {/* NEW: Impact Metrics */}
+        {/* Enhanced Stats Grid */}
         <div className="mb-8">
-          <ImpactMetrics />
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardCardSkeleton />}>
+              <EnhancedStatsGrid />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+
+        {/* Impact Metrics (Original) */}
+        <div className="mb-8">
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardCardSkeleton />}>
+              <ImpactMetrics />
+            </Suspense>
+          </ErrorBoundary>
         </div>
 
         {/* Quick Actions */}
@@ -196,14 +227,22 @@ export function DashboardWrapper() {
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* NEW: Priority Queue - Takes 2 columns */}
+          {/* Priority Queue - Takes 2 columns */}
           <div className="lg:col-span-2">
-            <PriorityQueue />
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardCardSkeleton />}>
+                <PriorityQueue />
+              </Suspense>
+            </ErrorBoundary>
           </div>
 
-          {/* NEW: Feature Spotlight - Takes 1 column */}
+          {/* Feature Spotlight - Takes 1 column */}
           <div>
-            <FeatureSpotlight />
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardCardSkeleton />}>
+                <FeatureSpotlight />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </div>
 

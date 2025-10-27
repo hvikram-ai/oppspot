@@ -12,7 +12,6 @@ import type {
   RoleChangeRequest,
   PermissionCheckResult,
 } from './types';
-import { PERMISSIONS } from './types';
 
 // =====================================================
 // PERMISSION CHECKING
@@ -95,7 +94,7 @@ export class PermissionService {
       return [];
     }
 
-    return data?.map((rp: any) => rp.permission).filter(Boolean) || [];
+    return data?.map((rp: { permission: Permission | null }) => rp.permission).filter(Boolean) || [];
   }
 
   /**
@@ -127,7 +126,7 @@ export class PermissionService {
       .eq('user_id', userId);
 
     if (userPerms) {
-      userPerms.forEach((up: any) => {
+      userPerms.forEach((up: { granted: boolean; permission: { name: string } | null }) => {
         const permName = up.permission?.name;
         if (permName) {
           if (up.granted) {

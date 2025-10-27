@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -52,12 +52,7 @@ export default function ImportBusinessesPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  useEffect(() => {
-    checkAuth()
-    fetchImportData()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       router.push('/login')
@@ -75,9 +70,9 @@ export default function ImportBusinessesPage() {
       toast.error('Admin access required')
       router.push('/dashboard')
     }
-  }
+  }, [router, supabase])
 
-  const fetchImportData = async () => {
+  const fetchImportData = useCallback(async () => {
     try {
       const response = await fetch('/api/businesses/import')
       if (response.ok) {
@@ -89,7 +84,12 @@ export default function ImportBusinessesPage() {
     } catch (error) {
       console.error('Error fetching import data:', error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    checkAuth()
+    fetchImportData()
+  }, [checkAuth, fetchImportData])
 
   const handleImport = async () => {
     if (!query && !location) {

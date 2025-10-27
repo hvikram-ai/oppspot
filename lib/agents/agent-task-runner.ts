@@ -9,7 +9,7 @@
  * 4. Handles retries and error logging
  */
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { BaseAgent, AgentExecutionResult } from '@/lib/ai/agents/base-agent'
 import { createOpportunityBot } from '@/lib/agents/opportunity-bot'
 import { createEnrichmentAgent } from '@/lib/agents/enrichment-agent'
@@ -118,7 +118,7 @@ export class AgentTaskRunner {
    * Fetch pending tasks from database
    */
   private async fetchPendingTasks(limit: number): Promise<AgentTask[]> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data: tasks, error } = await supabase
       .from('agent_tasks')
@@ -186,7 +186,7 @@ export class AgentTaskRunner {
    * Execute task based on type
    */
   private async executeTask(task: AgentTask): Promise<AgentExecutionResult> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Fetch agent configuration
     const { data: agent, error: agentError } = await supabase
@@ -315,7 +315,7 @@ export class AgentTaskRunner {
     streamId: string,
     result: AgentExecutionResult
   ): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Fetch current stream
     const { data: stream } = await supabase
@@ -349,7 +349,7 @@ export class AgentTaskRunner {
     executionId: string,
     result: AgentExecutionResult
   ): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const insightTitle = this.generateInsightTitle(agent.agent_type, result)
     const insightDescription = this.generateInsightDescription(agent.agent_type, result)
@@ -411,7 +411,7 @@ export class AgentTaskRunner {
    * Retry a failed task
    */
   private async retryTask(task: AgentTask, errorMessage: string): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Calculate exponential backoff delay
     const delayMs = Math.min(1000 * Math.pow(2, task.retry_count), 60000) // Max 60s
@@ -440,7 +440,7 @@ export class AgentTaskRunner {
     status: AgentTask['status'],
     updates: Record<string, unknown> = {}
   ): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     await supabase
       .from('agent_tasks')

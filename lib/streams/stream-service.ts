@@ -4,6 +4,7 @@
  */
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { Database } from '@/types/database'
 import type {
   Stream,
   StreamMember,
@@ -23,6 +24,22 @@ import type {
   WorkflowStage
 } from '@/types/streams'
 
+// Database type aliases
+type DBStream = Database['public']['Tables']['streams']['Row']
+type DBStreamInsert = Database['public']['Tables']['streams']['Insert']
+type DBStreamUpdate = Database['public']['Tables']['streams']['Update']
+type DBStreamMember = Database['public']['Tables']['stream_members']['Row']
+type DBStreamMemberInsert = Database['public']['Tables']['stream_members']['Insert']
+type DBStreamMemberUpdate = Database['public']['Tables']['stream_members']['Update']
+type DBStreamItem = Database['public']['Tables']['stream_items']['Row']
+type DBStreamItemInsert = Database['public']['Tables']['stream_items']['Insert']
+type DBStreamItemUpdate = Database['public']['Tables']['stream_items']['Update']
+type DBStreamActivity = Database['public']['Tables']['stream_activities']['Row']
+type DBStreamActivityInsert = Database['public']['Tables']['stream_activities']['Insert']
+type DBStreamComment = Database['public']['Tables']['stream_comments']['Row']
+type DBStreamCommentInsert = Database['public']['Tables']['stream_comments']['Insert']
+type DBStreamNotificationInsert = Database['public']['Tables']['stream_notifications']['Insert']
+
 export class StreamService {
   /**
    * Create a new stream
@@ -37,28 +54,30 @@ export class StreamService {
 
     console.log('[StreamService] Creating stream with:', { userId, orgId, streamName: data.name })
 
-    const { data: stream, error } = await adminClient
+    const insertData: DBStreamInsert = {
+      org_id: orgId,
+      name: data.name,
+      description: data.description || null,
+      emoji: data.emoji || '📁',
+      color: data.color || '#6366f1',
+      stream_type: data.stream_type || 'project',
+      stages: (data.stages || [
+        { id: 'discover', name: 'Discover', color: '#3b82f6' },
+        { id: 'research', name: 'Research', color: '#8b5cf6' },
+        { id: 'outreach', name: 'Outreach', color: '#ec4899' },
+        { id: 'qualified', name: 'Qualified', color: '#10b981' },
+        { id: 'closed', name: 'Closed', color: '#64748b' }
+      ]) as unknown as Database['public']['Tables']['streams']['Insert']['stages'],
+      metadata: (data.metadata || {}) as unknown as Database['public']['Tables']['streams']['Insert']['metadata'],
+      created_by: userId,
+      status: 'active' as const
+    }
+
+    const { data: stream, error } = (await adminClient
       .from('streams')
-      .insert({
-        org_id: orgId,
-        name: data.name,
-        description: data.description || null,
-        emoji: data.emoji || '📁',
-        color: data.color || '#6366f1',
-        stream_type: data.stream_type || 'project',
-        stages: data.stages || [
-          { id: 'discover', name: 'Discover', color: '#3b82f6' },
-          { id: 'research', name: 'Research', color: '#8b5cf6' },
-          { id: 'outreach', name: 'Outreach', color: '#ec4899' },
-          { id: 'qualified', name: 'Qualified', color: '#10b981' },
-          { id: 'closed', name: 'Closed', color: '#64748b' }
-        ],
-        metadata: data.metadata || {},
-        created_by: userId,
-        status: 'active' as const
-      } as Record<string, unknown>)
+      .insert(insertData)
       .select()
-      .single()
+      .single()) as { data: DBStream | null; error: any }
 
     if (error || !stream) {
       console.error('[StreamService] Error creating stream:', error)
@@ -70,15 +89,17 @@ export class StreamService {
 
     // Add creator as owner member using same admin client to bypass RLS
     console.log('[StreamService] Adding owner member:', { streamId: streamData.id, userId })
-    const { error: memberError } = await adminClient
+
+    const memberInsert: DBStreamMemberInsert = {
+      stream_id: streamData.id,
+      user_id: userId,
+      role: 'owner' as const,
+      invitation_accepted_at: new Date().toISOString()
+    }
+
+    const { error: memberError } = (await adminClient
       .from('stream_members')
-      // @ts-expect-error - Supabase type inference issue with admin client
-      .insert([{
-        stream_id: streamData.id,
-        user_id: userId,
-        role: 'owner' as const,
-        invitation_accepted_at: new Date().toISOString()
-      } as Record<string, unknown>])
+      .insert([memberInsert])) as { error: any }
 
     if (memberError) {
       console.error('[StreamService] Error adding stream member:', memberError)
@@ -109,12 +130,12 @@ export class StreamService {
     const supabase = await createClient()
 
     // First get stream IDs for this user
-    const { data: memberData } = await supabase
+    const { data: memberData } = (await supabase
       .from('stream_members')
       .select('stream_id')
-      .eq('user_id', userId)
+      .eq('user_id', userId)) as { data: Pick<DBStreamMember, 'stream_id'>[] | null }
 
-    const streamIds = (memberData as unknown[])?.map((m: Record<string, unknown>) => m.stream_id) || []
+    const streamIds = memberData?.map((m) => m.stream_id) || []
 
     // If user has no streams, return empty
     if (streamIds.length === 0) {
@@ -180,6 +201,10 @@ export class StreamService {
     // Verify user has access
     await this.verifyAccess(streamId, userId)
 
+    type StreamWithCreator = DBStream & {
+      creator: { id: string; full_name: string | null; avatar_url: string | null } | null
+    }
+
     // Get stream
     const { data: stream, error: streamError } = await supabase
       .from('streams')
@@ -188,9 +213,14 @@ export class StreamService {
         creator:profiles!streams_created_by_fkey(id, full_name, avatar_url)
       `)
       .eq('id', streamId)
-      .single()
+      .single() as { data: StreamWithCreator | null; error: unknown }
 
     if (streamError) throw streamError
+
+    type StreamItemWithRelations = DBStreamItem & {
+      business: { id: string; name: string; website: string | null } | null;
+      assigned_user: { id: string; full_name: string | null; avatar_url: string | null } | null;
+    }
 
     // Get items
     const { data: items, error: itemsError } = await supabase
@@ -201,9 +231,13 @@ export class StreamService {
         assigned_user:profiles!stream_items_assigned_to_fkey(id, full_name, avatar_url)
       `)
       .eq('stream_id', streamId)
-      .order('position', { ascending: true })
+      .order('position', { ascending: true }) as { data: StreamItemWithRelations[] | null; error: unknown }
 
     if (itemsError) throw itemsError
+
+    type StreamMemberWithUser = DBStreamMember & {
+      user: { id: string; full_name: string | null; email: string; avatar_url: string | null } | null;
+    }
 
     // Get members
     const { data: members, error: membersError } = await supabase
@@ -213,9 +247,13 @@ export class StreamService {
         user:profiles(id, full_name, email, avatar_url)
       `)
       .eq('stream_id', streamId)
-      .order('joined_at', { ascending: true })
+      .order('joined_at', { ascending: true }) as { data: StreamMemberWithUser[] | null; error: unknown }
 
     if (membersError) throw membersError
+
+    type StreamActivityWithUser = DBStreamActivity & {
+      user: { id: string; full_name: string | null; avatar_url: string | null } | null;
+    }
 
     // Get recent activity
     const { data: activity, error: activityError } = await supabase
@@ -226,17 +264,20 @@ export class StreamService {
       `)
       .eq('stream_id', streamId)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(20) as { data: StreamActivityWithUser[] | null; error: unknown }
 
     if (activityError) throw activityError
 
     // Update last accessed
-    await supabase
+    const memberUpdate: DBStreamMemberUpdate = {
+      last_accessed_at: new Date().toISOString()
+    }
+
+    await (supabase
       .from('stream_members')
-      // @ts-expect-error - Supabase type inference issue
-      .update({ last_accessed_at: new Date().toISOString() } as Record<string, unknown>)
+      .update(memberUpdate as any)
       .eq('stream_id', streamId)
-      .eq('user_id', userId)
+      .eq('user_id', userId) as any)
 
     return {
       stream: stream as unknown as Stream,
@@ -259,16 +300,19 @@ export class StreamService {
     // Verify user is owner or editor
     await this.verifyRole(streamId, userId, ['owner', 'editor'])
 
-    const { data: stream, error } = await supabase
+    const updateData: DBStreamUpdate = {
+      ...data,
+      updated_by: userId,
+      stages: data.stages as unknown as Database['public']['Tables']['streams']['Update']['stages'],
+      metadata: data.metadata as unknown as Database['public']['Tables']['streams']['Update']['metadata']
+    }
+
+    const { data: stream, error } = (await supabase
       .from('streams')
-      // @ts-expect-error - Supabase type inference issue
-      .update({
-        ...data,
-        updated_by: userId
-      } as Record<string, unknown>)
+      .update(updateData as any)
       .eq('id', streamId)
       .select()
-      .single()
+      .single()) as { data: DBStream | null; error: any }
 
     if (error || !stream) throw error || new Error('Stream not found')
 
@@ -292,15 +336,16 @@ export class StreamService {
     // Verify user is owner
     await this.verifyRole(streamId, userId, ['owner'])
 
-    const { error } = await supabase
+    const archiveUpdate: DBStreamUpdate = {
+      status: 'archived' as const,
+      archived_at: new Date().toISOString(),
+      updated_by: userId
+    }
+
+    const { error } = (await supabase
       .from('streams')
-      // @ts-expect-error - Supabase type inference issue
-      .update({
-        status: 'archived' as const,
-        archived_at: new Date().toISOString(),
-        updated_by: userId
-      } as Record<string, unknown>)
-      .eq('id', streamId)
+      .update(archiveUpdate as any)
+      .eq('id', streamId)) as { error: any }
 
     if (error) throw error
 
@@ -341,25 +386,27 @@ export class StreamService {
     // Verify requester is owner or editor
     await this.verifyRole(streamId, requesterId, ['owner', 'editor'])
 
-    const { data: member, error } = await supabase
+    const memberInsertData: DBStreamMemberInsert = {
+      stream_id: streamId,
+      user_id: data.user_id,
+      role: data.role,
+      notification_settings: (data.notification_settings || {
+        new_items: true,
+        status_changes: true,
+        mentions: true,
+        comments: true,
+        daily_digest: false,
+        instant_critical: true
+      }) as unknown as Database['public']['Tables']['stream_members']['Insert']['notification_settings'],
+      invited_by: requesterId,
+      invitation_accepted_at: new Date().toISOString()
+    }
+
+    const { data: member, error } = (await supabase
       .from('stream_members')
-      .insert({
-        stream_id: streamId,
-        user_id: data.user_id,
-        role: data.role,
-        notification_settings: data.notification_settings || {
-          new_items: true,
-          status_changes: true,
-          mentions: true,
-          comments: true,
-          daily_digest: false,
-          instant_critical: true
-        },
-        invited_by: requesterId,
-        invitation_accepted_at: new Date().toISOString()
-      } as Record<string, unknown>)
+      .insert(memberInsertData)
       .select()
-      .single()
+      .single()) as { data: DBStreamMember | null; error: any }
 
     if (error || !member) throw error || new Error('Failed to add member')
 
@@ -427,39 +474,41 @@ export class StreamService {
     await this.verifyRole(streamId, userId, ['owner', 'editor'])
 
     // Get next position
-    const { data: maxPosition } = await supabase
+    const { data: maxPosition } = (await supabase
       .from('stream_items')
       .select('position')
       .eq('stream_id', streamId)
       .order('position', { ascending: false })
       .limit(1)
-      .single()
+      .single()) as { data: Pick<DBStreamItem, 'position'> | null; error: any }
 
-    const nextPosition = (maxPosition?.position || 0) + 1
+    const nextPosition = (maxPosition?.position ?? 0) + 1
 
-    const { data: item, error } = await supabase
+    const itemInsertData: DBStreamItemInsert = {
+      stream_id: streamId,
+      item_type: data.item_type,
+      title: data.title,
+      description: data.description || null,
+      content: (data.content || {}) as unknown as Database['public']['Tables']['stream_items']['Insert']['content'],
+      business_id: data.business_id || null,
+      list_id: data.list_id || null,
+      research_id: data.research_id || null,
+      stage_id: data.stage_id || null,
+      priority: data.priority || 'medium',
+      tags: data.tags || [],
+      assigned_to: data.assigned_to || null,
+      due_date: data.due_date || null,
+      position: nextPosition,
+      metadata: (data.metadata || {}) as unknown as Database['public']['Tables']['stream_items']['Insert']['metadata'],
+      added_by: userId,
+      status: 'open'
+    }
+
+    const { data: item, error } = (await supabase
       .from('stream_items')
-      .insert({
-        stream_id: streamId,
-        item_type: data.item_type,
-        title: data.title,
-        description: data.description || null,
-        content: data.content || {},
-        business_id: data.business_id || null,
-        list_id: data.list_id || null,
-        research_id: data.research_id || null,
-        stage_id: data.stage_id || null,
-        priority: data.priority || 'medium',
-        tags: data.tags || [],
-        assigned_to: data.assigned_to || null,
-        due_date: data.due_date || null,
-        position: nextPosition,
-        metadata: data.metadata || {},
-        added_by: userId,
-        status: 'open'
-      } as Record<string, unknown>)
+      .insert(itemInsertData)
       .select()
-      .single()
+      .single()) as { data: DBStreamItem | null; error: any }
 
     if (error || !item) throw error || new Error('Failed to create item')
 
@@ -492,11 +541,11 @@ export class StreamService {
     const supabase = await createClient()
 
     // Get item to verify access
-    const { data: existingItem } = await supabase
+    const { data: existingItem } = (await supabase
       .from('stream_items')
       .select('stream_id, assigned_to, stage_id, status')
       .eq('id', itemId)
-      .single()
+      .single()) as { data: Pick<DBStreamItem, 'stream_id' | 'assigned_to' | 'stage_id' | 'status'> | null; error: any }
 
     if (!existingItem) throw new Error('Item not found')
 
@@ -504,16 +553,19 @@ export class StreamService {
     // Verify user is owner or editor
     await this.verifyRole(existingItemData.stream_id, userId, ['owner', 'editor'])
 
-    const { data: item, error } = await supabase
+    const itemUpdateData: DBStreamItemUpdate = {
+      ...data,
+      updated_by: userId,
+      content: data.content as unknown as Database['public']['Tables']['stream_items']['Update']['content'],
+      metadata: data.metadata as unknown as Database['public']['Tables']['stream_items']['Update']['metadata']
+    }
+
+    const { data: item, error } = (await supabase
       .from('stream_items')
-      // @ts-expect-error - Supabase type inference issue
-      .update({
-        ...data,
-        updated_by: userId
-      } as Record<string, unknown>)
+      .update(itemUpdateData as any)
       .eq('id', itemId)
       .select()
-      .single()
+      .single()) as { data: DBStreamItem | null; error: any }
 
     if (error) throw error
 
@@ -542,11 +594,11 @@ export class StreamService {
     const supabase = await createClient()
 
     // Get item to verify access
-    const { data: item } = await supabase
+    const { data: item } = (await supabase
       .from('stream_items')
       .select('stream_id')
       .eq('id', itemId)
-      .single()
+      .single()) as { data: Pick<DBStreamItem, 'stream_id'> | null; error: any }
 
     if (!item) throw new Error('Item not found')
 
@@ -635,19 +687,21 @@ export class StreamService {
     // Verify access
     await this.verifyAccess(streamId, userId)
 
-    const { data: comment, error } = await supabase
+    const commentInsertData: DBStreamCommentInsert = {
+      stream_id: streamId,
+      item_id: data.item_id || null,
+      content: data.content,
+      parent_comment_id: data.parent_comment_id || null,
+      thread_id: data.parent_comment_id || null, // If reply, use parent as thread
+      mentioned_users: data.mentioned_users || [],
+      author_id: userId
+    }
+
+    const { data: comment, error } = (await supabase
       .from('stream_comments')
-      .insert({
-        stream_id: streamId,
-        item_id: data.item_id || null,
-        content: data.content,
-        parent_comment_id: data.parent_comment_id || null,
-        thread_id: data.parent_comment_id || null, // If reply, use parent as thread
-        mentioned_users: data.mentioned_users || [],
-        author_id: userId
-      } as Record<string, unknown>)
+      .insert(commentInsertData)
       .select()
-      .single()
+      .single()) as { data: DBStreamComment | null; error: any }
 
     if (error || !comment) throw error || new Error('Failed to create comment')
 
@@ -680,12 +734,12 @@ export class StreamService {
   private static async verifyAccess(streamId: string, userId: string): Promise<void> {
     const supabase = await createClient()
 
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from('stream_members')
       .select('id')
       .eq('stream_id', streamId)
       .eq('user_id', userId)
-      .single()
+      .single()) as { data: Pick<DBStreamMember, 'id'> | null; error: any }
 
     if (error || !data) {
       throw new Error('Access denied')
@@ -702,12 +756,12 @@ export class StreamService {
   ): Promise<void> {
     const supabase = await createClient()
 
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from('stream_members')
       .select('role')
       .eq('stream_id', streamId)
       .eq('user_id', userId)
-      .single()
+      .single()) as { data: Pick<DBStreamMember, 'role'> | null; error: any }
 
     const memberData = data
     if (error || !memberData || !allowedRoles.includes(memberData.role)) {
@@ -732,7 +786,7 @@ export class StreamService {
   ): Promise<void> {
     const supabase = await createClient()
 
-    await supabase.from('stream_activities').insert({
+    const activityInsert: DBStreamActivityInsert = {
       stream_id: streamId,
       user_id: userId,
       activity_type: activityType,
@@ -740,9 +794,11 @@ export class StreamService {
       target_type: options.target_type || null,
       target_id: options.target_id || null,
       importance: options.importance || 'normal',
-      metadata: options.metadata || {},
+      metadata: (options.metadata || {}) as unknown as Database['public']['Tables']['stream_activities']['Insert']['metadata'],
       is_system: false
-    } as Record<string, unknown>)
+    }
+
+    await (supabase.from('stream_activities').insert(activityInsert) as any)
   }
 
   /**
@@ -761,7 +817,7 @@ export class StreamService {
   }): Promise<void> {
     const supabase = await createClient()
 
-    await supabase.from('stream_notifications').insert({
+    const notificationInsert: DBStreamNotificationInsert = {
       stream_id: data.stream_id,
       user_id: data.user_id,
       notification_type: data.notification_type,
@@ -772,6 +828,8 @@ export class StreamService {
       comment_id: data.comment_id || null,
       actor_id: data.actor_id || null,
       action_url: `/streams/${data.stream_id}${data.item_id ? `/items/${data.item_id}` : ''}`
-    } as Record<string, unknown>)
+    }
+
+    await (supabase.from('stream_notifications').insert(notificationInsert) as any)
   }
 }

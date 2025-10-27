@@ -3,7 +3,12 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { EnrichmentResult } from './types';
-import type { Row } from '@/lib/supabase/helpers'
+import type { Database } from '@/types/database';
+
+// Type aliases for queries
+type ResearchReportRow = Database['public']['Tables']['research_reports']['Row'];
+type LeadScoreRow = Database['public']['Tables']['lead_scores']['Row'];
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 // =====================================================
 // Enrichment Service
@@ -61,21 +66,21 @@ export class CRMEnrichmentService {
 
       // 2. Determine deal stage based on score and signals
       results.dealStage = this.determineDealStage(
-        results.leadScore,
-        results.buyingSignals.length
+        results.leadScore ?? 50,
+        results.buyingSignals?.length ?? 0
       );
 
       // 3. Generate suggested actions
       results.suggestedActions = await this.generateActions(
         contactData,
-        results.leadScore,
-        results.buyingSignals
+        results.leadScore ?? 50,
+        results.buyingSignals ?? []
       );
 
       // 4. Generate next steps
       results.nextSteps = this.generateNextSteps(
-        results.leadScore,
-        results.buyingSignals
+        results.leadScore ?? 50,
+        results.buyingSignals ?? []
       );
 
       // 5. Extract pain points and competitors (if available)
@@ -107,7 +112,7 @@ export class CRMEnrichmentService {
   /**
    * Fetch company research from ResearchGPT cache
    */
-  private async fetchCompanyResearch(companyId: string): Promise<any | null> {
+  private async fetchCompanyResearch(companyId: string): Promise<ResearchReportRow | null> {
     const supabase = await createClient();
 
     try {
@@ -118,7 +123,8 @@ export class CRMEnrichmentService {
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single() as { data: Row<'research_reports'> | null; error: unknown };
+        .returns<ResearchReportRow>()
+        .single();
 
       return research;
     } catch (error) {
@@ -129,13 +135,17 @@ export class CRMEnrichmentService {
   /**
    * Generate AI summary from research data
    */
-  private async generateSummary(research: Record<string, unknown>): Promise<string> {
+  private async generateSummary(research: ResearchReportRow): Promise<string> {
     try {
-      // Extract key information
-      const name = research.snapshot?.name || 'Company';
-      const industry = research.snapshot?.industry || 'Unknown industry';
-      const employeeCount = research.snapshot?.employeeCount || 'Unknown';
-      const signals = research.signals?.length || 0;
+      // Extract key information from metadata
+      const metadata = research.metadata as Record<string, any> | null;
+      const snapshot = metadata?.snapshot as Record<string, any> | undefined;
+      const signals = metadata?.signals as Array<any> | undefined;
+
+      const name = snapshot?.name || research.company_name || 'Company';
+      const industry = snapshot?.industry || 'Unknown industry';
+      const employeeCount = snapshot?.employeeCount || 'Unknown';
+      const signalCount = signals?.length || 0;
 
       // Generate concise summary
       let summary = `${name} is a ${industry} company`;
@@ -144,8 +154,8 @@ export class CRMEnrichmentService {
         summary += ` with ${employeeCount} employees`;
       }
 
-      if (signals > 0) {
-        summary += `. Currently showing ${signals} positive buying signal${signals > 1 ? 's' : ''}`;
+      if (signalCount > 0) {
+        summary += `. Currently showing ${signalCount} positive buying signal${signalCount > 1 ? 's' : ''}`;
       }
 
       summary += '.';
@@ -159,15 +169,18 @@ export class CRMEnrichmentService {
   /**
    * Extract high-priority buying signals
    */
-  private extractBuyingSignals(research: Record<string, unknown>): string[] {
+  private extractBuyingSignals(research: ResearchReportRow): string[] {
     try {
-      if (!research.signals || !Array.isArray(research.signals)) {
+      const metadata = research.metadata as Record<string, any> | null;
+      const signals = metadata?.signals as Array<Record<string, any>> | undefined;
+
+      if (!signals || !Array.isArray(signals)) {
         return [];
       }
 
-      return research.signals
-        .filter((s: Record<string, unknown>) => s.priority === 'high' || s.strength === 'strong')
-        .map((s: Record<string, unknown>) => s.signal || s.description || 'Positive signal detected')
+      return signals
+        .filter((s: Record<string, any>) => s.priority === 'high' || s.strength === 'strong')
+        .map((s: Record<string, any>) => (s.signal || s.description || 'Positive signal detected') as string)
         .slice(0, 5); // Max 5 signals
     } catch (error) {
       return [];
@@ -180,19 +193,20 @@ export class CRMEnrichmentService {
   private async getLeadScore(companyId: string): Promise<number> {
     const supabase = await createClient();
 
-    try {
-      const { data: scoring } = await supabase
-        .from('lead_scores')
-        .select('total_score')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single() as { data: Row<'lead_scores'> | null; error: unknown };
+    type ScoreResult = Pick<LeadScoreRow, 'overall_score'>;
+    const { data, error } = await supabase
+      .from('lead_scores')
+      .select('overall_score')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single() as { data: ScoreResult | null; error: unknown };
 
-      return scoring?.total_score || 50;
-    } catch (error) {
+    if (error || !data) {
       return 50; // Default mid-range score
     }
+
+    return data.overall_score ?? 50;
   }
 
   /**
@@ -206,24 +220,16 @@ export class CRMEnrichmentService {
   }> {
     const supabase = await createClient();
 
-    try {
-      const { data: scoring } = await supabase
-        .from('lead_scores')
-        .select('score_breakdown')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single() as { data: Row<'lead_scores'> | null; error: unknown };
+    type BreakdownResult = Pick<LeadScoreRow, 'score_breakdown'>;
+    const { data, error } = await supabase
+      .from('lead_scores')
+      .select('score_breakdown')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single() as { data: BreakdownResult | null; error: unknown };
 
-      const breakdown = scoring?.score_breakdown || {};
-
-      return {
-        financial: breakdown.financial || 50,
-        growth: breakdown.growth || 50,
-        engagement: breakdown.engagement || 50,
-        fit: breakdown.fit || 50,
-      };
-    } catch (error) {
+    if (error || !data) {
       return {
         financial: 50,
         growth: 50,
@@ -231,6 +237,15 @@ export class CRMEnrichmentService {
         fit: 50,
       };
     }
+
+    const breakdown = (data.score_breakdown as Record<string, any> | null) || {};
+
+    return {
+      financial: breakdown.financial || 50,
+      growth: breakdown.growth || 50,
+      engagement: breakdown.engagement || 50,
+      fit: breakdown.fit || 50,
+    };
   }
 
   /**
@@ -325,25 +340,27 @@ export class CRMEnrichmentService {
   }> {
     const supabase = await createClient();
 
-    try {
-      const { data: research } = await supabase
-        .from('research_reports')
-        .select('analysis')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single() as { data: Row<'research_reports'> | null; error: unknown };
+    type MetadataResult = Pick<ResearchReportRow, 'metadata'>;
+    const { data, error } = await supabase
+      .from('research_reports')
+      .select('metadata')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single() as { data: MetadataResult | null; error: unknown };
 
-      const analysis = research?.analysis || {};
-
-      return {
-        painPoints: analysis.painPoints || [],
-        competitors: analysis.competitors || [],
-        recommendations: analysis.recommendations || 'Focus on value proposition and ROI',
-      };
-    } catch (error) {
+    if (error || !data) {
       return {};
     }
+
+    const metadata = data.metadata as Record<string, any> | null;
+    const analysis = metadata?.analysis as Record<string, any> | undefined;
+
+    return {
+      painPoints: analysis?.painPoints || [],
+      competitors: analysis?.competitors || [],
+      recommendations: analysis?.recommendations || 'Focus on value proposition and ROI',
+    };
   }
 
   /**
@@ -354,13 +371,16 @@ export class CRMEnrichmentService {
     const supabase = await createClient();
 
     try {
+      const orgId = contactData.organizationId as string;
+
       // Get organization's team members with sales role
       const { data: teamMembers } = await supabase
         .from('profiles')
-        .select('id, full_name, role, metadata')
-        .eq('organization_id', contactData.organizationId)
+        .select('id, full_name, role, preferences')
+        .eq('org_id', orgId)
         .eq('role', 'sales')
-        .limit(10) as { data: Row<'profiles'>[] | null; error: unknown };
+        .limit(10)
+        .returns<Pick<ProfileRow, 'id' | 'full_name' | 'role' | 'preferences'>[]>();
 
       if (!teamMembers || teamMembers.length === 0) {
         return undefined; // No sales reps available

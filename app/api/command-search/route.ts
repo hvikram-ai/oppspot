@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { Database } from '@/types/database'
+
+type Profile = Pick<Database['public']['Tables']['profiles']['Row'], 'org_id'>
+type Business = Pick<Database['public']['Tables']['businesses']['Row'], 'id' | 'name' | 'description' | 'company_number'>
+type Stream = Pick<Database['public']['Tables']['streams']['Row'], 'id' | 'name' | 'description' | 'stream_type'>
+type Scan = Pick<Database['public']['Tables']['acquisition_scans']['Row'], 'id' | 'name' | 'description' | 'status'>
+type List = Pick<Database['public']['Tables']['lists']['Row'], 'id' | 'name' | 'description'>
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +30,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('org_id')
       .eq('id', user.id)
-      .single()
+      .single<Profile>()
 
     const orgId = profile?.org_id
 
@@ -42,6 +49,7 @@ export async function GET(request: NextRequest) {
       .select('id, name, description, company_number')
       .or(`name.ilike.${searchPattern},description.ilike.${searchPattern},company_number.ilike.${searchPattern}`)
       .limit(5)
+      .returns<Business[]>()
 
     if (companies) {
       companies.forEach(company => {
@@ -65,6 +73,7 @@ export async function GET(request: NextRequest) {
         .or(`name.ilike.${searchPattern},description.ilike.${searchPattern}`)
         .eq('status', 'active')
         .limit(5)
+        .returns<Stream[]>()
 
       if (streams) {
         streams.forEach(stream => {
@@ -87,6 +96,7 @@ export async function GET(request: NextRequest) {
         .eq('org_id', orgId)
         .or(`name.ilike.${searchPattern},description.ilike.${searchPattern}`)
         .limit(5)
+        .returns<Scan[]>()
 
       if (scans) {
         scans.forEach(scan => {
@@ -109,6 +119,7 @@ export async function GET(request: NextRequest) {
         .eq('org_id', orgId)
         .or(`name.ilike.${searchPattern},description.ilike.${searchPattern}`)
         .limit(5)
+        .returns<List[]>()
 
       if (lists) {
         lists.forEach(list => {

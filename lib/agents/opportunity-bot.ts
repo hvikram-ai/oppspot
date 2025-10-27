@@ -12,7 +12,35 @@
 import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } from '@/lib/ai/agents/base-agent'
 import { createClient } from '@/lib/supabase/server'
 import { createProgressBroadcaster } from './progress-broadcaster'
-import type { Row } from '@/lib/supabase/helpers'
+import type { Database, Json } from '@/types/database'
+
+// Type aliases for database tables
+type StreamRow = Database['public']['Tables']['streams']['Row']
+type StreamItemInsert = Database['public']['Tables']['stream_items']['Insert']
+type BusinessRow = Database['public']['Tables']['businesses']['Row']
+type AIAgentRow = Database['public']['Tables']['ai_agents']['Row']
+
+// Helper types for criteria and metrics
+interface GoalCriteria {
+  industry?: string[]
+  location?: string[]
+  employee_count?: {
+    min?: number
+    max?: number
+  }
+  [key: string]: unknown
+}
+
+interface TargetMetrics {
+  companies_to_find?: number
+  min_quality_score?: number
+  [key: string]: unknown
+}
+
+// Extended business type with quality score
+interface ScoredBusiness extends BusinessRow {
+  quality_score: number
+}
 
 export class OpportunityBot extends BaseAgent {
   async execute(context: AgentExecutionContext): Promise<AgentExecutionResult> {
@@ -42,21 +70,21 @@ export class OpportunityBot extends BaseAgent {
 
       // Fetch stream details
       const supabase = await createClient()
-      const { data: stream } = await supabase
+      const { data: stream, error: streamError } = await supabase
         .from('streams')
         .select('*')
         .eq('id', stream_id)
-        .single() as { data: Row<'streams'> | null; error: unknown }
+        .single<StreamRow>()
 
-      if (!stream) {
+      if (streamError || !stream) {
         throw new Error(`Stream not found: ${stream_id}`)
       }
 
       // Extract goal criteria
-      const streamData = stream;
-      const goalContext = (goal_context || {});
-      const criteria = goalContext.goal_criteria || streamData.goal_criteria || {}
-      const targetMetrics = goalContext.target_metrics || streamData.target_metrics || {}
+      const goalContext = (goal_context || {}) as { goal_criteria?: GoalCriteria; target_metrics?: TargetMetrics }
+      const streamMetadata = (stream.metadata || {}) as { goal_criteria?: GoalCriteria; target_metrics?: TargetMetrics }
+      const criteria: GoalCriteria = goalContext.goal_criteria || streamMetadata.goal_criteria || {}
+      const targetMetrics: TargetMetrics = goalContext.target_metrics || streamMetadata.target_metrics || {}
 
       const targetCount = targetMetrics.companies_to_find || 50
       const minQualityScore = targetMetrics.min_quality_score || 3.0
@@ -79,7 +107,7 @@ export class OpportunityBot extends BaseAgent {
       )
 
       // Qualify and score each company
-      const qualifiedCompanies = []
+      const qualifiedCompanies: ScoredBusiness[] = []
       for (const company of companies) {
         const qualityScore = await this.scoreCompany(company, criteria, targetMetrics)
 
@@ -241,9 +269,9 @@ export class OpportunityBot extends BaseAgent {
    * Search for companies matching criteria
    */
   private async searchCompanies(
-    criteria: Record<string, unknown>,
+    criteria: GoalCriteria,
     limit: number
-  ): Promise<any[]> {
+  ): Promise<BusinessRow[]> {
     const supabase = await createClient()
 
     // Build query based on criteria
@@ -254,11 +282,12 @@ export class OpportunityBot extends BaseAgent {
 
     // Apply filters based on criteria
     if (criteria.industry && Array.isArray(criteria.industry) && criteria.industry.length > 0) {
-      query = query.in('industry', criteria.industry)
+      query = query.in('categories', criteria.industry)
     }
 
     if (criteria.location && Array.isArray(criteria.location) && criteria.location.length > 0) {
-      query = query.in('region', criteria.location)
+      // Note: businesses table doesn't have region, would need to filter by address or other location field
+      // This is a placeholder - adjust based on actual schema
     }
 
     if (criteria.employee_count) {
@@ -271,7 +300,7 @@ export class OpportunityBot extends BaseAgent {
     }
 
     // Execute query
-    const { data: companies, error } = await query
+    const { data: companies, error } = await query.returns<BusinessRow[]>()
 
     if (error) {
       this.log(`Error searching companies: ${error.message}`, 'error')
@@ -285,29 +314,36 @@ export class OpportunityBot extends BaseAgent {
    * Score a company based on criteria and metrics
    */
   private async scoreCompany(
-    company: unknown,
-    criteria: Record<string, unknown>,
-    targetMetrics: Record<string, unknown>
+    company: BusinessRow,
+    criteria: GoalCriteria,
+    targetMetrics: TargetMetrics
   ): Promise<number> {
     let score = 3.0 // Base score
 
-    // Industry match
+    // Get metadata fields
+    const metadata = (company.metadata || {}) as Record<string, unknown>
+    const aiInsights = (company.ai_insights || {}) as Record<string, unknown>
+    const socialLinks = (company.social_links || {}) as Record<string, unknown>
+
+    // Industry match (using categories)
     if (criteria.industry && Array.isArray(criteria.industry)) {
-      if (criteria.industry.includes(company.industry)) {
+      const hasMatch = company.categories.some(cat => criteria.industry?.includes(cat))
+      if (hasMatch) {
         score += 0.5
       }
     }
 
-    // Location match
+    // Location match (from metadata if available)
     if (criteria.location && Array.isArray(criteria.location)) {
-      if (criteria.location.includes(company.region)) {
+      const region = metadata.region as string | undefined
+      if (region && criteria.location.includes(region)) {
         score += 0.3
       }
     }
 
-    // Employee count match
+    // Employee count match (from metadata if available)
     if (criteria.employee_count) {
-      const employeeCount = company.employee_count || 0
+      const employeeCount = (metadata.employee_count as number) || 0
       const min = criteria.employee_count.min || 0
       const max = criteria.employee_count.max || Number.MAX_SAFE_INTEGER
 
@@ -327,12 +363,12 @@ export class OpportunityBot extends BaseAgent {
     }
 
     // Has social media
-    if (company.linkedin_url || company.twitter_url) {
+    if (socialLinks.linkedin_url || socialLinks.twitter_url) {
       score += 0.2
     }
 
-    // Revenue signals (if available)
-    if (company.revenue_range) {
+    // Revenue signals (from metadata if available)
+    if (metadata.revenue_range) {
       score += 0.3
     }
 
@@ -345,7 +381,7 @@ export class OpportunityBot extends BaseAgent {
    */
   private async addCompanyToStream(
     streamId: string,
-    company: unknown,
+    company: ScoredBusiness,
     executionId: string
   ): Promise<void> {
     const supabase = await createClient()
@@ -355,8 +391,8 @@ export class OpportunityBot extends BaseAgent {
       .from('stream_items')
       .select('id')
       .eq('stream_id', streamId)
-      .eq('business_id', company.id)
-      .single() as { data: Row<'stream_items'> | null; error: unknown }
+      .eq('item_id', company.id)
+      .maybeSingle()
 
     if (existing) {
       this.log(`Company ${company.name} already in stream, skipping`)
@@ -368,34 +404,40 @@ export class OpportunityBot extends BaseAgent {
       .from('streams')
       .select('stages')
       .eq('id', streamId)
-      .single() as { data: Row<'streams'> | null; error: unknown }
+      .single<Pick<StreamRow, 'stages'>>()
 
-    const streamData = stream;
-    const stages = Array.isArray(streamData?.stages) ? streamData.stages : [];
-    const firstStage = stages.length > 0 ? stages[0] : null;
+    const stages = Array.isArray(stream?.stages) ? stream.stages as Array<{ id: string }> : []
+    const firstStage = stages.length > 0 ? stages[0] : null
+
+    // Get company metadata
+    const metadata = (company.metadata || {}) as Record<string, unknown>
 
     // Add to stream
-    await supabase
+    const itemData: StreamItemInsert = {
+      stream_id: streamId,
+      item_type: 'company',
+      item_id: company.id,
+      position: 0,
+      stage_id: firstStage?.id || null,
+      metadata: {
+        quality_score: company.quality_score,
+        discovered_by_execution: executionId,
+        categories: company.categories,
+        employee_count: (metadata.employee_count as number) ?? null,
+        region: (metadata.region as string) ?? null,
+        website: company.website ?? null
+      } satisfies Record<string, Json>,
+      created_by: this.config.id
+    }
+
+    const { error: insertError } = await supabase
       .from('stream_items')
-      .insert({
-        stream_id: streamId,
-        item_type: 'company',
-        business_id: company.id,
-        title: company.name,
-        description: company.description || '',
-        stage_id: firstStage?.id || null,
-        priority: company.quality_score >= 4.5 ? 'high' : company.quality_score >= 4.0 ? 'medium' : 'low',
-        status: 'open',
-        position: 0,
-        metadata: {
-          quality_score: company.quality_score,
-          discovered_by_execution: executionId,
-          industry: company.industry,
-          employee_count: company.employee_count,
-          region: company.region
-        },
-        added_by: this.config.id // Agent ID as added_by
-      } as Record<string, unknown>)
+      .insert(itemData as never)
+
+    if (insertError) {
+      this.log(`Error adding company to stream: ${insertError.message}`, 'error')
+      throw insertError
+    }
 
     this.log(`Added ${company.name} to stream (score: ${company.quality_score.toFixed(1)})`)
   }
@@ -403,36 +445,43 @@ export class OpportunityBot extends BaseAgent {
   /**
    * Detect buying signals for a company
    */
-  private async detectBuyingSignals(company: unknown): Promise<void> {
+  private async detectBuyingSignals(company: ScoredBusiness): Promise<void> {
     // Detect signals based on available data
     const signals: Array<{
       type: string
-      strength: string
+      strength: 'very_strong' | 'strong' | 'moderate' | 'weak'
       confidence: number
-      data: unknown
+      data: Record<string, unknown>
     }> = []
 
+    // Get metadata
+    const metadata = (company.metadata || {}) as Record<string, unknown>
+    const aiInsights = (company.ai_insights || {}) as Record<string, unknown>
+
     // Job posting signal
-    if (company.jobs_count && company.jobs_count > 5) {
+    const jobsCount = metadata.jobs_count as number | undefined
+    if (jobsCount && jobsCount > 5) {
       signals.push({
         type: 'job_posting',
-        strength: company.jobs_count > 20 ? 'strong' : 'moderate',
+        strength: jobsCount > 20 ? 'strong' : 'moderate',
         confidence: 75,
         data: {
-          jobs_count: company.jobs_count,
+          jobs_count: jobsCount,
           detected_at: new Date().toISOString()
         }
       })
     }
 
     // Website activity (if tracked)
-    if (company.website_updated_recently) {
+    const websiteUpdatedRecently = metadata.website_updated_recently as boolean | undefined
+    const websiteLastUpdated = metadata.website_last_updated as string | undefined
+    if (websiteUpdatedRecently) {
       signals.push({
         type: 'website_activity',
         strength: 'moderate',
         confidence: 60,
         data: {
-          last_updated: company.website_last_updated,
+          last_updated: websiteLastUpdated,
           detected_at: new Date().toISOString()
         }
       })
@@ -470,7 +519,7 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single() as { data: Row<'ai_agents'> | null; error: unknown }
+    .single<AIAgentRow>()
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)
@@ -479,9 +528,9 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
   const config: AgentConfig = {
     id: agent.id,
     orgId: agent.org_id || '',
-    name: agent.name || 'OpportunityBot',
+    name: agent.name,
     type: agent.agent_type,
-    configuration: (agent.configuration) || {},
+    configuration: (agent.configuration as Record<string, unknown>) || {},
     isActive: agent.is_active,
     scheduleCron: agent.schedule_cron || undefined
   }

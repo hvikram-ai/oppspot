@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -44,15 +44,11 @@ export default function NotificationSettingsPage() {
     marketing_emails: false,
   })
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (!user) {
         toast.error('Please sign in to manage notification settings')
         return
@@ -76,7 +72,11 @@ export default function NotificationSettingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
 
   const saveSettings = async () => {
     setSaving(true)

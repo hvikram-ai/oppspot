@@ -14,6 +14,72 @@ import { IndustryAlignmentScorer } from './industry-alignment-scorer'
 import { OllamaScoringService } from './ollama-scoring-service'
 import { isOllamaEnabled } from '@/lib/ai/ollama'
 import type { Row } from '@/lib/supabase/helpers'
+import type { Database } from '@/types/database'
+
+// Type aliases for database queries
+type BusinessRow = Database['public']['Tables']['businesses']['Row']
+type ScoringCriteriaRow = Database['public']['Tables']['scoring_criteria']['Row']
+type ScoringCriteriaUpdate = Database['public']['Tables']['scoring_criteria']['Update']
+type ScoringAlertRow = Database['public']['Tables']['scoring_alerts']['Row']
+type LeadScoreInsert = Database['public']['Tables']['lead_scores']['Insert']
+
+// Interface for component score results
+interface ComponentScore {
+  score: number
+  factors: Array<{
+    name: string
+    value: number
+    impact: 'positive' | 'negative' | 'neutral'
+    explanation: string
+  }>
+  data_quality: number
+  missing_data: string[]
+}
+
+// Interface for AI analysis
+interface AIAnalysis {
+  overall: {
+    score: number
+    confidence: 'high' | 'medium' | 'low'
+  }
+  financial: {
+    score: number
+    confidence: 'high' | 'medium' | 'low'
+    key_factors: string[]
+  }
+  technology: {
+    score: number
+    confidence: 'high' | 'medium' | 'low'
+    key_factors: string[]
+  }
+  industry: {
+    score: number
+    confidence: 'high' | 'medium' | 'low'
+    key_factors: string[]
+  }
+  growth: {
+    score: number
+    confidence: 'high' | 'medium' | 'low'
+    key_factors: string[]
+  }
+  engagement: {
+    score: number
+    confidence: 'high' | 'medium' | 'low'
+    key_factors: string[]
+  }
+  ai_metadata: {
+    analysis_time_ms: number
+    model_used: string
+  }
+  natural_language_summary: string
+}
+
+// Interface for alert criteria
+interface AlertCriteria {
+  score_type: string
+  operator: string
+  value: number
+}
 
 export interface LeadScore {
   id?: string
@@ -145,7 +211,7 @@ export class LeadScoringService {
             depth: options.ai_depth || 'detailed',
             useCache: options.use_cache !== false,
             includeRecommendations: options.include_explanations !== false
-          })
+          }) as AIAnalysis
 
           // Convert AI analysis to LeadScore format
           return this.convertAIAnalysisToLeadScore(aiAnalysis, company)
@@ -377,11 +443,14 @@ export class LeadScoringService {
 
     // Update each criteria weight
     for (const [type, weight] of Object.entries(newWeights)) {
-      await supabase
+      await (supabase
         .from('scoring_criteria')
-        .update({ weight, updated_at: new Date().toISOString() })
+        .update({
+          weight,
+          updated_at: new Date().toISOString()
+        } as never)
         .eq('org_id', orgId)
-        .eq('criteria_type', type)
+        .eq('criteria_type', type) as unknown as Promise<unknown>)
     }
 
     console.log('[LeadScoring] Updated scoring weights for org:', orgId)
@@ -389,7 +458,7 @@ export class LeadScoringService {
 
   // Private helper methods
 
-  private async resolveCompany(identifier: string | Record<string, unknown>) {
+  private async resolveCompany(identifier: string | Record<string, unknown>): Promise<BusinessRow | null> {
     const supabase = await createClient()
 
     if (typeof identifier === 'string') {
@@ -398,7 +467,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('company_number', identifier.toUpperCase())
-        .single() as { data: Row<'businesses'> | null; error: unknown }
+        .single<BusinessRow>()
 
       if (byNumber) return byNumber
 
@@ -406,7 +475,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('id', identifier)
-        .single() as { data: Row<'businesses'> | null; error: unknown }
+        .single<BusinessRow>()
 
       return byId
     }
@@ -416,7 +485,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('id', identifier.company_id)
-        .single() as { data: Row<'businesses'> | null; error: unknown }
+        .single<BusinessRow>()
       return data
     }
 
@@ -425,7 +494,7 @@ export class LeadScoringService {
         .from('businesses')
         .select('*')
         .eq('company_number', (identifier.company_number as string).toUpperCase())
-        .single() as { data: Row<'businesses'> | null; error: unknown }
+        .single<BusinessRow>()
       return data
     }
 
@@ -435,7 +504,7 @@ export class LeadScoringService {
       .select('*')
       .ilike('name', `%${identifier.company_name}%`)
       .limit(1)
-      .single() as { data: Row<'businesses'> | null; error: unknown }
+      .single<BusinessRow>()
 
     return data
   }
@@ -465,16 +534,19 @@ export class LeadScoringService {
 
     if (options.org_id) {
       const supabase = await createClient()
-      const { data } = await (supabase
-        .from('scoring_criteria'))
+      const { data } = await supabase
+        .from('scoring_criteria')
         .select('criteria_type, weight')
         .eq('org_id', options.org_id)
         .eq('is_active', true)
+        .returns<Array<Pick<ScoringCriteriaRow, 'criteria_type' | 'weight'>>>()
 
       if (data && data.length > 0) {
         const weights: Record<string, number> = {}
         data.forEach(criteria => {
-          weights[criteria?.criteria_type] = criteria?.weight
+          if (criteria.criteria_type && criteria.weight !== null) {
+            weights[criteria.criteria_type] = criteria.weight
+          }
         })
         return { ...this.defaultWeights, ...weights }
       }
@@ -501,7 +573,7 @@ export class LeadScoringService {
     return Math.round(totalWeight > 0 ? weightedSum / totalWeight : 0)
   }
 
-  private calculateConfidenceLevel(componentScores: unknown[]): 'high' | 'medium' | 'low' {
+  private calculateConfidenceLevel(componentScores: ComponentScore[]): 'high' | 'medium' | 'low' {
     const avgDataQuality = componentScores.reduce((sum, score) => sum + score.data_quality, 0) / componentScores.length
     const totalMissingData = componentScores.reduce((sum, score) => sum + score.missing_data.length, 0)
 
@@ -514,7 +586,7 @@ export class LeadScoringService {
     const sources = new Set<string>()
 
     for (const component of Object.values(breakdown)) {
-      component.factors.forEach((factor: unknown) => {
+      component.factors.forEach((factor: { name: string; value: number; impact: string; explanation: string }) => {
         // Extract data source from factor name or use default
         if (factor.name.includes('Companies House')) sources.add('companies_house')
         if (factor.name.includes('Website')) sources.add('website_analysis')
@@ -530,30 +602,33 @@ export class LeadScoringService {
   private async saveScore(score: LeadScore): Promise<void> {
     const supabase = await createClient()
 
+    const scoreData: LeadScoreInsert = {
+      company_id: score.company_id || null,
+      company_number: score.company_number || null,
+      company_name: score.company_name,
+      overall_score: score.overall_score,
+      financial_health_score: score.financial_health_score,
+      technology_fit_score: score.technology_fit_score,
+      industry_alignment_score: score.industry_alignment_score,
+      growth_indicator_score: score.growth_indicator_score,
+      engagement_score: score.engagement_score,
+      confidence_level: score.confidence_level,
+      score_breakdown: score.score_breakdown as unknown as Database['public']['Tables']['lead_scores']['Insert']['score_breakdown'],
+      scoring_metadata: score.scoring_metadata as unknown as Database['public']['Tables']['lead_scores']['Insert']['scoring_metadata'],
+      financial_factors: score.score_breakdown.financial.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['financial_factors'],
+      technology_factors: score.score_breakdown.technology.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['technology_factors'],
+      industry_factors: score.score_breakdown.industry.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['industry_factors'],
+      growth_factors: score.score_breakdown.growth.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['growth_factors'],
+      engagement_factors: score.score_breakdown.engagement.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['engagement_factors'],
+      last_calculated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
     const { error } = await (supabase
-      .from('lead_scores'))
-      .upsert({
-        company_id: score.company_id,
-        company_number: score.company_number,
-        company_name: score.company_name,
-        overall_score: score.overall_score,
-        financial_health_score: score.financial_health_score,
-        technology_fit_score: score.technology_fit_score,
-        industry_alignment_score: score.industry_alignment_score,
-        growth_indicator_score: score.growth_indicator_score,
-        engagement_score: score.engagement_score,
-        confidence_level: score.confidence_level,
-        score_breakdown: score.score_breakdown,
-        scoring_metadata: score.scoring_metadata,
-        financial_factors: score.score_breakdown.financial.factors,
-        technology_factors: score.score_breakdown.technology.factors,
-        industry_factors: score.score_breakdown.industry.factors,
-        growth_factors: score.score_breakdown.growth.factors,
-        engagement_factors: score.score_breakdown.engagement.factors,
-        last_calculated_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('company_id', score.company_id || '')
+      .from('lead_scores')
+      .upsert(scoreData as never, {
+        onConflict: 'company_id'
+      }) as unknown as Promise<{ error: Error | null }>)
 
     if (error) {
       console.error('[LeadScoring] Error saving score:', error)
@@ -565,23 +640,24 @@ export class LeadScoringService {
     if (!orgId) return
 
     const supabase = await createClient()
-    const { data: alerts } = await (supabase
-      .from('scoring_alerts'))
+    const { data: alerts } = await supabase
+      .from('scoring_alerts')
       .select('*')
       .eq('org_id', orgId)
       .eq('is_active', true)
+      .returns<ScoringAlertRow[]>()
 
     if (!alerts) return
 
     for (const alert of alerts) {
-      if (this.shouldTriggerAlert(score, alert?.criteria)) {
-        console.log(`[LeadScoring] Triggering alert: ${alert?.alert_name}`)
+      if (alert.criteria && this.shouldTriggerAlert(score, alert.criteria as unknown as AlertCriteria)) {
+        console.log(`[LeadScoring] Triggering alert: ${alert.alert_name}`)
         // TODO: Implement notification sending
       }
     }
   }
 
-  private shouldTriggerAlert(score: LeadScore, criteria: unknown): boolean {
+  private shouldTriggerAlert(score: LeadScore, criteria: AlertCriteria): boolean {
     const scoreType = criteria.score_type || 'overall'
     const value = score[`${scoreType}_score` as keyof LeadScore] as number
     const threshold = criteria.value
@@ -645,8 +721,8 @@ export class LeadScoringService {
    * Convert AI analysis to LeadScore format
    */
   private convertAIAnalysisToLeadScore(
-    aiAnalysis: Record<string, unknown>,
-    company: Record<string, unknown>
+    aiAnalysis: AIAnalysis,
+    company: BusinessRow
   ): LeadScore {
     // Build score breakdown from AI analysis
     const scoreBreakdown: ScoreBreakdown = {
@@ -656,7 +732,7 @@ export class LeadScoringService {
         factors: aiAnalysis.financial.key_factors.map((factor: string) => ({
           name: 'AI Financial Analysis',
           value: aiAnalysis.financial.score,
-          impact: aiAnalysis.financial.score > 60 ? 'positive' : aiAnalysis.financial.score < 40 ? 'negative' : 'neutral',
+          impact: (aiAnalysis.financial.score > 60 ? 'positive' : aiAnalysis.financial.score < 40 ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
           explanation: factor
         })),
         data_quality: aiAnalysis.financial.confidence === 'high' ? 90 :
@@ -669,7 +745,7 @@ export class LeadScoringService {
         factors: aiAnalysis.technology.key_factors.map((factor: string) => ({
           name: 'AI Technology Assessment',
           value: aiAnalysis.technology.score,
-          impact: aiAnalysis.technology.score > 60 ? 'positive' : aiAnalysis.technology.score < 40 ? 'negative' : 'neutral',
+          impact: (aiAnalysis.technology.score > 60 ? 'positive' : aiAnalysis.technology.score < 40 ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
           explanation: factor
         })),
         data_quality: aiAnalysis.technology.confidence === 'high' ? 90 :
@@ -682,7 +758,7 @@ export class LeadScoringService {
         factors: aiAnalysis.industry.key_factors.map((factor: string) => ({
           name: 'AI Industry Analysis',
           value: aiAnalysis.industry.score,
-          impact: aiAnalysis.industry.score > 60 ? 'positive' : aiAnalysis.industry.score < 40 ? 'negative' : 'neutral',
+          impact: (aiAnalysis.industry.score > 60 ? 'positive' : aiAnalysis.industry.score < 40 ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
           explanation: factor
         })),
         data_quality: aiAnalysis.industry.confidence === 'high' ? 90 :
@@ -695,7 +771,7 @@ export class LeadScoringService {
         factors: aiAnalysis.growth.key_factors.map((factor: string) => ({
           name: 'AI Growth Potential',
           value: aiAnalysis.growth.score,
-          impact: aiAnalysis.growth.score > 60 ? 'positive' : aiAnalysis.growth.score < 40 ? 'negative' : 'neutral',
+          impact: (aiAnalysis.growth.score > 60 ? 'positive' : aiAnalysis.growth.score < 40 ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
           explanation: factor
         })),
         data_quality: aiAnalysis.growth.confidence === 'high' ? 90 :
@@ -708,7 +784,7 @@ export class LeadScoringService {
         factors: aiAnalysis.engagement.key_factors.map((factor: string) => ({
           name: 'AI Engagement Analysis',
           value: aiAnalysis.engagement.score,
-          impact: aiAnalysis.engagement.score > 60 ? 'positive' : aiAnalysis.engagement.score < 40 ? 'negative' : 'neutral',
+          impact: (aiAnalysis.engagement.score > 60 ? 'positive' : aiAnalysis.engagement.score < 40 ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
           explanation: factor
         })),
         data_quality: aiAnalysis.engagement.confidence === 'high' ? 90 :
@@ -728,7 +804,7 @@ export class LeadScoringService {
 
     const leadScore: LeadScore = {
       company_id: company.id,
-      company_number: company.company_number,
+      company_number: company.company_number || undefined,
       company_name: company.name,
       overall_score: aiAnalysis.overall.score,
       financial_health_score: aiAnalysis.financial.score,
@@ -750,22 +826,41 @@ export class LeadScoringService {
   /**
    * Save AI-enhanced score with additional metadata
    */
-  private async saveAIScore(score: LeadScore, aiAnalysis: unknown): Promise<void> {
+  private async saveAIScore(score: LeadScore, aiAnalysis: AIAnalysis): Promise<void> {
     const supabase = await createClient()
 
+    const scoreData: LeadScoreInsert = {
+      company_id: score.company_id || null,
+      company_number: score.company_number || null,
+      company_name: score.company_name,
+      overall_score: score.overall_score,
+      financial_health_score: score.financial_health_score,
+      technology_fit_score: score.technology_fit_score,
+      industry_alignment_score: score.industry_alignment_score,
+      growth_indicator_score: score.growth_indicator_score,
+      engagement_score: score.engagement_score,
+      confidence_level: score.confidence_level,
+      score_breakdown: score.score_breakdown as unknown as Database['public']['Tables']['lead_scores']['Insert']['score_breakdown'],
+      scoring_metadata: score.scoring_metadata as unknown as Database['public']['Tables']['lead_scores']['Insert']['scoring_metadata'],
+      financial_factors: score.score_breakdown.financial.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['financial_factors'],
+      technology_factors: score.score_breakdown.technology.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['technology_factors'],
+      industry_factors: score.score_breakdown.industry.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['industry_factors'],
+      growth_factors: score.score_breakdown.growth.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['growth_factors'],
+      engagement_factors: score.score_breakdown.engagement.factors as unknown as Database['public']['Tables']['lead_scores']['Insert']['engagement_factors'],
+      ai_analysis: aiAnalysis as unknown as Database['public']['Tables']['lead_scores']['Insert']['ai_analysis'],
+      ai_model_used: aiAnalysis.ai_metadata.model_used,
+      ai_confidence: aiAnalysis.overall.confidence,
+      ai_reasoning: aiAnalysis.natural_language_summary,
+      use_ai_scoring: true,
+      last_calculated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
     await (supabase
-      .from('lead_scores'))
-      .upsert({
-        ...score,
-        ai_analysis: aiAnalysis,
-        ai_model_used: aiAnalysis.ai_metadata.model_used,
-        ai_confidence: aiAnalysis.overall.confidence,
-        ai_reasoning: aiAnalysis.natural_language_summary,
-        use_ai_scoring: true,
-        last_calculated_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('company_id', score.company_id || '')
+      .from('lead_scores')
+      .upsert(scoreData as never, {
+        onConflict: 'company_id'
+      }) as unknown as Promise<unknown>)
 
     console.log('[LeadScoring] AI-enhanced score saved')
   }

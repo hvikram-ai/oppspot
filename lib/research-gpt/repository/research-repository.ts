@@ -14,6 +14,7 @@
 import { createClient } from '@/lib/supabase/server';
 import SmartCacheManager from '../cache/smart-cache-manager';
 
+import type { Database } from '@/types/database';
 import type { Row } from '@/lib/supabase/helpers'
 import type {
   ResearchReport,
@@ -25,6 +26,18 @@ import type {
   ConfidenceLevel,
   SourceType,
 } from '@/types/research-gpt';
+
+// Database type aliases
+type ResearchReportRow = Database['public']['Tables']['research_reports']['Row'];
+type ResearchReportInsert = Database['public']['Tables']['research_reports']['Insert'];
+type ResearchReportUpdate = Database['public']['Tables']['research_reports']['Update'];
+type ResearchSectionRow = Database['public']['Tables']['research_sections']['Row'];
+type ResearchSectionInsert = Database['public']['Tables']['research_sections']['Insert'];
+type ResearchSourceRow = Database['public']['Tables']['research_sources']['Row'];
+type ResearchSourceInsert = Database['public']['Tables']['research_sources']['Insert'];
+type UserResearchQuotaRow = Database['public']['Tables']['user_research_quotas']['Row'];
+type UserResearchQuotaInsert = Database['public']['Tables']['user_research_quotas']['Insert'];
+type UserResearchQuotaUpdate = Database['public']['Tables']['user_research_quotas']['Update'];
 
 // ============================================================================
 // REPOSITORY CLASS
@@ -42,7 +55,7 @@ export class ResearchRepository {
   ): Promise<ResearchReport> {
     const supabase = await createClient();
 
-    const insertData: Record<string, unknown> = {
+    const insertData: ResearchReportInsert = {
       user_id: userId,
       company_id: companyId,
       company_name: companyName,
@@ -55,8 +68,9 @@ export class ResearchRepository {
 
     const { data, error } = await supabase
       .from('research_reports')
-      .insert(insertData as Record<string, unknown>)
+      .insert(insertData)
       .select()
+      .returns<ResearchReportRow[]>()
       .single();
 
     if (error) {
@@ -76,7 +90,8 @@ export class ResearchRepository {
     let query = supabase
       .from('research_reports')
       .select('*')
-      .eq('id', reportId);
+      .eq('id', reportId)
+      .returns<ResearchReportRow[]>();
 
     if (userId) {
       query = query.eq('user_id', userId);
@@ -112,10 +127,12 @@ export class ResearchRepository {
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single() as { data: Row<'research_reports'> | null; error: unknown };
+      .returns<ResearchReportRow[]>()
+      .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any).code === 'PGRST116') {
         return null;
       }
       console.error('Failed to get latest report:', error);
@@ -142,7 +159,7 @@ export class ResearchRepository {
   ): Promise<void> {
     const supabase = await createClient();
 
-    const updateData: Record<string, unknown> = {
+    const updateData: ResearchReportUpdate = {
       status,
       ...updates,
       updated_at: new Date().toISOString(),
@@ -151,7 +168,8 @@ export class ResearchRepository {
     const { error } = await supabase
       .from('research_reports')
       .update(updateData)
-      .eq('id', reportId);
+      .eq('id', reportId)
+      .returns<ResearchReportRow[]>();
 
     if (error) {
       console.error('Failed to update report status:', error);
@@ -185,8 +203,9 @@ export class ResearchRepository {
         expires_at: expiresAt,
         cached_at: new Date().toISOString(),
         generation_time_ms: generationTimeMs,
-      } as Record<string, unknown>)
+      } as ResearchSectionInsert)
       .select()
+      .returns<ResearchSectionRow[]>()
       .single();
 
     if (error) {
@@ -207,7 +226,8 @@ export class ResearchRepository {
       .from('research_sections')
       .select('*')
       .eq('report_id', reportId)
-      .order('created_at', { ascending: true }) as { data: Row<'research_sections'>[] | null; error: unknown };
+      .order('created_at', { ascending: true })
+      .returns<ResearchSectionRow[]>();
 
     if (error) {
       console.error('Failed to get sections:', error);
@@ -228,10 +248,12 @@ export class ResearchRepository {
       .select('*')
       .eq('report_id', reportId)
       .eq('section_type', sectionType)
-      .single() as { data: Row<'research_sections'> | null; error: unknown };
+      .returns<ResearchSectionRow[]>()
+      .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any).code === 'PGRST116') {
         return null;
       }
       console.error('Failed to get section:', error);
@@ -267,14 +289,15 @@ export class ResearchRepository {
   }>): Promise<void> {
     const supabase = await createClient();
 
+    const insertData: ResearchSourceInsert[] = sources.map((source) => ({
+      report_id: reportId,
+      ...source,
+    }));
+
     const { error } = await supabase
       .from('research_sources')
-      .insert(
-        sources.map((source) => ({
-          report_id: reportId,
-          ...source,
-        }))
-      );
+      .insert(insertData)
+      .returns<ResearchSourceRow[]>();
 
     if (error) {
       console.error('Failed to add sources:', error);
@@ -292,7 +315,8 @@ export class ResearchRepository {
       .from('research_sources')
       .select('*')
       .eq('report_id', reportId)
-      .order('reliability_score', { ascending: false }) as { data: Row<'research_sources'>[] | null; error: unknown };
+      .order('reliability_score', { ascending: false })
+      .returns<ResearchSourceRow[]>();
 
     if (error) {
       console.error('Failed to get sources:', error);
@@ -317,25 +341,30 @@ export class ResearchRepository {
       .from('user_research_quotas')
       .select('*')
       .eq('user_id', userId)
-      .single() as { data: Row<'user_research_quotas'> | null; error: unknown };
+      .returns<UserResearchQuotaRow[]>()
+      .single();
 
-    if (error && error.code === 'PGRST116') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (error && (error as any).code === 'PGRST116') {
       // Create new quota
       const now = new Date();
       const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
 
+      const insertData: UserResearchQuotaInsert = {
+        user_id: userId,
+        period_start: periodStart,
+        period_end: periodEnd,
+        researches_used: 0,
+        researches_limit: 100,
+        tier: 'standard' as const,
+      };
+
       const { data: newData, error: createError } = await supabase
         .from('user_research_quotas')
-        .insert({
-          user_id: userId,
-          period_start: periodStart,
-          period_end: periodEnd,
-          researches_used: 0,
-          researches_limit: 100,
-          tier: 'standard' as const,
-        } as Record<string, unknown>)
+        .insert(insertData)
         .select()
+        .returns<UserResearchQuotaRow[]>()
         .single();
 
       if (createError) {
@@ -349,16 +378,20 @@ export class ResearchRepository {
       throw new Error(`Failed to get quota: ${error.message}`);
     }
 
+    if (!data) {
+      throw new Error('Quota data is null');
+    }
+
     // Check if we need to reset for new period
     const now = new Date();
-    const periodEnd = new Date(data?.period_end);
+    const periodEnd = new Date(data.period_end);
 
     if (now > periodEnd) {
       // Reset quota
       const newPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const newPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
 
-      const quotaUpdateData: Record<string, unknown> = {
+      const quotaUpdateData: UserResearchQuotaUpdate = {
         period_start: newPeriodStart,
         period_end: newPeriodEnd,
         researches_used: 0,
@@ -371,6 +404,7 @@ export class ResearchRepository {
         .update(quotaUpdateData)
         .eq('user_id', userId)
         .select()
+        .returns<UserResearchQuotaRow[]>()
         .single();
 
       if (updateError) {
@@ -419,10 +453,11 @@ export class ResearchRepository {
     const supabase = await createClient();
 
     // Get count
-    const { count } = (await supabase
+    const { count } = await supabase
       .from('research_reports')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)) as { count: number | null; data: null; error: unknown };
+      .eq('user_id', userId)
+      .returns<ResearchReportRow[]>();
 
     // Get reports
     const { data, error } = await supabase
@@ -430,14 +465,15 @@ export class ResearchRepository {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1) as { data: Row<'research_reports'>[] | null; error: unknown };
+      .range(offset, offset + limit - 1)
+      .returns<ResearchReportRow[]>();
 
     if (error) {
       throw new Error(`Failed to get research history: ${error.message}`);
     }
 
     return {
-      reports: data as ResearchReport[],
+      reports: (data || []) as ResearchReport[],
       total: count || 0,
     };
   }
@@ -452,7 +488,8 @@ export class ResearchRepository {
       .from('research_reports')
       .delete()
       .eq('id', reportId)
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .returns<ResearchReportRow[]>();
 
     if (error) {
       throw new Error(`Failed to delete report: ${error.message}`);
@@ -472,7 +509,8 @@ export class ResearchRepository {
     const { data: oldReports } = await supabase
       .from('research_reports')
       .select('id')
-      .lt('generated_at', cutoffDate.toISOString());
+      .lt('generated_at', cutoffDate.toISOString())
+      .returns<Array<{ id: string }>>();
 
     if (!oldReports || oldReports.length === 0) {
       return 0;
@@ -488,21 +526,19 @@ export class ResearchRepository {
         const content = section.content;
         if (section.section_type === 'decision_makers' && Array.isArray(content)) {
           // Remove personal contact info
-          const anonymized = content.map((person: unknown) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const anonymized = content.map((person: any) => ({
             ...person,
             business_email: null,
             phone_number: null,
             linkedin_url: null,
           }));
 
-          const sectionUpdateData: Record<string, unknown> = {
-            content: anonymized,
-          };
-
           await supabase
             .from('research_sections')
-            .update(sectionUpdateData)
-            .eq('id', section.id);
+            .update({ content: anonymized })
+            .eq('id', section.id)
+            .returns<ResearchSectionRow[]>();
         }
       }
     }

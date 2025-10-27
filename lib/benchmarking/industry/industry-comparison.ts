@@ -4,13 +4,24 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type { Row } from '@/lib/supabase/helpers'
+import type { Database } from '@/types/database'
 import type {
   IndustryBenchmark,
   CompanyMetrics,
   MetricName,
-  CompanySize
+  CompanySize as CompanySizeEnum
 } from '../types/benchmarking'
+
+// Type aliases for database tables
+type BusinessRow = Database['public']['Tables']['businesses']['Row']
+
+// Since company_metrics and industry_benchmarks tables may not exist in the schema yet,
+// we'll use the interface types directly
+type CompanyMetricsRow = CompanyMetrics
+type IndustryBenchmarkRow = IndustryBenchmark
+
+// Type for CompanySize values
+type CompanySizeType = 'all' | 'micro' | 'small' | 'medium' | 'large'
 
 interface IndustryAnalysis {
   industry_code: string
@@ -27,16 +38,18 @@ interface IndustryAnalysis {
   regulatory_factors: string[]
 }
 
+interface MetricComparisonResult {
+  metric_name: string
+  company_value: number
+  industry_mean: number
+  industry_median: number
+  percentile: number
+  z_score: number
+  interpretation: string
+}
+
 interface IndustryComparison {
-  metrics: Array<{
-    metric_name: string
-    company_value: number
-    industry_mean: number
-    industry_median: number
-    percentile: number
-    z_score: number
-    interpretation: string
-  }>
+  metrics: MetricComparisonResult[]
   overall_percentile: number
   strengths: string[]
   weaknesses: string[]
@@ -93,7 +106,7 @@ export class IndustryComparisonEngine {
     companyId: string,
     options?: {
       industry_code?: string
-      size_category?: CompanySize
+      size_category?: CompanySizeType
       geographic_scope?: string
       include_trends?: boolean
     }
@@ -182,12 +195,17 @@ export class IndustryComparisonEngine {
   /**
    * Get company data
    */
-  private async getCompanyData(companyId: string): Promise<Record<string, unknown>> {
+  private async getCompanyData(companyId: string): Promise<BusinessRow | null> {
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+
     const { data } = await this.supabase
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: unknown }
+      .single()
+      .returns<BusinessRow>()
 
     return data
   }
@@ -196,31 +214,41 @@ export class IndustryComparisonEngine {
    * Get company metrics
    */
   private async getCompanyMetrics(companyId: string): Promise<CompanyMetrics> {
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+
     const { data } = await this.supabase
       .from('company_metrics')
       .select('*')
       .eq('company_id', companyId)
       .order('metric_date', { ascending: false })
       .limit(1)
-      .single() as { data: Row<'company_metrics'> | null; error: unknown }
+      .single()
+      .returns<CompanyMetricsRow>()
 
     if (!data) {
       // Generate from business data if no metrics exist
       return this.generateMetricsFromBusiness(companyId)
     }
 
-    return data
+    return data as unknown as CompanyMetrics
   }
 
   /**
    * Generate metrics from business data
    */
   private async generateMetricsFromBusiness(companyId: string): Promise<CompanyMetrics> {
-    const { data: business } = await this.supabase
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+
+    const { data } = await this.supabase
       .from('businesses')
       .select('*')
       .eq('id', companyId)
-      .single() as { data: Row<'businesses'> | null; error: unknown }
+      .single()
+      .returns<BusinessRow>()
 
     const metrics: CompanyMetrics = {
       company_id: companyId,
@@ -228,7 +256,14 @@ export class IndustryComparisonEngine {
     }
 
     // Extract from Companies House data if available
-    if (business?.accounts) {
+    if (!data) {
+      return metrics
+    }
+
+    // Type guard: explicitly assign to typed variable after null check
+    const business: BusinessRow = data
+
+    if (business.accounts) {
       const accounts = business.accounts as Record<string, unknown> & {
         turnover?: number
         gross_profit?: number
@@ -257,10 +292,13 @@ export class IndustryComparisonEngine {
   /**
    * Get industry code for company
    */
-  private async getIndustryCode(company: Record<string, unknown>): Promise<string> {
-    if (company?.sic_codes && company.sic_codes.length > 0) {
+  private async getIndustryCode(company: BusinessRow | null): Promise<string> {
+    if (company?.sic_codes && Array.isArray(company.sic_codes) && company.sic_codes.length > 0) {
       // Return 2-digit SIC division
-      return company.sic_codes[0].substring(0, 2)
+      const firstCode = company.sic_codes[0]
+      if (typeof firstCode === 'string') {
+        return firstCode.substring(0, 2)
+      }
     }
 
     // Default to Information and Communication
@@ -272,9 +310,13 @@ export class IndustryComparisonEngine {
    */
   private async getIndustryBenchmarks(
     industryCode: string,
-    sizeCategory?: CompanySize,
+    sizeCategory?: CompanySizeType,
     geographicScope?: string
   ): Promise<IndustryBenchmark[]> {
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+
     let query = this.supabase
       .from('industry_benchmarks')
       .select('*')
@@ -288,14 +330,16 @@ export class IndustryComparisonEngine {
       query = query.eq('geographic_scope', geographicScope)
     }
 
-    const { data } = await query.order('metric_date', { ascending: false })
+    const { data } = await query
+      .order('metric_date', { ascending: false })
+      .returns<IndustryBenchmarkRow[]>()
 
     if (!data || data.length === 0) {
       // Generate synthetic benchmarks
       return this.generateSyntheticBenchmarks(industryCode)
     }
 
-    return data
+    return data as unknown as IndustryBenchmark[]
   }
 
   /**
@@ -348,8 +392,8 @@ export class IndustryComparisonEngine {
   private calculateMetricComparisons(
     companyMetrics: CompanyMetrics,
     benchmarks: IndustryBenchmark[]
-  ): unknown[] {
-    const comparisons = []
+  ): MetricComparisonResult[] {
+    const comparisons: MetricComparisonResult[] = []
 
     for (const benchmark of benchmarks) {
       const metricName = benchmark.metric_name as keyof CompanyMetrics
@@ -418,7 +462,7 @@ export class IndustryComparisonEngine {
   /**
    * Calculate overall percentile
    */
-  private calculateOverallPercentile(comparisons: unknown[]): number {
+  private calculateOverallPercentile(comparisons: MetricComparisonResult[]): number {
     if (comparisons.length === 0) return 50
 
     const percentiles = comparisons.map(c => c.percentile)
@@ -429,7 +473,7 @@ export class IndustryComparisonEngine {
    * Perform SWOT analysis
    */
   private performSWOTAnalysis(
-    comparisons: unknown[],
+    comparisons: MetricComparisonResult[],
     industryCode: string,
     metrics: CompanyMetrics
   ): { strengths: string[], weaknesses: string[], opportunities: string[], threats: string[] } {
@@ -535,21 +579,31 @@ export class IndustryComparisonEngine {
   /**
    * Get industry statistics
    */
-  private async getIndustryStatistics(industryCode: string): Promise<any> {
+  private async getIndustryStatistics(industryCode: string): Promise<IndustryBenchmark[]> {
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+
     const { data } = await this.supabase
       .from('industry_benchmarks')
       .select('*')
       .eq('industry_code', industryCode)
       .order('metric_date', { ascending: false })
-      .limit(100) as { data: Row<'industry_benchmarks'>[] | null; error: unknown }
+      .limit(100)
+      .returns<IndustryBenchmarkRow[]>()
 
-    return data || []
+    return (data || []) as unknown as IndustryBenchmark[]
   }
 
   /**
    * Analyze market dynamics
    */
-  private analyzeMarketDynamics(stats: unknown[]): unknown {
+  private analyzeMarketDynamics(stats: IndustryBenchmark[]): {
+    growth_rate: number
+    competition_intensity: 'low' | 'medium' | 'high'
+    market_maturity: 'emerging' | 'growing' | 'mature' | 'declining'
+    disruption_risk: number
+  } {
     // Analyze growth trends
     const growthMetrics = stats.filter(s => s.metric_name === 'revenue_growth_yoy')
     const avgGrowth = growthMetrics.length > 0

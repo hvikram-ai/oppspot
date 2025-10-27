@@ -32,9 +32,11 @@ import type { DataRoom } from '@/lib/data-room/types'
 import { UploadZone } from '@/components/data-room/upload-zone'
 import { DocumentList } from '@/components/data-room/document-list'
 import { ActivityFeed } from '@/components/data-room/activity-feed'
+import { PermissionManager } from '@/components/data-room/permission-manager'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { TeamPresence } from '@/components/collaboration/TeamPresence'
 import { CommentThread } from '@/components/collaboration/CommentThread'
+import type { DataRoomAccess } from '@/lib/data-room/types'
 
 interface DataRoomWithDetails extends DataRoom {
   owner_name: string
@@ -316,56 +318,12 @@ export default function DataRoomDetailPage() {
 
         {/* Team Tab */}
         <TabsContent value="team">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Access</CardTitle>
-              <CardDescription>
-                Manage who has access to this data room
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Owner */}
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{dataRoom.owner_name}</p>
-                    <p className="text-sm text-muted-foreground">Owner</p>
-                  </div>
-                  <Badge>Owner</Badge>
-                </div>
-
-                {/* Team members */}
-                {dataRoom.data_room_access?.map((access: any) => (
-                  <div key={access.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{access.invite_email}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {access.accepted_at
-                          ? `Joined ${new Date(access.accepted_at).toLocaleDateString()}`
-                          : 'Invited'}
-                      </p>
-                    </div>
-                    <Badge variant="secondary">{access.permission_level}</Badge>
-                  </div>
-                ))}
-
-                {dataRoom.data_room_access?.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p>No team members yet</p>
-                    <p className="text-sm">Invite colleagues to collaborate</p>
-                  </div>
-                )}
-
-                {isOwner && (
-                  <Button className="w-full mt-4">
-                    <Users className="h-4 w-4 mr-2" />
-                    Invite Team Member
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <PermissionManager
+            dataRoomId={dataRoom.id}
+            accessList={(dataRoom.data_room_access || []) as DataRoomAccess[]}
+            currentUserPermission={dataRoom.my_permission as any}
+            onAccessChanged={fetchDataRoom}
+          />
         </TabsContent>
       </Tabs>
     </div>

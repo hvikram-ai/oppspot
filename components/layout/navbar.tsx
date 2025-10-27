@@ -28,6 +28,7 @@ import { NotificationBell } from '@/components/notifications/notification-bell'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
+import { GoalBasedNav } from '@/components/navigation/goal-based-nav'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -88,7 +89,14 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Center: Global Search (Desktop) */}
+          {/* Center: Goal-Based Navigation (Desktop) */}
+          {user && (
+            <div className="hidden md:flex flex-1 justify-center">
+              <GoalBasedNav />
+            </div>
+          )}
+
+          {/* Center: Global Search (Desktop - moved to right) */}
           {user && (
             <div className="hidden md:flex flex-1 max-w-md">
               <div className="relative w-full">

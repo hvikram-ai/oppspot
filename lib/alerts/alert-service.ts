@@ -8,6 +8,15 @@ import { createHash } from 'crypto'
 import { getSlackNotifier } from '@/lib/notifications/slack-notifier'
 import { getWebhookNotifier } from '@/lib/notifications/webhook-notifier'
 import { getSmsNotifier } from '@/lib/notifications/sms-notifier'
+import type { Database } from '@/types/database'
+
+// Database table type aliases
+type SystemAlertRow = Database['public']['Tables']['system_alerts']['Row']
+type SystemAlertInsert = Database['public']['Tables']['system_alerts']['Insert']
+type SystemAlertUpdate = Database['public']['Tables']['system_alerts']['Update']
+type AlertConfigurationRow = Database['public']['Tables']['alert_configurations']['Row']
+type AlertHistoryInsert = Database['public']['Tables']['alert_history']['Insert']
+type ProfileRow = Database['public']['Tables']['profiles']['Row']
 
 export type AlertSeverity = 'P0' | 'P1' | 'P2' | 'P3'
 export type AlertCategory =
@@ -96,28 +105,31 @@ export class AlertService {
       }
 
       // Create the alert
+      const insertData: SystemAlertInsert = {
+        severity: params.severity,
+        category: params.category,
+        title: params.title,
+        message: params.message,
+        error_stack: params.errorStack,
+        context: (params.context || {}) as Database['public']['Tables']['system_alerts']['Insert']['context'],
+        source_service: params.sourceService,
+        source_endpoint: params.sourceEndpoint,
+        source_method: params.sourceMethod,
+        affected_users: params.affectedUsers || [],
+        fingerprint,
+        tags: params.tags || [],
+        runbook_url: params.runbookUrl,
+        status: 'open',
+        occurrence_count: 1,
+        first_occurred_at: new Date().toISOString(),
+        last_occurred_at: new Date().toISOString(),
+      }
+
       const { data: alert, error } = await supabase
         .from('system_alerts')
-        .insert({
-          severity: params.severity,
-          category: params.category,
-          title: params.title,
-          message: params.message,
-          error_stack: params.errorStack,
-          context: params.context || {},
-          source_service: params.sourceService,
-          source_endpoint: params.sourceEndpoint,
-          source_method: params.sourceMethod,
-          affected_users: params.affectedUsers || [],
-          fingerprint,
-          tags: params.tags || [],
-          runbook_url: params.runbookUrl,
-          status: 'open',
-          occurrence_count: 1,
-          first_occurred_at: new Date().toISOString(),
-          last_occurred_at: new Date().toISOString(),
-        })
+        .insert(insertData as never)
         .select()
+        .returns<SystemAlertRow[]>()
         .single()
 
       if (error) {
@@ -126,12 +138,12 @@ export class AlertService {
       }
 
       // Record in history
-      await this.recordHistory(alert.id, 'created', null, alert)
+      await this.recordHistory(alert.id, 'created', null, alert as unknown as Record<string, unknown>)
 
       // Send notifications
-      await this.sendNotifications(alert)
+      await this.sendNotifications(alert as unknown as Record<string, unknown>)
 
-      return this.mapToSystemAlert(alert)
+      return this.mapToSystemAlert(alert as unknown as Record<string, unknown>)
     } catch (error) {
       console.error('[AlertService] Error triggering alert:', error)
       return null
@@ -145,15 +157,18 @@ export class AlertService {
     try {
       const supabase = await createClient()
 
+      const updateData: SystemAlertUpdate = {
+        status: 'acknowledged',
+        acknowledged_at: new Date().toISOString(),
+        acknowledged_by: userId,
+      }
+
       const { data: alert, error } = await supabase
         .from('system_alerts')
-        .update({
-          status: 'acknowledged',
-          acknowledged_at: new Date().toISOString(),
-          acknowledged_by: userId,
-        })
+        .update(updateData as never)
         .eq('id', alertId)
         .select()
+        .returns<SystemAlertRow[]>()
         .single()
 
       if (error) {
@@ -161,7 +176,7 @@ export class AlertService {
         return false
       }
 
-      await this.recordHistory(alertId, 'acknowledged', null, alert, userId, notes)
+      await this.recordHistory(alertId, 'acknowledged', null, alert as unknown as Record<string, unknown>, userId, notes)
       return true
     } catch (error) {
       console.error('[AlertService] Error acknowledging alert:', error)
@@ -180,16 +195,19 @@ export class AlertService {
     try {
       const supabase = await createClient()
 
+      const updateData: SystemAlertUpdate = {
+        status: 'resolved',
+        resolved_at: new Date().toISOString(),
+        resolved_by: userId,
+        resolution_notes: resolutionNotes,
+      }
+
       const { data: alert, error } = await supabase
         .from('system_alerts')
-        .update({
-          status: 'resolved',
-          resolved_at: new Date().toISOString(),
-          resolved_by: userId,
-          resolution_notes: resolutionNotes,
-        })
+        .update(updateData as never)
         .eq('id', alertId)
         .select()
+        .returns<SystemAlertRow[]>()
         .single()
 
       if (error) {
@@ -197,7 +215,7 @@ export class AlertService {
         return false
       }
 
-      await this.recordHistory(alertId, 'resolved', null, alert, userId, resolutionNotes)
+      await this.recordHistory(alertId, 'resolved', null, alert as unknown as Record<string, unknown>, userId, resolutionNotes)
 
       // Send Slack resolution notification
       const slackNotifier = getSlackNotifier()
@@ -209,7 +227,7 @@ export class AlertService {
           .from('profiles')
           .select('full_name, email')
           .eq('id', userId)
-          .single()
+          .single() as { data: { full_name: string | null; email: string | null } | null }
 
         const resolvedBy = profile?.full_name || profile?.email || 'Admin'
 
@@ -251,7 +269,7 @@ export class AlertService {
         query = query.eq('severity', severity)
       }
 
-      const { data, error } = await query
+      const { data, error } = await query.returns<SystemAlertRow[]>()
 
       if (error) {
         console.error('[AlertService] Failed to fetch alerts:', error)
@@ -276,6 +294,7 @@ export class AlertService {
         .from('system_alerts')
         .select('*')
         .eq('id', alertId)
+        .returns<SystemAlertRow[]>()
         .single()
 
       if (error) {
@@ -283,7 +302,7 @@ export class AlertService {
         return null
       }
 
-      return this.mapToSystemAlert(data)
+      return this.mapToSystemAlert(data as unknown as Record<string, unknown>)
     } catch (error) {
       console.error('[AlertService] Error fetching alert:', error)
       return null
@@ -309,6 +328,7 @@ export class AlertService {
         .from('system_alerts')
         .select('status, severity, category')
         .gte('created_at', since)
+        .returns<Pick<SystemAlertRow, 'status' | 'severity' | 'category'>[]>()
 
       if (error || !data) {
         return {
@@ -374,6 +394,7 @@ export class AlertService {
         .select('id, occurrence_count')
         .eq('fingerprint', fingerprint)
         .gte('last_occurred_at', fiveMinutesAgo)
+        .returns<Pick<SystemAlertRow, 'id' | 'occurrence_count'>[]>()
         .single()
 
       if (error || !data) {
@@ -381,12 +402,14 @@ export class AlertService {
       }
 
       // Update occurrence count
+      const updateOccurrence: SystemAlertUpdate = {
+        occurrence_count: data.occurrence_count + 1,
+        last_occurred_at: new Date().toISOString(),
+      }
+
       await supabase
         .from('system_alerts')
-        .update({
-          occurrence_count: data.occurrence_count + 1,
-          last_occurred_at: new Date().toISOString(),
-        })
+        .update(updateOccurrence as never)
         .eq('id', data.id)
 
       return true
@@ -438,13 +461,15 @@ export class AlertService {
 
       // Update alert with notification status
       const supabase = await createClient()
+      const updateNotification: SystemAlertUpdate = {
+        channels_notified: channels,
+        notification_sent_at: new Date().toISOString(),
+        notification_failed: channels.length === 0,
+      }
+
       await supabase
         .from('system_alerts')
-        .update({
-          channels_notified: channels,
-          notification_sent_at: new Date().toISOString(),
-          notification_failed: channels.length === 0,
-        })
+        .update(updateNotification as never)
         .eq('id', alert.id as string)
     } catch (error) {
       console.error('[AlertService] Failed to send notifications:', error)
@@ -598,6 +623,8 @@ export class AlertService {
   private async getAlertConfig(): Promise<{
     email?: { enabled: boolean; from: string; admin_emails: string[] }
     slack?: { enabled: boolean; webhook_url: string; channel: string }
+    webhook?: { enabled: boolean; url: string }
+    sms?: { enabled: boolean; phone_numbers: string[] }
   }> {
     try {
       const supabase = await createClient()
@@ -606,6 +633,7 @@ export class AlertService {
         .from('alert_configurations')
         .select('config_key, config_value')
         .in('config_key', ['email_settings', 'slack_settings'])
+        .returns<Pick<AlertConfigurationRow, 'config_key' | 'config_value'>[]>()
 
       if (!data) {
         return {}
@@ -619,6 +647,8 @@ export class AlertService {
       return {
         email: config.email_settings as { enabled: boolean; from: string; admin_emails: string[] },
         slack: config.slack_settings as { enabled: boolean; webhook_url: string; channel: string },
+        webhook: config.webhook_settings as { enabled: boolean; url: string },
+        sms: config.sms_settings as { enabled: boolean; phone_numbers: string[] },
       }
     } catch (error) {
       console.error('[AlertService] Failed to fetch config:', error)
@@ -640,14 +670,16 @@ export class AlertService {
     try {
       const supabase = await createClient()
 
-      await supabase.from('alert_history').insert({
+      const historyData: AlertHistoryInsert = {
         alert_id: alertId,
         action,
         actor_id: actorId,
-        previous_state: previousState,
-        new_state: newState,
+        previous_state: previousState as unknown as Database['public']['Tables']['alert_history']['Insert']['previous_state'],
+        new_state: newState as unknown as Database['public']['Tables']['alert_history']['Insert']['new_state'],
         notes,
-      })
+      }
+
+      await supabase.from('alert_history').insert(historyData as never)
     } catch (error) {
       console.error('[AlertService] Failed to record history:', error)
     }

@@ -5,7 +5,7 @@
  * Explore and query your team's collective knowledge
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -37,11 +37,7 @@ export default function KnowledgeGraphPage() {
     entities_by_type: {} as Record<string, number>
   })
 
-  useEffect(() => {
-    loadDashboard()
-  }, [])
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     // In production, load real data from API
     setStats({
       total_entities: 0,
@@ -49,7 +45,11 @@ export default function KnowledgeGraphPage() {
       total_facts: 0,
       entities_by_type: {}
     })
-  }
+  }, [])
+
+  useEffect(() => {
+    loadDashboard()
+  }, [loadDashboard])
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return

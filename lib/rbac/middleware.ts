@@ -385,8 +385,8 @@ export function requireOwnerOrAdmin(ownerIdField: string = 'userId') {
 export function compose(...middlewares: Array<(handler: ProtectedRouteHandler) => NextRouteHandler>) {
   return (handler: ProtectedRouteHandler): NextRouteHandler => {
     return middlewares.reduceRight(
-      (acc, middleware) => middleware(acc) as NextRequest,
-      handler
+      (acc, middleware) => middleware(acc as ProtectedRouteHandler),
+      handler as ProtectedRouteHandler | NextRouteHandler
     ) as NextRouteHandler;
   };
 }
@@ -461,7 +461,7 @@ export function rateLimit(options?: {
  * Get authenticated user from request
  * Utility function for use in route handlers
  */
-export async function getAuthenticatedUser(request: NextRequest) {
+export async function getAuthenticatedUser(_request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },

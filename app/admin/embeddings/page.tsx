@@ -5,7 +5,7 @@
  * Generate and monitor company embeddings
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -40,11 +40,7 @@ export default function EmbeddingsAdminPage() {
   const [error, setError] = useState<string | null>(null)
 
   // Load stats on mount
-  useEffect(() => {
-    loadStats()
-  }, [])
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await fetch('/api/embeddings/generate')
       const data = await response.json()
@@ -55,7 +51,11 @@ export default function EmbeddingsAdminPage() {
     } catch (err) {
       console.error('Failed to load stats:', err)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadStats()
+  }, [loadStats])
 
   const generateEmbeddings = async (limit?: number) => {
     setIsGenerating(true)

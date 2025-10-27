@@ -22,7 +22,7 @@ import { RateLimitingService } from './infrastructure/services/rate-limiting.ser
 import { CostManagementService } from './infrastructure/services/cost-management.service'
 
 // Legacy Services (to be refactored)
-import { DataSourceFactory } from './data-sources/data-source-factory'
+import { DataSourceFactory, DataSource } from './data-sources/data-source-factory'
 
 // Interfaces
 import {
@@ -37,6 +37,7 @@ import {
   ICacheService,
   IRateLimitingService,
   ICostManagementService,
+  IDataSourceProvider,
   UseCase
 } from './core/interfaces'
 
@@ -71,16 +72,26 @@ export function registerServices(
   container.registerFactory<IEventStore>('IEventStore', () => new InMemoryEventStore(), ServiceLifetime.SINGLETON)
 
   // Caching
-  container.registerFactory<ICacheService>('ICacheService', ((c: IContainer) => {
-    const redisClient = c.resolve<RedisClient>('redisClient') || null
+  container.registerFactory<ICacheService>('ICacheService', (...args: unknown[]) => {
+    const c = args[0] as IContainer
+    const redisClient = c.resolve<RedisClient>('redisClient') || undefined
     return new CacheService(redisClient) as unknown as ICacheService
-  }), ServiceLifetime.SINGLETON)
+  }, ServiceLifetime.SINGLETON)
 
   // Rate Limiting
-  container.registerFactory<IRateLimitingService>('IRateLimitingService', ((c: IContainer) => {
-    const redisClient = c.resolve<RedisClient>('redisClient') || null
-    return new RateLimitingService(redisClient) as unknown as IRateLimitingService
-  }), ServiceLifetime.SINGLETON)
+  container.registerFactory<IRateLimitingService>('IRateLimitingService', (...args: unknown[]) => {
+    const c = args[0] as IContainer
+    const redisClient = c.resolve<RedisClient>('redisClient') || undefined
+    // Adapter to match RateLimitingService expected interface
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rateLimitClient = redisClient ? {
+      get: (key: string) => redisClient.get(key),
+      set: (key: string, value: string) => redisClient.set(key, value),
+      incr: (key: string) => redisClient.incr(key),
+      expire: (key: string, seconds: number) => redisClient.expire(key, seconds)
+    } as any : undefined
+    return new RateLimitingService(rateLimitClient) as unknown as IRateLimitingService
+  }, ServiceLifetime.SINGLETON)
 
   // Cost Management
   container.registerFactory<ICostManagementService>('ICostManagementService', () => {
@@ -91,15 +102,26 @@ export function registerServices(
   // REPOSITORY LAYER
   // ============================================================================
 
-  container.registerFactory<IScanRepository>('IScanRepository', ((c: IContainer) => {
+  container.registerFactory<IScanRepository>('IScanRepository', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     const database = c.resolve<DatabaseClient>('database')
     return new ScanRepository(database) as unknown as IScanRepository
-  }), ServiceLifetime.SCOPED)
+  }, ServiceLifetime.SCOPED)
 
-  container.registerFactory<ICompanyRepository>('ICompanyRepository', ((c: IContainer) => {
+  container.registerFactory<ICompanyRepository>('ICompanyRepository', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     const database = c.resolve<DatabaseClient>('database')
-    return new CompanyRepository(database) as unknown as ICompanyRepository
-  }), ServiceLifetime.SCOPED)
+    // Wrap database to match expected interface - CompanyRepository expects specific QueryResult type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wrappedDb = {
+      query: async (sql: string, params: unknown[]) => {
+        const result = await database.query(sql, params)
+        return result as any
+      }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new CompanyRepository(wrappedDb as any) as unknown as ICompanyRepository
+  }, ServiceLifetime.SCOPED)
 
   // ============================================================================
   // DATA SOURCE LAYER
@@ -107,51 +129,55 @@ export function registerServices(
 
   container.registerFactory('DataSourceFactory', () => new DataSourceFactory(), ServiceLifetime.SINGLETON)
 
-  container.registerFactory('DataSourceProviders', ((c: IContainer) => {
+  container.registerFactory('DataSourceProviders', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     const factory = c.resolve<DataSourceFactory>('DataSourceFactory')
 
     // Initialize and return all available data sources as a Map
-    const sources = new Map<string, DataSourceProvider>()
+    const sources = new Map<string, IDataSourceProvider>()
 
     // Register individual data sources
-    const availableSources = factory.getAvailableDataSources?.() || []
-    for (const sourceId of availableSources) {
+    const availableSources: DataSource[] = factory.getAvailableDataSources() || []
+    for (const source of availableSources) {
       try {
-        const provider = factory.createDataSource?.(sourceId, {}) as DataSourceProvider
-        sources.set(sourceId, provider)
+        const provider = factory.getDataSource(source.id) as unknown as IDataSourceProvider
+        sources.set(source.id, provider)
       } catch (error) {
-        console.warn(`Failed to initialize data source ${sourceId}:`, error)
+        console.warn(`Failed to initialize data source ${source.id}:`, error)
       }
     }
 
     return sources
-  }))
+  })
 
   // ============================================================================
   // APPLICATION LAYER
   // ============================================================================
 
   // Data Collection Service
-  container.registerFactory<IDataCollectionService>('IDataCollectionService', ((c: IContainer) => {
+  container.registerFactory<IDataCollectionService>('IDataCollectionService', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     return new DataCollectionService(
-      c.resolve<Map<string, DataSourceProvider>>('DataSourceProviders'),
+      c.resolve<Map<string, IDataSourceProvider>>('DataSourceProviders'),
       c.resolve<ICompanyRepository>('ICompanyRepository'),
       c.resolve<IRateLimitingService>('IRateLimitingService'),
       c.resolve<ICacheService>('ICacheService'),
       c.resolve<IEventBus>('IEventBus')
     ) as unknown as IDataCollectionService
-  }), ServiceLifetime.SCOPED)
+  }, ServiceLifetime.SCOPED)
 
   // Company Analysis Service
-  container.registerFactory<ICompanyAnalysisService>('ICompanyAnalysisService', ((c: IContainer) => {
+  container.registerFactory<ICompanyAnalysisService>('ICompanyAnalysisService', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     return new CompanyAnalysisService(
-      c.resolve<Map<string, DataSourceProvider>>('DataSourceProviders'),
+      c.resolve<Map<string, IDataSourceProvider>>('DataSourceProviders'),
       c.resolve<ICacheService>('ICacheService')
     ) as unknown as ICompanyAnalysisService
-  }), ServiceLifetime.SCOPED)
+  }, ServiceLifetime.SCOPED)
 
   // Scan Orchestration Service (replaces ScanningEngine)
-  container.registerFactory<IScanOrchestrationService>('IScanOrchestrationService', ((c: IContainer) => {
+  container.registerFactory<IScanOrchestrationService>('IScanOrchestrationService', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     return new ScanOrchestrationService(
       c.resolve<IDataCollectionService>('IDataCollectionService'),
       c.resolve<ICompanyAnalysisService>('ICompanyAnalysisService'),
@@ -159,14 +185,15 @@ export function registerServices(
       c.resolve<IScanRepository>('IScanRepository'),
       c.resolve<IEventBus>('IEventBus')
     ) as unknown as IScanOrchestrationService
-  }))
+  })
 
   // ============================================================================
   // USE CASE LAYER
   // ============================================================================
-  
+
   // Execute Scan Use Case
-  container.registerScoped<UseCase<ExecuteScanInput, ExecuteScanOutput>>('ExecuteScanUseCase', ((c: IContainer) => {
+  container.registerFactory<UseCase<ExecuteScanInput, ExecuteScanOutput>>('ExecuteScanUseCase', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     return new ExecuteScanUseCase(
       c.resolve<IScanRepository>('IScanRepository'),
       c.resolve<ICompanyRepository>('ICompanyRepository'),
@@ -174,22 +201,23 @@ export function registerServices(
       c.resolve<ICompanyAnalysisService>('ICompanyAnalysisService'),
       c.resolve<ICostManagementService>('ICostManagementService'),
       c.resolve<IEventBus>('IEventBus')
-    )
-  }))
+    ) as unknown as UseCase<ExecuteScanInput, ExecuteScanOutput>
+  }, ServiceLifetime.SCOPED)
 
   // ============================================================================
   // HEALTH CHECKS AND MONITORING
   // ============================================================================
-  
-  container.registerSingleton('HealthCheckService', ((c: IContainer) => {
+
+  container.registerFactory('HealthCheckService', (...args: unknown[]) => {
+    const c = args[0] as IContainer
     return new HealthCheckService(
       c.resolve<IScanRepository>('IScanRepository'),
       c.resolve<ICompanyRepository>('ICompanyRepository'),
       c.resolve<ICacheService>('ICacheService'),
       c.resolve<IRateLimitingService>('IRateLimitingService'),
-      c.resolve<Map<string, DataSourceProvider>>('DataSourceProviders')
+      c.resolve<Map<string, IDataSourceProvider>>('DataSourceProviders')
     )
-  }))
+  }, ServiceLifetime.SINGLETON)
 }
 
 /**
@@ -201,7 +229,7 @@ class HealthCheckService {
     private readonly companyRepository: ICompanyRepository,
     private readonly cacheService: ICacheService,
     private readonly rateLimitingService: IRateLimitingService,
-    private readonly dataSourceProviders: Map<string, DataSourceProvider>
+    private readonly dataSourceProviders: Map<string, IDataSourceProvider>
   ) {}
 
   async checkHealth(): Promise<HealthCheckResult> {
@@ -278,16 +306,33 @@ export interface ContainerDependencies {
 }
 
 // Type definitions for external dependencies
+interface QueryResult {
+  rows: Array<Record<string, unknown>>
+  rowCount?: number
+}
+
 type DatabaseClient = {
-  from: (table: string) => unknown
+  query: (sql: string, params: unknown[]) => Promise<QueryResult>
+  from?: (table: string) => unknown
   [key: string]: unknown
 }
 
 type RedisClient = {
   get: (key: string) => Promise<string | null>
-  set: (key: string, value: string, ttl?: number) => Promise<void>
+  set: (key: string, value: string, ex?: number) => Promise<void>
+  del: (...keys: string[]) => Promise<void>
+  setex: (key: string, seconds: number, value: string) => Promise<void>
+  sadd: (key: string, ...members: string[]) => Promise<number>
+  smembers: (key: string) => Promise<string[]>
+  expire: (key: string, seconds: number) => Promise<number>
+  keys: (pattern: string) => Promise<string[]>
+  exists: (...keys: string[]) => Promise<number>
+  mget: (...keys: string[]) => Promise<(string | null)[]>
+  incr: (key: string) => Promise<number>
+  pipeline: () => unknown
+  info: (section?: string) => Promise<string>
   [key: string]: unknown
-} | null
+}
 
 type DataSourceProvider = {
   search?: (query: unknown) => Promise<unknown>

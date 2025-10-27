@@ -1521,37 +1521,232 @@ export interface Database {
           id: string
           stream_id: string
           item_type: string
-          item_id: string | null
-          position: number
+          business_id: string | null
+          list_id: string | null
+          research_id: string | null
+          title: string
+          description: string | null
+          content: Json
           stage_id: string | null
-          metadata: Json | null
-          created_by: string
+          priority: string
+          tags: string[]
+          assigned_to: string | null
+          due_date: string | null
+          completion_percentage: number
+          status: string
+          position: number
+          metadata: Json
+          added_by: string
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          stream_id: string
+          item_type: string
+          business_id?: string | null
+          list_id?: string | null
+          research_id?: string | null
+          title: string
+          description?: string | null
+          content?: Json
+          stage_id?: string | null
+          priority?: string
+          tags?: string[]
+          assigned_to?: string | null
+          due_date?: string | null
+          completion_percentage?: number
+          status?: string
+          position?: number
+          metadata?: Json
+          added_by: string
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          stream_id?: string
+          item_type?: string
+          business_id?: string | null
+          list_id?: string | null
+          research_id?: string | null
+          title?: string
+          description?: string | null
+          content?: Json
+          stage_id?: string | null
+          priority?: string
+          tags?: string[]
+          assigned_to?: string | null
+          due_date?: string | null
+          completion_percentage?: number
+          status?: string
+          position?: number
+          metadata?: Json
+          added_by?: string
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+        }
+      }
+      stream_activities: {
+        Row: {
+          id: string
+          stream_id: string
+          user_id: string
+          activity_type: string
+          target_type: string | null
+          target_id: string | null
+          description: string
+          metadata: Json
+          is_system: boolean
+          importance: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          stream_id: string
+          user_id: string
+          activity_type: string
+          target_type?: string | null
+          target_id?: string | null
+          description: string
+          metadata?: Json
+          is_system?: boolean
+          importance?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          stream_id?: string
+          user_id?: string
+          activity_type?: string
+          target_type?: string | null
+          target_id?: string | null
+          description?: string
+          metadata?: Json
+          is_system?: boolean
+          importance?: string
+          created_at?: string
+        }
+      }
+      stream_comments: {
+        Row: {
+          id: string
+          stream_id: string
+          item_id: string | null
+          content: string
+          content_html: string | null
+          parent_comment_id: string | null
+          thread_id: string | null
+          mentioned_users: string[]
+          reactions: Json
+          is_edited: boolean
+          edited_at: string | null
+          is_resolved: boolean
+          resolved_by: string | null
+          resolved_at: string | null
+          author_id: string
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           stream_id: string
-          item_type: string
           item_id?: string | null
-          position?: number
-          stage_id?: string | null
-          metadata?: Json | null
-          created_by: string
+          content: string
+          content_html?: string | null
+          parent_comment_id?: string | null
+          thread_id?: string | null
+          mentioned_users?: string[]
+          reactions?: Json
+          is_edited?: boolean
+          edited_at?: string | null
+          is_resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          author_id: string
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           stream_id?: string
-          item_type?: string
           item_id?: string | null
-          position?: number
-          stage_id?: string | null
-          metadata?: Json | null
-          created_by?: string
+          content?: string
+          content_html?: string | null
+          parent_comment_id?: string | null
+          thread_id?: string | null
+          mentioned_users?: string[]
+          reactions?: Json
+          is_edited?: boolean
+          edited_at?: string | null
+          is_resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          author_id?: string
           created_at?: string
           updated_at?: string
+        }
+      }
+      stream_notifications: {
+        Row: {
+          id: string
+          stream_id: string
+          user_id: string
+          notification_type: string
+          title: string
+          body: string
+          action_url: string | null
+          item_id: string | null
+          comment_id: string | null
+          actor_id: string | null
+          priority: string
+          is_read: boolean
+          read_at: string | null
+          is_archived: boolean
+          delivered_via: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          stream_id: string
+          user_id: string
+          notification_type: string
+          title: string
+          body: string
+          action_url?: string | null
+          item_id?: string | null
+          comment_id?: string | null
+          actor_id?: string | null
+          priority?: string
+          is_read?: boolean
+          read_at?: string | null
+          is_archived?: boolean
+          delivered_via?: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          stream_id?: string
+          user_id?: string
+          notification_type?: string
+          title?: string
+          body?: string
+          action_url?: string | null
+          item_id?: string | null
+          comment_id?: string | null
+          actor_id?: string | null
+          priority?: string
+          is_read?: boolean
+          read_at?: string | null
+          is_archived?: boolean
+          delivered_via?: string[]
+          created_at?: string
         }
       }
       api_audit_log: {
@@ -2118,30 +2313,87 @@ export interface Database {
       lead_scores: {
         Row: {
           id: string
-          company_id: string
-          user_id: string
+          company_id: string | null
+          company_number: string | null
+          company_name: string
           overall_score: number
-          metadata: Json | null
+          financial_health_score: number
+          technology_fit_score: number
+          industry_alignment_score: number
+          growth_indicator_score: number
+          engagement_score: number
+          score_breakdown: Json
+          confidence_level: string
+          scoring_metadata: Json
+          financial_factors: Json
+          technology_factors: Json
+          industry_factors: Json
+          growth_factors: Json
+          engagement_factors: Json
+          last_calculated_at: string
           created_at: string
           updated_at: string
+          ai_analysis: Json | null
+          ai_model_used: string | null
+          ai_confidence: string | null
+          ai_reasoning: string | null
+          use_ai_scoring: boolean | null
         }
         Insert: {
           id?: string
-          company_id: string
-          user_id: string
-          overall_score: number
-          metadata?: Json | null
+          company_id?: string | null
+          company_number?: string | null
+          company_name: string
+          overall_score?: number
+          financial_health_score?: number
+          technology_fit_score?: number
+          industry_alignment_score?: number
+          growth_indicator_score?: number
+          engagement_score?: number
+          score_breakdown?: Json
+          confidence_level?: string
+          scoring_metadata?: Json
+          financial_factors?: Json
+          technology_factors?: Json
+          industry_factors?: Json
+          growth_factors?: Json
+          engagement_factors?: Json
+          last_calculated_at?: string
           created_at?: string
           updated_at?: string
+          ai_analysis?: Json | null
+          ai_model_used?: string | null
+          ai_confidence?: string | null
+          ai_reasoning?: string | null
+          use_ai_scoring?: boolean | null
         }
         Update: {
           id?: string
-          company_id?: string
-          user_id?: string
+          company_id?: string | null
+          company_number?: string | null
+          company_name?: string
           overall_score?: number
-          metadata?: Json | null
+          financial_health_score?: number
+          technology_fit_score?: number
+          industry_alignment_score?: number
+          growth_indicator_score?: number
+          engagement_score?: number
+          score_breakdown?: Json
+          confidence_level?: string
+          scoring_metadata?: Json
+          financial_factors?: Json
+          technology_factors?: Json
+          industry_factors?: Json
+          growth_factors?: Json
+          engagement_factors?: Json
+          last_calculated_at?: string
           created_at?: string
           updated_at?: string
+          ai_analysis?: Json | null
+          ai_model_used?: string | null
+          ai_confidence?: string | null
+          ai_reasoning?: string | null
+          use_ai_scoring?: boolean | null
         }
       }
       meddic_qualifications: {
@@ -2189,6 +2441,268 @@ export interface Database {
           metadata?: Json | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      scoring_criteria: {
+        Row: {
+          id: string
+          org_id: string
+          criteria_name: string
+          criteria_type: string
+          weight: number
+          thresholds: Json
+          custom_rules: Json
+          scoring_formula: string | null
+          data_sources: string[]
+          required_fields: string[]
+          optional_fields: string[]
+          is_active: boolean
+          description: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          criteria_name: string
+          criteria_type: string
+          weight?: number
+          thresholds?: Json
+          custom_rules?: Json
+          scoring_formula?: string | null
+          data_sources?: string[]
+          required_fields?: string[]
+          optional_fields?: string[]
+          is_active?: boolean
+          description?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          criteria_name?: string
+          criteria_type?: string
+          weight?: number
+          thresholds?: Json
+          custom_rules?: Json
+          scoring_formula?: string | null
+          data_sources?: string[]
+          required_fields?: string[]
+          optional_fields?: string[]
+          is_active?: boolean
+          description?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      scoring_alerts: {
+        Row: {
+          id: string
+          org_id: string
+          alert_name: string
+          alert_type: string | null
+          is_active: boolean
+          criteria: Json
+          notification_channels: string[]
+          recipients: string[]
+          last_triggered_at: string | null
+          trigger_count: number
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          alert_name: string
+          alert_type?: string | null
+          is_active?: boolean
+          criteria: Json
+          notification_channels?: string[]
+          recipients?: string[]
+          last_triggered_at?: string | null
+          trigger_count?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          alert_name?: string
+          alert_type?: string | null
+          is_active?: boolean
+          criteria?: Json
+          notification_channels?: string[]
+          recipients?: string[]
+          last_triggered_at?: string | null
+          trigger_count?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      system_alerts: {
+        Row: {
+          id: string
+          severity: string
+          category: string
+          title: string
+          message: string
+          error_stack: string | null
+          context: Json
+          source_service: string
+          source_endpoint: string | null
+          source_method: string | null
+          affected_users: string[] | null
+          status: string
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolution_notes: string | null
+          channels_notified: string[] | null
+          notification_sent_at: string | null
+          notification_failed: boolean
+          notification_error: string | null
+          fingerprint: string | null
+          occurrence_count: number
+          first_occurred_at: string
+          last_occurred_at: string
+          tags: string[] | null
+          related_alert_ids: string[] | null
+          runbook_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          severity: string
+          category: string
+          title: string
+          message: string
+          error_stack?: string | null
+          context?: Json
+          source_service: string
+          source_endpoint?: string | null
+          source_method?: string | null
+          affected_users?: string[] | null
+          status?: string
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolution_notes?: string | null
+          channels_notified?: string[] | null
+          notification_sent_at?: string | null
+          notification_failed?: boolean
+          notification_error?: string | null
+          fingerprint?: string | null
+          occurrence_count?: number
+          first_occurred_at?: string
+          last_occurred_at?: string
+          tags?: string[] | null
+          related_alert_ids?: string[] | null
+          runbook_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          severity?: string
+          category?: string
+          title?: string
+          message?: string
+          error_stack?: string | null
+          context?: Json
+          source_service?: string
+          source_endpoint?: string | null
+          source_method?: string | null
+          affected_users?: string[] | null
+          status?: string
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolution_notes?: string | null
+          channels_notified?: string[] | null
+          notification_sent_at?: string | null
+          notification_failed?: boolean
+          notification_error?: string | null
+          fingerprint?: string | null
+          occurrence_count?: number
+          first_occurred_at?: string
+          last_occurred_at?: string
+          tags?: string[] | null
+          related_alert_ids?: string[] | null
+          runbook_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      alert_configurations: {
+        Row: {
+          id: string
+          config_key: string
+          config_value: Json
+          description: string | null
+          enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          config_key: string
+          config_value: Json
+          description?: string | null
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          config_key?: string
+          config_value?: Json
+          description?: string | null
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      alert_history: {
+        Row: {
+          id: string
+          alert_id: string
+          action: string
+          actor_id: string | null
+          previous_state: Json | null
+          new_state: Json | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          alert_id: string
+          action: string
+          actor_id?: string | null
+          previous_state?: Json | null
+          new_state?: Json | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          alert_id?: string
+          action?: string
+          actor_id?: string | null
+          previous_state?: Json | null
+          new_state?: Json | null
+          notes?: string | null
+          created_at?: string
         }
       }
       // Alias tables - these reference different names used in code vs actual table names

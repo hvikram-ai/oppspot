@@ -9,6 +9,25 @@ import type { Database } from '@/types/database'
 type AgentExecution = Database['public']['Tables']['agent_executions']['Row']
 type AIAgent = Database['public']['Tables']['ai_agents']['Row']
 
+// Query result types for properly typed Supabase queries
+type ExecutionStatsRow = Pick<AgentExecution, 'status' | 'duration_ms'>
+type AgentRow = Pick<AIAgent, 'id' | 'is_active'>
+type AgentBasicRow = Pick<AIAgent, 'id' | 'name' | 'agent_type'>
+type ExecutionFullRow = Pick<AgentExecution, 'status' | 'duration_ms' | 'completed_at' | 'metrics'>
+type ExecutionHistoryRow = Pick<
+  AgentExecution,
+  'id' | 'agent_id' | 'status' | 'started_at' | 'completed_at' | 'duration_ms' | 'error_message' | 'metrics'
+> & {
+  ai_agents: Pick<AIAgent, 'name' | 'agent_type'>
+}
+type ExecutionErrorRow = Pick<AgentExecution, 'id' | 'agent_id' | 'error_message' | 'completed_at'> & {
+  ai_agents: Pick<AIAgent, 'name' | 'agent_type'>
+}
+type ExecutionTimeSeriesRow = Pick<AgentExecution, 'status' | 'duration_ms' | 'created_at'>
+type ExecutionCostRow = Pick<AgentExecution, 'id' | 'agent_id' | 'metrics' | 'created_at'> & {
+  ai_agents: Pick<AIAgent, 'id' | 'name'>
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -123,6 +142,7 @@ export class AgentAnalyticsService {
       .select('status, duration_ms')
       .eq('org_id', orgId)
       .gte('created_at', startDate.toISOString())
+      .returns<ExecutionStatsRow[]>()
 
     if (execError) {
       console.error('[AgentAnalytics] Error fetching executions:', execError)
@@ -144,6 +164,7 @@ export class AgentAnalyticsService {
       .from('ai_agents')
       .select('id, is_active')
       .eq('org_id', orgId)
+      .returns<AgentRow[]>()
 
     if (agentsError) {
       console.error('[AgentAnalytics] Error fetching agents:', agentsError)
@@ -183,6 +204,7 @@ export class AgentAnalyticsService {
       .from('ai_agents')
       .select('id, name, agent_type')
       .eq('org_id', orgId)
+      .returns<AgentBasicRow[]>()
 
     if (agentsError) throw agentsError
 
@@ -195,6 +217,7 @@ export class AgentAnalyticsService {
         .select('status, duration_ms, completed_at, metrics')
         .eq('agent_id', agent.id)
         .gte('created_at', startDate.toISOString())
+        .returns<ExecutionFullRow[]>()
 
       if (execError) continue
 
@@ -281,23 +304,26 @@ export class AgentAnalyticsService {
       query = query.eq('agent_id', agentId)
     }
 
-    const { data, error } = await query
+    const { data, error } = await query.returns<ExecutionHistoryRow[]>()
 
     if (error) throw error
 
-    return (data || []).map((item: any) => ({
-      id: item.id,
-      agentId: item.agent_id,
-      agentName: item.ai_agents.name,
-      agentType: item.ai_agents.agent_type,
-      status: item.status,
-      startedAt: item.started_at,
-      completedAt: item.completed_at,
-      durationMs: item.duration_ms,
-      errorMessage: item.error_message,
-      tokensUsed: item.metrics?.tokens_used,
-      itemsProcessed: item.metrics?.items_processed,
-    }))
+    return (data || []).map((item) => {
+      const metrics = item.metrics as Record<string, unknown> | null
+      return {
+        id: item.id,
+        agentId: item.agent_id,
+        agentName: item.ai_agents.name,
+        agentType: item.ai_agents.agent_type,
+        status: item.status,
+        startedAt: item.started_at,
+        completedAt: item.completed_at,
+        durationMs: item.duration_ms,
+        errorMessage: item.error_message,
+        tokensUsed: typeof metrics?.tokens_used === 'number' ? metrics.tokens_used : undefined,
+        itemsProcessed: typeof metrics?.items_processed === 'number' ? metrics.items_processed : undefined,
+      }
+    })
   }
 
   /**
@@ -330,6 +356,7 @@ export class AgentAnalyticsService {
       .eq('org_id', orgId)
       .eq('status', 'failed')
       .gte('created_at', startDate.toISOString())
+      .returns<ExecutionErrorRow[]>()
 
     if (error) throw error
 
@@ -356,7 +383,7 @@ export class AgentAnalyticsService {
       const errorInfo = errorMap.get(key)!
       errorInfo.count++
 
-      const agentName = (exec as any).ai_agents?.name
+      const agentName = exec.ai_agents?.name
       if (agentName && !errorInfo.affectedAgents.includes(agentName)) {
         errorInfo.affectedAgents.push(agentName)
       }
@@ -393,6 +420,7 @@ export class AgentAnalyticsService {
       .eq('org_id', orgId)
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: true })
+      .returns<ExecutionTimeSeriesRow[]>()
 
     if (error) throw error
 
@@ -458,6 +486,7 @@ export class AgentAnalyticsService {
       )
       .eq('org_id', orgId)
       .gte('created_at', startDate.toISOString())
+      .returns<ExecutionCostRow[]>()
 
     if (error) throw error
 
@@ -473,7 +502,7 @@ export class AgentAnalyticsService {
 
       // By agent
       const agentId = exec.agent_id
-      const agentName = (exec as any).ai_agents?.name || 'Unknown'
+      const agentName = exec.ai_agents?.name || 'Unknown'
       if (!costByAgent.has(agentId)) {
         costByAgent.set(agentId, { agentName, tokensUsed: 0 })
       }
