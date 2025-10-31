@@ -6,8 +6,14 @@
 import { Resend } from 'resend';
 import { FeedbackEmailTemplates } from './email-templates';
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend client with graceful fallback
+const resendApiKey = process.env.RESEND_API_KEY || 'dummy_key_for_build';
+const resend = new Resend(resendApiKey);
+
+// Check if email is properly configured
+const isEmailConfigured = () => {
+  return process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'dummy_key_for_build';
+};
 
 export class FeedbackNotificationService {
   /**
@@ -44,6 +50,11 @@ export class FeedbackNotificationService {
     affectedFeature?: string;
     isPublic: boolean;
   }): Promise<void> {
+    if (!isEmailConfigured()) {
+      console.log('[Feedback] Email not configured, skipping admin notification');
+      return;
+    }
+
     try {
       const actionUrl = `${this.getBaseUrl()}/admin/feedback?highlight=${data.feedbackId}`;
 
@@ -84,6 +95,11 @@ export class FeedbackNotificationService {
     referenceId: string;
     isPublic: boolean;
   }): Promise<void> {
+    if (!isEmailConfigured()) {
+      console.log('[Feedback] Email not configured, skipping user confirmation');
+      return;
+    }
+
     try {
       const actionUrl = data.isPublic
         ? `${this.getBaseUrl()}/feedback/${data.feedbackId}`
@@ -124,6 +140,11 @@ export class FeedbackNotificationService {
     newStatus: string;
     adminResponse?: string;
   }): Promise<void> {
+    if (!isEmailConfigured()) {
+      console.log('[Feedback] Email not configured, skipping status update');
+      return;
+    }
+
     try {
       const actionUrl = `${this.getBaseUrl()}/feedback/${data.feedbackId}`;
 
@@ -159,6 +180,11 @@ export class FeedbackNotificationService {
     commenterName: string;
     commentText: string;
   }): Promise<void> {
+    if (!isEmailConfigured()) {
+      console.log('[Feedback] Email not configured, skipping comment notifications');
+      return;
+    }
+
     try {
       const actionUrl = `${this.getBaseUrl()}/feedback/${data.feedbackId}`;
 
@@ -197,6 +223,11 @@ export class FeedbackNotificationService {
     feedbackTitle: string;
     voteCount: number;
   }): Promise<void> {
+    if (!isEmailConfigured()) {
+      console.log('[Feedback] Email not configured, skipping milestone notification');
+      return;
+    }
+
     try {
       const actionUrl = `${this.getBaseUrl()}/feedback/${data.feedbackId}`;
 
@@ -231,6 +262,11 @@ export class FeedbackNotificationService {
     pendingCount: number;
     topFeedback: Array<{ title: string; votes: number; url: string }>;
   }): Promise<void> {
+    if (!isEmailConfigured()) {
+      console.log('[Feedback] Email not configured, skipping weekly digest');
+      return;
+    }
+
     try {
       const actionUrl = `${this.getBaseUrl()}/admin/feedback`;
 
