@@ -173,7 +173,10 @@ export const ActivityLogSchema = z.object({
   actor_email: z.string().email(),
   action: ActivityActionSchema,
   details: z.record(z.unknown()),
-  ip_address: z.string().ip(),
+  ip_address: z.string().regex(
+    /^(\d{1,3}\.){3}\d{1,3}$|^([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$/i,
+    'Invalid IP address'
+  ).or(z.literal('127.0.0.1')),
   user_agent: z.string(),
   created_at: z.string().datetime(),
 });

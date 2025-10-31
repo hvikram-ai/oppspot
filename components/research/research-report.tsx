@@ -14,10 +14,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Download, RefreshCw, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { SaveToCollectionButton } from '@/components/collections/save-to-collection-button';
 
 interface ResearchReportProps {
   report: {
     id: string;
+    business_id?: string;
     company_name: string;
     status: string;
     confidence_score: number;
@@ -67,6 +69,16 @@ export function ResearchReport({ report, onRefresh, onExport }: ResearchReportPr
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          {report.business_id && (
+            <SaveToCollectionButton
+              itemType="research"
+              itemId={report.id}
+              variant="outline"
+              size="sm"
+              className="h-9"
+              showLabel={true}
+            />
+          )}
           {onRefresh && (
             <Button variant="outline" size="sm" onClick={onRefresh} className="h-9">
               <RefreshCw className="mr-2 h-4 w-4" />

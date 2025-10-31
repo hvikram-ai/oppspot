@@ -8,6 +8,154 @@ Demo123456!
   - 🟡 Documentation - Some services lack inline docs
   - 🟡 Mobile UX - Desktop-first design needs mobile polish
 
+
+------------------
+
+
+  Immediate Priority (Pick One):
+
+  Option A: 
+
+
+
+  Option C:
+
+  17. Team Intelligence Workspace
+  - Shared boards for investment theses, due diligence, and research
+  projects
+  - Collaborative annotations on companies, trials, and deals
+  - Task assignment and workflow management
+  - Integration with Slack, Teams, and email
+  - Version control for research documents
+  - Groundbreaking because: Transforms app from tool to platform
+
+  18. Automated Due Diligence Generator
+  - AI generates comprehensive due diligence reports on any company
+  - Pulls data from: trials, publications, patents, financials, competitive
+  landscape
+  - SWOT analysis, risk assessment, valuation benchmarking
+  - Customizable templates for different deal types (M&A, licensing,
+  investment)
+  - Groundbreaking because: Reduces 40-hour DD process to 40 minutes
+
+  19. Investment Thesis Builder & Tracker
+  - Structured framework for documenting investment hypotheses
+  - Track thesis evolution over time with version history
+  - Link thesis to key milestones and risk factors
+  - Alert when thesis-critical events occur
+  - Portfolio tracking for investors
+  - Groundbreaking because: Systematic investment process management
+
+  13. Company Relationship Network Graph
+  - Interactive network visualization of company connections
+  - Relationships: partnerships, deals, shared investors, shared KOLs,
+  licensing
+  - Identify "hidden" connections and potential partners
+  - Community detection algorithm finds company clusters
+  - Groundbreaking because: Reveals non-obvious strategic opportunities
+
+---------------------------
+1. Fix Test Configuration
+  # Set environment variable to match dev server port
+  export PLAYWRIGHT_BASE_URL=http://localhost:3000
+  Or update playwright.config.ts to default to port 3000 instead of 3009.
+
+  2. Verify Database Schema
+  Check which migrations are actually applied to Supabase production
+  database. The presence of 8 migration files suggests
+  iteration/troubleshooting. Need to:
+  - Identify the correct/latest migration to use
+  - Verify tables collections, collection_items, collection_access exist
+  - Verify active_collection_id column added to profiles table
+  - Clean up unused migration files
+
+  3. Run Tests to Validate API
+  Once port is fixed and DB is confirmed:
+  PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test
+  tests/e2e/collections-api.spec.ts
+
+  SHORT TERM (High Value - 2-3 hours)
+
+  4. Add SaveToCollectionButton to Business Pages
+  File: app/business/[id]/page.tsx or
+  components/business/business-actions.tsx
+  import { SaveToCollectionButton } from '@/components/collections'
+
+  // Add in business header/actions area:
+  <SaveToCollectionButton
+    itemType="business"
+    itemId={business.id}
+    variant="outline"
+    size="sm"
+  />
+
+  5. Add SaveToCollectionButton to Research Reports
+  File: components/research/research-report.tsx
+  <SaveToCollectionButton
+    itemType="report"
+    itemId={reportId}
+    variant="outline"
+    size="sm"
+  />
+
+  6. Integration Testing
+  - Test full workflow: Create collection → Save business → View in
+  collection
+  - Test sharing workflow
+  - Test archive/restore workflow
+
+  CLEANUP (Production Ready - 1-2 hours)
+
+  7. Database Migration Cleanup
+  - Consolidate to single, final migration file
+  - Remove 7 experimental/duplicate migration files
+  - Document which migration is the canonical one
+
+  8. Documentation Updates
+  - Update COLLECTIONS_IMPLEMENTATION.md with final status
+  - Add usage examples to CLAUDE.md
+  - Create user-facing documentation
+
+  9. Final Validation
+  # Run all tests
+  npm run test:e2e:collections
+
+  # Type check
+  npx tsc --noEmit
+
+  # Lint
+  npm run lint
+
+  Recommended Execution Order
+
+  1.  
+  2. Verify database migrations applied (10 min)
+  3. Run tests to validate API (15 min)
+  4. Add SaveToCollectionButton to business pages (45 min)
+  5. Add SaveToCollectionButton to research pages (30 min)
+  6. End-to-end integration testing (30 min)
+  7. Clean up migration files (20 min)
+  8. Update documentation (30 min)
+  9. Final validation and deploy (30 min)
+---------------------------------
+
+  3. Move to next feature:
+    - Command Center Dashboard (0/100 tasks) -
+  specs/004-command-center-dashboard-redesign/
+    - Data Room AI Due Diligence (0/94 tasks) -
+  specs/005-data-room-ai-due-diligence/
+
+
+
+
+
+
+
+
+
+---------------------
+
+
   1. 
   2. Add more example protected API routes
   3. Create E2E tests for the RBAC system
@@ -15,6 +163,16 @@ Demo123456!
 
 -------------------
 
+  1. Quick wins (2-3 hours):
+  
+  2. High-impact cleanup (1 week):
+    - Fix top 5 worst any files
+    - Continue TS2339 error reduction
+  3. Full audit (analyze):
+    - Generate detailed error breakdown by file
+    - Prioritize by business impact
+  4. Just keep shipping:
+    - Current debt is managed, continue incremental fixes
 
 
 

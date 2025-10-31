@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Data Room Q&A - Export & Delete API
+  description: Export query history (GDPR data portability) and delete queries (GDPR right to erasure)
+  version: 1.0.0
+
+paths:
+  /api/data-room/{dataRoomId}/export:
+    get:
+      summary: Export query history
+      description: |
+        Generate a downloadable export of user's query history in CSV or JSON format.
+        Supports GDPR data portability requirement (FR-022b).
+
+      parameters:
+        - name: dataRoomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+
+      responses:
+        '200':
+          description: Export file generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url:
+                    type: string
+                    format: uri
+                    description: Signed URL for download (expires in 1 hour)
+
+                  expires_at:
+                    type: string
+                    format: date-time
+
+                  file_size_bytes:
+                    type: integer
+
+              example:
+                download_url: "https://storage.supabase.co/..."
+                expires_at: "2025-01-29T16:00:00Z"
+                file_size_bytes: 524288
+
+            text/csv:
+              schema:
+                type: string
+              example: |
+                question,answer,created_at,documents_cited
+                "What are revenue projections?","Based on financial projections...","2025-01-29T14:30:00Z","Financial Projections Q3.pdf"
+
+        '401':
+          $ref: 'query-api.yaml#/components/responses/Unauthorized'
+
+  /api/data-room/{dataRoomId}/history:
+    delete:
+      summary: Delete query history
+      description: |
+        Delete individual queries or entire query history for GDPR right to erasure (FR-022a).
+        Cascades to citations and feedback.
+
+      parameters:
+        - name: dataRoomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Specific queries to delete (if omitted, deletes ALL queries in this data room)
+
+      responses:
+        '200':
+          description: Queries deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted_count:
+                    type: integer
+                    description: Number of queries deleted
+
+              example:
+                deleted_count: 42
+
+        '401':
+          $ref: 'query-api.yaml#/components/responses/Unauthorized'
+
+        '403':
+          description: Cannot delete queries from other users
+
+security:
+  - bearerAuth: []

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import PredictionScoreBadge from '@/components/ma-prediction/prediction-score-badge'
 
 interface Business {
   id: string
@@ -40,6 +41,10 @@ interface Business {
   distance?: number
   relevance_score?: number
   verified?: boolean
+  ma_prediction?: {
+    prediction_score: number
+    likelihood_category: string
+  }
 }
 
 interface SearchResultsProps {
@@ -188,8 +193,16 @@ export function SearchResults({
                           <span>{business.rating.toFixed(1)}</span>
                         </div>
                       )}
+                      {business.ma_prediction && (
+                        <div className="ml-2">
+                          <PredictionScoreBadge
+                            score={business.ma_prediction.prediction_score}
+                            size="sm"
+                          />
+                        </div>
+                      )}
                     </div>
-                    
+
                     {business.description && (
                       <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                         {business.description}

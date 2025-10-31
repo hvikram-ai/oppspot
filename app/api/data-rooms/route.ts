@@ -17,17 +17,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    console.log('[Data Rooms API] User:', user.id, user.email)
+
     // Get query params
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || 'active'
 
     // Fetch data rooms with access info
+    // Note: LEFT JOIN (no !inner) to include rooms user owns without explicit access records
     const { data: dataRooms, error } = await supabase
       .from('data_rooms')
       .select(`
         *,
         profiles!data_rooms_user_id_fkey(name, email),
-        data_room_access!inner(permission_level)
+        data_room_access(permission_level)
       `)
       .eq('status', status)
       .order('created_at', { ascending: false }) as any as {
@@ -38,6 +41,17 @@ export async function GET(request: NextRequest) {
         }> | null
         error: { message: string } | null
       }
+
+    console.log('[Data Rooms API] Raw query result:', {
+      count: dataRooms?.length || 0,
+      error: error?.message,
+      sampleRoom: dataRooms?.[0] ? {
+        id: dataRooms[0].id,
+        name: dataRooms[0].name,
+        user_id: dataRooms[0].user_id,
+        status: dataRooms[0].status
+      } : null
+    })
 
     if (error) {
       console.error('[Data Rooms API] List error:', error)
@@ -51,6 +65,11 @@ export async function GET(request: NextRequest) {
       my_permission: room.data_room_access?.[0]?.permission_level ||
                      (room.user_id === user.id ? 'owner' : null)
     })) || []
+
+    console.log('[Data Rooms API] Returning:', {
+      count: rooms.length,
+      userMatches: rooms.filter(r => r.user_id === user.id).length
+    })
 
     return NextResponse.json({
       success: true,

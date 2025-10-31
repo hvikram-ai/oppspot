@@ -29,6 +29,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { useDemoMode } from '@/lib/demo/demo-context'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
 import { GoalBasedNav } from '@/components/navigation/goal-based-nav'
+import { CollectionSelector } from '@/components/collections'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -109,10 +110,18 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Right Section: Theme Toggle + Notifications + User Menu */}
+          {/* Right Section: Collections + Theme Toggle + Notifications + User Menu */}
           <div className="flex items-center gap-2">
             {user ? (
               <>
+                <div className="hidden md:block">
+                  <CollectionSelector
+                    onCreateCollection={() => router.push('/collections')}
+                    onManageCollections={() => router.push('/collections')}
+                    variant="ghost"
+                    size="sm"
+                  />
+                </div>
                 <ThemeToggle />
                 <NotificationBell />
                 <DropdownMenu>

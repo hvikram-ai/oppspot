@@ -1,39 +1,22 @@
 /**
  * Metadata Extractor
- * AI-powered extraction of structured metadata from documents
+ * AI-powered extraction of structured metadata from documents using LLM Manager
  */
 
 import { DocumentType, DocumentMetadata } from '../types';
+import { getUserLLMManager } from '@/lib/ai/llm-client-wrapper';
 
-interface OpenRouterResponse {
-  choices: {
-    message: {
-      content: string;
-    };
-  }[];
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
 
 /**
- * MetadataExtractor - Extracts structured metadata using AI
+ * MetadataExtractor - Extracts structured metadata using AI via LLM Manager
  */
 export class MetadataExtractor {
-  private apiKey: string;
+  private userId: string;
   private model: string;
-  private baseUrl: string;
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
+  constructor(userId: string = 'system') {
+    this.userId = userId;
     this.model = 'anthropic/claude-3.5-sonnet'; // Claude Sonnet 3.5 for accuracy
-    this.baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
-
-    if (!this.apiKey) {
-      throw new Error('OPENROUTER_API_KEY is required for metadata extraction');
-    }
   }
 
   /**
@@ -46,6 +29,8 @@ export class MetadataExtractor {
     text: string,
     documentType: DocumentType
   ): Promise<DocumentMetadata> {
+    const manager = await getUserLLMManager(this.userId);
+
     try {
       // Truncate text if too long (keep first 15k characters for metadata extraction)
       const truncatedText = text.slice(0, 15000);
@@ -53,42 +38,26 @@ export class MetadataExtractor {
       const systemPrompt = this.getSystemPrompt(documentType);
       const userPrompt = `Extract structured metadata from this ${documentType} document:\n\n${truncatedText}`;
 
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://oppspot.ai',
-          'X-Title': 'oppSpot Data Room',
-        },
-        body: JSON.stringify({
+      // Use LLM Manager with automatic fallback
+      const response = await manager.chat(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        {
           model: this.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
           temperature: 0.1, // Low temperature for accurate extraction
-          max_tokens: 1500,
-          response_format: { type: 'json_object' },
-        }),
-      });
+          maxTokens: 1500,
+          feature: 'data-room', // Track usage under data-room feature
+        }
+      );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `OpenRouter API error (${response.status}): ${errorText}`
-        );
-      }
-
-      const data: OpenRouterResponse = await response.json();
-      const content = data.choices[0]?.message?.content;
-
-      if (!content) {
-        throw new Error('No response content from OpenRouter API');
+      if (!response.content) {
+        throw new Error('No response content from LLM');
       }
 
       // Parse JSON response
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(response.content);
 
       // Normalize and validate metadata
       const metadata = this.normalizeMetadata(parsed, documentType);
@@ -100,6 +69,8 @@ export class MetadataExtractor {
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
+    } finally {
+      await manager.cleanup();
     }
   }
 
@@ -399,4 +370,13 @@ Extract any dates, amounts, and parties mentioned in the document.`,
 
     return results;
   }
+}
+
+/**
+ * Factory function to get a MetadataExtractor instance
+ * @param userId - User ID for per-user LLM configuration
+ * @returns MetadataExtractor instance
+ */
+export function getMetadataExtractor(userId?: string): MetadataExtractor {
+  return new MetadataExtractor(userId || 'system');
 }

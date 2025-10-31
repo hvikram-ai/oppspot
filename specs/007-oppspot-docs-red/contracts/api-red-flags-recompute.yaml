@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: Red Flag Radar API - Recompute Flags
+  version: 1.0.0
+  description: Trigger detection run for an entity
+
+paths:
+  /api/{entityType}/{id}/red-flags/recompute:
+    post:
+      summary: Trigger detection run
+      operationId: recomputeRedFlags
+      description: Manually trigger detector execution (requires editor/admin role)
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [companies, data-rooms]
+
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                detectors:
+                  type: array
+                  items:
+                    type: string
+                    enum: [financial, legal, operational, cyber, esg]
+                  description: Optional - run specific detectors only (default all)
+                force:
+                  type: boolean
+                  default: false
+                  description: Force run even if recent run exists (<10min)
+
+      responses:
+        '202':
+          description: Detection run accepted (async execution)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - run_id
+                  - status
+                  - started_at
+                properties:
+                  run_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [running]
+                  started_at:
+                    type: string
+                    format: date-time
+                  estimated_duration_seconds:
+                    type: integer
+                    description: Estimated time to completion
+                  poll_url:
+                    type: string
+                    description: URL to check run status
+
+        '400':
+          description: Bad request (e.g., invalid detector name, recent run exists without force)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                recentRun:
+                  value:
+                    error: 'RECENT_RUN_EXISTS'
+                    message: 'A detection run was executed 3 minutes ago. Wait 7 minutes or use force=true.'
+                    details:
+                      last_run_id: '123e4567-e89b-12d3-a456-426614174000'
+                      last_run_started_at: '2025-10-29T10:30:00Z'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '403':
+          description: Forbidden - requires editor or admin role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: 'INSUFFICIENT_PERMISSIONS'
+                message: 'Recompute requires editor or admin role'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: 'RATE_LIMIT_EXCEEDED'
+                message: 'Maximum 10 concurrent runs per organization'
+                details:
+                  retry_after_seconds: 60
+
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/{entityType}/{id}/red-flags/runs/{runId}:
+    get:
+      summary: Get detection run status
+      operationId: getRunStatus
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [companies, data-rooms]
+
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      responses:
+        '200':
+          description: Run status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunStatus'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    RunStatus:
+      type: object
+      required:
+        - id
+        - entity_type
+        - entity_id
+        - started_at
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          enum: [company, data_room]
+        entity_id:
+          type: string
+          format: uuid
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        detector_version:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [running, success, partial, error]
+        stats:
+          type: object
+          nullable: true
+          properties:
+            detectors_ran:
+              type: integer
+            detectors_succeeded:
+              type: integer
+            detectors_failed:
+              type: integer
+            flags_detected:
+              type: integer
+            flags_new:
+              type: integer
+            flags_updated:
+              type: integer
+            duration_ms:
+              type: integer
+        errors:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              detector:
+                type: string
+              error:
+                type: string
+              message:
+                type: string
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

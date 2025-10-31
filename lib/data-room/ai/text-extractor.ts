@@ -3,7 +3,7 @@
  * Extract text from various document formats
  */
 
-import pdf from 'pdf-parse';
+import * as pdfParse from 'pdf-parse';
 
 export interface TextExtractionResult {
   text: string;
@@ -28,6 +28,8 @@ export async function extractTextFromPDF(
   buffer: Buffer
 ): Promise<TextExtractionResult> {
   try {
+    // @ts-ignore - pdf-parse is a CommonJS module
+    const pdf = pdfParse.default || pdfParse;
     const data = await pdf(buffer);
 
     const extractedText = data.text || '';

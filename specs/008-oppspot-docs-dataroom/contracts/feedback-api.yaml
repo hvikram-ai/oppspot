@@ -1,0 +1,72 @@
+openapi: 3.1.0
+info:
+  title: Data Room Q&A - Feedback API
+  description: Submit and update feedback on query answers
+  version: 1.0.0
+
+paths:
+  /api/data-room/{dataRoomId}/feedback:
+    post:
+      summary: Submit or update feedback on a query
+      description: |
+        Provide feedback on answer quality. Users can rate answers as helpful/not helpful
+        and optionally add comments. Per FR-023 and FR-024.
+
+      parameters:
+        - name: dataRoomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query_id
+                - rating
+              properties:
+                query_id:
+                  type: string
+                  format: uuid
+
+                rating:
+                  type: string
+                  enum: [helpful, not_helpful]
+
+                comment:
+                  type: string
+                  maxLength: 2000
+                  description: Optional detailed feedback (FR-024)
+
+      responses:
+        '200':
+          description: Feedback recorded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  feedback_id:
+                    type: string
+                    format: uuid
+
+        '400':
+          description: Invalid rating or comment too long
+
+        '401':
+          $ref: 'query-api.yaml#/components/responses/Unauthorized'
+
+        '404':
+          description: Query not found or not owned by user
+
+security:
+  - bearerAuth: []

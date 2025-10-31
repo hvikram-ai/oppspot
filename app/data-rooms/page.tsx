@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import type { DataRoom } from '@/lib/data-room/types'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
+import { useDemoMode } from '@/lib/demo/demo-context'
 
 interface DataRoomWithStats extends DataRoom {
   owner_name: string
@@ -34,6 +35,7 @@ interface DataRoomWithStats extends DataRoom {
 
 export default function DataRoomsPage() {
   const router = useRouter()
+  const { isDemoMode, demoData } = useDemoMode()
   const [dataRooms, setDataRooms] = useState<DataRoomWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -42,18 +44,45 @@ export default function DataRoomsPage() {
   const fetchDataRooms = useCallback(async () => {
     try {
       setLoading(true)
+
+      console.log('[Data Rooms Page] Fetching data rooms...', {
+        isDemoMode,
+        hasDemoDataRoom: !!demoData.dataRoom,
+        statusFilter
+      })
+
+      // In demo mode, show demo data room
+      if (isDemoMode && demoData.dataRoom) {
+        console.log('[Data Rooms Page] Using demo data:', demoData.dataRoom)
+        const demoRooms = [{
+          ...demoData.dataRoom,
+          owner_name: 'Demo User',
+          my_permission: 'owner'
+        } as DataRoomWithStats]
+        console.log('[Data Rooms Page] Setting demo rooms:', demoRooms)
+        setDataRooms(demoRooms)
+        return
+      }
+
+      console.log('[Data Rooms Page] Calling API...')
       const response = await fetch(`/api/data-rooms?status=${statusFilter}`)
       const result = await response.json()
+
+      console.log('[Data Rooms Page] API response:', {
+        success: result.success,
+        count: result.data?.length || 0,
+        error: result.error
+      })
 
       if (result.success) {
         setDataRooms(result.data)
       }
     } catch (error) {
-      console.error('Failed to fetch data rooms:', error)
+      console.error('[Data Rooms Page] Failed to fetch data rooms:', error)
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, isDemoMode, demoData.dataRoom])
 
   useEffect(() => {
     fetchDataRooms()

@@ -13,11 +13,33 @@
     },
     "app/api/companies/refresh/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/cron/ma-predictions/route.ts": {
+      "maxDuration": 600
+    },
+    "app/api/ma-predictions/batch/route.ts": {
+      "maxDuration": 600
     }
   },
   "crons": [
     {
       "path": "/api/companies/refresh",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/llm/health-check",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/llm/usage-aggregation",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/llm/quota-enforcement",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/ma-predictions",
       "schedule": "0 2 * * *"
     }
   ],

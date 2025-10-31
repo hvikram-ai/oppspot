@@ -337,6 +337,111 @@ const metadata = await extractor.extract(result.text, classification.document_ty
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY` - Service role key for Edge Functions
 
+### Data Room Q&A Copilot (Feature 008)
+
+**Location**: `lib/data-room/qa/`, `components/data-room/qa-*.tsx`, `app/api/data-room/[dataRoomId]/{query,history,feedback}/`
+
+AI-powered Q&A system for data room documents using Retrieval-Augmented Generation (RAG). Users ask natural language questions about uploaded PDFs and receive grounded answers with verifiable citations.
+
+**Architecture**:
+- **Vector Search** (`lib/data-room/qa/retrieval-service.ts`): Semantic search using pgvector
+- **Document Processing** (`lib/data-room/qa/document-chunker.ts`, `text-extractor.ts`): PDF chunking and embedding
+- **LLM Integration** (`lib/data-room/qa/qa-llm-client.ts`): Multi-provider LLM support via LLMManager
+- **Query Orchestration** (`lib/data-room/qa/query-service.ts`): End-to-end Q&A pipeline
+- **Rate Limiting** (`lib/data-room/qa/rate-limiter.ts`): 60 queries/hour per user per data room
+
+**Core Features**:
+- **Natural Language Q&A**: Ask questions about documents in plain English
+- **Streaming Responses**: Progressive answer rendering (SSE)
+- **Citation Deep-Linking**: Click citations to jump to specific pages/chunks in documents
+- **Query History**: Paginated history with export (JSON/CSV) and deletion (GDPR compliant)
+- **User Feedback**: Thumbs up/down ratings with optional comments
+- **Automatic Retry**: One retry attempt for temporary errors
+- **Abstention**: Responds "I don't have enough information" when insufficient evidence
+
+**API Endpoints**:
+- `POST /api/data-room/[dataRoomId]/query` - Submit question, receive answer with citations
+- `GET /api/data-room/[dataRoomId]/history` - Retrieve query history (paginated, cursor-based)
+- `POST /api/data-room/[dataRoomId]/feedback` - Submit helpful/not_helpful rating
+- `GET /api/data-room/[dataRoomId]/export` - Export query history (JSON/CSV)
+- `DELETE /api/data-room/[dataRoomId]/history` - Delete queries (individual or bulk)
+
+**Database Tables** (see `supabase/migrations/20250129_dataroom_qa.sql`):
+- `document_pages` - Page-level text from PDFs
+- `document_chunks` - 500-token chunks with vector embeddings (pgvector HNSW index)
+- `qa_queries` - User questions, answers, citations, performance metrics
+- `qa_citations` - Citations linking answers to source documents
+- `qa_feedback` - User ratings (helpful/not_helpful) with comments
+- `qa_rate_limits` - Rate limiting state (60/hour enforcement)
+
+**UI Components**:
+- `components/data-room/qa-chat-interface.tsx` - Main chat UI
+- `components/data-room/qa-citation-card.tsx` - Clickable citation chips
+- `components/data-room/qa-history-panel.tsx` - Query history sidebar
+- `components/data-room/qa-feedback-controls.tsx` - Rating buttons
+- `components/data-room/qa-document-preview.tsx` - PDF viewer with citation highlighting
+
+**Performance Targets**:
+- End-to-end query: <7 seconds (95th percentile)
+- Vector retrieval: <300ms for 50K chunks
+- Streaming start: <3 seconds
+- Document processing: <2 seconds per 100 pages
+
+**Monitoring** (see `lib/data-room/qa/analytics.sql`):
+- Average & P95 latency metrics
+- Abstention rate (target: <30%)
+- Average citations per answer
+- User feedback helpful rate
+- Rate limit violations count
+- Query failure rate by error type
+
+**Usage Example**:
+```typescript
+import { executeQuery } from '@/lib/data-room/qa/query-service';
+
+// Submit query
+const result = await executeQuery(
+  userId,
+  dataRoomId,
+  "What are the revenue projections for Q3 2024?",
+  { stream: true }
+);
+
+// Result includes:
+// - query_id
+// - answer (streaming or complete)
+// - answer_type ('grounded' | 'insufficient_evidence')
+// - citations (array of document references)
+// - metrics (total_time_ms, retrieval_time_ms, llm_time_ms)
+```
+
+**Key Files**:
+- `lib/data-room/qa/query-service.ts` - Main orchestration logic
+- `lib/data-room/qa/retrieval-service.ts` - Vector search (pgvector + cosine similarity)
+- `lib/data-room/qa/document-chunker.ts` - Recursive character splitting (tiktoken)
+- `lib/data-room/qa/embeddings-service.ts` - OpenAI ada-002 embeddings (1536 dims)
+- `lib/data-room/qa/citation-generator.ts` - Citation extraction and linking
+- `lib/data-room/qa/rate-limiter.ts` - Redis-based sliding window (Upstash)
+- `lib/data-room/qa/analytics.sql` - Monitoring dashboard queries
+- `types/data-room-qa.ts` - TypeScript types for all Q&A entities
+
+**GDPR Compliance** (FR-022):
+- Query export: JSON/CSV format with all user data
+- Query deletion: Cascading delete (citations + feedback)
+- User-specific RLS: Users only access their own queries
+
+**Error Handling**:
+- `INVALID_QUERY` - Question length validation (5-2000 chars)
+- `RATE_LIMIT_EXCEEDED` - 60 queries/hour exceeded (includes retry_after_seconds)
+- `PERMISSION_DENIED` - User not member of data room
+- `LLM_TIMEOUT` - Temporary error, automatic retry attempted
+- `INSUFFICIENT_EVIDENCE` - Not an error, abstention response
+
+**Testing**:
+- Contract tests: `tests/contract/data-room-qa-*.contract.test.ts` (4 files, 72 tests)
+- E2E tests: `tests/e2e/data-room-qa-*.spec.ts` (3 files covering happy path, errors, edge cases)
+- Performance tests: Validate <7s latency, <300ms retrieval
+
 ## Testing & Demo Access
 
 ### Demo Mode (Recommended for Testing)

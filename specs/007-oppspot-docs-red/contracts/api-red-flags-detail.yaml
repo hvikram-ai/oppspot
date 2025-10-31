@@ -1,0 +1,326 @@
+openapi: 3.0.3
+info:
+  title: Red Flag Radar API - Flag Detail
+  version: 1.0.0
+  description: Retrieve detailed information for a specific red flag
+
+paths:
+  /api/{entityType}/{id}/red-flags/{flagId}:
+    get:
+      summary: Get red flag detail with full evidence and action history
+      operationId: getRedFlagDetail
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [companies, data-rooms]
+
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Entity ID
+
+        - name: flagId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Red flag ID
+
+      responses:
+        '200':
+          description: Red flag detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedFlagDetail'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    RedFlagDetail:
+      type: object
+      required:
+        - id
+        - entity_type
+        - entity_id
+        - category
+        - title
+        - severity
+        - status
+        - first_detected_at
+        - last_updated_at
+        - fingerprint
+        - evidence
+        - actions
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          enum: [company, data_room]
+        entity_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum: [financial, legal, operational, cyber, esg]
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+        status:
+          type: string
+          enum: [open, reviewing, mitigating, resolved, false_positive]
+        first_detected_at:
+          type: string
+          format: date-time
+        last_updated_at:
+          type: string
+          format: date-time
+        run_id:
+          type: string
+          format: uuid
+          nullable: true
+        fingerprint:
+          type: string
+        owner:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            avatar_url:
+              type: string
+              nullable: true
+        snoozed_until:
+          type: string
+          format: date-time
+          nullable: true
+        explainer:
+          type: object
+          nullable: true
+          properties:
+            why:
+              type: string
+              description: Plain-language explanation of the risk
+            key_evidence:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Evidence IDs supporting this explanation
+            suggested_remediation:
+              type: string
+              description: Recommended remediation actions
+            timeframe:
+              type: string
+              description: Recommended timeframe for remediation
+            cached_at:
+              type: string
+              format: date-time
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Action'
+
+    Evidence:
+      type: object
+      required:
+        - id
+        - evidence_type
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        evidence_type:
+          type: string
+          enum: [document, alert, signal, kpi, news]
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        preview:
+          type: string
+          maxLength: 200
+          nullable: true
+        citation:
+          oneOf:
+            - $ref: '#/components/schemas/DocumentCitation'
+            - $ref: '#/components/schemas/AlertCitation'
+            - $ref: '#/components/schemas/KPICitation'
+            - $ref: '#/components/schemas/NewsCitation'
+        importance:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+        score:
+          type: number
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        page_number:
+          type: integer
+          nullable: true
+        chunk_index:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        is_available:
+          type: boolean
+          description: Whether the evidence source still exists
+
+    DocumentCitation:
+      type: object
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        pageNumber:
+          type: integer
+        chunkIndex:
+          type: integer
+
+    AlertCitation:
+      type: object
+      properties:
+        alertId:
+          type: string
+          format: uuid
+        severity:
+          type: string
+
+    KPICitation:
+      type: object
+      properties:
+        kpiId:
+          type: string
+          format: uuid
+        value:
+          type: number
+        threshold:
+          type: number
+
+    NewsCitation:
+      type: object
+      properties:
+        newsId:
+          type: string
+          format: uuid
+        source:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+
+    Action:
+      type: object
+      required:
+        - id
+        - action_type
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [assign, note, status_change, snooze, remediation, override]
+        actor:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+        payload:
+          type: object
+          description: Action-specific data
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,19 @@
+customer_id,plan,currency,start_date,end_date,mrr,status
+CUST-001,Enterprise,GBP,2023-01-15,,5000,active
+CUST-002,Pro,GBP,2023-02-20,2023-08-20,1200,churned
+CUST-003,Business,GBP,2023-03-10,,2500,active
+CUST-004,Pro,GBP,2023-04-05,,1200,active
+CUST-005,Enterprise,GBP,2023-05-12,,5000,active
+CUST-006,Starter,GBP,2023-06-18,2023-12-18,500,churned
+CUST-007,Business,GBP,2023-07-22,,2500,active
+CUST-008,Pro,GBP,2023-08-30,,1200,active
+CUST-009,Enterprise,GBP,2023-09-14,,5000,active
+CUST-010,Business,GBP,2023-10-08,,2500,active
+CUST-011,Pro,GBP,2023-11-15,,1200,active
+CUST-012,Starter,GBP,2023-12-01,,500,active
+CUST-013,Business,GBP,2024-01-10,,2500,active
+CUST-014,Pro,GBP,2024-02-14,,1200,active
+CUST-015,Enterprise,GBP,2024-03-20,,5000,active
+CUST-002,Pro,GBP,2024-04-01,,1200,active
+CUST-006,Business,GBP,2024-05-01,,2500,active
+CUST-001,Enterprise Plus,GBP,2024-06-01,,7500,active

@@ -1,0 +1,16 @@
+customer_id,name,email,country,acquisition_date
+CUST-001,Acme Corporation,finance@acme-corp.com,GB,2023-01-15
+CUST-002,TechStart Ltd,hello@techstart.io,IE,2023-02-20
+CUST-003,Global Widgets Inc,contact@globalwidgets.com,GB,2023-03-10
+CUST-004,DataFlow Systems,sales@dataflow.co.uk,GB,2023-04-05
+CUST-005,CloudMesh Solutions,info@cloudmesh.com,IE,2023-05-12
+CUST-006,SmartBiz Analytics,hello@smartbiz.io,GB,2023-06-18
+CUST-007,FinTech Innovations,support@fintech-innov.com,GB,2023-07-22
+CUST-008,EcoTrade Partners,contact@ecotrade.ie,IE,2023-08-30
+CUST-009,MediCore Health,admin@medicore.co.uk,GB,2023-09-14
+CUST-010,LogiTrack Pro,sales@logitrack.com,GB,2023-10-08
+CUST-011,RetailGenius Ltd,info@retailgenius.co.uk,GB,2023-11-15
+CUST-012,SecureNet Systems,contact@securenet.ie,IE,2023-12-01
+CUST-013,MarketPulse Analytics,hello@marketpulse.com,GB,2024-01-10
+CUST-014,DevOps Masters,support@devopsmasters.io,GB,2024-02-14
+CUST-015,GreenEnergy Tech,info@greenenergy.co.uk,GB,2024-03-20

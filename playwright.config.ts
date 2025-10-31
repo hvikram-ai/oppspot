@@ -34,7 +34,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3009',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     /* Action timeout for clicks, fills, etc. */
     actionTimeout: 15000, // 15 seconds
     /* Navigation timeout for page loads */

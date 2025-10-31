@@ -14,16 +14,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { 
-  Filter, 
-  MapPin, 
-  Star, 
-  Building2, 
+import {
+  Filter,
+  MapPin,
+  Star,
+  Building2,
+  Target,
   RotateCcw,
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
 import { useState } from 'react'
+import PredictionScoreBadge from '@/components/ma-prediction/prediction-score-badge'
 
 interface FilterProps {
   filters: {
@@ -33,8 +35,9 @@ interface FilterProps {
     minRating?: number
     verified?: boolean
     sortBy?: string
+    maLikelihood?: string[]
   }
-   
+
   onChange: (filters: unknown) => void
   resultCount?: number
 }
@@ -59,6 +62,7 @@ export function SearchFilters({ filters, onChange, resultCount = 0 }: FilterProp
     categories: true,
     location: true,
     rating: false,
+    maLikelihood: false,
     advanced: false
   })
 
@@ -74,8 +78,17 @@ export function SearchFilters({ filters, onChange, resultCount = 0 }: FilterProp
     const newCategories = currentCategories.includes(category)
       ? currentCategories.filter(c => c !== category)
       : [...currentCategories, category]
-    
+
     onChange({ ...filters, categories: newCategories })
+  }
+
+  const handleMALikelihoodToggle = (likelihood: string) => {
+    const currentLikelihoods = filters.maLikelihood || []
+    const newLikelihoods = currentLikelihoods.includes(likelihood)
+      ? currentLikelihoods.filter(l => l !== likelihood)
+      : [...currentLikelihoods, likelihood]
+
+    onChange({ ...filters, maLikelihood: newLikelihoods })
   }
 
   const handleReset = () => {
@@ -90,6 +103,7 @@ export function SearchFilters({ filters, onChange, resultCount = 0 }: FilterProp
     filters.radius ? 1 : 0,
     filters.minRating ? 1 : 0,
     filters.verified ? 1 : 0,
+    filters.maLikelihood?.length || 0,
   ].reduce((a, b) => a + b, 0)
 
   return (
@@ -267,6 +281,60 @@ export function SearchFilters({ filters, onChange, resultCount = 0 }: FilterProp
           )}
         </div>
 
+        {/* M&A Target Likelihood */}
+        <div className="space-y-2">
+          <button
+            onClick={() => toggleSection('maLikelihood')}
+            className="flex w-full items-center justify-between text-sm font-medium"
+          >
+            <span className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              M&A Target Likelihood
+              {filters.maLikelihood?.length ? (
+                <Badge variant="outline" className="text-xs">
+                  {filters.maLikelihood.length}
+                </Badge>
+              ) : null}
+            </span>
+            {expandedSections.maLikelihood ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+
+          {expandedSections.maLikelihood && (
+            <div className="space-y-2 pt-2">
+              {['Low', 'Medium', 'High', 'Very High'].map((likelihood) => (
+                <div key={likelihood} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`ma-${likelihood}`}
+                    checked={filters.maLikelihood?.includes(likelihood) || false}
+                    onCheckedChange={() => handleMALikelihoodToggle(likelihood)}
+                  />
+                  <label
+                    htmlFor={`ma-${likelihood}`}
+                    className="text-sm font-normal cursor-pointer flex items-center gap-2 flex-1"
+                  >
+                    <span>{likelihood}</span>
+                    <PredictionScoreBadge
+                      score={
+                        likelihood === 'Low' ? 20 :
+                        likelihood === 'Medium' ? 40 :
+                        likelihood === 'High' ? 65 : 85
+                      }
+                      size="sm"
+                    />
+                  </label>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground mt-2">
+                Filter companies by their AI-predicted M&A target likelihood
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Advanced */}
         <div className="space-y-2">
           <button
@@ -280,14 +348,14 @@ export function SearchFilters({ filters, onChange, resultCount = 0 }: FilterProp
               <ChevronDown className="h-4 w-4" />
             )}
           </button>
-          
+
           {expandedSections.advanced && (
             <div className="space-y-2 pt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="verified"
                   checked={filters.verified || false}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     onChange({ ...filters, verified: checked as boolean })
                   }
                 />

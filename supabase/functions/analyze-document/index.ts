@@ -3,6 +3,10 @@
  * AI-powered document classification and metadata extraction
  *
  * Triggered after document upload to classify and extract metadata
+ *
+ * NOTE: This Edge Function runs in Deno environment and cannot use the Node.js-based
+ * LLMManager system. It uses direct OpenRouter API calls instead. This is tracked as
+ * technical debt for future migration when Deno-compatible LLM client is available.
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -18,6 +22,7 @@ const corsHeaders = {
 
 interface AnalyzeRequest {
   document_id: string;
+  user_id?: string; // Optional user context for future LLM management
 }
 
 interface DocumentRecord {
@@ -73,7 +78,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Parse request
-    const { document_id }: AnalyzeRequest = await req.json();
+    const { document_id, user_id }: AnalyzeRequest = await req.json();
 
     if (!document_id) {
       return new Response(
@@ -85,7 +90,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Starting analysis for document: ${document_id}`);
+    console.log(`Starting analysis for document: ${document_id}${user_id ? ` (user: ${user_id})` : ''}`);
 
     // 1. Fetch document record
     const { data: document, error: fetchError } = await supabase
@@ -181,12 +186,13 @@ serve(async (req) => {
             document_type: classification.document_type,
             confidence_score: classification.confidence_score,
             reasoning: classification.reasoning,
+            user_id: user_id, // Track user context for future multi-tenant LLM management
           },
           confidence: classification.confidence_score >= 0.7 ? 'high' : classification.confidence_score >= 0.5 ? 'medium' : 'low',
           risks_identified: 0,
           processing_time_ms: processingTime,
           ai_model: 'anthropic/claude-3.5-sonnet',
-          ai_tokens_used: 0, // Updated if we track tokens
+          ai_tokens_used: 0, // TODO: Track tokens when LLM Manager integration is available for Deno
         });
 
       if (analysisError) {
@@ -237,6 +243,10 @@ serve(async (req) => {
 
 /**
  * Classify document using OpenRouter API
+ *
+ * NOTE: Direct OpenRouter API call used due to Deno environment.
+ * In Node.js contexts, use DocumentClassifier from lib/data-room/ai/document-classifier.ts
+ * which integrates with the LLMManager system for multi-provider support and fallback.
  */
 async function classifyDocument(
   text: string,
@@ -307,6 +317,10 @@ Return your response as a JSON object:
 
 /**
  * Extract metadata using OpenRouter API
+ *
+ * NOTE: Direct OpenRouter API call used due to Deno environment.
+ * In Node.js contexts, use MetadataExtractor from lib/data-room/ai/metadata-extractor.ts
+ * which integrates with the LLMManager system for multi-provider support and fallback.
  */
 async function extractMetadata(
   text: string,

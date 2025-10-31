@@ -1,0 +1,376 @@
+openapi: 3.1.0
+info:
+  title: Data Room Q&A - Query API
+  description: Submit questions to the data room Q&A copilot and receive streaming answers with citations
+  version: 1.0.0
+
+paths:
+  /api/data-room/{dataRoomId}/query:
+    post:
+      summary: Submit a question to the data room
+      description: |
+        Ask a natural language question about documents in the data room. Returns a streaming response
+        with the generated answer and citations. Enforces rate limiting (60 queries/hour per user).
+
+        Functional Requirements: FR-001, FR-002, FR-003, FR-004, FR-005, FR-014, FR-035, FR-036
+
+      parameters:
+        - name: dataRoomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the data room
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question
+              properties:
+                question:
+                  type: string
+                  minLength: 5
+                  maxLength: 2000
+                  description: Natural language question to ask about the documents
+                  example: "What are the revenue projections for Q3 2024?"
+
+                stream:
+                  type: boolean
+                  default: true
+                  description: Enable streaming response (recommended for better UX)
+
+      responses:
+        '200':
+          description: Streaming answer with citations
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                enum: [text/event-stream, application/json]
+              description: text/event-stream if streaming=true, application/json otherwise
+
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [chunk, citation, complete, error]
+                    description: Event type
+
+                  content:
+                    type: string
+                    description: Answer text chunk (for type=chunk)
+
+                  citation:
+                    $ref: '#/components/schemas/Citation'
+                    description: Citation reference (for type=citation)
+
+                  query_id:
+                    type: string
+                    format: uuid
+                    description: Query identifier (for type=complete)
+
+                  metrics:
+                    $ref: '#/components/schemas/QueryMetrics'
+                    description: Performance metrics (for type=complete)
+
+                  error:
+                    $ref: '#/components/schemas/ErrorDetail'
+                    description: Error details (for type=error)
+
+              examples:
+                chunkEvent:
+                  value:
+                    type: chunk
+                    content: "Based on the financial projections document, "
+
+                citationEvent:
+                  value:
+                    type: citation
+                    citation:
+                      document_id: "123e4567-e89b-12d3-a456-426614174000"
+                      document_title: "Q3 2024 Financial Projections"
+                      page_number: 12
+                      chunk_id: "abc-def-ghi"
+                      relevance_score: 0.89
+                      text_preview: "Q3 revenue is projected at $2.5M, representing 18% growth year-over-year..."
+
+                completeEvent:
+                  value:
+                    type: complete
+                    query_id: "987fcdeb-51a2-43e1-8f12-9876543210ab"
+                    metrics:
+                      total_time_ms: 4250
+                      retrieval_time_ms: 280
+                      llm_time_ms: 3970
+                      chunks_retrieved: 8
+                      citation_count: 3
+
+            application/json:
+              schema:
+                type: object
+                required:
+                  - query_id
+                  - question
+                  - answer
+                  - citations
+                properties:
+                  query_id:
+                    type: string
+                    format: uuid
+
+                  question:
+                    type: string
+
+                  answer:
+                    type: string
+                    description: Complete generated answer
+
+                  answer_type:
+                    type: string
+                    enum: [grounded, insufficient_evidence]
+                    description: Whether answer was grounded in documents or evidence was insufficient
+
+                  citations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Citation'
+
+                  metrics:
+                    $ref: '#/components/schemas/QueryMetrics'
+
+        '400':
+          description: Invalid request (question too short/long, malformed JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                questionTooShort:
+                  value:
+                    error: "INVALID_QUERY"
+                    message: "Question must be between 5 and 2000 characters"
+                    retry_allowed: false
+
+        '401':
+          description: Unauthorized (user not authenticated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '403':
+          description: Forbidden (user not a member of this data room)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notMember:
+                  value:
+                    error: "PERMISSION_DENIED"
+                    message: "You don't have permission to query this data room"
+                    retry_allowed: false
+
+        '429':
+          description: Rate limit exceeded (60 queries/hour per user per data room)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until rate limit resets
+              example: 1800
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rateLimitExceeded:
+                  value:
+                    error: "RATE_LIMIT_EXCEEDED"
+                    message: "You've reached the query limit (60 per hour). Please try again in 28 minutes."
+                    retry_after_seconds: 1680
+                    retry_allowed: false
+
+        '500':
+          description: Server error (LLM service unavailable, timeout, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                llmTimeout:
+                  value:
+                    error: "LLM_TIMEOUT"
+                    message: "Query timeout - your question took too long to process. Try a simpler question or retry."
+                    retry_allowed: true
+                    retry_attempted: true
+
+                llmUnavailable:
+                  value:
+                    error: "LLM_SERVICE_UNAVAILABLE"
+                    message: "AI service temporarily unavailable. Please retry."
+                    retry_allowed: true
+                    retry_attempted: true
+
+        '503':
+          description: Service temporarily unavailable (maintenance, overload)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying
+              example: 60
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Citation:
+      type: object
+      required:
+        - document_id
+        - document_title
+        - page_number
+        - chunk_id
+        - relevance_score
+        - text_preview
+      properties:
+        document_id:
+          type: string
+          format: uuid
+
+        document_title:
+          type: string
+
+        page_number:
+          type: integer
+          minimum: 1
+
+        chunk_id:
+          type: string
+          format: uuid
+
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Cosine similarity score (0.0-1.0)
+
+        text_preview:
+          type: string
+          maxLength: 500
+          description: Preview of cited text (~240 characters, per FR-010)
+
+        rank:
+          type: integer
+          minimum: 1
+          description: Citation ranking (1 = most relevant)
+
+    QueryMetrics:
+      type: object
+      properties:
+        total_time_ms:
+          type: integer
+          description: End-to-end query duration (target <7000ms per FR-005)
+
+        retrieval_time_ms:
+          type: integer
+          description: Vector search duration (target <300ms per FR-031)
+
+        llm_time_ms:
+          type: integer
+          description: LLM response generation duration
+
+        chunks_retrieved:
+          type: integer
+          description: Number of document chunks used for context
+
+        citation_count:
+          type: integer
+          description: Number of citations in answer
+
+        tokens_input:
+          type: integer
+          description: LLM input tokens
+
+        tokens_output:
+          type: integer
+          description: LLM output tokens
+
+        model_used:
+          type: string
+          description: LLM model identifier
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - INVALID_QUERY
+            - PERMISSION_DENIED
+            - RATE_LIMIT_EXCEEDED
+            - LLM_TIMEOUT
+            - LLM_SERVICE_UNAVAILABLE
+            - INTERNAL_ERROR
+
+        message:
+          type: string
+          description: Human-readable error description (per FR-036)
+
+        retry_allowed:
+          type: boolean
+          description: Whether client should offer retry button (per FR-037)
+
+        retry_attempted:
+          type: boolean
+          description: Whether automatic retry was attempted (per FR-035)
+
+        retry_after_seconds:
+          type: integer
+          description: Seconds until retry is allowed (for rate limits per FR-038)
+
+    ErrorDetail:
+      type: object
+      required:
+        - error_type
+        - message
+      properties:
+        error_type:
+          type: string
+
+        message:
+          type: string
+
+        retry_count:
+          type: integer
+          description: Number of retries attempted (max 1 per FR-035)
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Q&A
+    description: Question and answer operations

@@ -3,7 +3,6 @@
  * Audit logging for data room activities
  */
 
-import { createClient } from '@/lib/supabase/client';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ActivityLog } from '../types';
 import {
@@ -24,8 +23,8 @@ import {
 export class ActivityRepository {
   private supabase: SupabaseClient;
 
-  constructor(supabase?: SupabaseClient) {
-    this.supabase = supabase || createClient();
+  constructor(supabase: SupabaseClient) {
+    this.supabase = supabase;
   }
 
   /**

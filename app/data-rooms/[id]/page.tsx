@@ -26,7 +26,8 @@ import {
   FolderOpen,
   Clock,
   Download,
-  MessageCircle
+  MessageCircle,
+  Sparkles
 } from 'lucide-react'
 import type { DataRoom } from '@/lib/data-room/types'
 import { UploadZone } from '@/components/data-room/upload-zone'
@@ -259,6 +260,37 @@ export default function DataRoomDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Q&A Copilot CTA */}
+      {dataRoom.document_count > 0 && (
+        <Card className="mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Ask Questions About Your Documents</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get instant AI-powered answers with citations to specific pages and sections
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                onClick={() => router.push(`/data-rooms/${params.id}/qa`)}
+                className="gap-2"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Ask Questions
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

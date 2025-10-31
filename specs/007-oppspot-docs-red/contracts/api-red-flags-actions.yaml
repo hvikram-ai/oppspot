@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: Red Flag Radar API - Flag Actions
+  version: 1.0.0
+  description: Record actions on red flags (assign, note, status change, etc.)
+
+paths:
+  /api/{entityType}/{id}/red-flags/{flagId}/actions:
+    post:
+      summary: Record an action on a red flag
+      operationId: createRedFlagAction
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [companies, data-rooms]
+
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+        - name: flagId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/AssignAction'
+                - $ref: '#/components/schemas/NoteAction'
+                - $ref: '#/components/schemas/StatusChangeAction'
+                - $ref: '#/components/schemas/SnoozeAction'
+                - $ref: '#/components/schemas/RemediationAction'
+                - $ref: '#/components/schemas/OverrideAction'
+              discriminator:
+                propertyName: action_type
+
+      responses:
+        '201':
+          description: Action recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+
+        '400':
+          description: Bad request (invalid payload, validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidTransition:
+                  value:
+                    error: 'INVALID_STATUS_TRANSITION'
+                    message: 'Cannot transition from resolved to open'
+                missingReason:
+                  value:
+                    error: 'VALIDATION_ERROR'
+                    message: 'Override actions require a reason field'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    AssignAction:
+      type: object
+      required:
+        - action_type
+        - assignee_id
+      properties:
+        action_type:
+          type: string
+          enum: [assign]
+        assignee_id:
+          type: string
+          format: uuid
+          description: User ID to assign flag to
+
+    NoteAction:
+      type: object
+      required:
+        - action_type
+        - text
+      properties:
+        action_type:
+          type: string
+          enum: [note]
+        text:
+          type: string
+          maxLength: 5000
+        is_internal:
+          type: boolean
+          default: false
+          description: Internal notes not visible to external stakeholders
+
+    StatusChangeAction:
+      type: object
+      required:
+        - action_type
+        - to
+      properties:
+        action_type:
+          type: string
+          enum: [status_change]
+        to:
+          type: string
+          enum: [open, reviewing, mitigating, resolved, false_positive]
+        reason:
+          type: string
+          maxLength: 1000
+          description: Optional reason for status change
+
+    SnoozeAction:
+      type: object
+      required:
+        - action_type
+        - duration_days
+        - reason
+      properties:
+        action_type:
+          type: string
+          enum: [snooze]
+        duration_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Number of days to snooze notifications
+        reason:
+          type: string
+          maxLength: 1000
+          description: Reason for snoozing
+
+    RemediationAction:
+      type: object
+      required:
+        - action_type
+        - plan
+      properties:
+        action_type:
+          type: string
+          enum: [remediation]
+        plan:
+          type: string
+          maxLength: 5000
+          description: Remediation plan description
+        eta:
+          type: string
+          format: date-time
+          description: Estimated completion date
+        stakeholders:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: User IDs of stakeholders involved
+
+    OverrideAction:
+      type: object
+      required:
+        - action_type
+        - field
+        - to
+        - reason
+      properties:
+        action_type:
+          type: string
+          enum: [override]
+        field:
+          type: string
+          enum: [severity, confidence]
+        to:
+          oneOf:
+            - type: string
+              enum: [critical, high, medium, low]
+              description: New severity (if field=severity)
+            - type: number
+              minimum: 0
+              maximum: 1
+              description: New confidence (if field=confidence)
+        reason:
+          type: string
+          maxLength: 1000
+          description: Required justification for override
+
+    ActionResponse:
+      type: object
+      required:
+        - id
+        - flag_id
+        - action_type
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        flag_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [assign, note, status_change, snooze, remediation, override]
+        actor:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+        payload:
+          type: object
+          description: Action-specific data as recorded
+        created_at:
+          type: string
+          format: date-time
+        flag_updated:
+          type: object
+          description: Updated flag fields (if applicable)
+          properties:
+            status:
+              type: string
+              nullable: true
+            owner_id:
+              type: string
+              format: uuid
+              nullable: true
+            snoozed_until:
+              type: string
+              format: date-time
+              nullable: true
+            severity:
+              type: string
+              nullable: true
+            confidence:
+              type: number
+              nullable: true
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden - requires editor role for most actions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Flag not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

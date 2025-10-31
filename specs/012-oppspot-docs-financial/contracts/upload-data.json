@@ -1,0 +1,396 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Upload Financial Data",
+    "version": "1.0.0",
+    "description": "Upload CSV financial data (subscriptions, invoices, payments, COGS, sales/marketing costs) for a company. Validates currency against company reporting currency and uses checksums for idempotent ingestion."
+  },
+  "servers": [
+    {
+      "url": "https://oppspot-one.vercel.app/api",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development"
+    }
+  ],
+  "paths": {
+    "/companies/{companyId}/financials/upload": {
+      "post": {
+        "summary": "Upload financial data CSV file",
+        "description": "Upload CSV file containing financial data. System validates currency matches company reporting currency, checks for duplicates via checksum, and triggers automatic recalculation of affected periods.",
+        "operationId": "uploadFinancialData",
+        "tags": ["Financial Data"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "UUID of company to upload data for",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "data_type"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV file containing financial data"
+                  },
+                  "data_type": {
+                    "type": "string",
+                    "enum": [
+                      "subscriptions",
+                      "invoices",
+                      "payments",
+                      "cogs",
+                      "sales_marketing"
+                    ],
+                    "description": "Type of financial data being uploaded"
+                  }
+                }
+              },
+              "examples": {
+                "subscriptions": {
+                  "summary": "Upload subscriptions CSV",
+                  "value": {
+                    "data_type": "subscriptions",
+                    "file": "<binary CSV data>"
+                  }
+                },
+                "invoices": {
+                  "summary": "Upload invoices CSV",
+                  "value": {
+                    "data_type": "invoices",
+                    "file": "<binary CSV data>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload successful, data validated and imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "rows_processed",
+                        "rows_inserted",
+                        "rows_updated",
+                        "rows_skipped",
+                        "periods_affected",
+                        "recalculation_triggered"
+                      ],
+                      "properties": {
+                        "rows_processed": {
+                          "type": "integer",
+                          "description": "Total rows in CSV",
+                          "example": 150
+                        },
+                        "rows_inserted": {
+                          "type": "integer",
+                          "description": "New rows inserted",
+                          "example": 145
+                        },
+                        "rows_updated": {
+                          "type": "integer",
+                          "description": "Existing rows updated (re-upload)",
+                          "example": 5
+                        },
+                        "rows_skipped": {
+                          "type": "integer",
+                          "description": "Rows with validation errors",
+                          "example": 0
+                        },
+                        "periods_affected": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "description": "List of months requiring recalculation",
+                          "example": ["2024-01-01", "2024-02-01", "2024-03-01"]
+                        },
+                        "recalculation_triggered": {
+                          "type": "boolean",
+                          "description": "Whether automatic recalculation started",
+                          "example": true
+                        },
+                        "validation_warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "integer"
+                              },
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "description": "Non-fatal validation warnings",
+                          "example": []
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful upload",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "rows_processed": 150,
+                        "rows_inserted": 145,
+                        "rows_updated": 5,
+                        "rows_skipped": 0,
+                        "periods_affected": ["2024-01-01", "2024-02-01", "2024-03-01"],
+                        "recalculation_triggered": true,
+                        "validation_warnings": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error - invalid data format or currency mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "currency_mismatch": {
+                    "summary": "Mixed currencies detected",
+                    "value": {
+                      "error": {
+                        "code": "CURRENCY_MISMATCH",
+                        "message": "Mixed currencies detected. Company reporting currency is USD, but row 15 contains GBP. Please convert all data to USD before uploading.",
+                        "details": {
+                          "company_currency": "USD",
+                          "invalid_rows": [
+                            {
+                              "row": 15,
+                              "found_currency": "GBP"
+                            },
+                            {
+                              "row": 23,
+                              "found_currency": "EUR"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "validation_errors": {
+                    "summary": "Field validation errors",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "message": "3 validation errors found",
+                        "details": {
+                          "errors": [
+                            {
+                              "row": 5,
+                              "field": "customer_id",
+                              "message": "Missing required field. See subscriptions.csv template for format."
+                            },
+                            {
+                              "row": 12,
+                              "field": "mrr",
+                              "message": "MRR must be positive number"
+                            },
+                            {
+                              "row": 18,
+                              "field": "start_date",
+                              "message": "Invalid date format. Expected YYYY-MM-DD."
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "missing_columns": {
+                    "summary": "Required columns missing",
+                    "value": {
+                      "error": {
+                        "code": "INVALID_CSV_SCHEMA",
+                        "message": "CSV missing required columns",
+                        "details": {
+                          "missing_columns": ["customer_id", "mrr"],
+                          "expected_columns": [
+                            "customer_id",
+                            "plan",
+                            "currency",
+                            "start_date",
+                            "end_date",
+                            "mrr",
+                            "status"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "No authentication token",
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHORIZED",
+                        "message": "Authentication required"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Financial Editor role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "Insufficient permissions",
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "Financial Editor role required to upload data. Contact your organization admin."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "Company does not exist",
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "Company not found"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "server_error": {
+                    "summary": "Database error",
+                    "value": {
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "Failed to process upload. Please try again."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase JWT token from auth.session"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message"
+              },
+              "details": {
+                "type": "object",
+                "description": "Additional error context"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -31,7 +31,8 @@ import {
   ShieldCheck,
   Shield,
   AlertTriangle,
-  GitBranch
+  GitBranch,
+  MessageCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
@@ -194,6 +195,14 @@ export function Sidebar() {
               icon={Zap}
               label="ResearchGPT"
               tooltip="30-second deep company intelligence with AI-powered insights"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
+            <SidebarItem
+              href="/ma-targets"
+              icon={Target}
+              label="M&A Targets"
+              tooltip="AI-powered M&A target prediction with valuation estimates and acquirer profiles"
               isCollapsed={isCollapsed}
               isPremium
             />
@@ -409,6 +418,13 @@ export function Sidebar() {
           icon={CreditCard}
           label="Billing"
           tooltip="Manage subscription and billing information"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarItem
+          href="/feedback"
+          icon={MessageCircle}
+          label="Feedback"
+          tooltip="Submit feedback, report bugs, or request features"
           isCollapsed={isCollapsed}
         />
       </div>

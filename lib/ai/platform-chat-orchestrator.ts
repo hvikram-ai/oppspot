@@ -2,13 +2,16 @@
  * Platform Chat Orchestrator Service
  * Enhanced orchestrator that integrates with OppSpot's platform services
  * Provides intelligent responses using real data instead of generic templates
+ *
+ * Note: This orchestrator does not make direct LLM calls - it uses platform services
+ * (similarity analysis, company search, etc.) and returns structured data.
+ * LLM calls are handled by the AI Chat API route using LLMManager.
  */
 
 import { IntelligentSimilarityService } from '@/lib/intelligent-analysis/intelligent-similarity-service'
 import { CompanyAnalysisService } from '@/lib/opp-scan/application/services/company-analysis.service'
 import { WebSearchService } from '@/lib/opp-scan/services/web-search-service'
 import { createClient } from '@/lib/supabase/server'
-import { SimpleOllamaClient } from './simple-ollama'
 
 export interface PlatformAction {
   type: 'similarity_analysis' | 'company_search' | 'company_analysis' | 'oppscan' | 'general'
@@ -38,13 +41,11 @@ export interface PlatformActionResult {
 export class PlatformChatOrchestrator {
   private similarityService: IntelligentSimilarityService
   private webSearchService: WebSearchService
-  private ollamaClient: SimpleOllamaClient
   private actionHistory: Map<string, PlatformAction[]> = new Map()
-  
+
   constructor() {
     this.similarityService = new IntelligentSimilarityService()
     this.webSearchService = new WebSearchService()
-    this.ollamaClient = new SimpleOllamaClient()
   }
 
   /**

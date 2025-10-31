@@ -1,0 +1,149 @@
+openapi: 3.1.0
+info:
+  title: Data Room Q&A - History API
+  description: Retrieve user's query history with pagination
+  version: 1.0.0
+
+paths:
+  /api/data-room/{dataRoomId}/history:
+    get:
+      summary: Get query history
+      description: |
+        Retrieve all historical queries for the authenticated user in this data room.
+        Supports pagination for performance. Per FR-022, users can view all their
+        historical questions indefinitely with pagination.
+
+        Functional Requirements: FR-021, FR-022
+
+      parameters:
+        - name: dataRoomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Cursor for pagination (created_at timestamp of last item from previous page)
+          example: "2025-01-29T10:30:00Z"
+
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of queries to return per page
+
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order by created_at timestamp
+
+      responses:
+        '200':
+          description: Paginated query history
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - queries
+                  - has_more
+                properties:
+                  queries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HistoricalQuery'
+
+                  has_more:
+                    type: boolean
+                    description: Whether more results exist
+
+                  next_cursor:
+                    type: string
+                    format: date-time
+                    description: Cursor for next page (if has_more=true)
+
+                  total_count:
+                    type: integer
+                    description: Total number of queries (cached, may be approximate)
+
+              examples:
+                historyResponse:
+                  value:
+                    queries:
+                      - query_id: "123e4567-e89b-12d3-a456-426614174000"
+                        question: "What are the revenue projections for Q3 2024?"
+                        answer: "Based on the financial projections document..."
+                        answer_type: "grounded"
+                        created_at: "2025-01-29T14:30:00Z"
+                        citation_count: 3
+                        feedback_rating: "helpful"
+                    has_more: true
+                    next_cursor: "2025-01-29T14:30:00Z"
+                    total_count: 127
+
+        '401':
+          $ref: 'query-api.yaml#/components/responses/Unauthorized'
+
+        '403':
+          $ref: 'query-api.yaml#/components/responses/Forbidden'
+
+        '500':
+          $ref: 'query-api.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    HistoricalQuery:
+      type: object
+      required:
+        - query_id
+        - question
+        - created_at
+      properties:
+        query_id:
+          type: string
+          format: uuid
+
+        question:
+          type: string
+
+        answer:
+          type: string
+          nullable: true
+          description: Null if query failed
+
+        answer_type:
+          type: string
+          enum: [grounded, insufficient_evidence, error]
+
+        created_at:
+          type: string
+          format: date-time
+
+        citation_count:
+          type: integer
+          minimum: 0
+
+        feedback_rating:
+          type: string
+          enum: [helpful, not_helpful]
+          nullable: true
+
+        total_time_ms:
+          type: integer
+
+security:
+  - bearerAuth: []

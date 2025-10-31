@@ -1,0 +1,46 @@
+date,category,amount,currency,description
+2023-01-31,advertising,8000,GBP,Google Ads campaign
+2023-01-31,salaries,15000,GBP,Sales team salaries
+2023-01-31,events,3000,GBP,Trade show participation
+2023-02-28,advertising,9000,GBP,Google Ads + LinkedIn Ads
+2023-02-28,salaries,15000,GBP,Sales team salaries
+2023-02-28,content,2000,GBP,Content marketing
+2023-03-31,advertising,10000,GBP,Multi-channel advertising
+2023-03-31,salaries,18000,GBP,Sales team salaries (expanded)
+2023-03-31,events,5000,GBP,Industry conference
+2023-04-30,advertising,11000,GBP,Q2 campaign launch
+2023-04-30,salaries,18000,GBP,Sales team salaries
+2023-04-30,content,2500,GBP,Content marketing
+2023-05-31,advertising,12000,GBP,Peak season ads
+2023-05-31,salaries,20000,GBP,Sales team salaries (bonuses)
+2023-05-31,software,1500,GBP,CRM and marketing automation
+2023-06-30,advertising,13000,GBP,Summer campaign
+2023-06-30,salaries,18000,GBP,Sales team salaries
+2023-06-30,events,4000,GBP,Webinar series
+2023-07-31,advertising,12000,GBP,Retargeting campaigns
+2023-07-31,salaries,18000,GBP,Sales team salaries
+2023-07-31,content,3000,GBP,SEO and content
+2023-08-31,advertising,11000,GBP,Late summer push
+2023-08-31,salaries,18000,GBP,Sales team salaries
+2023-08-31,software,1500,GBP,Marketing tools
+2023-09-30,advertising,14000,GBP,Q4 campaign kickoff
+2023-09-30,salaries,20000,GBP,Sales team salaries
+2023-09-30,events,6000,GBP,Major industry event
+2023-10-31,advertising,15000,GBP,Peak Q4 advertising
+2023-10-31,salaries,20000,GBP,Sales team salaries
+2023-10-31,content,3500,GBP,Case studies and whitepapers
+2023-11-30,advertising,16000,GBP,Year-end push
+2023-11-30,salaries,22000,GBP,Sales team salaries (bonuses)
+2023-11-30,events,5000,GBP,Customer appreciation event
+2023-12-31,advertising,14000,GBP,Holiday campaign
+2023-12-31,salaries,20000,GBP,Sales team salaries
+2023-12-31,software,2000,GBP,Annual tool renewals
+2024-01-31,advertising,12000,GBP,New year campaign
+2024-01-31,salaries,22000,GBP,Sales team salaries
+2024-01-31,content,3000,GBP,Content refresh
+2024-02-29,advertising,13000,GBP,Q1 campaigns
+2024-02-29,salaries,22000,GBP,Sales team salaries
+2024-02-29,events,4000,GBP,Partner event
+2024-03-31,advertising,15000,GBP,Spring campaign
+2024-03-31,salaries,25000,GBP,Sales team salaries (expanded team)
+2024-03-31,content,4000,GBP,Video marketing production

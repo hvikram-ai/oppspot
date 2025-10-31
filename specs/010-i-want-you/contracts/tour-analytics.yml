@@ -1,0 +1,105 @@
+openapi: 3.0.0
+info:
+  title: Demo Tour Analytics API
+  version: 1.0.0
+  description: Batched event tracking for demo tour interactions and conversion funnel
+
+paths:
+  /api/analytics/demo-tours:
+    post:
+      summary: Batch track demo tour events
+      description: Accepts batch of analytics events from demo sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    $ref: '#/components/schemas/DemoTourEvent'
+              required: [events]
+      responses:
+        '200':
+          description: Events logged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logged_count:
+                    type: integer
+                    example: 15
+                  status:
+                    type: string
+                    enum: [success]
+                    example: success
+        '400':
+          description: Invalid event data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded (100 events/request max)
+
+components:
+  schemas:
+    DemoTourEvent:
+      type: object
+      required:
+        - event_id
+        - event_type
+        - session_id
+        - timestamp
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        event_type:
+          type: string
+          enum:
+            - tour_started
+            - tour_step_viewed
+            - tour_step_skipped
+            - tour_completed
+            - tour_abandoned
+            - exit_intent_shown
+            - exit_intent_dismissed
+            - exit_intent_converted
+            - demo_upgrade_prompt_shown
+            - demo_signup_initiated
+            - demo_feature_explored
+          example: "tour_started"
+        session_id:
+          type: string
+          format: uuid
+          example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
+          example: 1738276800000
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Event-specific metadata
+          example:
+            step_number: 3
+            step_title: "Generate Intelligence Reports"
+            time_spent_ms: 4500
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "INVALID_EVENT_DATA"
+        message:
+          type: string
+          example: "Event type 'invalid_type' is not allowed"

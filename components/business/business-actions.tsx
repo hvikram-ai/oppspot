@@ -10,11 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { 
-  Bookmark, 
-  Share2, 
-  Download, 
-  Flag, 
+import {
+  Bookmark,
+  Share2,
+  Download,
+  Flag,
   Edit,
   MoreVertical,
   Star,
@@ -24,10 +24,13 @@ import {
   Facebook,
   Twitter,
   Linkedin,
-  BookmarkCheck
+  BookmarkCheck,
+  Shield
 } from 'lucide-react'
+import NextLink from 'next/link'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { SaveToCollectionButton } from '@/components/collections/save-to-collection-button'
 
 interface BusinessActionsProps {
   business: {
@@ -223,8 +226,8 @@ export function BusinessActions({ business }: BusinessActionsProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Save Button */}
-        <Button 
-          className="w-full" 
+        <Button
+          className="w-full"
           variant={isSaved ? "secondary" : "default"}
           onClick={handleSave}
           disabled={saving}
@@ -241,6 +244,24 @@ export function BusinessActions({ business }: BusinessActionsProps) {
             </>
           )}
         </Button>
+
+        {/* Save to Collection */}
+        <SaveToCollectionButton
+          itemType="business"
+          itemId={business.id}
+          variant="outline"
+          size="default"
+          className="w-full"
+          showLabel={true}
+        />
+
+        {/* Red Flag Radar */}
+        <NextLink href={`/business/${business.id}/red-flags`} className="w-full">
+          <Button variant="outline" className="w-full">
+            <Shield className="mr-2 h-4 w-4 text-red-600" />
+            Red Flag Radar
+          </Button>
+        </NextLink>
 
         {/* Share Button */}
         <DropdownMenu>

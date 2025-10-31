@@ -117,6 +117,23 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       });
     }
 
+    // Trigger Q&A document processing (Feature 008-oppspot-docs-dataroom)
+    // Extract text, chunk, and generate embeddings for Q&A
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    fetch(`${baseUrl}/api/data-room/${dataRoomId}/process-document`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': req.headers.get('cookie') || '', // Forward cookies for auth
+      },
+      body: JSON.stringify({
+        document_id: document.id,
+        storage_path: storagePath
+      }),
+    }).catch((err) => {
+      console.error('Failed to trigger Q&A document processing:', err);
+    });
+
     return NextResponse.json(updatedDocument, { status: 201 });
   } catch (error) {
     // If upload fails, delete the document record

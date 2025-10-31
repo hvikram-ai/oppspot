@@ -3,6 +3,7 @@
  * Export all data room components for easier imports
  */
 
+// Core Data Room Components
 export { ActivityFeed } from './activity-feed'
 export { AIInsightsSidebar } from './ai-insights-sidebar'
 export { ApprovalRequests } from './approval-requests'
@@ -21,3 +22,10 @@ export { TaskManager } from './task-manager'
 export { UploadZone } from './upload-zone'
 export { WorkflowDashboard } from './workflow-dashboard'
 export { WorkflowNotificationPreferences } from './workflow-notification-preferences'
+
+// Q&A Copilot Components (Feature 008-oppspot-docs-dataroom)
+export { QAChatInterface } from './qa-chat-interface'
+export { CitationCard, CitationList } from './qa-citation-card'
+export { HistoryPanel } from './qa-history-panel'
+export { FeedbackControls, FeedbackDisplay } from './qa-feedback-controls'
+export { QADocumentPreview, generateCitationUrl, useCitationUrlParams } from './qa-document-preview'

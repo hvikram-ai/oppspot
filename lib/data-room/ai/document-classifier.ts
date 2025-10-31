@@ -1,9 +1,10 @@
 /**
  * Document Classifier
- * AI-powered document type classification using OpenRouter API
+ * AI-powered document type classification using LLM Manager
  */
 
 import { DocumentType } from '../types';
+import { getUserLLMManager } from '@/lib/ai/llm-client-wrapper';
 
 interface ClassificationResult {
   document_type: DocumentType;
@@ -15,35 +16,17 @@ interface ClassificationResult {
   }[];
 }
 
-interface OpenRouterResponse {
-  choices: {
-    message: {
-      content: string;
-    };
-  }[];
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
 
 /**
- * DocumentClassifier - Classifies documents using AI
+ * DocumentClassifier - Classifies documents using AI via LLM Manager
  */
 export class DocumentClassifier {
-  private apiKey: string;
+  private userId: string;
   private model: string;
-  private baseUrl: string;
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
+  constructor(userId: string = 'system') {
+    this.userId = userId;
     this.model = 'anthropic/claude-3.5-sonnet'; // Claude Sonnet 3.5 for accuracy
-    this.baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
-
-    if (!this.apiKey) {
-      throw new Error('OPENROUTER_API_KEY is required for document classification');
-    }
   }
 
   /**
@@ -56,6 +39,8 @@ export class DocumentClassifier {
     text: string,
     filename?: string
   ): Promise<ClassificationResult> {
+    const manager = await getUserLLMManager(this.userId);
+
     try {
       // Truncate text if too long (keep first 10k characters for classification)
       const truncatedText = text.slice(0, 10000);
@@ -88,42 +73,26 @@ Be conservative with confidence scores:
 
       const userPrompt = `Document: ${filename ? `Filename: ${filename}\n\n` : ''}Text content:\n\n${truncatedText}`;
 
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://oppspot.ai',
-          'X-Title': 'oppSpot Data Room',
-        },
-        body: JSON.stringify({
+      // Use LLM Manager with automatic fallback
+      const response = await manager.chat(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        {
           model: this.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
           temperature: 0.1, // Low temperature for consistent classification
-          max_tokens: 500,
-          response_format: { type: 'json_object' },
-        }),
-      });
+          maxTokens: 500,
+          feature: 'data-room', // Track usage under data-room feature
+        }
+      );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `OpenRouter API error (${response.status}): ${errorText}`
-        );
-      }
-
-      const data: OpenRouterResponse = await response.json();
-      const content = data.choices[0]?.message?.content;
-
-      if (!content) {
-        throw new Error('No response content from OpenRouter API');
+      if (!response.content) {
+        throw new Error('No response content from LLM');
       }
 
       // Parse JSON response
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(response.content);
 
       // Validate and normalize response
       const result: ClassificationResult = {
@@ -146,6 +115,8 @@ Be conservative with confidence scores:
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
+    } finally {
+      await manager.cleanup();
     }
   }
 
@@ -236,4 +207,13 @@ Be conservative with confidence scores:
 
     return false;
   }
+}
+
+/**
+ * Factory function to get a DocumentClassifier instance
+ * @param userId - User ID for per-user LLM configuration
+ * @returns DocumentClassifier instance
+ */
+export function getDocumentClassifier(userId?: string): DocumentClassifier {
+  return new DocumentClassifier(userId || 'system');
 }

@@ -12,6 +12,8 @@ import { RelatedBusinesses } from '@/components/business/related-businesses'
 import { BusinessStakeholders } from '@/components/business/business-stakeholders'
 import { BANTScoreCard } from '@/components/bant/bant-score-card'
 import { BenchmarkCard } from '@/components/benchmarking/benchmark-card'
+import { RedFlagsSummary } from '@/components/analytics/red-flags-summary'
+import { MAPredictionSection } from '@/components/ma-prediction/ma-prediction-section'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { getMockCompany, getMockRelatedCompanies } from '@/lib/mock-data/companies'
@@ -295,6 +297,13 @@ export default async function BusinessPage({ params: paramsPromise }: BusinessPa
                 <BenchmarkCard
                   companyId={business.id}
                   companyName={business.name}
+                />
+                <MAPredictionSection
+                  companyId={business.id}
+                  companyName={business.name}
+                />
+                <RedFlagsSummary
+                  companyId={business.id}
                 />
               </>
             )}

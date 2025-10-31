@@ -1,0 +1,303 @@
+openapi: 3.0.3
+info:
+  title: Red Flag Radar API - Export Flags
+  version: 1.0.0
+  description: Export red flags to PDF or CSV format
+
+paths:
+  /api/{entityType}/{id}/red-flags/export:
+    get:
+      summary: Export red flags
+      operationId: exportRedFlags
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [companies, data-rooms]
+
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pdf, csv]
+          description: Export format
+
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by status (comma-separated)
+
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by category (comma-separated)
+
+        - name: severity
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by severity (comma-separated)
+
+        - name: include_resolved
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include resolved flags in export
+
+        - name: include_false_positives
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include false positive flags in export
+
+        - name: include_explainer
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Include AI-generated explanations (PDF only)
+
+        - name: include_evidence
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Include evidence references (PDF only)
+
+        - name: include_remediation
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Include remediation suggestions (PDF only)
+
+      responses:
+        '200':
+          description: Export file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+              example: Binary PDF data
+            text/csv:
+              schema:
+                type: string
+                format: binary
+              example: |
+                ID,Category,Severity,Confidence,Title,Status,First Detected,Last Updated,Explanation,Remediation,Evidence Count
+                123e4567-e89b-12d3-a456-426614174000,financial,critical,0.92,Revenue Concentration Risk,open,2025-10-29T10:00:00Z,2025-10-29T15:30:00Z,"Top 3 customers represent 85% of revenue","Diversify customer base; target new market segments",5
+
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Filename for download
+              example: attachment; filename="red-flags-2025-10-29.pdf"
+
+        '202':
+          description: Export is being generated (for large exports >1000 flags)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  export_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [processing]
+                  estimated_time_seconds:
+                    type: integer
+                  poll_url:
+                    type: string
+                    description: URL to check export status
+                  download_url:
+                    type: string
+                    description: URL will be available when ready
+
+        '400':
+          description: Bad request (invalid format, invalid filters)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '413':
+          description: Export too large (>2000 flags)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: 'EXPORT_TOO_LARGE'
+                message: 'Export exceeds 2000 flags. Please apply additional filters.'
+                details:
+                  total_flags: 2543
+                  max_allowed: 2000
+
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/{entityType}/{id}/red-flags/exports/{exportId}:
+    get:
+      summary: Get export status or download file
+      operationId: getExportStatus
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [companies, data-rooms]
+
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+        - name: exportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      responses:
+        '200':
+          description: Export ready - file download or status check
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportStatus'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    ExportStatus:
+      type: object
+      required:
+        - export_id
+        - status
+        - created_at
+      properties:
+        export_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing, ready, expired, failed]
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        download_url:
+          type: string
+          nullable: true
+          description: Presigned URL for download (expires in 1 hour)
+        expires_at:
+          type: string
+          format: date-time
+          description: Export file expiration (24 hours after creation)
+        format:
+          type: string
+          enum: [pdf, csv]
+        file_size_bytes:
+          type: integer
+          nullable: true
+        flag_count:
+          type: integer
+          description: Number of flags included in export
+        error:
+          type: string
+          nullable: true
+          description: Error message if status=failed
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "driver.js/dist/driver.css";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationProvider } from "@/lib/notifications/realtime-notifications";
 import { DemoModeProvider } from "@/lib/demo/demo-context";

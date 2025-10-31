@@ -1,0 +1,379 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Get Cohort Analysis",
+    "version": "1.0.0",
+    "description": "Retrieve customer retention cohort data showing logo and revenue retention rates by acquisition month over time. Returns data suitable for rendering retention heatmaps."
+  },
+  "servers": [
+    {
+      "url": "https://oppspot-one.vercel.app/api",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development"
+    }
+  ],
+  "paths": {
+    "/companies/{companyId}/financials/cohorts": {
+      "get": {
+        "summary": "Get cohort retention analysis",
+        "description": "Retrieve cohort retention matrix showing what percentage of customers and revenue from each acquisition month remained active over time. Supports monthly/quarterly windows.",
+        "operationId": "getCohortAnalysis",
+        "tags": ["Financial Analytics"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "UUID of company to retrieve data for",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          {
+            "name": "start_cohort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "First cohort month to include (defaults to 24 months ago)",
+            "example": "2023-01-01"
+          },
+          {
+            "name": "end_cohort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Last cohort month to include (defaults to current month)",
+            "example": "2024-12-01"
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["monthly", "quarterly"],
+              "default": "monthly"
+            },
+            "description": "Time window for cohort grouping",
+            "example": "monthly"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cohort analysis retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": ["company_id", "currency", "cohorts", "metadata"],
+                      "properties": {
+                        "company_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "example": "USD"
+                        },
+                        "cohorts": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Cohort"
+                          }
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "properties": {
+                            "cohort_count": {
+                              "type": "integer",
+                              "description": "Number of cohorts"
+                            },
+                            "max_age_months": {
+                              "type": "integer",
+                              "description": "Maximum cohort age in months"
+                            },
+                            "calculated_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "cohort_analysis": {
+                    "summary": "24 months of cohort data",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "company_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "currency": "USD",
+                        "cohorts": [
+                          {
+                            "cohort_month": "2024-01-01",
+                            "initial_customers": 100,
+                            "initial_mrr": 50000.0,
+                            "periods": [
+                              {
+                                "period_month": "2024-01-01",
+                                "months_since_acquisition": 0,
+                                "retained_customers": 100,
+                                "churned_customers": 0,
+                                "retention_rate": 100.0,
+                                "revenue_retained": 50000.0,
+                                "revenue_retention_rate": 100.0
+                              },
+                              {
+                                "period_month": "2024-02-01",
+                                "months_since_acquisition": 1,
+                                "retained_customers": 98,
+                                "churned_customers": 2,
+                                "retention_rate": 98.0,
+                                "revenue_retained": 51000.0,
+                                "revenue_retention_rate": 102.0
+                              },
+                              {
+                                "period_month": "2024-03-01",
+                                "months_since_acquisition": 2,
+                                "retained_customers": 95,
+                                "churned_customers": 5,
+                                "retention_rate": 95.0,
+                                "revenue_retained": 52000.0,
+                                "revenue_retention_rate": 104.0
+                              }
+                            ]
+                          },
+                          {
+                            "cohort_month": "2024-02-01",
+                            "initial_customers": 85,
+                            "initial_mrr": 42500.0,
+                            "periods": [
+                              {
+                                "period_month": "2024-02-01",
+                                "months_since_acquisition": 0,
+                                "retained_customers": 85,
+                                "churned_customers": 0,
+                                "retention_rate": 100.0,
+                                "revenue_retained": 42500.0,
+                                "revenue_retention_rate": 100.0
+                              },
+                              {
+                                "period_month": "2024-03-01",
+                                "months_since_acquisition": 1,
+                                "retained_customers": 83,
+                                "churned_customers": 2,
+                                "retention_rate": 97.6,
+                                "revenue_retained": 43000.0,
+                                "revenue_retention_rate": 101.2
+                              }
+                            ]
+                          }
+                        ],
+                        "metadata": {
+                          "cohort_count": 24,
+                          "max_age_months": 23,
+                          "calculated_at": "2024-10-30T20:00:00Z"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Cohort": {
+        "type": "object",
+        "required": ["cohort_month", "initial_customers", "initial_mrr", "periods"],
+        "properties": {
+          "cohort_month": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of cohort acquisition month"
+          },
+          "initial_customers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of customers acquired in cohort month"
+          },
+          "initial_mrr": {
+            "type": "number",
+            "format": "decimal",
+            "minimum": 0,
+            "description": "Initial MRR from cohort at acquisition"
+          },
+          "periods": {
+            "type": "array",
+            "description": "Retention data for each subsequent period",
+            "items": {
+              "$ref": "#/components/schemas/CohortPeriod"
+            }
+          }
+        }
+      },
+      "CohortPeriod": {
+        "type": "object",
+        "required": [
+          "period_month",
+          "months_since_acquisition",
+          "retained_customers",
+          "churned_customers",
+          "retention_rate",
+          "revenue_retained",
+          "revenue_retention_rate"
+        ],
+        "properties": {
+          "period_month": {
+            "type": "string",
+            "format": "date",
+            "description": "Analysis period (first day of month)"
+          },
+          "months_since_acquisition": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Months elapsed since cohort acquisition"
+          },
+          "retained_customers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Customers still active from cohort"
+          },
+          "churned_customers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Cumulative churned customers from cohort"
+          },
+          "retention_rate": {
+            "type": "number",
+            "format": "decimal",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Logo retention percentage"
+          },
+          "revenue_retained": {
+            "type": "number",
+            "format": "decimal",
+            "minimum": 0,
+            "description": "MRR retained from cohort (can exceed initial with expansion)"
+          },
+          "revenue_retention_rate": {
+            "type": "number",
+            "format": "decimal",
+            "minimum": 0,
+            "maximum": 200,
+            "description": "Revenue retention percentage (can exceed 100% with expansion)"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

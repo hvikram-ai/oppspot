@@ -1,0 +1,332 @@
+openapi: 3.0.3
+info:
+  title: M&A Prediction Batch Processing API
+  description: Trigger and monitor batch prediction generation
+  version: 1.0.0
+
+servers:
+  - url: https://oppspot-one.vercel.app/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Local development
+
+paths:
+  /ma-predictions/batch:
+    post:
+      summary: Trigger batch prediction generation
+      description: |
+        Initiates batch processing for all companies or a specific subset.
+        Normally triggered by Vercel Cron Job nightly at 2 AM (FR-030).
+        Can be manually triggered by admins for testing or re-processing.
+
+        Processing Strategy:
+        - Processes 100 companies in parallel
+        - Estimated time: ~7 minutes for 10,000 companies
+        - Updates existing predictions or creates new ones
+      operationId: triggerBatchPrediction
+      tags:
+        - Batch Processing
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                company_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Optional: specific companies to process. If omitted, processes all active companies.
+                force_recalculate:
+                  type: boolean
+                  default: false
+                  description: If true, recalculate even if prediction is recent
+                batch_size:
+                  type: integer
+                  default: 100
+                  minimum: 10
+                  maximum: 500
+                  description: Number of companies to process in parallel
+      responses:
+        '202':
+          description: Batch processing initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch_id:
+                    type: string
+                    format: uuid
+                    description: Unique identifier for this batch job
+                  total_companies:
+                    type: integer
+                    description: Number of companies queued for processing
+                  estimated_completion_time:
+                    type: string
+                    format: date-time
+                    description: Estimated completion timestamp
+                  status_url:
+                    type: string
+                    example: "/api/ma-predictions/batch/550e8400-e29b-41d4-a716-446655440000/status"
+              example:
+                batch_id: "550e8400-e29b-41d4-a716-446655440000"
+                total_companies: 10234
+                estimated_completion_time: "2025-10-30T02:07:00Z"
+                status_url: "/api/ma-predictions/batch/550e8400-e29b-41d4-a716-446655440000/status"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden - admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "forbidden"
+                message: "Batch processing requires admin role"
+                code: 403
+      security:
+        - supabaseAuth: []
+        - cronSecret: []
+
+  /ma-predictions/batch/{batchId}/status:
+    get:
+      summary: Get batch processing status
+      description: Monitor progress of a batch prediction job
+      operationId: getBatchStatus
+      tags:
+        - Batch Processing
+      parameters:
+        - name: batchId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Batch status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchStatus'
+              examples:
+                in_progress:
+                  summary: Batch in progress
+                  value:
+                    batch_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "processing"
+                    total_companies: 10234
+                    processed_count: 5120
+                    success_count: 5080
+                    failed_count: 40
+                    progress_percentage: 50.0
+                    started_at: "2025-10-30T02:00:00Z"
+                    estimated_completion: "2025-10-30T02:07:00Z"
+                completed:
+                  summary: Batch completed
+                  value:
+                    batch_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "completed"
+                    total_companies: 10234
+                    processed_count: 10234
+                    success_count: 10150
+                    failed_count: 84
+                    progress_percentage: 100.0
+                    started_at: "2025-10-30T02:00:00Z"
+                    completed_at: "2025-10-30T02:06:43Z"
+                    duration_seconds: 403
+        '404':
+          description: Batch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - supabaseAuth: []
+
+  /cron/ma-predictions:
+    get:
+      summary: Vercel Cron endpoint for nightly batch processing
+      description: |
+        This endpoint is called by Vercel Cron Jobs nightly at 2 AM.
+        Secured by CRON_SECRET environment variable.
+
+        Vercel cron configuration (vercel.json):
+        {
+          "crons": [{
+            "path": "/api/cron/ma-predictions",
+            "schedule": "0 2 * * *"
+          }]
+        }
+      operationId: cronBatchPrediction
+      tags:
+        - Cron Jobs
+      parameters:
+        - name: authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Bearer token with CRON_SECRET
+      responses:
+        '200':
+          description: Cron job executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  batch_id:
+                    type: string
+                    format: uuid
+                  processed_count:
+                    type: integer
+                  execution_time_seconds:
+                    type: integer
+        '401':
+          description: Invalid or missing CRON_SECRET
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - cronSecret: []
+
+  /ma-predictions/queue/status:
+    get:
+      summary: Get real-time recalculation queue status
+      description: View pending recalculation jobs triggered by data updates (FR-009)
+      operationId: getQueueStatus
+      tags:
+        - Queue Management
+      responses:
+        '200':
+          description: Queue status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pending_count:
+                    type: integer
+                  processing_count:
+                    type: integer
+                  oldest_pending:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  average_processing_time_seconds:
+                    type: number
+                    format: float
+              example:
+                pending_count: 12
+                processing_count: 5
+                oldest_pending: "2025-10-30T14:23:10Z"
+                average_processing_time_seconds: 3.8
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      security:
+        - supabaseAuth: []
+
+components:
+  schemas:
+    BatchStatus:
+      type: object
+      required:
+        - batch_id
+        - status
+        - total_companies
+        - processed_count
+        - success_count
+        - failed_count
+        - progress_percentage
+        - started_at
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed, cancelled]
+        total_companies:
+          type: integer
+          description: Total companies to process
+        processed_count:
+          type: integer
+          description: Number of companies processed so far
+        success_count:
+          type: integer
+          description: Number of successful predictions
+        failed_count:
+          type: integer
+          description: Number of failed predictions
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: integer
+          description: Total processing time (when completed)
+        error_summary:
+          type: object
+          properties:
+            insufficient_data:
+              type: integer
+            api_timeouts:
+              type: integer
+            unknown_errors:
+              type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: integer
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    supabaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token
+    cronSecret:
+      type: http
+      scheme: bearer
+      description: Vercel Cron Secret from environment variable

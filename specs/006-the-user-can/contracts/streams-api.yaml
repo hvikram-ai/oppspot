@@ -1,0 +1,245 @@
+openapi: 3.0.3
+info:
+  title: Streams API
+  version: 1.0.0
+  description: Stream management endpoints for oppSpot work organization
+
+paths:
+  /api/streams:
+    get:
+      summary: List user's streams
+      parameters:
+        - name: include_archived
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  owned:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stream'
+                  shared:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SharedStream'
+    post:
+      summary: Create new stream
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stream'
+
+  /api/streams/{streamId}:
+    get:
+      summary: Get stream details
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamDetail'
+    put:
+      summary: Rename stream
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Archive stream (soft delete)
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Archived
+
+  /api/streams/{streamId}/restore:
+    post:
+      summary: Restore archived stream
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Restored
+
+  /api/streams/active:
+    get:
+      summary: Get user's active stream
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stream'
+    put:
+      summary: Set active stream
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stream_id]
+              properties:
+                stream_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Updated
+
+  /api/streams/archive:
+    get:
+      summary: List archived streams
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stream'
+
+components:
+  schemas:
+    Stream:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        is_system:
+          type: boolean
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        item_count:
+          type: integer
+
+    SharedStream:
+      allOf:
+        - $ref: '#/components/schemas/Stream'
+        - type: object
+          properties:
+            permission_level:
+              type: string
+              enum: [view, edit, manage]
+            owner_name:
+              type: string
+
+    StreamDetail:
+      allOf:
+        - $ref: '#/components/schemas/Stream'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/StreamItem'
+            access_grants:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccessGrant'
+
+    StreamItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_type:
+          type: string
+          enum: [business, report, contact, list, insight, query]
+        item_id:
+          type: string
+          format: uuid
+        added_by:
+          type: string
+          format: uuid
+        added_at:
+          type: string
+          format: date-time
+
+    AccessGrant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        user_email:
+          type: string
+        permission_level:
+          type: string
+          enum: [view, edit, manage]
+        granted_at:
+          type: string
+          format: date-time

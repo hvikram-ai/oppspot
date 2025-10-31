@@ -1,0 +1,337 @@
+openapi: 3.0.3
+info:
+  title: M&A Prediction Export API
+  description: Export M&A predictions in PDF, Excel, and CSV formats
+  version: 1.0.0
+
+servers:
+  - url: https://oppspot-one.vercel.app/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Local development
+
+paths:
+  /ma-predictions/export:
+    post:
+      summary: Export M&A predictions
+      description: |
+        Export predictions in user-specified format (PDF, Excel, CSV) per FR-019.
+
+        Export contents (FR-020):
+        - Prediction scores and likelihood categories
+        - Valuation estimates
+        - Top contributing factors
+        - Historical comparables (if available)
+
+        Performance targets:
+        - PDF: 2-5s for single company report
+        - Excel: 1-3s for bulk export (100 companies)
+        - CSV: <1s (simple text serialization)
+      operationId: exportMAPredictions
+      tags:
+        - Export
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - format
+                - company_ids
+              properties:
+                format:
+                  type: string
+                  enum: [pdf, excel, csv]
+                  description: Export file format
+                company_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                  maxItems: 1000
+                  description: Companies to export (1-1000)
+                filters:
+                  type: object
+                  description: Optional filters to apply
+                  properties:
+                    likelihood_categories:
+                      type: array
+                      items:
+                        type: string
+                        enum: [Low, Medium, High, Very High]
+                      description: Filter by likelihood (e.g., ["High", "Very High"])
+                    min_score:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                      description: Minimum prediction score
+                    max_score:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                      description: Maximum prediction score
+                include_fields:
+                  type: object
+                  description: Customize export contents
+                  properties:
+                    factors:
+                      type: boolean
+                      default: true
+                    valuation:
+                      type: boolean
+                      default: true
+                    acquirer_profiles:
+                      type: boolean
+                      default: true
+                    historical_comparables:
+                      type: boolean
+                      default: false
+            examples:
+              pdf_single_company:
+                summary: PDF export for single company
+                value:
+                  format: "pdf"
+                  company_ids: ["123e4567-e89b-12d3-a456-426614174000"]
+                  include_fields:
+                    factors: true
+                    valuation: true
+                    acquirer_profiles: true
+              excel_high_targets:
+                summary: Excel export of high-likelihood targets
+                value:
+                  format: "excel"
+                  company_ids: ["123e4567-e89b-12d3-a456-426614174000", "550e8400-e29b-41d4-a716-446655440000"]
+                  filters:
+                    likelihood_categories: ["High", "Very High"]
+                  include_fields:
+                    factors: true
+                    valuation: true
+              csv_bulk_export:
+                summary: CSV export for data integration
+                value:
+                  format: "csv"
+                  company_ids: ["123e4567-e89b-12d3-a456-426614174000"]
+                  include_fields:
+                    factors: false
+                    valuation: true
+                    acquirer_profiles: false
+      responses:
+        '200':
+          description: Export generated successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              example: 'attachment; filename="ma-predictions-2025-10-30.pdf"'
+        '202':
+          description: Export queued for large requests (>100 companies)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  export_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: "processing"
+                  estimated_completion_seconds:
+                    type: integer
+                  status_url:
+                    type: string
+                    example: "/api/ma-predictions/export/550e8400-e29b-41d4-a716-446655440000/status"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                too_many_companies:
+                  value:
+                    error: "invalid_request"
+                    message: "Maximum 1000 companies per export request"
+                    code: 400
+                invalid_format:
+                  value:
+                    error: "invalid_format"
+                    message: "Format must be one of: pdf, excel, csv"
+                    code: 400
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      security:
+        - supabaseAuth: []
+
+  /ma-predictions/export/{exportId}/status:
+    get:
+      summary: Check export generation status
+      description: Poll status for large async exports
+      operationId: getExportStatus
+      tags:
+        - Export
+      parameters:
+        - name: exportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  export_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [queued, processing, completed, failed]
+                  progress_percentage:
+                    type: number
+                    format: float
+                  created_at:
+                    type: string
+                    format: date-time
+                  completed_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  download_url:
+                    type: string
+                    nullable: true
+                    description: Available when status = completed
+                  expires_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    description: Download link expiry time
+                  error_message:
+                    type: string
+                    nullable: true
+              examples:
+                processing:
+                  value:
+                    export_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "processing"
+                    progress_percentage: 65.0
+                    created_at: "2025-10-30T14:30:00Z"
+                completed:
+                  value:
+                    export_id: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "completed"
+                    progress_percentage: 100.0
+                    created_at: "2025-10-30T14:30:00Z"
+                    completed_at: "2025-10-30T14:32:15Z"
+                    download_url: "https://storage.supabase.co/exports/ma-predictions-550e8400.xlsx"
+                    expires_at: "2025-10-30T15:32:15Z"
+        '404':
+          description: Export not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - supabaseAuth: []
+
+  /ma-predictions/export/watchlist:
+    get:
+      summary: Export predictions for user's saved companies
+      description: |
+        Convenience endpoint to export High/Very High likelihood targets from
+        user's saved companies or watchlists (FR-021).
+
+        Automatically filters for High/Very High categories.
+      operationId: exportWatchlistPredictions
+      tags:
+        - Export
+      parameters:
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pdf, excel, csv]
+        - name: list_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Optional specific business list to export
+      responses:
+        '200':
+          description: Export generated
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+        '404':
+          description: No saved companies or no high-likelihood targets found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      security:
+        - supabaseAuth: []
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: integer
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    supabaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token

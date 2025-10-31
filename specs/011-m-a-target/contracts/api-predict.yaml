@@ -1,0 +1,382 @@
+openapi: 3.0.3
+info:
+  title: M&A Prediction API
+  description: Retrieve M&A target predictions for companies
+  version: 1.0.0
+
+servers:
+  - url: https://oppspot-one.vercel.app/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Local development
+
+paths:
+  /ma-predictions/{companyId}:
+    get:
+      summary: Get M&A prediction for a company
+      description: |
+        Retrieves the active M&A target prediction for a specific company, including:
+        - Prediction score (0-100) and likelihood category
+        - Top 5 contributing factors
+        - Valuation estimate (if Medium+ likelihood)
+        - Potential acquirer profiles (if High+ likelihood)
+
+        Performance: <5 seconds (95th percentile) per FR-029
+      operationId: getMAPrediction
+      tags:
+        - M&A Predictions
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the company (businesses table)
+        - name: include
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [factors, valuation, acquirers, all]
+          description: |
+            Optional related data to include:
+            - factors: Top 5 contributing factors
+            - valuation: Estimated price range
+            - acquirers: Potential acquirer profiles
+            - all: Include everything
+      responses:
+        '200':
+          description: Prediction retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MAPredictionResponse'
+              examples:
+                high_likelihood:
+                  summary: High likelihood target
+                  value:
+                    prediction:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      company_id: "123e4567-e89b-12d3-a456-426614174000"
+                      prediction_score: 78
+                      likelihood_category: "High"
+                      confidence_level: "High"
+                      analysis_version: "1.0"
+                      created_at: "2025-10-30T02:00:00Z"
+                      updated_at: "2025-10-30T02:00:00Z"
+                      data_last_refreshed: "2025-10-29T18:00:00Z"
+                      calculation_time_ms: 3240
+                    factors:
+                      - rank: 1
+                        factor_type: "financial"
+                        factor_name: "declining_revenue"
+                        factor_description: "Revenue declined 18% YoY while profitability dropped 25%"
+                        impact_weight: 35.5
+                        impact_direction: "positive"
+                      - rank: 2
+                        factor_type: "market"
+                        factor_name: "industry_consolidation"
+                        factor_description: "Software sector seeing 40% increase in M&A activity"
+                        impact_weight: 28.0
+                        impact_direction: "positive"
+                    valuation:
+                      min_valuation_gbp: 5000000
+                      max_valuation_gbp: 12000000
+                      currency: "GBP"
+                      valuation_method: "revenue_multiple"
+                      confidence_level: "Medium"
+                    acquirer_profiles:
+                      - rank: 1
+                        industry_match: "SIC 62012 - Business and domestic software development"
+                        size_ratio_description: "5-7x larger by revenue"
+                        geographic_proximity: "Same region (London)"
+                        strategic_rationale: "horizontal_integration"
+                        match_score: 85
+        '404':
+          description: Prediction not found or insufficient data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "prediction_not_found"
+                message: "No M&A prediction available for this company. Insufficient data (require 2+ years financial history)."
+                code: 404
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - supabaseAuth: []
+
+  /ma-predictions/{companyId}/history:
+    get:
+      summary: Get historical predictions for a company
+      description: Retrieve past predictions to show likelihood trends over time (FR-012)
+      operationId: getMAPredictionHistory
+      tags:
+        - M&A Predictions
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Historical predictions retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  predictions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MAPrediction'
+                  total_count:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      security:
+        - supabaseAuth: []
+
+components:
+  schemas:
+    MAPredictionResponse:
+      type: object
+      required:
+        - prediction
+      properties:
+        prediction:
+          $ref: '#/components/schemas/MAPrediction'
+        factors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MAPredictionFactor'
+        valuation:
+          $ref: '#/components/schemas/MAValuationEstimate'
+        acquirer_profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/MAAcquirerProfile'
+
+    MAPrediction:
+      type: object
+      required:
+        - id
+        - company_id
+        - prediction_score
+        - likelihood_category
+        - confidence_level
+        - created_at
+        - updated_at
+        - data_last_refreshed
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        prediction_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: M&A likelihood score (0-100)
+        likelihood_category:
+          type: string
+          enum: [Low, Medium, High, Very High]
+        confidence_level:
+          type: string
+          enum: [High, Medium, Low]
+        analysis_version:
+          type: string
+          example: "1.0"
+        algorithm_type:
+          type: string
+          example: "hybrid_ai_rule_based"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        data_last_refreshed:
+          type: string
+          format: date-time
+          description: When underlying company data was last updated
+        calculation_time_ms:
+          type: integer
+          description: Time taken to calculate prediction (milliseconds)
+
+    MAPredictionFactor:
+      type: object
+      required:
+        - rank
+        - factor_type
+        - factor_name
+        - factor_description
+        - impact_weight
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Importance rank (1 = most important)
+        factor_type:
+          type: string
+          enum: [financial, operational, market, historical]
+        factor_name:
+          type: string
+          example: "declining_revenue"
+        factor_description:
+          type: string
+          example: "Revenue declined 18% YoY while profitability dropped 25%"
+        impact_weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Percentage contribution to final score
+        impact_direction:
+          type: string
+          enum: [positive, negative, neutral]
+        supporting_value:
+          type: object
+          additionalProperties: true
+          example:
+            revenue_decline_pct: -18.3
+            profitability_decline_pct: -25.1
+
+    MAValuationEstimate:
+      type: object
+      required:
+        - min_valuation_gbp
+        - max_valuation_gbp
+        - currency
+        - valuation_method
+        - confidence_level
+      properties:
+        min_valuation_gbp:
+          type: integer
+          format: int64
+          description: Minimum estimated valuation in GBP
+        max_valuation_gbp:
+          type: integer
+          format: int64
+          description: Maximum estimated valuation in GBP
+        currency:
+          type: string
+          default: "GBP"
+        valuation_method:
+          type: string
+          example: "revenue_multiple"
+          description: Methodology used (e.g., revenue multiple, EBITDA multiple, comparable deals)
+        confidence_level:
+          type: string
+          enum: [High, Medium, Low]
+        key_assumptions:
+          type: object
+          additionalProperties: true
+          example:
+            revenue_multiple: 3.5
+            industry_avg_multiple: 3.2
+
+    MAAcquirerProfile:
+      type: object
+      required:
+        - rank
+        - industry_match
+        - size_ratio_description
+        - geographic_proximity
+        - strategic_rationale
+        - match_score
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 10
+        potential_acquirer_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID of specific company if identified, null for generic profile
+        industry_match:
+          type: string
+          example: "SIC 62012 - Business and domestic software development"
+        size_ratio_description:
+          type: string
+          example: "5-7x larger by revenue"
+        geographic_proximity:
+          type: string
+          example: "Same region (London)"
+        strategic_rationale:
+          type: string
+          enum:
+            - horizontal_integration
+            - vertical_integration
+            - technology_acquisition
+            - market_expansion
+            - talent_acquisition
+            - other
+        strategic_rationale_description:
+          type: string
+          example: "Expand product portfolio and customer base"
+        match_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: How well this acquirer profile matches
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          type: string
+          example: "prediction_not_found"
+        message:
+          type: string
+          example: "No M&A prediction available for this company."
+        code:
+          type: integer
+          example: 404
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    supabaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token from auth.session()

@@ -1,15 +1,22 @@
+/**
+ * AI Chat API Route
+ *
+ * Migrated to use LLMManager system for unified multi-provider support.
+ * LLMManager automatically handles provider selection, fallback, and usage tracking.
+ *
+ * Migration: Phase 4.4 - Replaced direct Ollama/OpenRouter calls with getUserLLMManager()
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
-import { SimpleOllamaClient } from '@/lib/ai/simple-ollama'
 import { findBestMatch } from '@/lib/ai/knowledge-base'
 import { PlatformChatOrchestrator } from '@/lib/ai/platform-chat-orchestrator'
-import { OpenRouterClient } from '@/lib/ai/openrouter'
+import { getUserLLMManager } from '@/lib/ai/llm-client-wrapper'
 
 // Enable streaming
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Initialize clients
-const ollama = new SimpleOllamaClient()
+// Initialize platform orchestrator
 const platformOrchestrator = new PlatformChatOrchestrator()
 
 // Enhanced system prompt with examples and better context
@@ -60,23 +67,20 @@ Guidelines:
 
 When you don't know something specific about OppSpot, guide users to relevant features or suggest contacting support.`
 
-// Build prioritized model list from env or sensible defaults
-function getPreferredModels(): string[] {
-  const fromEnv = process.env.OLLAMA_CHAT_MODELS
-  if (fromEnv) {
-    return fromEnv.split(',').map(m => m.trim()).filter(Boolean)
-  }
-  // Defaults align with scripts/setup-ollama.sh
-  return ['mistral:7b', 'llama3.2:3b', 'llama3.2:1b', 'phi:2.7b']
-}
 
-// Convert chat history + KB priming to Ollama message format
-function convertToOllamaMessages(
+// Convert chat history + KB priming to message format
+function convertToMessages(
   currentMessage: string,
   history?: Array<{ role: string; content: string }>,
   kbContext?: string
 ) {
   const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = []
+
+  // Add system prompt
+  messages.push({
+    role: 'system',
+    content: SYSTEM_PROMPT
+  })
 
   // Add lightweight KB priming to steer relevance
   if (kbContext) {
@@ -112,7 +116,7 @@ const getFallbackResponse = (message: string): string => {
   
   // Check for specific questions about LLM/AI
   if (lowerMessage.includes('llm') || lowerMessage.includes('model') || lowerMessage.includes('what are you using')) {
-    return "I'm powered by advanced LLMs (currently Phi-3.5 and TinyLlama) through Ollama for intelligent responses. This enables me to understand your questions about OppSpot and provide specific guidance on finding companies, using our analysis tools, and discovering M&A opportunities. What would you like to know about OppSpot?"
+    return "I'm powered by oppSpot's multi-provider LLM system, which automatically selects the best available AI model (local Ollama, OpenAI, Anthropic, or OpenRouter) to answer your questions. This enables me to understand your questions about OppSpot and provide specific guidance on finding companies, using our analysis tools, and discovering M&A opportunities. What would you like to know about OppSpot?"
   }
   
   // Default helpful response with specific options
@@ -199,27 +203,19 @@ export async function POST(request: NextRequest) {
     const lower = String(message).toLowerCase()
     if (/(\bllm\b|which\s+llm|which\s+model|what\s+model|model\s+are\s+you|are\s+you\s+using\s+.*model)/.test(lower)) {
       try {
-        const ollamaAvailable = await ollama.isAvailable()
-        const installed = ollamaAvailable ? await ollama.getModels() : []
-        const preferred = getPreferredModels().filter(m => installed.includes(m))
-        const hasOpenRouter = !!process.env.OPENROUTER_API_KEY
+        const manager = await getUserLLMManager('system')
 
         const parts: string[] = []
-        if (ollamaAvailable && (preferred.length || installed.length)) {
-          parts.push(`I'm using local Ollama models (${(preferred.length ? preferred : installed).join(', ')}).`)
-        } else if (ollamaAvailable) {
-          parts.push('Ollama is available locally, but no preferred models are installed.')
-        } else {
-          parts.push('Local Ollama is not available in this environment.')
-        }
-        if (hasOpenRouter) {
-          parts.push('A cloud fallback via OpenRouter is configured for reliability.')
-        }
+        parts.push("I'm powered by oppSpot's intelligent LLM Manager, which automatically")
+        parts.push("selects the best available AI provider (Local Ollama, OpenAI, Anthropic, or OpenRouter)")
+        parts.push("based on your configuration and availability. This ensures reliable, high-quality responses.")
         parts.push('Responses are tailored to OppSpot features and workflows.')
 
         aiResponse = parts.join(' ')
-        usedModel = ollamaAvailable ? 'ollama' : (hasOpenRouter ? 'openrouter' : 'fallback')
-        confidence = (ollamaAvailable || hasOpenRouter) ? 0.95 : 0.8
+        usedModel = 'llm_manager'
+        confidence = 0.95
+
+        await manager.cleanup()
 
         const stream = request.headers.get('accept') === 'text/event-stream'
         if (stream) {
@@ -321,123 +317,51 @@ export async function POST(request: NextRequest) {
         throw new Error('No formatted response from platform orchestrator')
       }
     } catch (platformError) {
-      console.log('[AI Chat] Platform orchestration failed or incomplete, using Ollama:', platformError)
-      
-      // Fall back to Ollama for general responses
-      const ollamaAvailable = await ollama.isAvailable()
-      
-      if (ollamaAvailable) {
-        try {
-          console.log('[AI Chat] Using Ollama for response generation')
-        
-        // Convert messages to Ollama format with KB priming
+      console.log('[AI Chat] Platform orchestration failed or incomplete, using LLM Manager:', platformError)
+
+      // Fall back to LLM Manager for general responses
+      const manager = await getUserLLMManager('system')
+
+      try {
+        console.log('[AI Chat] Using LLM Manager for response generation')
+
+        // Convert messages with KB priming
         const kb = findBestMatch(message)
-        const messages = convertToOllamaMessages(message, conversation_history, kb?.response)
-        
-        // Try different models in order of preference (aligned with installed models)
-        const modelsToTry = getPreferredModels()
-        const availableModels = await ollama.getModels()
-        
-        for (const model of modelsToTry) {
-          if (availableModels.includes(model)) {
-            try {
-              aiResponse = await ollama.chat(messages, {
-                model,
-                temperature: 0.4, // lower for focus
-                stream: false,
-                systemPrompt: SYSTEM_PROMPT
-              })
-              
-              if (aiResponse && aiResponse.trim().length > 0) {
-                // Validate response relevance
-                const isRelevant = validateResponse(aiResponse, message)
-                if (isRelevant) {
-                  usedModel = model
-                  confidence = 0.95
-                  console.log(`[AI Chat] Successfully used ${model}`)
-                  break
-                } else {
-                  console.warn(`[AI Chat] Response from ${model} was not relevant, trying next model`)
-                  aiResponse = '' // Clear for next attempt
-                }
-              }
-            } catch (modelError) {
-              console.warn(`[AI Chat] Failed with ${model}:`, modelError)
-              continue
-            }
-          }
-        }
-        
-        // If no model worked, try OpenRouter before fallback
-        if (!aiResponse || aiResponse.trim().length === 0) {
-          throw new Error('No valid response from Ollama')
-        }
-      } catch (ollamaError) {
-        console.warn('[AI Chat] Ollama failed, considering OpenRouter fallback:', ollamaError)
-        // Attempt OpenRouter if API key is present
-        const orKey = process.env.OPENROUTER_API_KEY
-        if (orKey) {
-          try {
-            const kb = findBestMatch(message)
-            const prompt = buildOpenRouterPrompt(message, conversation_history, kb?.response)
-            const stream = request.headers.get('accept') === 'text/event-stream'
-            if (stream) {
-              // Stream tokens from OpenRouter to client
-              return await streamOpenRouter(sessionId, prompt, SYSTEM_PROMPT)
-            } else {
-              const client = new OpenRouterClient(orKey)
-              aiResponse = await client.complete(prompt, {
-                system_prompt: SYSTEM_PROMPT,
-                temperature: 0.4,
-                max_tokens: 700,
-              })
-              usedModel = 'openrouter'
-              confidence = 0.9
-            }
-          } catch (orError) {
-            console.warn('[AI Chat] OpenRouter fallback failed, using static fallback:', orError)
+        const messages = convertToMessages(message, conversation_history, kb?.response)
+
+        // Use LLM Manager - it automatically handles provider selection and fallback
+        const response = await manager.chat(messages, {
+          temperature: 0.4, // Lower for focused responses
+          maxTokens: 700,
+          feature: 'ai-chat', // Track usage under ai-chat feature
+        })
+
+        if (response && response.content && response.content.trim().length > 0) {
+          aiResponse = response.content
+
+          // Validate response relevance
+          const isRelevant = validateResponse(aiResponse, message)
+          if (isRelevant) {
+            usedModel = response.model || 'llm_manager'
+            confidence = 0.95
+            console.log(`[AI Chat] Successfully generated response with LLM Manager`)
+          } else {
+            console.warn(`[AI Chat] Response was not relevant, using fallback`)
             aiResponse = getFallbackResponse(message)
             usedModel = 'fallback'
             confidence = 0.75
           }
         } else {
-          aiResponse = getFallbackResponse(message)
-          usedModel = 'fallback'
-          confidence = 0.75
+          throw new Error('No valid response from LLM Manager')
         }
-      }
-    } else {
-      console.log('[AI Chat] Ollama not available; checking OpenRouter')
-      const orKey = process.env.OPENROUTER_API_KEY
-      if (orKey) {
-        try {
-          const kb = findBestMatch(message)
-          const prompt = buildOpenRouterPrompt(message, conversation_history, kb?.response)
-          const stream = request.headers.get('accept') === 'text/event-stream'
-          if (stream) {
-            return await streamOpenRouter(sessionId, prompt, SYSTEM_PROMPT)
-          } else {
-            const client = new OpenRouterClient(orKey)
-            aiResponse = await client.complete(prompt, {
-              system_prompt: SYSTEM_PROMPT,
-              temperature: 0.4,
-              max_tokens: 700,
-            })
-            usedModel = 'openrouter'
-            confidence = 0.9
-          }
-        } catch (orError) {
-          console.warn('[AI Chat] OpenRouter failed, using static fallback:', orError)
-          aiResponse = getFallbackResponse(message)
-          usedModel = 'fallback'
-          confidence = 0.75
-        }
-      } else {
+      } catch (llmError) {
+        console.warn('[AI Chat] LLM Manager failed, using static fallback:', llmError)
         aiResponse = getFallbackResponse(message)
         usedModel = 'fallback'
         confidence = 0.75
+      } finally {
+        await manager.cleanup()
       }
-    }
     } // End of platform error catch block
     
     // Ensure we have a response
@@ -549,29 +473,29 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const action = searchParams.get('action')
-    
-    // Check Ollama status
+
+    // Check LLM Manager status
     if (action === 'status') {
-      const isAvailable = await ollama.isAvailable()
-      const models = isAvailable ? await ollama.getModels() : []
-      const hasOpenRouter = !!process.env.OPENROUTER_API_KEY
-      
-      return NextResponse.json({
-        ollama: {
-          available: isAvailable,
-          models,
-          preferredModel: 'mistral:7b'
-        },
-        openrouter: {
-          configured: hasOpenRouter
-        }
-      })
+      const manager = await getUserLLMManager('system')
+
+      try {
+        return NextResponse.json({
+          llm_manager: {
+            enabled: true,
+            system: 'multi-provider',
+            description: 'Automatic provider selection with fallback support',
+            providers: 'Local Ollama, OpenAI, Anthropic, OpenRouter'
+          }
+        })
+      } finally {
+        await manager.cleanup()
+      }
     }
-    
+
     // Return empty history for now
-    return NextResponse.json({ 
+    return NextResponse.json({
       sessions: [],
-      messages: [] 
+      messages: []
     })
   } catch (error) {
     console.error('[AI Chat API] Error:', error)
@@ -582,107 +506,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Build an OpenRouter prompt that includes brief recent history and a KB hint
-function buildOpenRouterPrompt(
-  message: string,
-  conversation_history?: Array<{ role: string; content: string }>,
-  kbHint?: string
-): string {
-  const parts: string[] = []
-  if (kbHint) {
-    parts.push('Context to consider (from OppSpot KB):')
-    parts.push(kbHint)
-    parts.push('---')
-  }
-  if (Array.isArray(conversation_history) && conversation_history.length) {
-    const recent = conversation_history.slice(-5)
-    parts.push('Recent conversation:')
-    for (const h of recent) {
-      const role = h.role === 'assistant' ? 'Assistant' : 'User'
-      parts.push(`${role}: ${h.content}`)
-    }
-    parts.push('---')
-  }
-  parts.push('User question:')
-  parts.push(message)
-  parts.push('\nPlease answer with concrete, OppSpot-specific guidance and actionable steps.')
-  return parts.join('\n')
-}
-
-// Stream OpenRouter responses to the client as SSE tokens
-async function streamOpenRouter(sessionId: string, prompt: string, systemPrompt?: string) {
-  const apiKey = process.env.OPENROUTER_API_KEY!
-  const baseUrl = 'https://openrouter.ai/api/v1'
-  const model = 'anthropic/claude-3-haiku'
-  const encoder = new TextEncoder()
-
-  // Prepare request body
-  const messages: Array<{ role: string; content: string }> = []
-  if (systemPrompt) messages.push({ role: 'system', content: systemPrompt })
-  messages.push({ role: 'user', content: prompt })
-
-  const resp = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://oppspot.com',
-      'X-Title': 'OppSpot Business Platform'
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.4,
-      max_tokens: 700,
-      stream: true
-    })
-  })
-
-  if (!resp.ok || !resp.body) {
-    // Fall back to normal flow by throwing; caller handles
-    throw new Error(`OpenRouter stream error: ${resp.status}`)
-  }
-
-  let full = ''
-  const reader = resp.body.getReader()
-  const readable = new ReadableStream({
-    async start(controller) {
-      // Send model info
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'model', model: 'openrouter', timestamp: new Date() })}\n\n`))
-      try {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          const chunk = new TextDecoder().decode(value)
-          const lines = chunk.split('\n')
-          for (const line of lines) {
-            if (!line.startsWith('data:')) continue
-            const data = line.replace(/^data: ?/, '').trim()
-            if (!data || data === '[DONE]') continue
-            try {
-              const parsed = JSON.parse(data)
-              const delta = parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.message?.content || ''
-              if (delta) {
-                full += delta
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', content: delta })}\n\n`))
-              }
-            } catch {
-              // ignore parse errors
-            }
-          }
-        }
-      } finally {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', content: full, confidence: 0.9, model: 'openrouter', session_id: sessionId })}\n\n`))
-        controller.close()
-      }
-    }
-  })
-
-  return new Response(readable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    },
-  })
-}
+/**
+ * Legacy OpenRouter functions removed - LLMManager now handles all provider interactions
+ * including OpenRouter, with automatic fallback and usage tracking.
+ *
+ * For streaming support with LLMManager, see the future streaming implementation in LLMManager.
+ */

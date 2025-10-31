@@ -1,33 +1,36 @@
+/**
+ * Voice Parse API Route
+ *
+ * Migrated to use LLMManager for unified multi-provider support.
+ * Tracks usage under 'voice-parse' feature.
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import OpenAI from 'openai'
+import { getUserLLMManager } from '@/lib/ai/llm-client-wrapper'
 
 export async function POST(request: NextRequest) {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY || 'dummy-key',
-    baseURL: 'https://openrouter.ai/api/v1'
-  })
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const manager = await getUserLLMManager(user.id)
+
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { transcript } = await request.json()
 
     if (!transcript) {
       return NextResponse.json({ error: 'Transcript required' }, { status: 400 })
     }
 
-    // Use GPT-4 to parse command
-    const response = await openai.chat.completions.create({
-      model: 'anthropic/claude-3.5-sonnet',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a voice command parser for a B2B intelligence platform.
+    // Use LLM Manager to parse command
+    const response = await manager.chat([
+      {
+        role: 'system',
+        content: `You are a voice command parser for a B2B intelligence platform.
           Parse the user's voice command and extract:
           - intent: navigate, search, query, action, or unknown
           - parameters: relevant extracted data
@@ -38,16 +41,18 @@ export async function POST(request: NextRequest) {
           - "show me streams" -> { "intent": "navigate", "parameters": { "page": "streams" } }
 
           Return ONLY JSON without any markdown formatting or explanation.`
-        },
-        {
-          role: 'user',
-          content: transcript
-        }
-      ],
-      temperature: 0.3
+      },
+      {
+        role: 'user',
+        content: transcript
+      }
+    ], {
+      temperature: 0.3,
+      maxTokens: 200,
+      feature: 'voice-parse', // Track usage under voice-parse feature
     })
 
-    const content = response.choices[0].message.content || '{}'
+    const content = response.content || '{}'
 
     // Remove markdown code blocks if present
     const jsonContent = content.replace(/```json\n?|\n?```/g, '').trim()
@@ -64,5 +69,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
+  } finally {
+    await manager.cleanup()
   }
 }

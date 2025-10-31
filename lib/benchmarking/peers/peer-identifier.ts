@@ -66,11 +66,13 @@ export class PeerIdentifier {
   private supabase: Awaited<ReturnType<typeof createClient>> | null = null
 
   constructor() {
-    this.initializeClient()
+    // Don't initialize client in constructor - do it lazily when needed
   }
 
   private async initializeClient() {
-    this.supabase = await createClient()
+    if (!this.supabase) {
+      this.supabase = await createClient()
+    }
   }
 
   /**
@@ -78,6 +80,7 @@ export class PeerIdentifier {
    */
   async identifyPeers(request: IdentifyPeersRequest): Promise<IdentifyPeersResponse> {
     try {
+      await this.initializeClient()
       console.log(`[PeerIdentifier] Identifying peers for company ${request.company_id}`)
 
       // Get target company features

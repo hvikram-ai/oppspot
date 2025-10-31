@@ -2,15 +2,35 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { 
-  demoBusinesses, 
-  demoMetrics, 
+import {
+  demoBusinesses,
+  demoMetrics,
   demoOpportunities,
   demoTrends,
   demoCompetitors,
   demoNotifications,
-  demoUser 
+  demoUser
 } from './demo-data'
+import {
+  demoResearchReports,
+  demoResearchReportsList,
+} from './demo-research-data'
+import {
+  demoDataRoomInfo,
+  demoDocuments,
+  demoDocumentsById,
+  demoDocumentListItems,
+  demoFolderStructure,
+  demoDocumentTypeSummary,
+} from './demo-dataroom-data'
+import {
+  demoQueries,
+  demoCitationsByQueryId,
+  demoHistoricalQueries,
+  demoCitationResponses,
+  getDemoQueryResponse,
+  demoQAAnalytics,
+} from './demo-qa-data'
 
 interface AcquisitionScan {
   id: string
@@ -41,11 +61,28 @@ interface DemoContextType {
     competitors: typeof demoCompetitors
     notifications: typeof demoNotifications
     user: typeof demoUser
+    // ResearchGPT
+    researchReports: typeof demoResearchReports
+    researchReportsList: typeof demoResearchReportsList
+    // Data Room
+    dataRoom: typeof demoDataRoomInfo
+    documents: typeof demoDocuments
+    documentsById: typeof demoDocumentsById
+    documentListItems: typeof demoDocumentListItems
+    folderStructure: typeof demoFolderStructure
+    documentTypeSummary: typeof demoDocumentTypeSummary
+    // Q&A
+    qaQueries: typeof demoQueries
+    qaCitationsByQueryId: typeof demoCitationsByQueryId
+    qaHistoricalQueries: typeof demoHistoricalQueries
+    qaCitationResponses: typeof demoCitationResponses
+    qaAnalytics: typeof demoQAAnalytics
   }
   canPerformAction: (action: string) => boolean
   showUpgradePrompt: () => void
   getDemoScans: () => AcquisitionScan[]
   addDemoScan: (scan: Omit<AcquisitionScan, 'id' | 'created_at' | 'updated_at'>) => AcquisitionScan
+  getDemoQueryResponse: typeof getDemoQueryResponse
 }
 
 const DemoContext = createContext<DemoContextType>({
@@ -59,12 +96,26 @@ const DemoContext = createContext<DemoContextType>({
     trends: demoTrends,
     competitors: demoCompetitors,
     notifications: demoNotifications,
-    user: demoUser
+    user: demoUser,
+    researchReports: demoResearchReports,
+    researchReportsList: demoResearchReportsList,
+    dataRoom: demoDataRoomInfo,
+    documents: demoDocuments,
+    documentsById: demoDocumentsById,
+    documentListItems: demoDocumentListItems,
+    folderStructure: demoFolderStructure,
+    documentTypeSummary: demoDocumentTypeSummary,
+    qaQueries: demoQueries,
+    qaCitationsByQueryId: demoCitationsByQueryId,
+    qaHistoricalQueries: demoHistoricalQueries,
+    qaCitationResponses: demoCitationResponses,
+    qaAnalytics: demoQAAnalytics,
   },
   canPerformAction: () => false,
   showUpgradePrompt: () => {},
   getDemoScans: () => [],
-  addDemoScan: () => ({} as AcquisitionScan)
+  addDemoScan: () => ({} as AcquisitionScan),
+  getDemoQueryResponse: getDemoQueryResponse,
 })
 
 // Actions allowed in demo mode
@@ -279,7 +330,23 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
     trends: demoTrends,
     competitors: demoCompetitors,
     notifications: demoNotifications,
-    user: demoUser
+    user: demoUser,
+    // ResearchGPT
+    researchReports: demoResearchReports,
+    researchReportsList: demoResearchReportsList,
+    // Data Room
+    dataRoom: demoDataRoomInfo,
+    documents: demoDocuments,
+    documentsById: demoDocumentsById,
+    documentListItems: demoDocumentListItems,
+    folderStructure: demoFolderStructure,
+    documentTypeSummary: demoDocumentTypeSummary,
+    // Q&A
+    qaQueries: demoQueries,
+    qaCitationsByQueryId: demoCitationsByQueryId,
+    qaHistoricalQueries: demoHistoricalQueries,
+    qaCitationResponses: demoCitationResponses,
+    qaAnalytics: demoQAAnalytics,
   }
 
   return (
@@ -292,7 +359,8 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
         canPerformAction,
         showUpgradePrompt,
         getDemoScans,
-        addDemoScan
+        addDemoScan,
+        getDemoQueryResponse,
       }}
     >
       {children}

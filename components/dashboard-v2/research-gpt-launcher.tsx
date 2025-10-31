@@ -46,10 +46,28 @@ export function ResearchGPTLauncher() {
   );
 
   // Search companies (debounced)
-  const { data: searchResults } = useSWR<Company[]>(
-    searchQuery.length >= 2 ? `/api/businesses/search?q=${encodeURIComponent(searchQuery)}&limit=5` : null,
+  // Only search if we don't have a selected company or if the query differs from selected company name
+  const shouldSearch = searchQuery.length >= 2 && (!selectedCompany || searchQuery !== selectedCompany.name);
+  const { data: searchResults, error: searchError } = useSWR<Company[]>(
+    shouldSearch ? `/api/businesses/search?q=${encodeURIComponent(searchQuery)}&limit=5` : null,
     fetcher
   );
+
+  // Debug logging
+  if (searchError) {
+    console.error('[ResearchGPT] Search error:', searchError);
+  }
+  if (searchResults) {
+    console.log('[ResearchGPT] Search results:', searchResults);
+  }
+  console.log('[ResearchGPT] State:', {
+    searchQuery,
+    selectedCompany,
+    isGenerating,
+    creditsRemaining: quota?.researches_remaining,
+    isOutOfCredits: creditsRemaining === 0,
+    buttonDisabled: !selectedCompany || isGenerating || (creditsRemaining === 0)
+  });
 
   const handleGenerate = async () => {
     if (!selectedCompany) return;
@@ -133,6 +151,7 @@ export function ResearchGPTLauncher() {
             {searchResults.map((company) => (
               <button
                 key={company.id}
+                type="button"
                 onClick={() => {
                   setSelectedCompany(company);
                   setSearchQuery(company.name);

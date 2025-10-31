@@ -1,0 +1,339 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Export Financial Report PDF",
+    "version": "1.0.0",
+    "description": "Generate and download board-ready PDF report containing executive summary, KPI overview, NRR waterfall chart, cohort retention heatmap, revenue concentration analysis, AR/AP aging tables, and benchmark positioning."
+  },
+  "servers": [
+    {
+      "url": "https://oppspot-one.vercel.app/api",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development"
+    }
+  ],
+  "paths": {
+    "/companies/{companyId}/financials/export/pdf": {
+      "get": {
+        "summary": "Export financial report as PDF",
+        "description": "Generate professionally formatted PDF report with charts and metrics suitable for board presentation. Includes all financial analysis for specified period.",
+        "operationId": "exportFinancialPdf",
+        "tags": ["Financial Analytics"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "UUID of company to export report for",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Report period start (defaults to 12 months ago)",
+            "example": "2024-01-01"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Report period end (defaults to current month)",
+            "example": "2024-12-31"
+          },
+          {
+            "name": "include_benchmarks",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Include benchmark comparison section",
+            "example": true
+          },
+          {
+            "name": "include_cohorts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Include cohort retention heatmap",
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF report generated successfully",
+            "headers": {
+              "Content-Type": {
+                "schema": {
+                  "type": "string",
+                  "example": "application/pdf"
+                },
+                "description": "MIME type for PDF"
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "example": "attachment; filename=\"CompanyName_Financial_Report_2024-12-31.pdf\""
+                },
+                "description": "Suggested filename with company name and date"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer",
+                  "example": 524288
+                },
+                "description": "PDF file size in bytes"
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "PDF file binary data"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "insufficient_data": {
+                    "summary": "Not enough data for report",
+                    "value": {
+                      "error": {
+                        "code": "INSUFFICIENT_DATA",
+                        "message": "Cannot generate report: No financial data exists for period 2024-01-01 to 2024-12-31"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - company not in user's organization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "PDF generation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "generation_failed": {
+                    "summary": "PDF rendering failed",
+                    "value": {
+                      "error": {
+                        "code": "PDF_GENERATION_ERROR",
+                        "message": "Failed to generate PDF report. Please try again or contact support."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message"
+              },
+              "details": {
+                "type": "object",
+                "description": "Additional error context"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-pdf-report-structure": {
+    "description": "Generated PDF report contains the following sections in order:",
+    "sections": [
+      {
+        "page": 1,
+        "section": "Cover Page",
+        "contents": [
+          "Company name and logo",
+          "Report title: Financial & Revenue Quality Analysis",
+          "Period covered (start - end dates)",
+          "Generated date and time",
+          "oppSpot branding"
+        ]
+      },
+      {
+        "page": 2,
+        "section": "Executive Summary",
+        "contents": [
+          "Key financial highlights (ARR, MRR, growth %)",
+          "Current period NRR and GRR",
+          "Top 3 strengths identified",
+          "Top 3 risks/concerns identified",
+          "Overall financial health score/rating"
+        ]
+      },
+      {
+        "page": 3,
+        "section": "KPI Overview",
+        "contents": [
+          "Table of current vs. previous period metrics",
+          "Line charts: ARR, MRR trends (12-24 months)",
+          "Bar chart: NRR waterfall (starting MRR, expansion, contraction, churn, ending MRR)",
+          "KPI definitions and formulas"
+        ]
+      },
+      {
+        "page": 4,
+        "section": "Customer Retention Analysis",
+        "contents": [
+          "Cohort retention heatmap (logo retention %)",
+          "Revenue retention heatmap",
+          "Average retention rates by cohort age",
+          "Churn rate trends"
+        ]
+      },
+      {
+        "page": 5,
+        "section": "Revenue Concentration",
+        "contents": [
+          "Bar chart: Top 10 customers by revenue",
+          "Pie chart: Revenue distribution (top 1, top 3, top 5, top 10, others)",
+          "HHI score and concentration level indicator",
+          "Risk assessment and recommendations"
+        ]
+      },
+      {
+        "page": 6,
+        "section": "AR/AP Aging & Collection Efficiency",
+        "contents": [
+          "Stacked bar chart: AR aging buckets over time",
+          "DSO trend line chart",
+          "Table: Current aging breakdown with percentages",
+          "AP analysis (if data available)"
+        ]
+      },
+      {
+        "page": 7,
+        "section": "Benchmark Comparison",
+        "contents": [
+          "Table: Company metrics vs. sector median",
+          "Horizontal bar charts: NRR, gross margin, CAC, LTV:CAC ratio vs. peers",
+          "Percentile positioning indicators",
+          "Interpretation notes"
+        ]
+      },
+      {
+        "page": 8,
+        "section": "Anomalies & Alerts",
+        "contents": [
+          "List of detected anomalies with severity levels",
+          "Detailed explanation of each flagged issue",
+          "Recommended actions"
+        ]
+      },
+      {
+        "page": 9,
+        "section": "Appendix",
+        "contents": [
+          "Data sources and date ranges",
+          "Methodology notes",
+          "Metric definitions glossary",
+          "Report generation metadata"
+        ]
+      }
+    ],
+    "design_notes": [
+      "Professional formatting with consistent fonts (Inter/Arial)",
+      "oppSpot brand colors for charts",
+      "High-contrast text for readability",
+      "Page numbers in footer",
+      "Logo and company name in header",
+      "White background with subtle grid lines for charts",
+      "All currency amounts formatted with commas and 2 decimal places"
+    ]
+  }
+}

@@ -502,7 +502,8 @@ export async function GET(request: Request) {
     const minRating = searchParams.get('minRating') ? parseFloat(searchParams.get('minRating')!) : null
     const verified = searchParams.get('verified') === 'true'
     const sortBy = searchParams.get('sortBy') || 'relevance'
-    
+    const maLikelihood = searchParams.get('maLikelihood')?.split(',').filter(Boolean) || []
+
     // User location for distance calculation (if provided)
     const userLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null
     const userLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null
@@ -514,8 +515,19 @@ export async function GET(request: Request) {
     // Allow search without authentication for demo purposes
     // In production, you might want to limit results for unauthenticated users
 
-    // Build the query
-    let businessQuery = supabase.from('businesses').select('*', { count: 'exact' })
+    // Build the query - include M&A prediction if filtering by likelihood
+    const selectFields = maLikelihood.length > 0
+      ? `
+        *,
+        ma_predictions!left(
+          prediction_score,
+          likelihood_category,
+          is_active
+        )
+      `
+      : '*'
+
+    let businessQuery = supabase.from('businesses').select(selectFields, { count: 'exact' })
 
     // Apply search query
     if (query) {
@@ -543,6 +555,15 @@ export async function GET(request: Request) {
     // Apply verified filter
     if (verified) {
       businessQuery = businessQuery.eq('verified', true)
+    }
+
+    // Apply M&A likelihood filter
+    if (maLikelihood.length > 0) {
+      // Filter for businesses with active predictions matching the likelihood categories
+      businessQuery = businessQuery
+        .not('ma_predictions', 'is', null)
+        .eq('ma_predictions.is_active', true)
+        .in('ma_predictions.likelihood_category', maLikelihood)
     }
 
     // Apply sorting
@@ -670,27 +691,59 @@ export async function GET(request: Request) {
     }
 
     // Format the results
-    const formattedResults = filteredResults.map(business => ({
-      id: business.id,
-      name: business.name,
-      description: business.description,
-      address: business.address,
-      latitude: business.latitude,
-      longitude: business.longitude,
-      phone: Array.isArray(business.phone_numbers) 
-        ? business.phone_numbers[0] 
-        : business.phone_numbers,
-      email: Array.isArray(business.emails) 
-        ? business.emails[0] 
-        : business.emails,
-      website: business.website,
-      categories: business.categories || [],
-      rating: (business as typeof business & { rating?: number }).rating,
-      verified: (business as typeof business & { verified?: boolean }).verified || false,
-      distance: business.distance_km,
-      google_place_id: business.google_place_id,
-      metadata: business.metadata
-    }))
+    const formattedResults = filteredResults.map(business => {
+      const businessWithPredictions = business as typeof business & {
+        ma_predictions?: Array<{
+          prediction_score: number;
+          likelihood_category: string;
+          is_active: boolean;
+        }> | {
+          prediction_score: number;
+          likelihood_category: string;
+          is_active: boolean;
+        } | null;
+      };
+
+      // Extract M&A prediction if available (handle both array and single object from Supabase join)
+      let maPrediction = null;
+      if (businessWithPredictions.ma_predictions) {
+        const predictions = Array.isArray(businessWithPredictions.ma_predictions)
+          ? businessWithPredictions.ma_predictions
+          : [businessWithPredictions.ma_predictions];
+
+        // Get the first active prediction
+        const activePrediction = predictions.find(p => p && p.is_active);
+        if (activePrediction) {
+          maPrediction = {
+            prediction_score: activePrediction.prediction_score,
+            likelihood_category: activePrediction.likelihood_category
+          };
+        }
+      }
+
+      return {
+        id: business.id,
+        name: business.name,
+        description: business.description,
+        address: business.address,
+        latitude: business.latitude,
+        longitude: business.longitude,
+        phone: Array.isArray(business.phone_numbers)
+          ? business.phone_numbers[0]
+          : business.phone_numbers,
+        email: Array.isArray(business.emails)
+          ? business.emails[0]
+          : business.emails,
+        website: business.website,
+        categories: business.categories || [],
+        rating: (business as typeof business & { rating?: number }).rating,
+        verified: (business as typeof business & { verified?: boolean }).verified || false,
+        distance: business.distance_km,
+        google_place_id: business.google_place_id,
+        metadata: business.metadata,
+        ...(maPrediction && { ma_prediction: maPrediction })
+      };
+    })
 
     // Log search for analytics (only if user is authenticated)
     if (user?.id) {
@@ -704,7 +757,8 @@ export async function GET(request: Request) {
             location,
             radius,
             minRating,
-            verified
+            verified,
+            maLikelihood
           },
           results_count: formattedResults.length
         } as never)

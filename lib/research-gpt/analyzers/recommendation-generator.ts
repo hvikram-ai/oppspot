@@ -1,14 +1,15 @@
 /**
  * Recommendation Generator for ResearchGPT™
  *
- * Uses OpenRouter GPT-4 to generate personalized outreach recommendations:
+ * Uses LLMManager to generate personalized outreach recommendations:
  * - Analyzes buying signals, decision makers, and financial health
  * - Generates tailored outreach strategy
  * - Suggests talking points and value propositions
  * - Identifies optimal timing for engagement
  * - Provides email templates and conversation starters
  *
- * AI Model: GPT-4 via OpenRouter (best reasoning for strategic recommendations)
+ * AI Model: GPT-4 Turbo (best reasoning for strategic recommendations)
+ * System: Uses LLMManager with automatic fallback and usage tracking
  */
 
 import type {
@@ -19,6 +20,7 @@ import type {
 import type { AnalyzedSignals } from './signals-analyzer';
 import type { AnalyzedDecisionMakers } from './decision-maker-analyzer';
 import type { AnalyzedRevenueSignals } from './revenue-analyzer';
+import { getUserLLMManager } from '@/lib/ai/llm-client-wrapper';
 
 // ============================================================================
 // TYPES
@@ -38,16 +40,11 @@ interface RecommendationInput {
 // ============================================================================
 
 export class RecommendationGenerator {
-  private apiKey: string;
-  private apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+  private userId: string;
   private model = 'openai/gpt-4-turbo'; // Best for strategic reasoning
 
-  constructor() {
-    this.apiKey = process.env.OPENROUTER_API_KEY || '';
-
-    if (!this.apiKey) {
-      console.warn('OpenRouter API key not configured');
-    }
+  constructor(userId: string = 'system') {
+    this.userId = userId;
   }
 
   /**
@@ -65,8 +62,8 @@ export class RecommendationGenerator {
       // Build context for AI
       const context = this.buildContext(input);
 
-      // Generate recommendations via GPT-4
-      const aiResponse = await this.callOpenRouter(context, input);
+      // Generate recommendations via LLMManager
+      const aiResponse = await this.callLLMManager(context, input);
 
       // Parse and structure recommendations
       const recommendations = this.parseRecommendations(aiResponse, input);
@@ -151,13 +148,10 @@ export class RecommendationGenerator {
   // ============================================================================
 
   /**
-   * Call OpenRouter API for AI-generated recommendations
+   * Call LLMManager for AI-generated recommendations
+   * Uses user's configured LLM providers with automatic fallback
    */
-  private async callOpenRouter(context: string, input: RecommendationInput): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('OpenRouter API key not configured');
-    }
-
+  private async callLLMManager(context: string, input: RecommendationInput): Promise<string> {
     const systemPrompt = `You are an expert B2B sales strategist helping sales teams identify the best approach to engage with potential customers.
 
 Analyze the provided company research and generate a comprehensive outreach strategy with:
@@ -185,32 +179,26 @@ Based on this research, provide a detailed outreach strategy in the following JS
   "next_steps": ["step 1", "step 2", "step 3"]
 }`;
 
-    const response = await fetch(this.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://oppspot.ai',
-        'X-Title': 'ResearchGPT',
-      },
-      body: JSON.stringify({
-        model: this.model,
-        messages: [
+    // Use LLMManager for AI generation with automatic fallback
+    const manager = await getUserLLMManager(this.userId);
+
+    try {
+      const response = await manager.chat(
+        [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.7,
-        max_tokens: 1500,
-      }),
-    });
+        {
+          model: this.model,
+          temperature: 0.7,
+          maxTokens: 1500,
+        }
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+      return response.content;
+    } finally {
+      await manager.cleanup();
     }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
   }
 
   // ============================================================================
@@ -480,16 +468,18 @@ Based on this research, provide a detailed outreach strategy in the following JS
 }
 
 // ============================================================================
-// SINGLETON EXPORT
+// FACTORY EXPORT
 // ============================================================================
 
-let instance: RecommendationGenerator | null = null;
-
-export function getRecommendationGenerator(): RecommendationGenerator {
-  if (!instance) {
-    instance = new RecommendationGenerator();
-  }
-  return instance;
+/**
+ * Get recommendation generator instance for a user
+ *
+ * @param userId - User ID for LLM manager (defaults to 'system' for system-level generation)
+ * @returns RecommendationGenerator instance
+ */
+export function getRecommendationGenerator(userId?: string): RecommendationGenerator {
+  // Create new instance per user to enable per-user LLM configurations
+  return new RecommendationGenerator(userId || 'system');
 }
 
 export default RecommendationGenerator;

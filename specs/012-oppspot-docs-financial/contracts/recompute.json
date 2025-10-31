@@ -1,0 +1,364 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Recompute Financial Metrics",
+    "version": "1.0.0",
+    "description": "Manually trigger recalculation of financial metrics for a specified date range. Recalculates KPI snapshots, cohort metrics, concentration analysis, and AR/AP aging for affected periods."
+  },
+  "servers": [
+    {
+      "url": "https://oppspot-one.vercel.app/api",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development"
+    }
+  ],
+  "paths": {
+    "/companies/{companyId}/financials/recompute": {
+      "post": {
+        "summary": "Manually recompute financial metrics",
+        "description": "Trigger recalculation of all financial metrics (KPIs, cohorts, concentration, aging) for specified date range. Typically used after data corrections or when automatic recalculation failed. Financial Editor or Admin role required.",
+        "operationId": "recomputeMetrics",
+        "tags": ["Financial Data"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "UUID of company to recompute metrics for",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["start_date", "end_date"],
+                "properties": {
+                  "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "First month to recalculate (first day of month)",
+                    "example": "2024-01-01"
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Last month to recalculate (last day of month)",
+                    "example": "2024-12-31"
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Force recalculation even if recent calculation exists"
+                  }
+                }
+              },
+              "examples": {
+                "12_months": {
+                  "summary": "Recalculate 12 months",
+                  "value": {
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-12-31",
+                    "force": false
+                  }
+                },
+                "force_recalc": {
+                  "summary": "Force recalculation",
+                  "value": {
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-12-31",
+                    "force": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recalculation completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "periods_recalculated",
+                        "kpi_snapshots_updated",
+                        "cohorts_updated",
+                        "concentration_updated",
+                        "aging_updated",
+                        "total_time_ms"
+                      ],
+                      "properties": {
+                        "periods_recalculated": {
+                          "type": "integer",
+                          "description": "Number of months recalculated",
+                          "example": 12
+                        },
+                        "kpi_snapshots_updated": {
+                          "type": "integer",
+                          "description": "KPI snapshot rows upserted",
+                          "example": 12
+                        },
+                        "cohorts_updated": {
+                          "type": "integer",
+                          "description": "Cohort metric rows upserted",
+                          "example": 144
+                        },
+                        "concentration_updated": {
+                          "type": "integer",
+                          "description": "Revenue concentration rows upserted",
+                          "example": 12
+                        },
+                        "aging_updated": {
+                          "type": "integer",
+                          "description": "AR/AP aging rows upserted",
+                          "example": 12
+                        },
+                        "anomalies_detected": {
+                          "type": "integer",
+                          "description": "New anomalies detected during recalculation",
+                          "example": 2
+                        },
+                        "total_time_ms": {
+                          "type": "integer",
+                          "description": "Total recalculation time in milliseconds",
+                          "example": 3847
+                        },
+                        "performance_breakdown": {
+                          "type": "object",
+                          "description": "Time breakdown by calculation type",
+                          "properties": {
+                            "kpi_snapshots_ms": {
+                              "type": "integer"
+                            },
+                            "cohorts_ms": {
+                              "type": "integer"
+                            },
+                            "concentration_ms": {
+                              "type": "integer"
+                            },
+                            "aging_ms": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "summary": "12 months recalculated in <5s",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "periods_recalculated": 12,
+                        "kpi_snapshots_updated": 12,
+                        "cohorts_updated": 144,
+                        "concentration_updated": 12,
+                        "aging_updated": 12,
+                        "anomalies_detected": 2,
+                        "total_time_ms": 3847,
+                        "performance_breakdown": {
+                          "kpi_snapshots_ms": 1250,
+                          "cohorts_ms": 1800,
+                          "concentration_ms": 450,
+                          "aging_ms": 347
+                        }
+                      }
+                    }
+                  },
+                  "24_months": {
+                    "summary": "24 months recalculated (max range)",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "periods_recalculated": 24,
+                        "kpi_snapshots_updated": 24,
+                        "cohorts_updated": 576,
+                        "concentration_updated": 24,
+                        "aging_updated": 24,
+                        "anomalies_detected": 5,
+                        "total_time_ms": 4923,
+                        "performance_breakdown": {
+                          "kpi_snapshots_ms": 2100,
+                          "cohorts_ms": 2150,
+                          "concentration_ms": 380,
+                          "aging_ms": 293
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters or date range too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "invalid_date_range": {
+                    "summary": "end_date before start_date",
+                    "value": {
+                      "error": {
+                        "code": "INVALID_PARAMETER",
+                        "message": "end_date must be after start_date"
+                      }
+                    }
+                  },
+                  "range_too_large": {
+                    "summary": "Exceeds 24 month maximum",
+                    "value": {
+                      "error": {
+                        "code": "INVALID_PARAMETER",
+                        "message": "Date range cannot exceed 24 months. Requested: 36 months."
+                      }
+                    }
+                  },
+                  "future_dates": {
+                    "summary": "Date range in the future",
+                    "value": {
+                      "error": {
+                        "code": "INVALID_PARAMETER",
+                        "message": "Cannot recalculate future periods. end_date must be <= current month."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Financial Editor role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "Insufficient permissions",
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "Financial Editor role required to trigger recalculation. Contact your organization admin."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error during recalculation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "partial_failure": {
+                    "summary": "Partial recalculation failure",
+                    "value": {
+                      "error": {
+                        "code": "RECALCULATION_ERROR",
+                        "message": "Recalculation failed at month 2024-06-01",
+                        "details": {
+                          "completed_periods": 5,
+                          "failed_period": "2024-06-01",
+                          "error_message": "Database constraint violation"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message"
+              },
+              "details": {
+                "type": "object",
+                "description": "Additional error context"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
