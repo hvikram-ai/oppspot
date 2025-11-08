@@ -11,6 +11,7 @@ export { ExportDialog } from './export-dialog';
 export { FeatureMatrix } from './feature-matrix';
 export { MoatStrengthRadar } from './moat-strength-radar';
 export { PricingComparisonChart } from './pricing-comparison';
+export { PricingComparison } from './pricing-comparison-container';
 export { RefreshButton } from './refresh-button';
 export { ShareDialog } from './share-dialog';
 export { StaleDataAlert } from './stale-data-alert';
