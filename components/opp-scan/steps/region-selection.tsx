@@ -56,10 +56,10 @@ interface RegionConfig {
 
 interface RegionSelectionProps {
   config: RegionConfig
-  onChange: (field: string, value: unknown) => void
+  updateConfig: (updates: Partial<RegionConfig>) => void
 }
 
-export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) {
+export function RegionSelectionStep({ config, updateConfig }: RegionSelectionProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTab, setSelectedTab] = useState<'regions' | 'regulatory'>('regions')
 
@@ -338,7 +338,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
       newSelection = [...selectedRegions, region]
     }
 
-    onChange('selectedRegions', newSelection)
+    updateConfig({ selectedRegions: newSelection })
   }
 
   const handleRegulatoryRequirementToggle = (requirement: RegulatoryRequirement) => {
@@ -351,7 +351,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
       newRequirements[requirement.id] = requirement
     }
 
-    onChange('regulatoryRequirements', newRequirements)
+    updateConfig({ regulatoryRequirements: newRequirements })
   }
 
   const isRegionSelected = (region: Region) => {
@@ -456,7 +456,7 @@ export function RegionSelectionStep({ config, onChange }: RegionSelectionProps) 
                     <button
                       onClick={() => {
                         const newSelection = (config.selectedRegions ?? []).filter((_: unknown, i: number) => i !== index)
-                        onChange('selectedRegions', newSelection)
+                        updateConfig({ selectedRegions: newSelection })
                       }}
                       className="ml-1 hover:text-destructive"
                     >

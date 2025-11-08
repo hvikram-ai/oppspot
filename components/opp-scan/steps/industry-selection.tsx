@@ -56,10 +56,10 @@ interface OppScanConfig {
 
 interface IndustrySelectionProps {
   config: OppScanConfig
-  onChange: (field: string, value: unknown) => void
+  updateConfig: (updates: Partial<OppScanConfig>) => void
 }
 
-export function IndustrySelectionStep({ config, onChange }: IndustrySelectionProps) {
+export function IndustrySelectionStep({ config, updateConfig }: IndustrySelectionProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [industries, setIndustries] = useState<IndustryCategory[]>([])
   const [loading, setLoading] = useState(false)
@@ -243,7 +243,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
       newSelection = [...selectedIndustries, newItem]
     }
 
-    onChange('selectedIndustries', newSelection)
+    updateConfig({ selectedIndustries: newSelection })
   }
 
   const handleMarketMaturityToggle = (maturity: string) => {
@@ -252,7 +252,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
       ? current.filter((m: string) => m !== maturity)
       : [...current, maturity]
     
-    onChange('marketMaturity', newMaturity)
+    updateConfig({ marketMaturity: newMaturity })
   }
 
   const isIndustrySelected = (industry: IndustryCategory, subcategory?: IndustrySubcategory) => {
@@ -286,7 +286,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
             id="scan-name"
             placeholder="e.g., UK FinTech Acquisition Scan"
             value={(config.name as string | undefined) || ''}
-            onChange={(e) => onChange('name', e.target.value)}
+            onChange={(e) => updateConfig({ name: e.target.value })}
           />
         </div>
         <div className="space-y-2">
@@ -295,7 +295,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
             id="scan-description"
             placeholder="Brief description of your acquisition goals"
             value={(config.description as string | undefined) || ''}
-            onChange={(e) => onChange('description', e.target.value)}
+            onChange={(e) => updateConfig({ description: e.target.value })}
           />
         </div>
       </div>
@@ -368,7 +368,7 @@ export function IndustrySelectionStep({ config, onChange }: IndustrySelectionPro
                 <button
                   onClick={() => {
                     const newSelection = (config.selectedIndustries ?? []).filter((_: unknown, i: number) => i !== index)
-                    onChange('selectedIndustries', newSelection)
+                    updateConfig({ selectedIndustries: newSelection })
                   }}
                   className="ml-1 hover:text-destructive"
                 >

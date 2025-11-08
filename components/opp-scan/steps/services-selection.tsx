@@ -59,10 +59,10 @@ interface ServicesConfig {
 
 interface ServicesSelectionProps {
   config: ServicesConfig
-  onChange: (field: string, value: unknown) => void
+  updateConfig: (updates: Partial<ServicesConfig>) => void
 }
 
-export function ServicesSelectionStep({ config, onChange }: ServicesSelectionProps) {
+export function ServicesSelectionStep({ config, updateConfig }: ServicesSelectionProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTab, setSelectedTab] = useState<'capabilities' | 'objectives' | 'synergies'>('capabilities')
   const [customCapability, setCustomCapability] = useState('')
@@ -329,7 +329,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
       newSelection = [...selected, capability]
     }
 
-    onChange('requiredCapabilities', newSelection)
+    updateConfig({ requiredCapabilities: newSelection })
   }
 
   const handleObjectiveToggle = (objective: StrategicObjective) => {
@@ -342,7 +342,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
       newObjectives[objective.id] = objective
     }
 
-    onChange('strategicObjectives', newObjectives)
+    updateConfig({ strategicObjectives: newObjectives })
   }
 
   const addCustomCapability = () => {
@@ -360,7 +360,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
     }
 
     const selected = config.requiredCapabilities || []
-    onChange('requiredCapabilities', [...selected, custom])
+    updateConfig({ requiredCapabilities: [...selected, custom] })
     setCustomCapability('')
   }
 
@@ -503,7 +503,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     <button
                       onClick={() => {
                         const newSelection = (config.requiredCapabilities ?? []).filter((_: unknown, i: number) => i !== index)
-                        onChange('requiredCapabilities', newSelection)
+                        updateConfig({ requiredCapabilities: newSelection })
                       }}
                       className="ml-1 hover:text-destructive"
                     >
@@ -697,7 +697,7 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     }
                     
                     const current = config.strategicObjectives || {}
-                    onChange('strategicObjectives', { ...current, [custom.id]: custom })
+                    updateConfig({ strategicObjectives: { ...current, [custom.id]: custom } })
                     setCustomObjective('')
                   }
                 }} disabled={!customObjective.trim()}>
@@ -727,10 +727,10 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     id="revenue-synergies"
                     placeholder="Describe expected revenue synergies (cross-selling, new markets, pricing power, etc.)"
                     value={(config.synergyRequirements as any)?.revenue_synergies || ''}
-                    onChange={(e) => onChange('synergyRequirements', {
+                    onChange={(e) => updateConfig({ synergyRequirements: {
                       ...config.synergyRequirements,
                       revenue_synergies: e.target.value
-                    })}
+                    } })}
                   />
                 </div>
 
@@ -740,10 +740,10 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     id="cost-synergies"
                     placeholder="Describe expected cost synergies (economies of scale, operational efficiencies, shared services, etc.)"
                     value={(config.synergyRequirements as any)?.cost_synergies || ''}
-                    onChange={(e) => onChange('synergyRequirements', {
+                    onChange={(e) => updateConfig({ synergyRequirements: {
                       ...config.synergyRequirements,
                       cost_synergies: e.target.value
-                    })}
+                    } })}
                   />
                 </div>
 
@@ -753,10 +753,10 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     id="strategic-synergies"
                     placeholder="Describe expected strategic synergies (capabilities, market position, competitive advantages, etc.)"
                     value={(config.synergyRequirements as any)?.strategic_synergies || ''}
-                    onChange={(e) => onChange('synergyRequirements', {
+                    onChange={(e) => updateConfig({ synergyRequirements: {
                       ...config.synergyRequirements,
                       strategic_synergies: e.target.value
-                    })}
+                    } })}
                   />
                 </div>
 
@@ -766,10 +766,10 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                     id="integration-requirements"
                     placeholder="Describe integration requirements and potential challenges"
                     value={(config.synergyRequirements as any)?.integration_requirements || ''}
-                    onChange={(e) => onChange('synergyRequirements', {
+                    onChange={(e) => updateConfig({ synergyRequirements: {
                       ...config.synergyRequirements,
                       integration_requirements: e.target.value
-                    })}
+                    } })}
                   />
                 </div>
               </div>
@@ -803,13 +803,13 @@ export function ServicesSelectionStep({ config, onChange }: ServicesSelectionPro
                         <button
                           key={priority}
                           onClick={() => {
-                            onChange('synergyRequirements', {
+                            updateConfig({ synergyRequirements: {
                               ...(config.synergyRequirements as any),
                               priorities: {
                                 ...(config.synergyRequirements?.priorities as any),
                                 [synergy.id]: priority.toLowerCase()
                               }
-                            })
+                            } })
                           }}
                           className={`px-3 py-1 text-xs rounded ${
                             (config.synergyRequirements?.priorities as any)?.[synergy.id] === priority.toLowerCase()
