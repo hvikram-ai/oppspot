@@ -12,7 +12,7 @@ import { ShareDialog } from '@/components/competitive-analysis/share-dialog';
 import { DataAgeBadge } from '@/components/competitive-analysis/data-age-badge';
 import { CompetitorCard } from '@/components/competitive-analysis/competitor-card';
 import { FeatureMatrix } from '@/components/competitive-analysis/feature-matrix';
-import { PricingComparison } from '@/components/competitive-analysis/pricing-comparison';
+import { PricingComparison } from '@/components/competitive-analysis/pricing-comparison-container';
 import { MoatStrengthRadar } from '@/components/competitive-analysis/moat-strength-radar';
 import { ExportDialog } from '@/components/competitive-analysis/export-dialog';
 import { CompetitorManagement } from '@/components/competitive-analysis/competitor-management';
