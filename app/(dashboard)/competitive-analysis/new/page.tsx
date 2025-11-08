@@ -16,7 +16,7 @@ import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { StepIndicator } from '@/components/ui/step-indicator';
+import { StepIndicator } from '@/components/ui/simple-step-indicator';
 
 /**
  * Multi-step wizard for creating a new competitive analysis
