@@ -25,7 +25,7 @@ import type { Row } from '@/lib/supabase/helpers'
 
 // Step Components
 import { IndustrySelectionStep } from '@/components/opp-scan/steps/industry-selection'
-import { RegionSelectionStep } from '@/components/opp-scan/steps/region-selection'
+import { CountrySelectionStep } from '@/components/opp-scan/steps/country-selection'
 import { ServicesSelectionStep } from '@/components/opp-scan/steps/services-selection'
 import { ScanConfigurationStep } from '@/components/opp-scan/steps/scan-configuration'
 
@@ -47,7 +47,8 @@ interface ScanConfig {
   description: string
   selectedIndustries: Array<{ industry: string; description?: string }>
   marketMaturity: string[]
-  selectedRegions: Array<{ id: string; name: string; country: string }>
+  selectedCountries?: string[] // NEW: Array of ISO country codes
+  selectedRegions?: Array<{ id: string; name: string; country: string }> // DEPRECATED: Keep for backward compatibility
   regulatoryRequirements: Record<string, unknown>
   crossBorderConsiderations: Record<string, unknown>
   requiredCapabilities: string[]
@@ -75,7 +76,8 @@ function NewOppScanPageContent() {
     description: '',
     selectedIndustries: [],
     marketMaturity: [],
-    selectedRegions: [],
+    selectedCountries: [], // NEW: Use country codes instead of regions
+    selectedRegions: [], // DEPRECATED: Keep for backward compatibility
     regulatoryRequirements: {},
     crossBorderConsiderations: {},
     requiredCapabilities: [],
@@ -101,11 +103,11 @@ function NewOppScanPageContent() {
       component: IndustrySelectionStep as unknown as React.ComponentType<StepComponentProps>
     },
     {
-      id: 'region',
+      id: 'countries',
       title: 'Geographic Scope',
-      description: 'Select regions and regulatory considerations',
+      description: 'Select countries for worldwide opportunity scanning',
       icon: MapPin,
-      component: RegionSelectionStep as unknown as React.ComponentType<StepComponentProps>
+      component: CountrySelectionStep as unknown as React.ComponentType<StepComponentProps>
     },
     {
       id: 'services',
@@ -181,8 +183,9 @@ function NewOppScanPageContent() {
     switch (currentStep.id) {
       case 'industry':
         return scanConfig.selectedIndustries.length > 0 && scanConfig.name.trim().length > 0
-      case 'region':
-        return scanConfig.selectedRegions.length > 0
+      case 'countries':
+        return (scanConfig.selectedCountries && scanConfig.selectedCountries.length > 0) ||
+               (scanConfig.selectedRegions && scanConfig.selectedRegions.length > 0) // Backward compatibility
       case 'services':
         return scanConfig.requiredCapabilities.length > 0
       case 'scan':

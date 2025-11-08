@@ -40,6 +40,7 @@ import {
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { SelectedCountriesDisplay } from '@/components/opp-scan/selected-countries-display'
 
 interface ScanData {
   id: string
@@ -54,7 +55,10 @@ interface ScanData {
   started_at?: string
   completed_at?: string
   selected_industries?: Array<{ industry: string; description?: string }>
-  selected_regions?: Array<{ id: string; name: string; country: string }>
+  selected_country_codes?: string[] // NEW: ISO country codes for global scans
+  selected_regions?: Array<{ id: string; name: string; country: string }> // DEPRECATED
+  is_global?: boolean // NEW: Flag for global vs legacy scans
+  budget_currency?: string // NEW: User's preferred currency
   current_step: string
   data_sources?: string[]
   scan_depth: string
@@ -611,13 +615,19 @@ function ScanDetailPageContent() {
                 </Card>
               )}
 
-              {/* Regions */}
-              {scanData.selected_regions && scanData.selected_regions.length > 0 && (
+              {/* Geographic Scope - Show Countries (new) or Regions (legacy) */}
+              {scanData.selected_country_codes && scanData.selected_country_codes.length > 0 ? (
+                <SelectedCountriesDisplay
+                  countryCodes={scanData.selected_country_codes}
+                  title="Target Countries"
+                  showDetails={true}
+                />
+              ) : scanData.selected_regions && scanData.selected_regions.length > 0 ? (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <MapPin className="h-5 w-5" />
-                      Target Regions
+                      Target Regions (Legacy)
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -631,7 +641,7 @@ function ScanDetailPageContent() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              ) : null}
 
               {/* Data Sources */}
               {scanData.data_sources && scanData.data_sources.length > 0 && (

@@ -85,7 +85,8 @@ export async function POST(request: NextRequest) {
       description,
       selectedIndustries,
       marketMaturity,
-      selectedRegions,
+      selectedCountries, // NEW: ISO country codes
+      selectedRegions, // DEPRECATED: Keep for backward compatibility
       regulatoryRequirements,
       crossBorderConsiderations,
       requiredCapabilities,
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
       synergyRequirements,
       dataSources,
       scanDepth,
+      budgetCurrency, // NEW: User's preferred currency
       ...config
     } = body
 
@@ -104,9 +106,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!selectedRegions || selectedRegions.length === 0) {
+    // Validate geographic selection (support both new and old formats)
+    const hasCountries = selectedCountries && selectedCountries.length > 0
+    const hasRegions = selectedRegions && selectedRegions.length > 0
+
+    if (!hasCountries && !hasRegions) {
       return NextResponse.json(
-        { error: 'At least one region must be selected' },
+        { error: 'At least one country or region must be selected' },
         { status: 400 }
       )
     }
@@ -118,6 +124,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Determine if this is a global scan (new format) or legacy scan
+    const isGlobalScan = hasCountries
+
     // Create the acquisition scan
     const scanData = {
       user_id: user.id,
@@ -127,7 +136,11 @@ export async function POST(request: NextRequest) {
       status: 'configuring' as const,
       selected_industries: selectedIndustries,
       market_maturity: marketMaturity || [],
-      selected_regions: selectedRegions,
+      selected_regions: selectedRegions || [], // Keep for backward compatibility
+      selected_country_codes: selectedCountries || null, // NEW: Store ISO country codes
+      is_global: isGlobalScan, // NEW: Flag for global vs legacy scans
+      budget_currency: budgetCurrency || 'USD', // NEW: User's preferred currency
+      estimated_cost_currency: budgetCurrency || 'USD', // NEW: Currency for cost estimates
       regulatory_requirements: regulatoryRequirements || {},
       cross_border_considerations: crossBorderConsiderations || {},
       required_capabilities: requiredCapabilities || [],
@@ -140,7 +153,9 @@ export async function POST(request: NextRequest) {
         ...config,
         selectedIndustries,
         marketMaturity,
-        selectedRegions,
+        selectedCountries, // NEW: Include in config
+        selectedRegions, // Keep for backward compatibility
+        budgetCurrency, // NEW
         regulatoryRequirements,
         crossBorderConsiderations,
         requiredCapabilities,
