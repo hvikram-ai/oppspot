@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Search, Sparkles, Zap } from 'lucide-react';
 import useSWR from 'swr';
+import { useDemoMode } from '@/lib/demo/demo-context';
 
 interface ResearchQuota {
   researches_used: number;
@@ -35,23 +36,35 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function ResearchGPTLauncher() {
   const router = useRouter();
+  const { isDemoMode } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Fetch quota
+  // Fetch quota (with demo mode support)
+  const quotaUrl = isDemoMode ? '/api/research/quota?demo=true' : '/api/research/quota';
   const { data: quota, error: quotaError } = useSWR<ResearchQuota>(
-    '/api/research/quota',
+    quotaUrl,
     fetcher
   );
 
   // Search companies (debounced)
   // Only search if we don't have a selected company or if the query differs from selected company name
   const shouldSearch = searchQuery.length >= 2 && (!selectedCompany || searchQuery !== selectedCompany.name);
+  const searchUrl = shouldSearch
+    ? `/api/businesses/search?q=${encodeURIComponent(searchQuery)}&limit=5${isDemoMode ? '&demo=true' : ''}`
+    : null;
   const { data: searchResults, error: searchError } = useSWR<Company[]>(
-    shouldSearch ? `/api/businesses/search?q=${encodeURIComponent(searchQuery)}&limit=5` : null,
+    searchUrl,
     fetcher
   );
+
+  // Calculate credits before using them
+  const creditsRemaining = quota?.researches_remaining ?? 0;
+  const creditsLimit = quota?.researches_limit ?? 100;
+  const creditsUsed = quota?.researches_used ?? 0;
+  const isLowOnCredits = creditsRemaining < 10;
+  const isOutOfCredits = creditsRemaining === 0;
 
   // Debug logging
   if (searchError) {
@@ -64,9 +77,9 @@ export function ResearchGPTLauncher() {
     searchQuery,
     selectedCompany,
     isGenerating,
-    creditsRemaining: quota?.researches_remaining,
-    isOutOfCredits: creditsRemaining === 0,
-    buttonDisabled: !selectedCompany || isGenerating || (creditsRemaining === 0)
+    creditsRemaining,
+    isOutOfCredits,
+    buttonDisabled: !selectedCompany || isGenerating || isOutOfCredits
   });
 
   const handleGenerate = async () => {
@@ -93,12 +106,6 @@ export function ResearchGPTLauncher() {
       setIsGenerating(false);
     }
   };
-
-  const creditsRemaining = quota?.researches_remaining ?? 0;
-  const creditsLimit = quota?.researches_limit ?? 100;
-  const creditsUsed = quota?.researches_used ?? 0;
-  const isLowOnCredits = creditsRemaining < 10;
-  const isOutOfCredits = creditsRemaining === 0;
 
   return (
     <Card className="border-2 border-indigo-100 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950 dark:to-gray-900">

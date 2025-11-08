@@ -1,0 +1,199 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [active]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - navigation [ref=e7]:
+            - button "previous" [disabled] [ref=e8]:
+              - img "previous" [ref=e9]
+            - generic:
+              - generic: 1/
+              - generic: "1"
+            - button "next" [disabled] [ref=e11]:
+              - img "next" [ref=e12]
+          - img
+        - generic [ref=e14]:
+          - link "Next.js 15.5.2 (outdated) Turbopack" [ref=e15] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e16] [cursor=pointer]
+            - generic "An outdated version detected (latest is 16.0.1), upgrade is highly recommended!": Next.js 15.5.2 (outdated)
+            - generic: Turbopack
+          - img
+      - dialog "Build Error" [ref=e19]:
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e24]:
+              - generic [ref=e26]: Build Error
+              - generic [ref=e27]:
+                - button "Copy Error Info" [ref=e28] [cursor=pointer]:
+                  - img [ref=e29] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e31]:
+                  - img [ref=e32]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e34] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e35] [cursor=pointer]
+            - generic:
+              - paragraph: Export PricingComparison doesn't exist in target module
+          - generic [ref=e44]:
+            - generic [ref=e46]:
+              - img [ref=e48]
+              - generic [ref=e51]: ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx (15:1)
+              - button "Open in editor" [ref=e52] [cursor=pointer]:
+                - img [ref=e54] [cursor=pointer]
+            - generic [ref=e57]:
+              - generic [ref=e58]: Export PricingComparison doesn't exist in target module
+              - generic [ref=e60]: 13 |
+              - generic [ref=e62]: import
+              - generic [ref=e63]: "{"
+              - generic [ref=e64]: CompetitorCard
+              - generic [ref=e65]: "}"
+              - generic [ref=e66]: from
+              - generic [ref=e68]: "'@/components/competitive-analysis/competitor-card'"
+              - generic [ref=e69]: ;
+              - generic [ref=e71]: 14 |
+              - generic [ref=e73]: import
+              - generic [ref=e74]: "{"
+              - generic [ref=e75]: FeatureMatrix
+              - generic [ref=e76]: "}"
+              - generic [ref=e77]: from
+              - generic [ref=e79]: "'@/components/competitive-analysis/feature-matrix'"
+              - generic [ref=e80]: ;
+              - generic [ref=e81]: ">"
+              - generic [ref=e82]: 15 |
+              - generic [ref=e84]: import
+              - generic [ref=e85]: "{"
+              - generic [ref=e86]: PricingComparison
+              - generic [ref=e87]: "}"
+              - generic [ref=e88]: from
+              - generic [ref=e90]: "'@/components/competitive-analysis/pricing-comparison'"
+              - generic [ref=e91]: ;
+              - generic [ref=e93]: "|"
+              - generic [ref=e95]: ^
+              - generic [ref=e96]: ^
+              - generic [ref=e97]: ^
+              - generic [ref=e98]: ^
+              - generic [ref=e99]: ^
+              - generic [ref=e100]: ^
+              - generic [ref=e101]: ^
+              - generic [ref=e102]: ^
+              - generic [ref=e103]: ^
+              - generic [ref=e104]: ^
+              - generic [ref=e105]: ^
+              - generic [ref=e106]: ^
+              - generic [ref=e107]: ^
+              - generic [ref=e108]: ^
+              - generic [ref=e109]: ^
+              - generic [ref=e110]: ^
+              - generic [ref=e111]: ^
+              - generic [ref=e112]: ^
+              - generic [ref=e113]: ^
+              - generic [ref=e114]: ^
+              - generic [ref=e115]: ^
+              - generic [ref=e116]: ^
+              - generic [ref=e117]: ^
+              - generic [ref=e118]: ^
+              - generic [ref=e119]: ^
+              - generic [ref=e120]: ^
+              - generic [ref=e121]: ^
+              - generic [ref=e122]: ^
+              - generic [ref=e123]: ^
+              - generic [ref=e124]: ^
+              - generic [ref=e125]: ^
+              - generic [ref=e126]: ^
+              - generic [ref=e127]: ^
+              - generic [ref=e128]: ^
+              - generic [ref=e129]: ^
+              - generic [ref=e130]: ^
+              - generic [ref=e131]: ^
+              - generic [ref=e132]: ^
+              - generic [ref=e133]: ^
+              - generic [ref=e134]: ^
+              - generic [ref=e135]: ^
+              - generic [ref=e136]: ^
+              - generic [ref=e137]: ^
+              - generic [ref=e138]: ^
+              - generic [ref=e139]: ^
+              - generic [ref=e140]: ^
+              - generic [ref=e141]: ^
+              - generic [ref=e142]: ^
+              - generic [ref=e143]: ^
+              - generic [ref=e144]: ^
+              - generic [ref=e145]: ^
+              - generic [ref=e146]: ^
+              - generic [ref=e147]: ^
+              - generic [ref=e148]: ^
+              - generic [ref=e149]: ^
+              - generic [ref=e150]: ^
+              - generic [ref=e151]: ^
+              - generic [ref=e152]: ^
+              - generic [ref=e153]: ^
+              - generic [ref=e154]: ^
+              - generic [ref=e155]: ^
+              - generic [ref=e156]: ^
+              - generic [ref=e157]: ^
+              - generic [ref=e158]: ^
+              - generic [ref=e159]: ^
+              - generic [ref=e160]: ^
+              - generic [ref=e161]: ^
+              - generic [ref=e162]: ^
+              - generic [ref=e163]: ^
+              - generic [ref=e164]: ^
+              - generic [ref=e165]: ^
+              - generic [ref=e166]: ^
+              - generic [ref=e167]: ^
+              - generic [ref=e168]: ^
+              - generic [ref=e169]: ^
+              - generic [ref=e170]: ^
+              - generic [ref=e171]: ^
+              - generic [ref=e172]: ^
+              - generic [ref=e173]: ^
+              - generic [ref=e174]: ^
+              - generic [ref=e175]: ^
+              - generic [ref=e176]: ^
+              - generic [ref=e177]: ^
+              - generic [ref=e178]: ^
+              - generic [ref=e179]: ^
+              - generic [ref=e180]: ^
+              - generic [ref=e181]: ^
+              - generic [ref=e182]: ^
+              - generic [ref=e183]: ^
+              - generic [ref=e185]: 16 |
+              - generic [ref=e187]: import
+              - generic [ref=e188]: "{"
+              - generic [ref=e189]: MoatStrengthRadar
+              - generic [ref=e190]: "}"
+              - generic [ref=e191]: from
+              - generic [ref=e193]: "'@/components/competitive-analysis/moat-strength-radar'"
+              - generic [ref=e194]: ;
+              - generic [ref=e196]: 17 |
+              - generic [ref=e198]: import
+              - generic [ref=e199]: "{"
+              - generic [ref=e200]: ExportDialog
+              - generic [ref=e201]: "}"
+              - generic [ref=e202]: from
+              - generic [ref=e204]: "'@/components/competitive-analysis/export-dialog'"
+              - generic [ref=e205]: ;
+              - generic [ref=e207]: 18 |
+              - generic [ref=e209]: import
+              - generic [ref=e210]: "{"
+              - generic [ref=e211]: CompetitorManagement
+              - generic [ref=e212]: "}"
+              - generic [ref=e213]: from
+              - generic [ref=e215]: "'@/components/competitive-analysis/competitor-management'"
+              - generic [ref=e216]: ;
+              - generic [ref=e217]: "The export PricingComparison was not found in module [project]/oppspot/components/competitive-analysis/pricing-comparison.tsx [app-client] (ecmascript). Did you mean to import PricingComparisonChart? All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist. Import traces: Client Component Browser: ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Client Component Browser] ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Server Component] Client Component SSR: ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Client Component SSR] ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Server Component]"
+        - generic [ref=e218]:
+          - generic [ref=e219]: "1"
+          - generic [ref=e220]: "2"
+    - generic [ref=e225] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e226] [cursor=pointer]:
+        - img [ref=e227] [cursor=pointer]
+      - button "Open issues overlay" [ref=e231] [cursor=pointer]:
+        - generic:
+          - generic: "1"
+        - generic: Issue
+  - 'heading "Application error: a client-side exception has occurred while loading localhost (see the browser console for more information)." [level=2] [ref=e234]'
+```

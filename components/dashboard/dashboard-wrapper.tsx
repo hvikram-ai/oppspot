@@ -28,7 +28,6 @@ import { PriorityQueue } from '@/components/dashboard-v2/priority-queue'
 import { ImpactMetrics } from '@/components/dashboard-v2/impact-metrics'
 import { FeatureSpotlight } from '@/components/dashboard-v2/feature-spotlight'
 import { EnhancedStatsGrid } from '@/components/dashboard-v2/enhanced-stats-grid'
-import { ResearchGPTLauncher } from '@/components/dashboard-v2/research-gpt-launcher'
 import { ErrorBoundary } from '@/components/dashboard-v2/error-boundary'
 import { DashboardCardSkeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -184,22 +183,13 @@ export function DashboardWrapper() {
           </Alert>
         )}
 
-        {/* Hero Section: AI Digest + ResearchGPT Launcher */}
-        <div className="grid gap-6 lg:grid-cols-3 mb-8" data-testid="dashboard-hero">
-          <div className="lg:col-span-2">
-            <ErrorBoundary>
-              <Suspense fallback={<DashboardCardSkeleton />}>
-                <AIDigestCard />
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-          <div>
-            <ErrorBoundary>
-              <Suspense fallback={<DashboardCardSkeleton />}>
-                <ResearchGPTLauncher />
-              </Suspense>
-            </ErrorBoundary>
-          </div>
+        {/* Hero Section: AI Digest */}
+        <div className="mb-8" data-testid="dashboard-hero">
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardCardSkeleton />}>
+              <AIDigestCard />
+            </Suspense>
+          </ErrorBoundary>
         </div>
 
         {/* Enhanced Stats Grid */}

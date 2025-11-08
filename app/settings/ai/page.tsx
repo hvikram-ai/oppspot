@@ -145,11 +145,14 @@ export default function AISettingsPage() {
   const [selectedProvider, setSelectedProvider] = useState('openrouter')
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434')
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
+  const [ollamaInstalled, setOllamaInstalled] = useState<boolean>(false)
+  const [ollamaVersion, setOllamaVersion] = useState<string>('')
   const [availableModels, setAvailableModels] = useState<string[]>([])
   const [showApiKey, setShowApiKey] = useState<{ [key: string]: boolean }>({})
   const [isAddingKey, setIsAddingKey] = useState(false)
   const [newKey, setNewKey] = useState({ provider: '', name: '', key: '' })
   const [testingKey, setTestingKey] = useState<string | null>(null)
+  const [startingOllama, setStartingOllama] = useState(false)
 
   const loadSettings = useCallback(async () => {
     try {
@@ -208,19 +211,54 @@ export default function AISettingsPage() {
   }
 
   const checkOllamaStatus = useCallback(async () => {
+    setOllamaStatus('checking')
     try {
-      const response = await fetch(`/api/ollama/status?url=${encodeURIComponent(ollamaUrl)}`)
+      const response = await fetch(`/api/ollama/manage?endpoint=${encodeURIComponent(ollamaUrl)}`)
       if (response.ok) {
         const data = await response.json()
-        setOllamaStatus(data.status)
-        setAvailableModels(data.models || [])
+        const status = data.status
+
+        setOllamaInstalled(status.installed)
+        setOllamaVersion(status.version || '')
+        setOllamaStatus(status.running ? 'online' : 'offline')
+        setAvailableModels(status.models || [])
       } else {
         setOllamaStatus('offline')
+        setOllamaInstalled(false)
       }
     } catch (error) {
       setOllamaStatus('offline')
+      setOllamaInstalled(false)
     }
   }, [ollamaUrl])
+
+  const handleStartOllama = async () => {
+    setStartingOllama(true)
+    try {
+      toast.info('Starting Ollama server...')
+
+      const response = await fetch('/api/ollama/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start' })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success(result.message)
+        // Wait a moment then check status
+        setTimeout(() => checkOllamaStatus(), 1000)
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      console.error('Error starting Ollama:', error)
+      toast.error('Failed to start Ollama server')
+    } finally {
+      setStartingOllama(false)
+    }
+  }
 
   useEffect(() => {
     loadSettings()
@@ -627,26 +665,55 @@ export default function AISettingsPage() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`h-3 w-3 rounded-full ${
-                    ollamaStatus === 'online' ? 'bg-green-500' : 
-                    ollamaStatus === 'offline' ? 'bg-red-500' : 
+                    ollamaStatus === 'online' ? 'bg-green-500' :
+                    ollamaStatus === 'offline' ? 'bg-red-500' :
                     'bg-yellow-500'
                   }`} />
                   <div>
                     <p className="font-medium">Ollama Server Status</p>
                     <p className="text-sm text-muted-foreground">
-                      {ollamaStatus === 'online' ? 'Connected and ready' :
-                       ollamaStatus === 'offline' ? 'Not running or unreachable' :
-                       'Checking connection...'}
+                      {ollamaStatus === 'online' ? (
+                        <>Connected and ready{ollamaVersion && ` (${ollamaVersion})`}</>
+                      ) : ollamaStatus === 'offline' ? (
+                        ollamaInstalled ? 'Server not running' : 'Not installed or not in PATH'
+                      ) : 'Checking connection...'}
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={checkOllamaStatus}
-                >
-                  Refresh
-                </Button>
+                <div className="flex gap-2">
+                  {ollamaStatus === 'offline' && ollamaInstalled && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleStartOllama}
+                      disabled={startingOllama}
+                    >
+                      {startingOllama ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Starting...
+                        </>
+                      ) : (
+                        <>
+                          <Cpu className="mr-2 h-4 w-4" />
+                          Start Server
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={checkOllamaStatus}
+                    disabled={ollamaStatus === 'checking'}
+                  >
+                    {ollamaStatus === 'checking' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Refresh'
+                    )}
+                  </Button>
+                </div>
               </div>
 
               {/* Ollama URL Configuration */}
@@ -719,7 +786,7 @@ export default function AISettingsPage() {
               )}
 
               {/* Installation Help */}
-              {ollamaStatus === 'offline' && (
+              {ollamaStatus === 'offline' && !ollamaInstalled && (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
@@ -728,9 +795,21 @@ export default function AISettingsPage() {
                     <ol className="text-sm list-decimal list-inside space-y-1">
                       <li>Visit <a href="https://ollama.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">ollama.ai</a></li>
                       <li>Download and install Ollama for your OS</li>
-                      <li>Run: <code className="bg-muted px-1 rounded">ollama serve</code></li>
-                      <li>Click Refresh to check connection</li>
+                      <li>After installation, click the "Start Server" button above</li>
+                      <li>Or manually run: <code className="bg-muted px-1 rounded">ollama serve</code></li>
                     </ol>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Server Offline Help */}
+              {ollamaStatus === 'offline' && ollamaInstalled && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-medium mb-2">Ollama is installed but not running</p>
+                    <p className="text-sm mb-2">Click the "Start Server" button above to automatically start the Ollama server, or start it manually:</p>
+                    <code className="text-sm bg-muted px-2 py-1 rounded block">ollama serve</code>
                   </AlertDescription>
                 </Alert>
               )}

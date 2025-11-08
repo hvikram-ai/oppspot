@@ -1,0 +1,516 @@
+openapi: 3.0.0
+info:
+  title: Stream Wizard API
+  description: API endpoints for multi-step stream creation wizard
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://oppspot-one.vercel.app/api
+    description: Production
+
+paths:
+  /streams/wizard/progress:
+    get:
+      summary: Get wizard progress for current user
+      description: Retrieves saved wizard state for session persistence (FR-006)
+      tags: [Wizard]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Wizard progress retrieved (may be null if no saved progress)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  progress:
+                    $ref: '#/components/schemas/WizardProgress'
+                    nullable: true
+                  session_id:
+                    type: string
+                    description: "Session identifier for tracking"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      summary: Save wizard progress
+      description: Persists wizard state for session recovery (FR-006)
+      tags: [Wizard]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WizardProgress'
+      responses:
+        '200':
+          description: Progress saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                  saved_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      summary: Clear wizard progress
+      description: Clears saved wizard state (called on successful stream creation)
+      tags: [Wizard]
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Progress cleared successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /streams/wizard/validate:
+    post:
+      summary: Validate wizard step data
+      description: Server-side validation before proceeding to next step (FR-005)
+      tags: [Wizard]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - step
+                - data
+              properties:
+                step:
+                  type: integer
+                  enum: [1, 2, 3]
+                data:
+                  oneOf:
+                    - $ref: '#/components/schemas/Step1Data'
+                    - $ref: '#/components/schemas/Step2Data'
+                    - $ref: '#/components/schemas/Step3Data'
+      responses:
+        '200':
+          description: Validation passed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+                    example:
+                      - field: "goal_type"
+                        message: "Goal type is required"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /streams/wizard/complete:
+    post:
+      summary: Complete wizard and create stream
+      description: Final step - creates stream with all wizard data (FR-001 to FR-005)
+      tags: [Wizard]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - step1
+                - step2
+                - step3
+              properties:
+                step1:
+                  $ref: '#/components/schemas/Step1Data'
+                step2:
+                  $ref: '#/components/schemas/Step2Data'
+                step3:
+                  $ref: '#/components/schemas/Step3Data'
+                stream_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                stream_description:
+                  type: string
+                  nullable: true
+                stream_emoji:
+                  type: string
+                  default: "🎯"
+                stream_color:
+                  type: string
+                  default: "#6366f1"
+      responses:
+        '201':
+          description: Stream created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stream:
+                    $ref: '#/components/schemas/Stream'
+                  redirect_url:
+                    type: string
+                    example: "/streams/{id}/dashboard"
+        '400':
+          description: Validation error or incomplete wizard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                incomplete_wizard:
+                  value:
+                    error: "All wizard steps must be completed"
+                invalid_profile:
+                  value:
+                    error: "Selected profile does not exist or does not belong to your organization"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /goal-templates:
+    get:
+      summary: List available goal templates
+      description: Returns predefined goal types for Step 1 (FR-002)
+      tags: [GoalTemplates]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [acquisition, expansion, research]
+      responses:
+        '200':
+          description: Goal templates list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GoalTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /goal-templates/{id}:
+    get:
+      summary: Get single goal template with defaults
+      description: Retrieves template details for wizard step 2 pre-population
+      tags: [GoalTemplates]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Goal template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalTemplate'
+        '404':
+          description: Template not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    WizardProgress:
+      type: object
+      properties:
+        current_step:
+          type: integer
+          enum: [1, 2, 3]
+        step1:
+          $ref: '#/components/schemas/Step1Data'
+          nullable: true
+        step2:
+          $ref: '#/components/schemas/Step2Data'
+          nullable: true
+        step3:
+          $ref: '#/components/schemas/Step3Data'
+          nullable: true
+        session_id:
+          type: string
+        saved_at:
+          type: string
+          format: date-time
+
+    Step1Data:
+      type: object
+      required:
+        - goal_template_id
+      properties:
+        goal_template_id:
+          type: string
+          description: "ID of selected goal template (FR-002)"
+          example: "due_diligence"
+
+    Step2Data:
+      type: object
+      required:
+        - business_impact_description
+      properties:
+        business_impact_description:
+          type: string
+          minLength: 10
+          maxLength: 5000
+          description: "User's business objectives and impact criteria (FR-003)"
+          example: "Looking to acquire SaaS companies with $5-10M ARR in healthcare vertical to expand our product portfolio and accelerate market entry."
+        custom_criteria:
+          type: object
+          additionalProperties: true
+          description: "Optional structured criteria (future v2 enhancement)"
+
+    Step3Data:
+      type: object
+      required:
+        - profile_selection_method
+      properties:
+        profile_selection_method:
+          type: string
+          enum: [existing, new]
+        selected_profile_id:
+          type: string
+          format: uuid
+          description: "Required if profile_selection_method = 'existing' (FR-004)"
+          nullable: true
+        new_profile:
+          type: object
+          description: "Required if profile_selection_method = 'new' (FR-004)"
+          nullable: true
+          properties:
+            name:
+              type: string
+            company_name:
+              type: string
+            website_url:
+              type: string
+              format: uri
+            wait_for_analysis:
+              type: boolean
+              default: true
+              description: "If true, wizard waits for AI analysis to complete"
+
+    GoalTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [acquisition, expansion, research]
+        icon:
+          type: string
+        default_criteria:
+          type: object
+          additionalProperties: true
+        default_metrics:
+          type: object
+          additionalProperties: true
+        default_success_criteria:
+          type: object
+          additionalProperties: true
+        suggested_stages:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              color:
+                type: string
+        suggested_agents:
+          type: array
+          items:
+            type: object
+            properties:
+              agent_type:
+                type: string
+              role:
+                type: string
+              order:
+                type: integer
+              config:
+                type: object
+        is_active:
+          type: boolean
+        use_count:
+          type: integer
+        display_order:
+          type: integer
+
+    Stream:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        emoji:
+          type: string
+        color:
+          type: string
+        stream_type:
+          type: string
+          enum: [project, deal, campaign, research, territory]
+        goal_template_id:
+          type: string
+        goal_criteria:
+          type: object
+        target_metrics:
+          type: object
+        success_criteria:
+          type: object
+        current_progress:
+          type: object
+          properties:
+            completed:
+              type: integer
+            total:
+              type: integer
+            percentage:
+              type: integer
+        goal_deadline:
+          type: string
+          format: date-time
+          nullable: true
+        goal_status:
+          type: string
+          enum: [not_started, in_progress, on_track, at_risk, completed, failed, paused]
+        business_profile_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [active, archived, completed]
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+          nullable: true
+        code:
+          type: string
+          nullable: true
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+
+    BadRequest:
+      description: Bad request - validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal server error"

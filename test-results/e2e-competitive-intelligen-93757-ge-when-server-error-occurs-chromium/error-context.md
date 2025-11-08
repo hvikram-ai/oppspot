@@ -1,0 +1,263 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Command Palette" [level=2] [ref=e3]
+    - paragraph [ref=e4]: Search for a command to run...
+  - generic [ref=e8]:
+    - button [ref=e9]:
+      - img
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - heading "Pro Tip!" [level=3] [ref=e15]
+      - paragraph [ref=e16]:
+        - text: Press
+        - generic [ref=e17]:
+          - img [ref=e18]
+          - text: K
+        - text: to instantly search companies, streams, scans, and more. Try it now!
+      - button "Got it!" [ref=e21]
+  - generic [ref=e22]:
+    - navigation [ref=e23]:
+      - generic [ref=e25]:
+        - link "oppSpot" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e29] [cursor=pointer]
+          - generic [ref=e32] [cursor=pointer]: oppSpot
+        - generic [ref=e34]:
+          - link "Sign In" [ref=e35] [cursor=pointer]:
+            - /url: /login
+            - button "Sign In" [ref=e36]
+          - link "Get Started" [ref=e37] [cursor=pointer]:
+            - /url: /login
+            - button "Get Started" [ref=e38]
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]: Welcome to oppSpot
+        - generic [ref=e44]: Sign in to discover UK & Ireland business opportunities
+      - generic [ref=e46]:
+        - tablist [ref=e47]:
+          - tab "Magic Link" [ref=e48]
+          - tab "Password" [selected] [ref=e49]
+          - tab "Sign Up" [ref=e50]
+        - tabpanel "Password" [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e53]:
+              - generic [ref=e54]: Email
+              - textbox "Email" [ref=e55]: demo@oppspot.com
+            - generic [ref=e56]:
+              - generic [ref=e57]:
+                - generic [ref=e58]: Password
+                - link "Forgot password?" [ref=e59] [cursor=pointer]:
+                  - /url: /forgot-password
+              - textbox "Password" [active] [ref=e60]: Demo123456!
+            - button "Sign In" [ref=e61]
+      - generic [ref=e63]:
+        - generic [ref=e68]: Or continue with
+        - button "Continue with Google" [ref=e69]:
+          - img
+          - text: Continue with Google
+        - button "Try Demo (No Registration)" [ref=e70]:
+          - img
+          - text: Try Demo (No Registration)
+        - paragraph [ref=e71]: Demo mode lets you explore all features without creating an account
+  - button [ref=e72]:
+    - img
+  - region "Notifications alt+T"
+  - generic:
+    - generic [ref=e75]:
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - navigation [ref=e78]:
+            - button "previous" [disabled] [ref=e79]:
+              - img "previous" [ref=e80]
+            - generic:
+              - generic: 1/
+              - generic: "1"
+            - button "next" [disabled] [ref=e82]:
+              - img "next" [ref=e83]
+          - img
+        - generic [ref=e85]:
+          - link "Next.js 15.5.2 (outdated) Turbopack" [ref=e86] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e87] [cursor=pointer]
+            - generic "An outdated version detected (latest is 16.0.1), upgrade is highly recommended!": Next.js 15.5.2 (outdated)
+            - generic: Turbopack
+          - img
+      - dialog "Build Error" [ref=e90]:
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - generic [ref=e95]:
+              - generic [ref=e97]: Build Error
+              - generic [ref=e98]:
+                - button "Copy Error Info" [ref=e99] [cursor=pointer]:
+                  - img [ref=e100] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e102]:
+                  - img [ref=e103]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e105] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e106] [cursor=pointer]
+            - generic:
+              - paragraph: Export PricingComparison doesn't exist in target module
+          - generic [ref=e115]:
+            - generic [ref=e117]:
+              - img [ref=e119]
+              - generic [ref=e122]: ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx (15:1)
+              - button "Open in editor" [ref=e123] [cursor=pointer]:
+                - img [ref=e125] [cursor=pointer]
+            - generic [ref=e128]:
+              - generic [ref=e129]: Export PricingComparison doesn't exist in target module
+              - generic [ref=e131]: 13 |
+              - generic [ref=e133]: import
+              - generic [ref=e134]: "{"
+              - generic [ref=e135]: CompetitorCard
+              - generic [ref=e136]: "}"
+              - generic [ref=e137]: from
+              - generic [ref=e139]: "'@/components/competitive-analysis/competitor-card'"
+              - generic [ref=e140]: ;
+              - generic [ref=e142]: 14 |
+              - generic [ref=e144]: import
+              - generic [ref=e145]: "{"
+              - generic [ref=e146]: FeatureMatrix
+              - generic [ref=e147]: "}"
+              - generic [ref=e148]: from
+              - generic [ref=e150]: "'@/components/competitive-analysis/feature-matrix'"
+              - generic [ref=e151]: ;
+              - generic [ref=e152]: ">"
+              - generic [ref=e153]: 15 |
+              - generic [ref=e155]: import
+              - generic [ref=e156]: "{"
+              - generic [ref=e157]: PricingComparison
+              - generic [ref=e158]: "}"
+              - generic [ref=e159]: from
+              - generic [ref=e161]: "'@/components/competitive-analysis/pricing-comparison'"
+              - generic [ref=e162]: ;
+              - generic [ref=e164]: "|"
+              - generic [ref=e166]: ^
+              - generic [ref=e167]: ^
+              - generic [ref=e168]: ^
+              - generic [ref=e169]: ^
+              - generic [ref=e170]: ^
+              - generic [ref=e171]: ^
+              - generic [ref=e172]: ^
+              - generic [ref=e173]: ^
+              - generic [ref=e174]: ^
+              - generic [ref=e175]: ^
+              - generic [ref=e176]: ^
+              - generic [ref=e177]: ^
+              - generic [ref=e178]: ^
+              - generic [ref=e179]: ^
+              - generic [ref=e180]: ^
+              - generic [ref=e181]: ^
+              - generic [ref=e182]: ^
+              - generic [ref=e183]: ^
+              - generic [ref=e184]: ^
+              - generic [ref=e185]: ^
+              - generic [ref=e186]: ^
+              - generic [ref=e187]: ^
+              - generic [ref=e188]: ^
+              - generic [ref=e189]: ^
+              - generic [ref=e190]: ^
+              - generic [ref=e191]: ^
+              - generic [ref=e192]: ^
+              - generic [ref=e193]: ^
+              - generic [ref=e194]: ^
+              - generic [ref=e195]: ^
+              - generic [ref=e196]: ^
+              - generic [ref=e197]: ^
+              - generic [ref=e198]: ^
+              - generic [ref=e199]: ^
+              - generic [ref=e200]: ^
+              - generic [ref=e201]: ^
+              - generic [ref=e202]: ^
+              - generic [ref=e203]: ^
+              - generic [ref=e204]: ^
+              - generic [ref=e205]: ^
+              - generic [ref=e206]: ^
+              - generic [ref=e207]: ^
+              - generic [ref=e208]: ^
+              - generic [ref=e209]: ^
+              - generic [ref=e210]: ^
+              - generic [ref=e211]: ^
+              - generic [ref=e212]: ^
+              - generic [ref=e213]: ^
+              - generic [ref=e214]: ^
+              - generic [ref=e215]: ^
+              - generic [ref=e216]: ^
+              - generic [ref=e217]: ^
+              - generic [ref=e218]: ^
+              - generic [ref=e219]: ^
+              - generic [ref=e220]: ^
+              - generic [ref=e221]: ^
+              - generic [ref=e222]: ^
+              - generic [ref=e223]: ^
+              - generic [ref=e224]: ^
+              - generic [ref=e225]: ^
+              - generic [ref=e226]: ^
+              - generic [ref=e227]: ^
+              - generic [ref=e228]: ^
+              - generic [ref=e229]: ^
+              - generic [ref=e230]: ^
+              - generic [ref=e231]: ^
+              - generic [ref=e232]: ^
+              - generic [ref=e233]: ^
+              - generic [ref=e234]: ^
+              - generic [ref=e235]: ^
+              - generic [ref=e236]: ^
+              - generic [ref=e237]: ^
+              - generic [ref=e238]: ^
+              - generic [ref=e239]: ^
+              - generic [ref=e240]: ^
+              - generic [ref=e241]: ^
+              - generic [ref=e242]: ^
+              - generic [ref=e243]: ^
+              - generic [ref=e244]: ^
+              - generic [ref=e245]: ^
+              - generic [ref=e246]: ^
+              - generic [ref=e247]: ^
+              - generic [ref=e248]: ^
+              - generic [ref=e249]: ^
+              - generic [ref=e250]: ^
+              - generic [ref=e251]: ^
+              - generic [ref=e252]: ^
+              - generic [ref=e253]: ^
+              - generic [ref=e254]: ^
+              - generic [ref=e256]: 16 |
+              - generic [ref=e258]: import
+              - generic [ref=e259]: "{"
+              - generic [ref=e260]: MoatStrengthRadar
+              - generic [ref=e261]: "}"
+              - generic [ref=e262]: from
+              - generic [ref=e264]: "'@/components/competitive-analysis/moat-strength-radar'"
+              - generic [ref=e265]: ;
+              - generic [ref=e267]: 17 |
+              - generic [ref=e269]: import
+              - generic [ref=e270]: "{"
+              - generic [ref=e271]: ExportDialog
+              - generic [ref=e272]: "}"
+              - generic [ref=e273]: from
+              - generic [ref=e275]: "'@/components/competitive-analysis/export-dialog'"
+              - generic [ref=e276]: ;
+              - generic [ref=e278]: 18 |
+              - generic [ref=e280]: import
+              - generic [ref=e281]: "{"
+              - generic [ref=e282]: CompetitorManagement
+              - generic [ref=e283]: "}"
+              - generic [ref=e284]: from
+              - generic [ref=e286]: "'@/components/competitive-analysis/competitor-management'"
+              - generic [ref=e287]: ;
+              - generic [ref=e288]: "The export PricingComparison was not found in module [project]/oppspot/components/competitive-analysis/pricing-comparison.tsx [app-client] (ecmascript). Did you mean to import PricingComparisonChart? All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist. Import traces: Client Component Browser: ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Client Component Browser] ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Server Component] Client Component SSR: ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Client Component SSR] ./oppspot/app/(dashboard)/competitive-intelligence/[id]/page.tsx [Server Component]"
+        - generic [ref=e289]:
+          - generic [ref=e290]: "1"
+          - generic [ref=e291]: "2"
+    - generic [ref=e296] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e297] [cursor=pointer]:
+        - img [ref=e298] [cursor=pointer]
+      - button "Open issues overlay" [ref=e302] [cursor=pointer]:
+        - generic:
+          - generic: "1"
+        - generic: Issue
+  - alert [ref=e303]
+```

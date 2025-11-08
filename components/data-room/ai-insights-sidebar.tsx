@@ -2,10 +2,10 @@
 
 /**
  * AI Insights Sidebar Component
- * Display AI analysis results for documents
+ * Display AI analysis results for documents + Structured Smart Summaries
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,14 +24,20 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  ListCheck
 } from 'lucide-react'
+import { SummaryView } from './summary-view'
+import { SummaryRunButton } from './summary-run-button'
+import { SummaryExportControls } from './summary-export-controls'
+import { toast } from 'sonner'
 import type {
   Document,
   DocumentAnalysis,
   DocumentMetadata,
   ConfidenceLevel
 } from '@/lib/data-room/types'
+import type { SummaryTemplate } from '@/lib/data-room/summaries/types'
 
 interface AIInsightsSidebarProps {
   document: Document
@@ -48,11 +54,108 @@ export function AIInsightsSidebar({ document, analyses, loading = false }: AIIns
     risks: false
   })
 
+  // Smart Summary state
+  const [summary, setSummary] = useState<any>(null)
+  const [templates, setTemplates] = useState<SummaryTemplate[]>([])
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }))
+  }
+
+  // Fetch templates and existing summary
+  useEffect(() => {
+    fetchTemplates()
+    fetchSummary()
+
+    // Cleanup poll interval on unmount
+    return () => {
+      if (pollInterval) clearInterval(pollInterval)
+    }
+  }, [document.id])
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await fetch('/api/data-room/templates')
+      const data = await response.json()
+      setTemplates(data.templates.map((t: any) => t.template))
+    } catch (error) {
+      console.error('Failed to fetch templates:', error)
+    }
+  }
+
+  const fetchSummary = async () => {
+    try {
+      setSummaryLoading(true)
+      // Try to get the latest summary for this document
+      const response = await fetch(`/api/data-room/summaries?documentId=${document.id}`)
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.summary) {
+          setSummary(data)
+
+          // If status is running, start polling
+          if (data.summary?.run?.status === 'running') {
+            startPolling(data.summary.run_id)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch summary:', error)
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
+
+  const startPolling = (runId: string) => {
+    // Clear existing interval
+    if (pollInterval) clearInterval(pollInterval)
+
+    // Poll every 3 seconds
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/data-room/summaries/${runId}`)
+        const data = await response.json()
+
+        if (data.summary) {
+          setSummary(data)
+
+          // Stop polling if completed
+          if (data.summary.run.status !== 'running' && data.summary.run.status !== 'queued') {
+            clearInterval(interval)
+            setPollInterval(null)
+
+            if (data.summary.run.status === 'success' || data.summary.run.status === 'partial') {
+              toast.success('Summary extraction completed', {
+                description: data.summary.quality_pass
+                  ? 'Quality gates passed'
+                  : 'Partial extraction - some fields missing'
+              })
+            } else if (data.summary.run.status === 'error') {
+              toast.error('Summary extraction failed', {
+                description: 'Please try again or contact support'
+              })
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Polling error:', error)
+      }
+    }, 3000)
+
+    setPollInterval(interval)
+  }
+
+  const handleSummaryStarted = (runId: string) => {
+    toast.info('Summary extraction started', {
+      description: 'This may take 15-45 seconds...'
+    })
+    startPolling(runId)
   }
 
   const getConfidenceColor = (confidence: number) => {
@@ -94,15 +197,15 @@ export function AIInsightsSidebar({ document, analyses, loading = false }: AIIns
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-blue-600" />
-              AI Insights
+              AI Analysis
             </CardTitle>
             <CardDescription className="mt-1">
-              Automated document analysis
+              Automated document insights & extraction
             </CardDescription>
           </div>
           {document.processing_status === 'complete' && (
@@ -111,7 +214,21 @@ export function AIInsightsSidebar({ document, analyses, loading = false }: AIIns
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-y-auto space-y-4">
+      <Tabs defaultValue="insights" className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="insights">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Insights
+            </TabsTrigger>
+            <TabsTrigger value="summary">
+              <ListCheck className="h-4 w-4 mr-2" />
+              Smart Summary
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="insights" className="flex-1 overflow-y-auto mt-0 px-6 pt-4 space-y-4">
         {/* Classification */}
         <div className="space-y-3">
           <button
@@ -285,7 +402,46 @@ export function AIInsightsSidebar({ document, analyses, loading = false }: AIIns
             ))}
           </div>
         </div>
-      </CardContent>
+        </TabsContent>
+
+        {/* Smart Summary Tab */}
+        <TabsContent value="summary" className="flex-1 overflow-y-auto mt-0 px-6 pt-4">
+          {summaryLoading && !summary ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground">Loading summary...</p>
+            </div>
+          ) : summary ? (
+            <div className="space-y-4">
+              <SummaryView summary={summary} />
+              <div className="sticky bottom-0 bg-background pt-4 border-t">
+                <SummaryExportControls summaryId={summary.summary.id} />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="text-center space-y-2 mb-6">
+                <ListCheck className="h-12 w-12 text-muted-foreground mx-auto" />
+                <h3 className="font-semibold">No Smart Summary Yet</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Extract structured key points from this document using AI-powered field extraction.
+                </p>
+              </div>
+              <SummaryRunButton
+                documentId={document.id}
+                templates={templates}
+                onRunStarted={handleSummaryStarted}
+                disabled={templates.length === 0}
+              />
+              {templates.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Loading templates...
+                </p>
+              )}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </Card>
   )
 }

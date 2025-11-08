@@ -77,7 +77,7 @@ export function LiveNotifications() {
 
     toast(notification.title, {
       description: notification.description,
-      icon,
+      ...(icon ? { icon } : {}),
       duration,
       action: notification.action_url ? {
         label: getActionLabel(notification.type),

@@ -35,7 +35,7 @@ export async function GET(
       .from('data_rooms')
       .select(`
         *,
-        profiles!data_rooms_user_id_fkey(name, email),
+        profiles!data_rooms_user_id_fkey(full_name, email),
         data_room_access(
           id,
           user_id,
@@ -43,7 +43,7 @@ export async function GET(
           invite_email,
           created_at,
           accepted_at,
-          profiles!data_room_access_user_id_fkey(name, email)
+          profiles!data_room_access_user_id_fkey(full_name, email)
         ),
         documents(count),
         activity_logs(
@@ -64,7 +64,7 @@ export async function GET(
 
     interface DataRoomData {
       user_id: string;
-      profiles?: { name?: string; email?: string };
+      profiles?: { full_name?: string; email?: string };
       data_room_access?: DataRoomAccess[];
     }
 
@@ -89,7 +89,7 @@ export async function GET(
       success: true,
       data: {
         ...typedDataRoom,
-        owner_name: typedDataRoom.profiles?.name || 'Unknown',
+        owner_name: typedDataRoom.profiles?.full_name || 'Unknown',
         my_permission: typedDataRoom.user_id === user.id ? 'owner' :
           typedDataRoom.data_room_access?.find((a) => a.user_id === user.id)?.permission_level
       }

@@ -55,7 +55,11 @@ function detectFeatureFromUrl(url: string | null): string | null {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
+
+    // Debug: Check cookies
+    const cookies = request.cookies.getAll();
+    console.log('[Feedback API] Cookies present:', cookies.map(c => c.name).join(', '));
 
     // Parse request body
     const body = await request.json();
@@ -74,9 +78,25 @@ export async function POST(request: NextRequest) {
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
+    // Debug: Log auth state
+    console.log('[Feedback API] Auth check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message
+    });
+
     if (authError || !user) {
+      console.error('[Feedback API] Authentication failed:', authError);
       return NextResponse.json(
-        { error: 'Authentication required' },
+        {
+          error: 'Authentication required',
+          debug: {
+            hasAuthError: !!authError,
+            errorMessage: authError?.message,
+            cookiesCount: cookies.length
+          }
+        },
         { status: 401 }
       );
     }
@@ -261,10 +281,17 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    // Debug: Log auth state for GET
+    console.log('[Feedback API GET] Auth check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      authError: authError?.message
+    });
 
     if (!user) {
       return NextResponse.json(

@@ -8,22 +8,50 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getResearchGPTService } from '@/lib/research-gpt/research-gpt-service';
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Check for demo mode
+    const searchParams = request.nextUrl.searchParams;
+    const isDemoMode = searchParams.get('demo') === 'true';
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    let userId: string;
+
+    if (isDemoMode) {
+      // Use demo user ID
+      userId = 'demo-user-id';
+    } else {
+      // Get authenticated user
+      const supabase = await createClient();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+      userId = user.id;
     }
 
-    // Get quota
+    // Get quota (or return demo data for demo mode)
+    if (isDemoMode) {
+      // Return demo quota data
+      return NextResponse.json({
+        user_id: userId,
+        period_start: new Date().toISOString(),
+        period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        researches_used: 15,
+        researches_limit: 100,
+        researches_remaining: 85,
+        percentage_used: 15,
+        tier: 'premium',
+        warning: false,
+        warning_message: undefined,
+      });
+    }
+
     const service = getResearchGPTService();
-    const quota = await service.getQuota(user.id);
+    const quota = await service.getQuota(userId);
 
     const researches_remaining = quota.researches_limit - quota.researches_used;
     const percentage_used = Math.round((quota.researches_used / quota.researches_limit) * 100);

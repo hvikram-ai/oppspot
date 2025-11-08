@@ -1,0 +1,637 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Command Palette" [level=2] [ref=e3]
+    - paragraph [ref=e4]: Search for a command to run...
+  - generic [ref=e8]:
+    - button [ref=e9]:
+      - img
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - heading "Pro Tip!" [level=3] [ref=e15]
+      - paragraph [ref=e16]:
+        - text: Press
+        - generic [ref=e17]:
+          - img [ref=e18]
+          - text: K
+        - text: to instantly search companies, streams, scans, and more. Try it now!
+      - button "Got it!" [ref=e21]
+  - generic [ref=e22]:
+    - navigation [ref=e23]:
+      - generic [ref=e25]:
+        - link "oppSpot" [ref=e27] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e29] [cursor=pointer]
+          - generic [ref=e32] [cursor=pointer]: oppSpot
+        - navigation "Main" [ref=e34]:
+          - list [ref=e36]:
+            - listitem [ref=e37]:
+              - button "Command Center" [ref=e38]:
+                - generic [ref=e39]:
+                  - img [ref=e40]
+                  - text: Command Center
+                - img [ref=e45]
+            - listitem [ref=e47]:
+              - button "Discover" [ref=e48]:
+                - generic [ref=e49]:
+                  - img [ref=e50]
+                  - text: Discover
+                - img [ref=e53]
+            - listitem [ref=e55]:
+              - button "Intelligence" [ref=e56]:
+                - generic [ref=e57]:
+                  - img [ref=e58]
+                  - text: Intelligence
+                - img [ref=e66]
+            - listitem [ref=e68]:
+              - button "Pipeline" [ref=e69]:
+                - generic [ref=e70]:
+                  - img [ref=e71]
+                  - text: Pipeline
+                - img [ref=e76]
+            - listitem [ref=e78]:
+              - button "Workspace" [ref=e79]:
+                - generic [ref=e80]:
+                  - img [ref=e81]
+                  - text: Workspace
+                - img [ref=e84]
+        - generic [ref=e87]:
+          - img [ref=e88]
+          - textbox "Quick search businesses..." [ref=e91]
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - button "General" [disabled]:
+              - img
+              - generic: General
+              - img
+          - button "Toggle theme" [ref=e94]:
+            - img
+            - generic [ref=e95]: Toggle theme
+          - button "1" [ref=e96]:
+            - img
+            - generic [ref=e97]: "1"
+          - button "D" [ref=e98]:
+            - generic [ref=e100]: D
+    - complementary [ref=e101]:
+      - generic [ref=e102]:
+        - button "Collapse sidebar" [ref=e104]:
+          - img
+        - generic [ref=e108]:
+          - button "Search... K" [ref=e110]:
+            - img
+            - generic [ref=e111]: Search...
+            - generic [ref=e112]:
+              - img
+              - text: K
+          - generic [ref=e113]:
+            - link "Dashboard" [ref=e114] [cursor=pointer]:
+              - /url: /dashboard
+              - generic [ref=e115] [cursor=pointer]:
+                - img [ref=e118] [cursor=pointer]
+                - generic [ref=e121] [cursor=pointer]: Dashboard
+            - link "Live Monitoring Pro" [ref=e122] [cursor=pointer]:
+              - /url: /monitoring
+              - generic [ref=e123] [cursor=pointer]:
+                - img [ref=e125] [cursor=pointer]
+                - generic [ref=e127] [cursor=pointer]: Live Monitoring
+                - generic [ref=e128] [cursor=pointer]: Pro
+            - link "ChatSpot Pro" [ref=e130] [cursor=pointer]:
+              - /url: /chatspot
+              - generic [ref=e131] [cursor=pointer]:
+                - img [ref=e133] [cursor=pointer]
+                - generic [ref=e136] [cursor=pointer]: ChatSpot
+                - generic [ref=e137] [cursor=pointer]: Pro
+          - button "Discover" [ref=e140]:
+            - generic [ref=e141]:
+              - img [ref=e142]
+              - generic [ref=e145]: Discover
+            - img [ref=e146]
+          - button "Diligence" [ref=e149]:
+            - generic [ref=e150]:
+              - img [ref=e151]
+              - generic [ref=e156]: Diligence
+            - img [ref=e157]
+          - button "Collaboration" [ref=e160]:
+            - generic [ref=e161]:
+              - img [ref=e162]
+              - generic [ref=e167]: Collaboration
+            - img [ref=e168]
+          - button "Outreach" [ref=e171]:
+            - generic [ref=e172]:
+              - img [ref=e173]
+              - generic [ref=e176]: Outreach
+            - img [ref=e177]
+          - button "Streams" [ref=e180]:
+            - generic [ref=e181]:
+              - img [ref=e182]
+              - generic [ref=e184]: Streams
+            - img [ref=e185]
+        - generic [ref=e187]:
+          - link "Profile" [ref=e188] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e189] [cursor=pointer]:
+              - img [ref=e191] [cursor=pointer]
+              - generic [ref=e194] [cursor=pointer]: Profile
+          - link "Team Management" [ref=e196] [cursor=pointer]:
+            - /url: /team
+            - generic [ref=e197] [cursor=pointer]:
+              - img [ref=e199] [cursor=pointer]
+              - generic [ref=e211] [cursor=pointer]: Team Management
+          - link "Settings" [ref=e213] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e214] [cursor=pointer]:
+              - img [ref=e216] [cursor=pointer]
+              - generic [ref=e219] [cursor=pointer]: Settings
+          - link "Billing" [ref=e221] [cursor=pointer]:
+            - /url: /billing
+            - generic [ref=e222] [cursor=pointer]:
+              - img [ref=e224] [cursor=pointer]
+              - generic [ref=e226] [cursor=pointer]: Billing
+          - link "Feedback" [ref=e228] [cursor=pointer]:
+            - /url: /feedback
+            - generic [ref=e229] [cursor=pointer]:
+              - img [ref=e231] [cursor=pointer]
+              - generic [ref=e233] [cursor=pointer]: Feedback
+    - generic [ref=e235]:
+      - generic [ref=e238]:
+        - generic [ref=e239]:
+          - heading "Good afternoon, demo!" [level=1] [ref=e240]
+          - paragraph [ref=e241]: Saturday, November 8, 2025
+        - generic [ref=e242]:
+          - generic [ref=e243]:
+            - img [ref=e244]
+            - textbox "Quick search..." [ref=e247]
+          - link "3" [ref=e248] [cursor=pointer]:
+            - /url: /notifications
+            - button "3" [ref=e249]:
+              - img
+              - generic [ref=e250]: "3"
+          - link [ref=e251] [cursor=pointer]:
+            - /url: /settings
+            - button [ref=e252]:
+              - img
+      - generic [ref=e253]:
+        - generic [ref=e255]:
+          - generic [ref=e257]:
+            - generic [ref=e258]:
+              - img [ref=e260]
+              - generic [ref=e263]:
+                - img [ref=e264]
+                - generic [ref=e265]: —
+            - generic [ref=e266]:
+              - generic [ref=e267]: Searches This Week
+              - generic [ref=e268]: "0"
+            - generic [ref=e269]: Start searching to discover opportunities
+            - button "New Search" [ref=e270]:
+              - text: New Search
+              - img
+          - generic [ref=e272]:
+            - generic [ref=e273]:
+              - img [ref=e275]
+              - generic [ref=e279]:
+                - img [ref=e280]
+                - generic [ref=e281]: —
+            - generic [ref=e282]:
+              - generic [ref=e283]: Saved Businesses
+              - generic [ref=e284]: "0"
+            - generic [ref=e285]: Save businesses to build your pipeline
+            - button "View All" [ref=e286]:
+              - text: View All
+              - img
+          - generic [ref=e288]:
+            - generic [ref=e289]:
+              - img [ref=e291]
+              - generic [ref=e294]:
+                - img [ref=e295]
+                - generic [ref=e296]: —
+            - generic [ref=e297]:
+              - generic [ref=e298]: Research Reports
+              - generic [ref=e299]: "0"
+            - generic [ref=e300]: Generate AI research reports
+            - button "Generate" [ref=e301]:
+              - text: Generate
+              - img
+          - generic [ref=e303]:
+            - generic [ref=e304]:
+              - img [ref=e306]
+              - generic [ref=e311]:
+                - img [ref=e312]
+                - generic [ref=e313]: —
+            - generic [ref=e314]:
+              - generic [ref=e315]: Active Leads
+              - generic [ref=e316]: "0"
+            - generic [ref=e317]: Build your pipeline by saving businesses
+            - button "View CRM" [ref=e318]:
+              - text: View CRM
+              - img
+        - generic [ref=e320]:
+          - generic [ref=e321] [cursor=pointer]:
+            - generic [ref=e322] [cursor=pointer]:
+              - generic [ref=e323] [cursor=pointer]: Time Saved This Week
+              - img [ref=e324] [cursor=pointer]
+            - generic [ref=e327] [cursor=pointer]:
+              - generic [ref=e328] [cursor=pointer]: 0.0 hours
+              - generic [ref=e330] [cursor=pointer]: → 0.0% vs last week
+              - paragraph [ref=e331] [cursor=pointer]: Manual research time saved
+          - generic [ref=e332] [cursor=pointer]:
+            - generic [ref=e333] [cursor=pointer]:
+              - generic [ref=e334] [cursor=pointer]: Pipeline Value
+              - img [ref=e335] [cursor=pointer]
+            - generic [ref=e337] [cursor=pointer]:
+              - generic [ref=e338] [cursor=pointer]: £0k
+              - generic [ref=e340] [cursor=pointer]: → 0.0% vs last week
+              - paragraph [ref=e341] [cursor=pointer]: Estimated opportunity value
+          - generic [ref=e342] [cursor=pointer]:
+            - generic [ref=e343] [cursor=pointer]:
+              - generic [ref=e344] [cursor=pointer]: Active Leads
+              - img [ref=e345] [cursor=pointer]
+            - generic [ref=e350] [cursor=pointer]:
+              - generic [ref=e351] [cursor=pointer]: "0"
+              - paragraph [ref=e352] [cursor=pointer]: Companies in your pipeline
+        - generic [ref=e354]:
+          - generic [ref=e357]:
+            - generic [ref=e358]:
+              - img [ref=e359]
+              - text: Quick Actions
+            - generic [ref=e361]: Cross-workflow shortcuts to boost productivity
+          - generic [ref=e363]:
+            - button "Discover Continue Last Search Resume where you left off Open" [ref=e364]:
+              - img [ref=e366]
+              - generic [ref=e370]:
+                - generic [ref=e371]:
+                  - img [ref=e373]
+                  - generic [ref=e377]: Discover
+                - generic [ref=e378]:
+                  - heading "Continue Last Search" [level=3] [ref=e379]
+                  - paragraph [ref=e380]: Resume where you left off
+                - generic [ref=e382]:
+                  - generic [ref=e383]: Open
+                  - img [ref=e384]
+            - button "12 items Recent Stream Q1 2025 Targets Coming Soon" [disabled] [ref=e386]:
+              - img [ref=e388]
+              - generic [ref=e390]:
+                - generic [ref=e391]:
+                  - img [ref=e393]
+                  - generic [ref=e395]: 12 items
+                - generic [ref=e396]:
+                  - heading "Recent Stream" [level=3] [ref=e397]
+                  - paragraph [ref=e398]: Q1 2025 Targets
+                - generic [ref=e400]: Coming Soon
+            - button "94% Top Scored Lead AI-ranked opportunity Open" [ref=e401]:
+              - img [ref=e403]
+              - generic [ref=e406]:
+                - generic [ref=e407]:
+                  - img [ref=e409]
+                  - generic [ref=e412]: 94%
+                - generic [ref=e413]:
+                  - heading "Top Scored Lead" [level=3] [ref=e414]
+                  - paragraph [ref=e415]: AI-ranked opportunity
+                - generic [ref=e417]:
+                  - generic [ref=e418]: Open
+                  - img [ref=e419]
+            - button "Outreach Quick Export Last search results Open" [ref=e421]:
+              - img [ref=e423]
+              - generic [ref=e426]:
+                - generic [ref=e427]:
+                  - img [ref=e429]
+                  - generic [ref=e432]: Outreach
+                - generic [ref=e433]:
+                  - heading "Quick Export" [level=3] [ref=e434]
+                  - paragraph [ref=e435]: Last search results
+                - generic [ref=e437]:
+                  - generic [ref=e438]: Open
+                  - img [ref=e439]
+        - generic [ref=e441]:
+          - generic [ref=e443]:
+            - generic [ref=e444]:
+              - generic [ref=e445]: Priority Queue
+              - generic [ref=e446]: No pending actions right now
+            - generic [ref=e448]:
+              - img [ref=e449]
+              - paragraph [ref=e451]: You're all caught up! Great work.
+          - generic [ref=e453]:
+            - generic [ref=e455]:
+              - generic [ref=e456]: Discover Features
+              - generic [ref=e457]:
+                - button "Previous feature" [ref=e458]:
+                  - img
+                - generic [ref=e459]: 1 / 3
+                - button "Next feature" [ref=e460]:
+                  - img
+            - generic [ref=e462]:
+              - generic [ref=e463]:
+                - img [ref=e465]
+                - generic [ref=e469]:
+                  - generic [ref=e470]:
+                    - heading "Opp Scan" [level=3] [ref=e471]
+                    - generic [ref=e472]: PREMIUM
+                  - paragraph [ref=e473]: Find acquisition opportunities with comprehensive AI analysis and market insights
+                  - link "Start Opp Scan" [ref=e474] [cursor=pointer]:
+                    - /url: /opp-scan
+                    - button "Start Opp Scan" [ref=e475]
+              - generic [ref=e476]:
+                - button "Go to slide 1" [ref=e477]
+                - button "Go to slide 2" [ref=e478]
+                - button "Go to slide 3" [ref=e479]
+        - generic [ref=e480]:
+          - generic [ref=e482]:
+            - generic [ref=e484]:
+              - generic [ref=e485]:
+                - generic [ref=e486]: Recent Activity
+                - generic [ref=e487]: Your latest actions and searches
+              - link "View All" [ref=e488] [cursor=pointer]:
+                - /url: /activity
+                - button "View All" [ref=e489]:
+                  - text: View All
+                  - img
+            - generic [ref=e494]:
+              - generic [ref=e495]:
+                - img [ref=e497]
+                - generic [ref=e500]:
+                  - generic [ref=e501]:
+                    - paragraph [ref=e502]: Searched for "tech startups"
+                    - generic [ref=e503]:
+                      - img
+                      - text: London
+                  - paragraph [ref=e504]: Found 156 matching businesses in London
+                  - paragraph [ref=e505]: 30 minutes ago
+                - button "View" [ref=e506]
+              - generic [ref=e507]:
+                - img [ref=e509]
+                - generic [ref=e513]:
+                  - paragraph [ref=e515]: Saved TechCorp Ltd
+                  - paragraph [ref=e516]: Added to "Potential Clients" list
+                  - paragraph [ref=e517]: about 2 hours ago
+                - button "View" [ref=e518]
+              - generic [ref=e519]:
+                - img [ref=e521]
+                - generic [ref=e524]:
+                  - paragraph [ref=e526]: Exported 45 businesses
+                  - paragraph [ref=e527]: Downloaded as CSV file
+                  - paragraph [ref=e528]: about 5 hours ago
+                - button "View" [ref=e529]
+              - generic [ref=e530]:
+                - img [ref=e532]
+                - generic [ref=e535]:
+                  - paragraph [ref=e537]: Created new list
+                  - paragraph [ref=e538]: "\"Q4 Prospects\" list created"
+                  - paragraph [ref=e539]: 1 day ago
+                - button "View" [ref=e540]
+              - generic [ref=e541]:
+                - img [ref=e543]
+                - generic [ref=e546]:
+                  - paragraph [ref=e548]: Shared list with team
+                  - paragraph [ref=e549]: Shared "Hot Leads" with 3 team members
+                  - paragraph [ref=e550]: 2 days ago
+                - button "View" [ref=e551]
+          - generic [ref=e553]:
+            - generic [ref=e555]:
+              - generic [ref=e556]:
+                - generic [ref=e557]: Saved Searches
+                - generic [ref=e558]: Your frequent searches with alerts
+              - link "New" [ref=e559] [cursor=pointer]:
+                - /url: /searches
+                - button "New" [ref=e560]:
+                  - img
+                  - text: New
+            - generic [ref=e565]:
+              - generic [ref=e566]:
+                - generic [ref=e567]:
+                  - generic [ref=e568]:
+                    - heading "Tech Startups London" [level=4] [ref=e569]
+                    - paragraph [ref=e570]: "\"technology startup\""
+                  - button [ref=e571]:
+                    - img
+                - generic [ref=e572]:
+                  - generic [ref=e573]: 📍 London
+                  - generic [ref=e574]: Technology
+                  - generic [ref=e575]: ⭐ 4+
+                  - generic [ref=e576]: 156 results
+                - generic [ref=e577]:
+                  - paragraph [ref=e578]: "Last run: 11/8/2025"
+                  - generic [ref=e579]:
+                    - button "Run" [ref=e580]:
+                      - img
+                      - text: Run
+                    - button [ref=e581]:
+                      - img
+              - generic [ref=e582]:
+                - generic [ref=e583]:
+                  - generic [ref=e584]:
+                    - heading "Manufacturing Partners" [level=4] [ref=e585]
+                    - paragraph [ref=e586]: "\"manufacturing\""
+                  - button [ref=e587]:
+                    - img
+                - generic [ref=e588]:
+                  - generic [ref=e589]: 📍 Manchester
+                  - generic [ref=e590]: Manufacturing
+                  - generic [ref=e591]: 89 results
+                - generic [ref=e592]:
+                  - paragraph [ref=e593]: "Last run: 11/7/2025"
+                  - generic [ref=e594]:
+                    - button "Run" [ref=e595]:
+                      - img
+                      - text: Run
+                    - button [ref=e596]:
+                      - img
+              - generic [ref=e597]:
+                - generic [ref=e598]:
+                  - generic [ref=e599]:
+                    - heading "Retail Opportunities" [level=4] [ref=e600]
+                    - paragraph [ref=e601]: "\"retail stores\""
+                  - button [ref=e602]:
+                    - img
+                - generic [ref=e603]:
+                  - generic [ref=e604]: Retail
+                  - generic [ref=e605]: ⭐ 3+
+                  - generic [ref=e606]: 234 results
+                - generic [ref=e607]:
+                  - paragraph [ref=e608]: "Last run: 11/8/2025"
+                  - generic [ref=e609]:
+                    - button "Run" [ref=e610]:
+                      - img
+                      - text: Run
+                    - button [ref=e611]:
+                      - img
+        - generic [ref=e612]:
+          - generic [ref=e613]:
+            - generic [ref=e615]:
+              - generic [ref=e616]:
+                - generic [ref=e617]: Business Insights
+                - generic [ref=e618]: AI-powered market intelligence
+              - link "View All" [ref=e619] [cursor=pointer]:
+                - /url: /insights
+                - button "View All" [ref=e620]:
+                  - text: View All
+                  - img
+            - generic [ref=e621]:
+              - generic [ref=e622]:
+                - generic [ref=e624] [cursor=pointer]:
+                  - img [ref=e626] [cursor=pointer]
+                  - generic [ref=e630] [cursor=pointer]:
+                    - generic [ref=e631] [cursor=pointer]:
+                      - heading "High-growth Tech Sector" [level=4] [ref=e632] [cursor=pointer]
+                      - generic [ref=e633] [cursor=pointer]:
+                        - generic [ref=e634] [cursor=pointer]: "+23"
+                        - img [ref=e635] [cursor=pointer]
+                    - paragraph [ref=e638] [cursor=pointer]: 23 new tech companies registered in your target area this month
+                    - generic [ref=e639] [cursor=pointer]:
+                      - generic [ref=e640] [cursor=pointer]: opportunity
+                      - generic [ref=e641] [cursor=pointer]: high impact
+                - generic [ref=e643] [cursor=pointer]:
+                  - img [ref=e645] [cursor=pointer]
+                  - generic [ref=e648] [cursor=pointer]:
+                    - generic [ref=e649] [cursor=pointer]:
+                      - heading "Manufacturing Decline" [level=4] [ref=e650] [cursor=pointer]
+                      - generic [ref=e651] [cursor=pointer]:
+                        - generic [ref=e652] [cursor=pointer]: "-12%"
+                        - img [ref=e653] [cursor=pointer]
+                    - paragraph [ref=e656] [cursor=pointer]: Manufacturing businesses in Birmingham showing 12% decline
+                    - generic [ref=e657] [cursor=pointer]:
+                      - generic [ref=e658] [cursor=pointer]: trend
+                      - generic [ref=e659] [cursor=pointer]: medium impact
+                - generic [ref=e661] [cursor=pointer]:
+                  - img [ref=e663] [cursor=pointer]
+                  - generic [ref=e665] [cursor=pointer]:
+                    - generic [ref=e666] [cursor=pointer]:
+                      - heading "Competitor Activity" [level=4] [ref=e667] [cursor=pointer]
+                      - generic [ref=e669] [cursor=pointer]: £2.3M
+                    - paragraph [ref=e670] [cursor=pointer]: 5 of your saved businesses have new funding rounds
+                    - generic [ref=e671] [cursor=pointer]:
+                      - generic [ref=e672] [cursor=pointer]: alert
+                      - generic [ref=e673] [cursor=pointer]: high impact
+                - generic [ref=e675] [cursor=pointer]:
+                  - img [ref=e677] [cursor=pointer]
+                  - generic [ref=e681] [cursor=pointer]:
+                    - generic [ref=e682] [cursor=pointer]:
+                      - heading "Expand Search Radius" [level=4] [ref=e683] [cursor=pointer]
+                      - generic [ref=e685] [cursor=pointer]: "+47"
+                    - paragraph [ref=e686] [cursor=pointer]: Similar businesses found 15 miles outside your current search area
+                    - generic [ref=e687] [cursor=pointer]:
+                      - generic [ref=e688] [cursor=pointer]: recommendation
+                      - generic [ref=e689] [cursor=pointer]: low impact
+              - generic [ref=e690]:
+                - generic [ref=e691]:
+                  - img [ref=e692]
+                  - paragraph [ref=e694]: £4.2M
+                  - paragraph [ref=e695]: Total opportunity
+                - generic [ref=e696]:
+                  - img [ref=e697]
+                  - paragraph [ref=e701]: "312"
+                  - paragraph [ref=e702]: New matches
+                - generic [ref=e703]:
+                  - img [ref=e704]
+                  - paragraph [ref=e709]: 89%
+                  - paragraph [ref=e710]: Match rate
+          - generic [ref=e711]:
+            - generic [ref=e713]:
+              - generic [ref=e714]:
+                - generic [ref=e715]: Upcoming Tasks
+                - generic [ref=e716]: Your scheduled follow-ups and actions
+              - link "View All" [ref=e717] [cursor=pointer]:
+                - /url: /tasks
+                - button "View All" [ref=e718]:
+                  - text: View All
+                  - img
+            - generic [ref=e719]:
+              - generic [ref=e720]:
+                - generic [ref=e721]:
+                  - generic [ref=e722]: Today's Progress
+                  - generic [ref=e723]: 0/5 completed
+                - progressbar [ref=e724]
+              - generic [ref=e726]:
+                - generic [ref=e727]:
+                  - checkbox [ref=e728]
+                  - img [ref=e730]
+                  - generic [ref=e733]:
+                    - paragraph [ref=e735]: Follow up with TechCorp Ltd
+                    - paragraph [ref=e736]: Send proposal after initial meeting
+                    - generic [ref=e737]: TechCorp Ltd
+                    - generic [ref=e738]:
+                      - generic [ref=e739]:
+                        - img [ref=e740]
+                        - text: in about 2 hours
+                      - generic [ref=e742]: high
+                - generic [ref=e743]:
+                  - checkbox [ref=e744]
+                  - img [ref=e746]
+                  - generic [ref=e748]:
+                    - paragraph [ref=e750]: Call DataSystems Inc
+                    - paragraph [ref=e751]: Discuss partnership opportunities
+                    - generic [ref=e752]: DataSystems Inc
+                    - generic [ref=e753]:
+                      - generic [ref=e754]:
+                        - img [ref=e755]
+                        - text: in about 4 hours
+                      - generic [ref=e757]: high
+                - generic [ref=e758]:
+                  - checkbox [ref=e759]
+                  - img [ref=e761]
+                  - generic [ref=e764]:
+                    - paragraph [ref=e766]: Review Q4 prospect list
+                    - paragraph [ref=e767]: Prioritize top 20 leads for outreach
+                    - generic [ref=e768]:
+                      - generic [ref=e769]:
+                        - img [ref=e770]
+                        - text: in 1 day
+                      - generic [ref=e772]: medium
+                - generic [ref=e773]:
+                  - checkbox [ref=e774]
+                  - img [ref=e776]
+                  - generic [ref=e781]:
+                    - paragraph [ref=e783]: Team sync on new leads
+                    - paragraph [ref=e784]: Weekly sales team meeting
+                    - generic [ref=e785]:
+                      - generic [ref=e786]:
+                        - img [ref=e787]
+                        - text: in 2 days
+                      - generic [ref=e789]: medium
+                - generic [ref=e790]:
+                  - checkbox [ref=e791]
+                  - img [ref=e793]
+                  - generic [ref=e796]:
+                    - paragraph [ref=e798]: Send follow-up to CloudTech
+                    - paragraph [ref=e799]: Check on proposal status
+                    - generic [ref=e800]: CloudTech Solutions
+                    - generic [ref=e801]:
+                      - generic [ref=e802]:
+                        - img [ref=e803]
+                        - text: in 3 days
+                      - generic [ref=e805]: low
+              - generic [ref=e806]:
+                - generic [ref=e807]:
+                  - paragraph [ref=e808]: "2"
+                  - paragraph [ref=e809]: High Priority
+                - generic [ref=e810]:
+                  - paragraph [ref=e811]: "3"
+                  - paragraph [ref=e812]: Due Today
+                - generic [ref=e813]:
+                  - paragraph [ref=e814]: "0"
+                  - paragraph [ref=e815]: Completed
+        - generic [ref=e817]:
+          - generic [ref=e818]:
+            - generic [ref=e819]:
+              - img [ref=e820]
+              - generic [ref=e822]: Team Activity
+            - generic [ref=e823]: See what your teammates are working on in real-time
+          - generic [ref=e825]:
+            - img [ref=e826]
+            - paragraph [ref=e828]: No team activity yet
+  - button [ref=e829]:
+    - img
+  - region "Notifications alt+T"
+  - generic [ref=e834] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e835] [cursor=pointer]:
+      - img [ref=e836] [cursor=pointer]
+    - generic [ref=e839] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e840] [cursor=pointer]:
+        - generic:
+          - generic: "1"
+        - generic: Issue
+      - button "Collapse issues badge" [ref=e841] [cursor=pointer]:
+        - img [ref=e842] [cursor=pointer]
+  - alert [ref=e844]
+```

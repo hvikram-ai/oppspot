@@ -11,12 +11,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { MagicLinkForm } from '@/components/auth/magic-link-form'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('magic') // Default to magic link
   const router = useRouter()
   const supabase = createClient()
   const { enableDemoMode } = useDemoMode()
@@ -145,11 +147,17 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="magic">
+              Magic Link
+            </TabsTrigger>
+            <TabsTrigger value="signin">Password</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
+          <TabsContent value="magic">
+            <MagicLinkForm onSwitchToPassword={() => setActiveTab('signin')} />
+          </TabsContent>
           <TabsContent value="signin">
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">

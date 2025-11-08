@@ -243,6 +243,14 @@ export function Sidebar() {
               tooltip="Track relationships, identify champions, and manage influence"
               isCollapsed={isCollapsed}
             />
+            <SidebarItem
+              href="/competitive-intelligence"
+              icon={Target}
+              label="Competitive Intel"
+              tooltip="Track competitors with AI-powered feature parity, pricing analysis, and moat scoring"
+              isCollapsed={isCollapsed}
+              isPremium
+            />
           </SidebarSection>
 
           {/* COLLABORATION Section */}

@@ -442,6 +442,115 @@ const result = await executeQuery(
 - E2E tests: `tests/e2e/data-room-qa-*.spec.ts` (3 files covering happy path, errors, edge cases)
 - Performance tests: Validate <7s latency, <300ms retrieval
 
+### Deal Hypothesis Tracker
+
+**Location**: `lib/data-room/hypothesis/`, `app/api/data-room/hypotheses/`, `components/data-room/hypothesis/`
+
+The Deal Hypothesis Tracker enables investment professionals to create, test, and validate deal hypotheses using AI-powered document analysis.
+
+**Architecture**:
+- **Repository** (`lib/data-room/repository/hypothesis-repository.ts`): Database operations for hypotheses, evidence, metrics, validations
+- **AI Analyzer** (`lib/data-room/hypothesis/ai-analyzer.ts`): Claude Sonnet 3.5 for hypothesis-document matching
+- **Evidence Extractor** (`lib/data-room/hypothesis/evidence-extractor.ts`): Vector search integration with Q&A system
+- **State Management** (`lib/stores/hypothesis-store.ts`): Zustand store for client-side state
+
+**Core Features**:
+- **Hypothesis Management**: Create and track investment/acquisition hypotheses (revenue growth, cost synergy, market expansion, etc.)
+- **AI Evidence Extraction**: Automatically find supporting/contradicting evidence in documents using vector search
+- **Confidence Scoring**: Dynamic 0-100 scoring based on evidence strength, relevance, and metrics validation
+- **Metrics Tracking**: Define and validate quantitative KPIs against hypothesis targets
+- **Manual Validation**: Record formal validation decisions with evidence summaries
+
+**API Endpoints**:
+- `POST /api/data-room/hypotheses` - Create hypothesis
+- `GET /api/data-room/hypotheses?data_room_id=xxx` - List hypotheses with filters
+- `GET /api/data-room/hypotheses/[id]` - Get hypothesis with details
+- `PATCH /api/data-room/hypotheses/[id]` - Update hypothesis
+- `DELETE /api/data-room/hypotheses/[id]` - Soft delete hypothesis
+- `POST /api/data-room/hypotheses/[id]/analyze` - Trigger AI document analysis
+- `GET /api/data-room/hypotheses/[id]/evidence` - List evidence
+- `POST /api/data-room/hypotheses/[id]/evidence` - Manually link evidence
+- `GET /api/data-room/hypotheses/[id]/metrics` - List metrics
+- `POST /api/data-room/hypotheses/[id]/metrics` - Add metric
+- `POST /api/data-room/hypotheses/[id]/validate` - Record validation
+
+**Database Tables** (see `supabase/migrations/20251031000002_deal_hypothesis_tracker.sql`):
+- `hypotheses` - Main hypothesis entities with confidence scores
+- `hypothesis_evidence` - Document evidence linking (supporting/contradicting/neutral)
+- `hypothesis_metrics` - Quantitative KPIs for validation
+- `hypothesis_validations` - Manual validation records with outcomes
+- Automatic triggers update evidence counts, metrics counts, and confidence scores
+
+**AI Pipeline**:
+1. User creates hypothesis with title, description, and type
+2. Trigger AI analysis on data room documents
+3. Vector search finds relevant document chunks (reuses Q&A `document_chunks` table)
+4. Claude Sonnet 3.5 classifies evidence type and extracts excerpts
+5. Evidence automatically linked with relevance scores (0-100)
+6. Confidence score calculated: 50% evidence ratio + 30% relevance + 20% metrics
+7. User can manually validate with pass/fail/inconclusive status
+
+**Confidence Calculation Formula**:
+```
+confidence = (
+  0.5 * (supporting_evidence / total_evidence) +
+  0.3 * (avg_relevance_score / 100) +
+  0.2 * (metrics_met / total_metrics)
+) * 100
+```
+
+**State Management**:
+```typescript
+import { useHypothesisStore } from '@/lib/stores/hypothesis-store';
+
+// Access state
+const { currentHypothesisId, hypothesisFilters, analysisProgress } = useHypothesisStore();
+
+// Update state
+const { setCurrentHypothesis, updateAnalysisProgress } = useHypothesisStore();
+```
+
+**Key Files**:
+- `lib/data-room/types.ts` - TypeScript types (lines 706-963)
+- `lib/data-room/repository/hypothesis-repository.ts` - Database operations
+- `lib/data-room/hypothesis/ai-analyzer.ts` - AI analysis logic
+- `lib/data-room/hypothesis/evidence-extractor.ts` - Vector search integration
+- `lib/stores/hypothesis-store.ts` - Zustand state management
+- `supabase/migrations/20251031000002_deal_hypothesis_tracker.sql` - Database schema
+
+**Hypothesis Types**:
+- `revenue_growth` - Revenue expansion potential
+- `cost_synergy` - Cost reduction opportunities
+- `market_expansion` - Market entry or expansion
+- `tech_advantage` - Technology/IP value
+- `team_quality` - Management/team strength
+- `competitive_position` - Market positioning
+- `operational_efficiency` - Process improvements
+- `customer_acquisition` - Growth engine potential
+- `custom` - User-defined
+
+**Performance Targets**:
+- Document analysis: <5s per document (95th percentile)
+- Bulk analysis: 500ms delay between documents to avoid rate limits
+- Confidence recalculation: <1s using database function
+- Vector search: <300ms (inherits from Q&A system)
+
+**Integration Points**:
+- **Q&A Copilot**: Shares `document_chunks` table for vector search
+- **Document Classifier**: Uses document types to prioritize analysis
+- **Activity Logs**: Uses existing logging infrastructure
+- **Access Control**: Inherits Data Room RLS policies
+
+**Environment Variables**:
+- `OPENROUTER_API_KEY` - Required for AI analysis (Claude Sonnet 3.5)
+
+**Future Enhancements**:
+- Hypothesis templates for common deal types
+- Comparative analysis (compare multiple hypotheses)
+- Time-series confidence tracking
+- Collaborative validation with voting
+- PDF export of validation reports
+
 ## Testing & Demo Access
 
 ### Demo Mode (Recommended for Testing)

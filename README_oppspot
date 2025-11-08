@@ -1,4 +1,9 @@
 -----------------------------------
+  Email:           hvikram.ai@gmail.com
+  Password:        Admin2025!Secure
+
+
+
 demo@oppspot.com
 
 Demo123456!
@@ -10,6 +15,53 @@ Demo123456!
 
 
 ------------------
+  1. Sophisticated LLM Management: Multi-provider system with fallback,
+  caching, health monitoring
+  2. ResearchGPT™: Sub-30-second AI-powered company intelligence
+  3. Data Room Q&A: RAG-based document Q&A with citations and vector search
+  4. Deal Hypothesis Tracker: Evidence-based investment hypothesis
+  validation (JUST ADDED)
+  5. Comprehensive RLS: Complex row-level security policies throughout
+  6. Real-time Features: Supabase Realtime for collaborative features
+----------------------------------
+
+  Top 3 Must-Build Features (9-13 days):
+
+  1. Competitive Intelligence Dashboard ⭐⭐⭐⭐⭐
+    - Real-time tracking of ITONICS vs. 8-10 competitors
+    - Shows: Feature parity, pricing, market positioning, moat strength
+    - Demo impact: Answers "Can they defend against Microsoft/Miro?"
+  2. Customer Concentration & Churn Risk ⭐⭐⭐⭐⭐
+    - Auto-identify customers from public sources (G2, case studies,
+  LinkedIn)
+    - Estimate: Revenue concentration, retention rate, at-risk accounts
+    - Demo impact: "Top 10 customers = 30% of ARR" (deal risk)
+  3. SaaS Valuation Model ⭐⭐⭐⭐⭐
+    - Fair value calculation using ARR multiples, comps, DCF
+    - Output: $75M-$120M range for ITONICS
+    - Demo impact: Anchors negotiation with data
+
+  Advanced Features (add if time allows):
+
+  4. Tech Stack Due Diligence - Verify AI claims vs. GPT wrappers (5-7 days)
+  5. Integration Playbook Generator - Auto-create 100-day M&A plan (3-4
+  days)
+  6. ESG Risk Screening - Use your existing ESG spec (3-4 days)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   Immediate Priority (Pick One):

@@ -702,3 +702,262 @@ export interface ChecklistWithItems extends ReviewChecklist {
     total: number;
   }[];
 }
+
+// ============================================================================
+// HYPOTHESIS TRACKING TYPES (Deal Hypothesis Tracker Feature)
+// ============================================================================
+
+export type HypothesisType =
+  | 'revenue_growth'
+  | 'cost_synergy'
+  | 'market_expansion'
+  | 'tech_advantage'
+  | 'team_quality'
+  | 'competitive_position'
+  | 'operational_efficiency'
+  | 'customer_acquisition'
+  | 'custom';
+
+export type HypothesisStatus =
+  | 'draft'
+  | 'active'
+  | 'validated'
+  | 'invalidated'
+  | 'needs_revision';
+
+export type EvidenceType = 'supporting' | 'contradicting' | 'neutral';
+
+export type MetricStatus = 'not_tested' | 'testing' | 'met' | 'not_met' | 'partially_met';
+
+export type ValidationStatus = 'pass' | 'fail' | 'inconclusive';
+
+// Hypothesis
+export interface Hypothesis {
+  id: string;
+  data_room_id: string;
+  created_by: string;
+
+  // Content
+  title: string;
+  description: string;
+  hypothesis_type: HypothesisType;
+
+  // Status and confidence
+  status: HypothesisStatus;
+  confidence_score: number | null; // 0-100
+
+  // Statistics (denormalized)
+  evidence_count: number;
+  supporting_evidence_count: number;
+  contradicting_evidence_count: number;
+  metrics_count: number;
+  metrics_met_count: number;
+
+  // Metadata
+  tags: string[];
+  metadata: Record<string, unknown>;
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+  last_analyzed_at: string | null;
+  deleted_at: string | null;
+}
+
+// Evidence linking documents to hypotheses
+export interface HypothesisEvidence {
+  id: string;
+  hypothesis_id: string;
+  document_id: string;
+
+  // Classification
+  evidence_type: EvidenceType;
+  relevance_score: number | null; // 0-100
+
+  // Content
+  excerpt_text: string | null;
+  page_number: number | null;
+  chunk_id: string | null; // References document_chunks from Q&A
+
+  // AI analysis
+  ai_reasoning: string | null;
+  ai_model: string | null;
+  ai_confidence: number | null; // 0-1
+
+  // Manual annotations
+  manual_note: string | null;
+  manually_verified: boolean;
+  verified_by: string | null;
+  verified_at: string | null;
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+}
+
+// Quantitative metrics for hypothesis validation
+export interface HypothesisMetric {
+  id: string;
+  hypothesis_id: string;
+
+  // Metric definition
+  metric_name: string;
+  description: string | null;
+  target_value: number | null;
+  actual_value: number | null;
+  unit: string | null; // e.g., "USD", "%", "users"
+
+  // Status
+  status: MetricStatus;
+
+  // Source tracking
+  source_document_id: string | null;
+  source_excerpt: string | null;
+  source_page_number: number | null;
+
+  // Metadata
+  metadata: Record<string, unknown>;
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+}
+
+// Manual validation records
+export interface HypothesisValidation {
+  id: string;
+  hypothesis_id: string;
+  validated_by: string;
+
+  // Outcome
+  validation_status: ValidationStatus;
+
+  // Details
+  notes: string | null;
+  confidence_adjustment: number | null; // -100 to +100
+
+  // Supporting data
+  evidence_summary: string | null;
+  key_findings: string[];
+
+  // Timestamp
+  created_at: string;
+}
+
+// ============================================================================
+// HYPOTHESIS API REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateHypothesisRequest {
+  data_room_id: string;
+  title: string;
+  description: string;
+  hypothesis_type: HypothesisType;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface UpdateHypothesisRequest {
+  title?: string;
+  description?: string;
+  hypothesis_type?: HypothesisType;
+  status?: HypothesisStatus;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface LinkEvidenceRequest {
+  hypothesis_id: string;
+  document_id: string;
+  evidence_type: EvidenceType;
+  excerpt_text?: string;
+  page_number?: number;
+  manual_note?: string;
+}
+
+export interface CreateMetricRequest {
+  hypothesis_id: string;
+  metric_name: string;
+  description?: string;
+  target_value?: number;
+  actual_value?: number;
+  unit?: string;
+  source_document_id?: string;
+}
+
+export interface UpdateMetricRequest {
+  metric_name?: string;
+  description?: string;
+  target_value?: number;
+  actual_value?: number;
+  unit?: string;
+  status?: MetricStatus;
+  source_document_id?: string;
+}
+
+export interface CreateValidationRequest {
+  hypothesis_id: string;
+  validation_status: ValidationStatus;
+  notes?: string;
+  confidence_adjustment?: number;
+  evidence_summary?: string;
+  key_findings?: string[];
+}
+
+export interface AnalyzeDocumentsRequest {
+  hypothesis_id: string;
+  document_ids?: string[]; // If empty, analyze all documents
+}
+
+// ============================================================================
+// HYPOTHESIS UI TYPES
+// ============================================================================
+
+export interface HypothesisWithDetails extends Hypothesis {
+  // Related entities
+  evidence: HypothesisEvidence[];
+  metrics: HypothesisMetric[];
+  validations: HypothesisValidation[];
+
+  // Creator info
+  creator_name: string;
+  creator_email: string;
+
+  // Derived stats
+  avg_relevance_score: number | null;
+  metrics_completion_rate: number; // 0-100
+}
+
+export interface EvidenceWithDocument extends HypothesisEvidence {
+  // Document info
+  document_filename: string;
+  document_type: DocumentType;
+  document_storage_path: string;
+}
+
+export interface HypothesisListItem {
+  id: string;
+  title: string;
+  hypothesis_type: HypothesisType;
+  status: HypothesisStatus;
+  confidence_score: number | null;
+  evidence_count: number;
+  supporting_evidence_count: number;
+  contradicting_evidence_count: number;
+  metrics_met_count: number;
+  metrics_count: number;
+  created_by: string;
+  creator_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HypothesisSummary {
+  total_hypotheses: number;
+  active_hypotheses: number;
+  validated_hypotheses: number;
+  invalidated_hypotheses: number;
+  avg_confidence_score: number;
+  total_evidence: number;
+  recent_validations: HypothesisValidation[];
+}

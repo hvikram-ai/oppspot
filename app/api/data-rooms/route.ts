@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
       .from('data_rooms')
       .select(`
         *,
-        profiles!data_rooms_user_id_fkey(name, email),
+        profiles!data_rooms_user_id_fkey(full_name, email),
         data_room_access(permission_level)
       `)
       .eq('status', status)
       .order('created_at', { ascending: false }) as any as {
         data: Array<any & {
           user_id: string
-          profiles?: { name?: string; email?: string }
+          profiles?: { full_name?: string; email?: string }
           data_room_access?: Array<{ permission_level?: string }>
         }> | null
         error: { message: string } | null
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Transform data to include access info
     const rooms = dataRooms?.map(room => ({
       ...room,
-      owner_name: room.profiles?.name || 'Unknown',
+      owner_name: room.profiles?.full_name || 'Unknown',
       my_permission: room.data_room_access?.[0]?.permission_level ||
                      (room.user_id === user.id ? 'owner' : null)
     })) || []

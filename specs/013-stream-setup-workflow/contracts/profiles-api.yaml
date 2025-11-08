@@ -1,0 +1,543 @@
+openapi: 3.0.0
+info:
+  title: Business Profiles API
+  description: API endpoints for managing org-scoped business profiles
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://oppspot-one.vercel.app/api
+    description: Production
+
+paths:
+  /profiles:
+    get:
+      summary: List business profiles for user's organization
+      description: Returns all profiles in the user's org (FR-012)
+      tags: [Profiles]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_at, updated_at, name, use_count]
+            default: created_at
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: status
+          in: query
+          description: Filter by analysis_status
+          schema:
+            type: string
+            enum: [pending, analyzing, completed, failed]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BusinessProfile'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      summary: Create a new business profile
+      description: Creates profile and optionally triggers AI analysis (FR-007)
+      tags: [Profiles]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - company_name
+                - website_url
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "TechCorp Acquisition Profile"
+                company_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: "TechCorp Inc."
+                website_url:
+                  type: string
+                  format: uri
+                  example: "https://techcorp.com"
+                analyze_now:
+                  type: boolean
+                  default: true
+                  description: "If true, triggers AI website analysis immediately"
+      responses:
+        '201':
+          description: Profile created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: '#/components/schemas/BusinessProfile'
+                  analysis_job_id:
+                    type: string
+                    description: "Job ID for tracking AI analysis progress"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                duplicate_url:
+                  value:
+                    error: "A profile with this website URL already exists in your organization"
+                invalid_url:
+                  value:
+                    error: "Invalid website URL format"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /profiles/{id}:
+    get:
+      summary: Get a single business profile
+      description: Returns detailed profile information (FR-012)
+      tags: [Profiles]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: '#/components/schemas/BusinessProfile'
+                  usage_stats:
+                    type: object
+                    properties:
+                      streams_using_profile:
+                        type: integer
+                      last_used_at:
+                        type: string
+                        format: date-time
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      summary: Update a business profile
+      description: Updates profile fields, tracks manual edits (FR-010)
+      tags: [Profiles]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                industry:
+                  type: string
+                description:
+                  type: string
+                company_size:
+                  type: string
+                  enum: ['1-10', '11-50', '51-200', '201-500', '500+']
+                location:
+                  type: string
+                revenue_range:
+                  type: string
+                  enum: ['$0-1M', '$1-10M', '$10-50M', '$50-100M', '$100M+']
+                tech_stack:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+                products_services:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 5
+                target_markets:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 5
+                key_differentiators:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 3
+                employee_count:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: '#/components/schemas/BusinessProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Profile not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      summary: Delete a business profile
+      description: Soft deletes profile if not in use by active streams
+      tags: [Profiles]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Profile deleted successfully
+        '400':
+          description: Profile cannot be deleted (in use by active streams)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Cannot delete profile: 3 active streams are using this profile"
+                  streams_using_profile:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+        '404':
+          description: Profile not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /profiles/analyze:
+    post:
+      summary: Trigger AI website analysis for a profile
+      description: Analyzes company website and extracts profile data (FR-007, FR-008)
+      tags: [Profiles]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - profile_id
+              properties:
+                profile_id:
+                  type: string
+                  format: uuid
+                force_reanalysis:
+                  type: boolean
+                  default: false
+                  description: "Re-analyze even if analysis already completed"
+      responses:
+        '202':
+          description: Analysis started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  profile_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [analyzing]
+                  estimated_completion:
+                    type: string
+                    format: date-time
+                    description: "Estimated completion time (~30 seconds)"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                already_analyzing:
+                  value:
+                    error: "Profile analysis already in progress"
+                missing_website:
+                  value:
+                    error: "Profile must have a valid website_url"
+        '404':
+          description: Profile not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /profiles/{id}/analysis-status:
+    get:
+      summary: Get AI analysis status for a profile
+      description: Polls analysis progress (FR-008 progress display)
+      tags: [Profiles]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Analysis status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [pending, analyzing, completed, failed]
+                  progress:
+                    type: object
+                    properties:
+                      stage:
+                        type: string
+                        enum: [fetching_website, analyzing_content, extracting_data, complete, error]
+                      message:
+                        type: string
+                        example: "Analyzing website content..."
+                      percent:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+                  analysis_metadata:
+                    type: object
+                    properties:
+                      model:
+                        type: string
+                        example: "anthropic/claude-3.5-sonnet"
+                      tokens_used:
+                        type: integer
+                      analysis_time_ms:
+                        type: integer
+                      error_message:
+                        type: string
+                  profile:
+                    $ref: '#/components/schemas/BusinessProfile'
+                    description: "Returned if status is 'completed'"
+        '404':
+          description: Profile not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BusinessProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        company_name:
+          type: string
+        website_url:
+          type: string
+          format: uri
+        industry:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        company_size:
+          type: string
+          enum: ['1-10', '11-50', '51-200', '201-500', '500+']
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        revenue_range:
+          type: string
+          enum: ['$0-1M', '$1-10M', '$10-50M', '$50-100M', '$100M+']
+          nullable: true
+        tech_stack:
+          type: array
+          items:
+            type: string
+        products_services:
+          type: array
+          items:
+            type: string
+        target_markets:
+          type: array
+          items:
+            type: string
+        key_differentiators:
+          type: array
+          items:
+            type: string
+        employee_count:
+          type: integer
+          nullable: true
+        manual_edits:
+          type: object
+          additionalProperties: true
+        analysis_status:
+          type: string
+          enum: [pending, analyzing, completed, failed]
+        analysis_metadata:
+          type: object
+          properties:
+            model:
+              type: string
+            tokens_used:
+              type: integer
+            analysis_time_ms:
+              type: integer
+            error_message:
+              type: string
+        analysis_started_at:
+          type: string
+          format: date-time
+          nullable: true
+        analysis_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+          nullable: true
+        code:
+          type: string
+          nullable: true
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+
+    BadRequest:
+      description: Bad request - validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal server error"
