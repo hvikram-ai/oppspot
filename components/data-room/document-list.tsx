@@ -82,7 +82,9 @@ export function DocumentList({ dataRoomId, documents, onDocumentDeleted }: Docum
   }
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false
+    // If no search query, show all; otherwise check if filename matches
+    const matchesSearch = !searchQuery || (doc.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+    // If 'all' is selected, show all; otherwise check if document_type matches (including undefined for newly uploaded docs)
     const matchesType = typeFilter === 'all' || doc.document_type === typeFilter
     return matchesSearch && matchesType
   })
