@@ -18,7 +18,12 @@ interface StepIndicatorProps {
 }
 
 export function StepIndicator({ steps, currentStep, className }: StepIndicatorProps) {
-  const currentStepIndex = steps.findIndex(step => step.id === currentStep)
+  // Guard against invalid steps
+  if (!steps || steps.length === 0) {
+    return null;
+  }
+
+  const currentStepIndex = steps.findIndex(step => step?.id === currentStep)
   const progress = ((currentStepIndex + 1) / steps.length) * 100
 
   return (
@@ -34,7 +39,7 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
 
       {/* Step indicators */}
       <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
+        {steps.filter(step => step != null).map((step, index) => {
           const isActive = step.id === currentStep
           const isCompleted = index < currentStepIndex
           const StepIcon = step.icon
