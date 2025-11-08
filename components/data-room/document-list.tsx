@@ -37,7 +37,8 @@ export function DocumentList({ dataRoomId, documents, onDocumentDeleted }: Docum
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<DocumentType | 'all'>('all')
 
-  const getDocumentIcon = (mimeType: string) => {
+  const getDocumentIcon = (mimeType?: string) => {
+    if (!mimeType) return <File className="h-5 w-5 text-muted-foreground" />
     if (mimeType.includes('pdf')) return <FileText className="h-5 w-5 text-red-600" />
     if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return <FileSpreadsheet className="h-5 w-5 text-green-600" />
     if (mimeType.includes('word') || mimeType.includes('document')) return <FileText className="h-5 w-5 text-blue-600" />
@@ -81,7 +82,7 @@ export function DocumentList({ dataRoomId, documents, onDocumentDeleted }: Docum
   }
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.filename.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = doc.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false
     const matchesType = typeFilter === 'all' || doc.document_type === typeFilter
     return matchesSearch && matchesType
   })
@@ -161,12 +162,14 @@ export function DocumentList({ dataRoomId, documents, onDocumentDeleted }: Docum
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium truncate">{doc.filename}</p>
-                    <Badge className={getTypeColor(doc.document_type)}>
-                      {doc.document_type.replace('_', ' ')}
-                    </Badge>
-                    {getProcessingStatusBadge(doc.processing_status)}
-                    {doc.confidence_score > 0 && (
+                    <p className="font-medium truncate">{doc.filename || 'Unnamed Document'}</p>
+                    {doc.document_type && (
+                      <Badge className={getTypeColor(doc.document_type)}>
+                        {doc.document_type.replace('_', ' ')}
+                      </Badge>
+                    )}
+                    {doc.processing_status && getProcessingStatusBadge(doc.processing_status)}
+                    {doc.confidence_score && doc.confidence_score > 0 && (
                       <Badge variant="outline" className="text-xs">
                         {Math.round(doc.confidence_score * 100)}% confidence
                       </Badge>
@@ -175,13 +178,15 @@ export function DocumentList({ dataRoomId, documents, onDocumentDeleted }: Docum
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <HardDrive className="h-3 w-3" />
-                      <span>{formatBytes(doc.file_size_bytes)}</span>
+                      <span>{formatBytes(doc.file_size_bytes || 0)}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{new Date(doc.created_at).toLocaleDateString()}</span>
-                    </div>
-                    {doc.folder_path !== '/' && (
+                    {doc.created_at && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {doc.folder_path && doc.folder_path !== '/' && (
                       <div className="flex items-center gap-1">
                         <span>📁 {doc.folder_path}</span>
                       </div>
