@@ -87,26 +87,9 @@ export class StreamService {
     const streamData = stream
     console.log('[StreamService] Stream created:', streamData.id)
 
-    // Add creator as owner member using same admin client to bypass RLS
-    console.log('[StreamService] Adding owner member:', { streamId: streamData.id, userId })
-
-    const memberInsert: DBStreamMemberInsert = {
-      stream_id: streamData.id,
-      user_id: userId,
-      role: 'owner' as const,
-      invitation_accepted_at: new Date().toISOString()
-    }
-
-    const { error: memberError } = (await adminClient
-      .from('stream_members')
-      .insert([memberInsert])) as { error: any }
-
-    if (memberError) {
-      console.error('[StreamService] Error adding stream member:', memberError)
-      throw new Error(`Failed to add stream member: ${memberError.message} (Code: ${memberError.code})`)
-    }
-
-    console.log('[StreamService] Member added successfully')
+    // Note: Creator is automatically added as owner by database trigger (auto_add_stream_owner)
+    // No need to manually add member - see migration 20250130000001_create_streams_system.sql line 499
+    console.log('[StreamService] Creator will be added as owner automatically by database trigger')
 
     // Log activity
     await this.logActivity(streamData.id, userId, 'stream_created', {
