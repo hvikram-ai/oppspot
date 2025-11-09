@@ -10,43 +10,142 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AnimatedGradient } from '@/components/ui/animated-gradient'
-import { Check, Sparkles, Zap, Target } from 'lucide-react'
+import {
+  Sparkles,
+  Zap,
+  Target,
+  MapPin,
+  Globe,
+  Radar,
+  Bell,
+  Clock,
+  Filter,
+  Rocket,
+  TrendingUp,
+  BarChart3,
+} from 'lucide-react'
 
-const features = [
-  {
-    icon: Target,
-    text: '50,000+ UK & Ireland businesses tracked',
-  },
-  {
-    icon: Sparkles,
-    text: 'AI-powered company intelligence in <30s',
-  },
-  {
-    icon: Zap,
-    text: 'Real-time opportunity alerts',
-  },
-]
+interface ValueProposition {
+  id: number
+  theme: string
+  accentColor: string
+  headline: string
+  headlineEmphasis: string
+  subheadline: string
+  features: Array<{
+    icon: React.ComponentType<{ className?: string }>
+    text: string
+  }>
+  testimonial: {
+    text: string
+    author: string
+  }
+}
 
-const testimonials = [
+const valuePropositions: ValueProposition[] = [
   {
-    text: 'oppSpot helped us find 50 qualified leads in our first week. The AI research feature is a game-changer.',
-    author: 'Sarah J., Sales Director at TechCorp',
-    role: 'Sales',
+    id: 1,
+    theme: 'speed',
+    accentColor: 'text-yellow-300',
+    headline: 'Discover your next business opportunity in',
+    headlineEmphasis: 'under 30 seconds',
+    subheadline: 'AI-powered intelligence for UK & Ireland businesses',
+    features: [
+      {
+        icon: Zap,
+        text: 'ResearchGPT™ generates reports in <30 seconds',
+      },
+      {
+        icon: Target,
+        text: '50,000+ UK & Ireland businesses tracked',
+      },
+      {
+        icon: Sparkles,
+        text: 'AI-powered company intelligence',
+      },
+    ],
+    testimonial: {
+      text: 'oppSpot helped us find 50 qualified leads in our first week. The AI research feature is a game-changer.',
+      author: 'Sarah J., Sales Director at TechCorp',
+    },
   },
   {
-    text: 'ResearchGPT saved us 20 hours per week on prospect research. ROI paid for itself in the first month.',
-    author: 'Michael R., Head of BD at ScaleUp Inc.',
-    role: 'Business Development',
+    id: 2,
+    theme: 'geographic',
+    accentColor: 'text-blue-400',
+    headline: 'Every business opportunity in',
+    headlineEmphasis: 'UK & Ireland, mapped',
+    subheadline: 'Geographic intelligence for targeted prospecting',
+    features: [
+      {
+        icon: MapPin,
+        text: 'Interactive map with 50,000+ businesses',
+      },
+      {
+        icon: Globe,
+        text: 'Complete UK & Ireland coverage',
+      },
+      {
+        icon: Radar,
+        text: 'Location-based filtering and search',
+      },
+    ],
+    testimonial: {
+      text: 'The geographic filtering and map view helped us identify 100+ local opportunities we were missing.',
+      author: 'Emma L., Regional Manager at GrowthCo',
+    },
   },
   {
-    text: 'The geographic filtering and map view helped us identify 100+ local opportunities we were missing.',
-    author: 'Emma L., Regional Manager at GrowthCo',
-    role: 'Regional Sales',
+    id: 3,
+    theme: 'alerts',
+    accentColor: 'text-green-400',
+    headline: 'Stay ahead with',
+    headlineEmphasis: 'real-time opportunity alerts',
+    subheadline: 'Automated intelligence delivered to your inbox',
+    features: [
+      {
+        icon: Bell,
+        text: 'Real-time notifications for new opportunities',
+      },
+      {
+        icon: Clock,
+        text: 'Automated daily/weekly digest emails',
+      },
+      {
+        icon: Filter,
+        text: 'Custom alert rules based on your criteria',
+      },
+    ],
+    testimonial: {
+      text: 'Real-time alerts mean we never miss an opportunity. Increased our close rate by 15%.',
+      author: 'James K., Sales Operations at DataFlow',
+    },
   },
   {
-    text: 'Real-time alerts mean we never miss an opportunity. Increased our close rate by 15%.',
-    author: 'James K., Sales Operations at DataFlow',
-    role: 'Sales Ops',
+    id: 4,
+    theme: 'efficiency',
+    accentColor: 'text-purple-400',
+    headline: 'Save',
+    headlineEmphasis: '20+ hours per week',
+    subheadline: 'on prospect research - Let AI do the heavy lifting',
+    features: [
+      {
+        icon: BarChart3,
+        text: 'Automated company research (no manual work)',
+      },
+      {
+        icon: TrendingUp,
+        text: 'Instant competitive analysis reports',
+      },
+      {
+        icon: Rocket,
+        text: '10x faster than traditional methods',
+      },
+    ],
+    testimonial: {
+      text: 'ResearchGPT saved us 20 hours per week on prospect research. ROI paid for itself in the first month.',
+      author: 'Michael R., Head of BD at ScaleUp Inc.',
+    },
   },
 ]
 
@@ -74,16 +173,18 @@ const itemVariants = {
 }
 
 export function LoginHero() {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  const [currentSlide, setCurrentSlide] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
-  // Auto-rotate testimonials every 8 seconds
+  const currentProp = valuePropositions[currentSlide]
+
+  // Auto-rotate slides every 10 seconds
   useEffect(() => {
     if (isPaused) return
 
     const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
-    }, 8000)
+      setCurrentSlide((prev) => (prev + 1) % valuePropositions.length)
+    }, 10000)
 
     return () => clearInterval(interval)
   }, [isPaused])
@@ -103,17 +204,29 @@ export function LoginHero() {
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault()
-          setCurrentTestimonial((prev) =>
-            prev === 0 ? testimonials.length - 1 : prev - 1
+          setCurrentSlide((prev) =>
+            prev === 0 ? valuePropositions.length - 1 : prev - 1
           )
           setIsPaused(true)
-          setTimeout(() => setIsPaused(false), 10000)
+          setTimeout(() => setIsPaused(false), 15000)
           break
         case 'ArrowRight':
           e.preventDefault()
-          setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
+          setCurrentSlide((prev) => (prev + 1) % valuePropositions.length)
           setIsPaused(true)
-          setTimeout(() => setIsPaused(false), 10000)
+          setTimeout(() => setIsPaused(false), 15000)
+          break
+        case 'Home':
+          e.preventDefault()
+          setCurrentSlide(0)
+          setIsPaused(true)
+          setTimeout(() => setIsPaused(false), 15000)
+          break
+        case 'End':
+          e.preventDefault()
+          setCurrentSlide(valuePropositions.length - 1)
+          setIsPaused(true)
+          setTimeout(() => setIsPaused(false), 15000)
           break
       }
     }
@@ -147,144 +260,143 @@ export function LoginHero() {
           </div>
         </motion.div>
 
-        {/* Main Headline */}
-        <motion.h1
-          variants={itemVariants}
-          className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight"
-        >
-          Discover your next business opportunity in{' '}
-          <span className="text-yellow-300">under 30 seconds</span>
-        </motion.h1>
-
-        <motion.p
-          variants={itemVariants}
-          className="text-xl text-white/90 mb-10"
-        >
-          AI-powered intelligence for UK & Ireland businesses
-        </motion.p>
-
-        {/* Features list */}
-        <motion.ul variants={containerVariants} className="space-y-4 mb-12">
-          {features.map((feature, i) => (
-            <motion.li
-              key={i}
-              variants={itemVariants}
-              className="flex items-center gap-3 text-white/90"
-            >
-              <motion.div
-                className="flex-shrink-0 h-8 w-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center"
-                animate={{
-                  scale: [1, 1.1, 1],
-                  opacity: [0.8, 1, 0.8],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                  delay: i * 0.5, // Stagger each icon
-                }}
-              >
-                <feature.icon className="h-4 w-4 text-green-300" />
-              </motion.div>
-              <span className="text-base">{feature.text}</span>
-            </motion.li>
-          ))}
-        </motion.ul>
-
-        {/* Social proof */}
-        <motion.div variants={itemVariants} className="space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 border-2 border-white/20"
-                />
-              ))}
-            </div>
-            <p className="text-sm text-white/80 ml-2">
-              Trusted by <span className="font-semibold text-white">500+</span>{' '}
-              sales professionals
-            </p>
-          </div>
-
-          {/* Rotating Testimonials */}
-          <div
-            className="mt-6"
-            role="region"
-            aria-label="Customer testimonials"
-            aria-live="polite"
+        {/* Dynamic Content - Slides change */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.7, ease: 'easeInOut' }}
           >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentTestimonial}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
-                className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4"
+            {/* Main Headline */}
+            <h1 className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
+              {currentProp.headline}{' '}
+              <span className={currentProp.accentColor}>
+                {currentProp.headlineEmphasis}
+              </span>
+            </h1>
+
+            <p className="text-xl text-white/90 mb-10">
+              {currentProp.subheadline}
+            </p>
+
+            {/* Features list */}
+            <ul className="space-y-4 mb-12">
+              {currentProp.features.map((feature, i) => (
+                <motion.li
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="flex items-center gap-3 text-white/90"
+                >
+                  <motion.div
+                    className="flex-shrink-0 h-8 w-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center"
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      opacity: [0.8, 1, 0.8],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                      delay: i * 0.5,
+                    }}
+                  >
+                    <feature.icon className="h-4 w-4 text-green-300" />
+                  </motion.div>
+                  <span className="text-base">{feature.text}</span>
+                </motion.li>
+              ))}
+            </ul>
+
+            {/* Social proof */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 border-2 border-white/20"
+                    />
+                  ))}
+                </div>
+                <p className="text-sm text-white/80 ml-2">
+                  Trusted by{' '}
+                  <span className="font-semibold text-white">500+</span> sales
+                  professionals
+                </p>
+              </div>
+
+              {/* Testimonial */}
+              <div
+                className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 mt-6"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
               >
                 <p className="text-sm text-white/90 italic mb-2">
-                  "{testimonials[currentTestimonial].text}"
+                  "{currentProp.testimonial.text}"
                 </p>
                 <p className="text-xs text-white/70">
-                  — {testimonials[currentTestimonial].author}
+                  — {currentProp.testimonial.author}
                 </p>
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
-            {/* Progress indicators */}
-            <div className="flex gap-2 justify-center mt-4" role="tablist">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setCurrentTestimonial(i)
-                    setIsPaused(true)
-                    setTimeout(() => setIsPaused(false), 10000)
+        {/* Progress indicators */}
+        <div
+          className="flex gap-2 justify-center mt-6"
+          role="tablist"
+          aria-label="Value proposition carousel"
+        >
+          {valuePropositions.map((prop, i) => (
+            <button
+              key={prop.id}
+              onClick={() => {
+                setCurrentSlide(i)
+                setIsPaused(true)
+                setTimeout(() => setIsPaused(false), 15000)
+              }}
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+              className="group relative"
+              aria-label={`View ${prop.theme} value proposition (${i + 1} of ${
+                valuePropositions.length
+              })`}
+              aria-selected={i === currentSlide}
+              role="tab"
+            >
+              {/* Background track */}
+              <div className="w-12 h-1 bg-white/20 rounded-full overflow-hidden">
+                {/* Animated progress fill */}
+                <div
+                  className="h-full bg-white rounded-full transition-all"
+                  style={{
+                    width: i === currentSlide ? '100%' : '0%',
+                    transitionDuration:
+                      i === currentSlide && !isPaused ? '10000ms' : '300ms',
+                    transitionTimingFunction: 'linear',
                   }}
-                  onMouseEnter={() => setIsPaused(true)}
-                  onMouseLeave={() => setIsPaused(false)}
-                  className="group relative"
-                  aria-label={`View testimonial ${i + 1} of ${
-                    testimonials.length
-                  }`}
-                  aria-selected={i === currentTestimonial}
-                  role="tab"
-                >
-                  {/* Background track */}
-                  <div className="w-12 h-1 bg-white/20 rounded-full overflow-hidden">
-                    {/* Animated progress fill */}
-                    <div
-                      className="h-full bg-white rounded-full transition-all"
-                      style={{
-                        width: i === currentTestimonial ? '100%' : '0%',
-                        transitionDuration:
-                          i === currentTestimonial && !isPaused
-                            ? '8000ms'
-                            : '300ms',
-                        transitionTimingFunction: 'linear',
-                      }}
-                    />
-                  </div>
-                </button>
-              ))}
-            </div>
+                />
+              </div>
+            </button>
+          ))}
+        </div>
 
-            {/* Navigation hint */}
-            <p className="text-xs text-white/50 text-center mt-2">
-              Press ← → to navigate
-            </p>
+        {/* Navigation hint */}
+        <p className="text-xs text-white/50 text-center mt-2">
+          Press ← → to navigate • Home/End for first/last
+        </p>
 
-            {/* Screen reader announcement */}
-            <div className="sr-only" aria-live="polite" aria-atomic="true">
-              Testimonial {currentTestimonial + 1} of {testimonials.length}.{' '}
-              {testimonials[currentTestimonial].author}
-            </div>
-          </div>
-        </motion.div>
+        {/* Screen reader announcement */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          Value proposition {currentSlide + 1} of {valuePropositions.length}:{' '}
+          {currentProp.theme}. {currentProp.headline}{' '}
+          {currentProp.headlineEmphasis}
+        </div>
       </motion.div>
 
       {/* Decorative elements */}
