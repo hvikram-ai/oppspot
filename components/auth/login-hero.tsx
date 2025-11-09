@@ -73,25 +73,25 @@ const valuePropositions: ValueProposition[] = [
     id: 2,
     theme: 'geographic',
     accentColor: 'text-blue-400',
-    headline: 'Every business opportunity in',
-    headlineEmphasis: 'UK & Ireland, mapped',
-    subheadline: 'Geographic intelligence for targeted prospecting',
+    headline: 'Every business opportunity',
+    headlineEmphasis: 'worldwide, mapped',
+    subheadline: 'Global geographic intelligence for targeted prospecting',
     features: [
       {
         icon: MapPin,
-        text: 'Interactive map with 50,000+ businesses',
+        text: 'Interactive map with businesses worldwide',
       },
       {
         icon: Globe,
-        text: 'Complete UK & Ireland coverage',
+        text: 'Complete global coverage across all regions',
       },
       {
         icon: Radar,
-        text: 'Location-based filtering and search',
+        text: 'Location-based filtering and search anywhere',
       },
     ],
     testimonial: {
-      text: 'The geographic filtering and map view helped us identify 100+ local opportunities we were missing.',
+      text: 'The global map view helped us identify 200+ international opportunities we were missing across multiple markets.',
       author: 'Emma L., Regional Manager at GrowthCo',
     },
   },
