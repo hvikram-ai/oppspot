@@ -554,6 +554,8 @@ export class CompetitiveAnalysisRepository {
   // ================================================================
 
   async getDashboardData(analysisId: string): Promise<DashboardData | null> {
+    const startTime = Date.now();
+
     const analysis = await this.findById(analysisId);
     if (!analysis) return null;
 
@@ -572,6 +574,18 @@ export class CompetitiveAnalysisRepository {
       this.getMarketPositioning(analysisId),
       this.getMoatScore(analysisId),
     ]);
+
+    // Performance monitoring
+    const duration = Date.now() - startTime;
+    if (duration > 100) {
+      console.warn(
+        `[CompetitiveAnalysis] Slow dashboard query: ${duration}ms for analysis ${analysisId}`
+      );
+    } else {
+      console.log(
+        `[CompetitiveAnalysis] Dashboard query completed in ${duration}ms for analysis ${analysisId}`
+      );
+    }
 
     return {
       analysis,

@@ -45,12 +45,16 @@ export interface ScanProgressUpdate {
 
 export interface SignalAlert {
   id: string
-  signal_id: string
-  business_id: string
-  business_name: string
+  company_id: string
+  org_id?: string
   signal_type: string
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-  created_at: string
+  signal_strength: number
+  detected_at: string
+  status: string
+  metadata?: Record<string, unknown>
+  // Computed fields for UI
+  business_name?: string
+  priority?: 'low' | 'medium' | 'high' | 'urgent'
 }
 
 export interface AgentExecution {
@@ -220,7 +224,7 @@ export class RealtimeService {
   }
 
   /**
-   * Subscribe to signal alerts for a user
+   * Subscribe to buying signal alerts for a user's organization
    */
   subscribeToSignalAlerts(
     userId: string,
@@ -234,6 +238,9 @@ export class RealtimeService {
       onStatus('connecting')
     }
 
+    // First, get user's org_id to filter signals
+    // Note: This is a simplified version. In production, you might want to
+    // fetch org_id once and reuse it, or pass it as a parameter
     const channel = this.supabase
       .channel(channelName)
       .on(
@@ -241,12 +248,39 @@ export class RealtimeService {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'signal_alerts',
-          filter: `user_id=eq.${userId}`
+          table: 'buying_signals',
+          // Note: Can't filter by org_id directly from userId in realtime filter
+          // So we subscribe to all and filter in callback, or use a better approach
         },
-        (payload: RealtimePostgresChangesPayload<SignalAlert>) => {
+        async (payload: RealtimePostgresChangesPayload<SignalAlert>) => {
           if (payload.new) {
-            callback(payload.new as SignalAlert)
+            // Get user's org_id to check if this signal belongs to their org
+            const { data: profile } = await this.supabase
+              .from('profiles')
+              .select('org_id')
+              .eq('id', userId)
+              .single()
+
+            const signal = payload.new as SignalAlert
+
+            // Only send callback if signal belongs to user's org
+            if (profile?.org_id && signal.org_id === profile.org_id) {
+              // Map signal strength to priority
+              const priority: 'low' | 'medium' | 'high' | 'urgent' =
+                signal.signal_strength >= 90
+                  ? 'urgent'
+                  : signal.signal_strength >= 75
+                  ? 'high'
+                  : signal.signal_strength >= 50
+                  ? 'medium'
+                  : 'low'
+
+              callback({
+                ...signal,
+                priority,
+                created_at: signal.detected_at,
+              })
+            }
           }
         }
       )

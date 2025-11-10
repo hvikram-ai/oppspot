@@ -4,6 +4,7 @@ import { competitiveAnalysisRepository } from '@/lib/competitive-analysis/reposi
 import { dataGatherer } from '@/lib/competitive-analysis/data-gatherer';
 import { scoringEngine } from '@/lib/competitive-analysis/scoring-engine';
 import { validateUUID } from '@/lib/competitive-analysis/validation';
+import { withRateLimit, getRateLimitHeaders } from '@/lib/competitive-analysis/rate-limiter';
 import {
   handleError,
   UnauthorizedError,
@@ -40,6 +41,9 @@ export async function POST(
 
     // Validate UUID format
     const id = validateUUID(params.id, 'Analysis ID');
+
+    // Enforce rate limiting (5 refreshes per hour per user)
+    await withRateLimit('refresh', user.id, async () => {});
 
     // Check access permissions
     const hasAccess = await competitiveAnalysisRepository.checkUserAccess(id, user.id);

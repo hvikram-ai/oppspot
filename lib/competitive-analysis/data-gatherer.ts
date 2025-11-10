@@ -5,10 +5,22 @@
  * Integrates with ResearchGPT infrastructure
  *
  * Target: <2 minutes for 10 competitors
+ *
+ * Features:
+ * - Retry logic with exponential backoff
+ * - Timeout handling for web scraping and AI operations
+ * - Graceful degradation on failures
  */
 
 import { WebsiteScraper } from '@/lib/research-gpt/data-sources/website-scraper';
 import { createLLMManager, type LLMManager } from '@/lib/llm/manager/LLMManager';
+import {
+  MAX_WEB_REQUEST_RETRIES,
+  RETRY_BASE_DELAY_MS,
+  WEB_SCRAPING_TIMEOUT_MS,
+  AI_ANALYSIS_TIMEOUT_MS,
+} from './constants';
+import { TimeoutError, ExternalServiceError, AIOperationError } from './errors';
 
 export interface CompetitorData {
   competitor_name: string;
@@ -141,14 +153,23 @@ export class DataGatherer {
     }
 
     try {
-      // Scrape website content
-      const websiteData = await this.websiteScraper.scrape(website);
+      // Scrape website content with retry and timeout
+      const websiteData = await this.withRetry(
+        () =>
+          this.withTimeout(
+            this.websiteScraper.scrape(website),
+            WEB_SCRAPING_TIMEOUT_MS,
+            'Website scraping'
+          ),
+        MAX_WEB_REQUEST_RETRIES,
+        `Scraping ${name} website`
+      );
 
-      // Extract structured data using AI
-      const extractedData = await this.extractCompetitorInfo(
-        name,
-        websiteData.content,
-        website
+      // Extract structured data using AI with timeout
+      const extractedData = await this.withTimeout(
+        this.extractCompetitorInfo(name, websiteData.content, website),
+        AI_ANALYSIS_TIMEOUT_MS,
+        'AI analysis'
       );
 
       return {
@@ -158,10 +179,15 @@ export class DataGatherer {
       };
     } catch (error) {
       console.error(`Failed to gather data for ${name}:`, error);
+
+      // Return graceful fallback with error indication
       return {
         competitor_name: name,
         competitor_website: website,
         features: [],
+        positioning: {
+          value_proposition: `Data gathering failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        },
       };
     }
   }
@@ -230,6 +256,64 @@ Only include information that is clearly stated on the website. Use null for mis
    */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Retry wrapper with exponential backoff
+   */
+  private async withRetry<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = MAX_WEB_REQUEST_RETRIES,
+    operationName: string = 'operation'
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error as Error;
+
+        // Don't retry on certain errors
+        if (error instanceof TimeoutError || error instanceof AIOperationError) {
+          throw error;
+        }
+
+        if (attempt < maxRetries - 1) {
+          // Exponential backoff: 1s, 2s, 4s, etc.
+          const delayMs = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
+          console.warn(
+            `${operationName} failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delayMs}ms...`,
+            error
+          );
+          await this.delay(delayMs);
+        }
+      }
+    }
+
+    throw new ExternalServiceError(
+      operationName,
+      lastError || new Error('All retries failed')
+    );
+  }
+
+  /**
+   * Timeout wrapper for async operations
+   */
+  private async withTimeout<T>(
+    operation: Promise<T>,
+    timeoutMs: number,
+    operationName: string
+  ): Promise<T> {
+    return Promise.race([
+      operation,
+      new Promise<T>((_, reject) =>
+        setTimeout(
+          () => reject(new TimeoutError(operationName, timeoutMs)),
+          timeoutMs
+        )
+      ),
+    ]);
   }
 
   /**

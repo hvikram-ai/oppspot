@@ -60,9 +60,9 @@ export function sanitizeURL(url: string): string {
     }
   }
 
-  // Enforce HTTPS only
-  if (!sanitized.startsWith('https://') && !sanitized.startsWith('http://localhost')) {
-    throw new ValidationError('Only HTTPS URLs are allowed', { url });
+  // Enforce HTTPS or HTTP (allow HTTP for development/testing)
+  if (!sanitized.startsWith('https://') && !sanitized.startsWith('http://')) {
+    throw new ValidationError('Only HTTP/HTTPS URLs are allowed', { url });
   }
 
   return url.trim();

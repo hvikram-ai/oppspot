@@ -328,19 +328,28 @@ export function LiveMonitoringDashboard({
                               ? 'text-red-500'
                               : alert.priority === 'high'
                               ? 'text-orange-500'
-                              : 'text-yellow-500'
+                              : alert.priority === 'medium'
+                              ? 'text-yellow-500'
+                              : 'text-blue-500'
                           }`}
                         />
                         <div className="flex-1">
                           <div className="flex items-start justify-between">
                             <div>
-                              <p className="font-medium">{alert.business_name}</p>
-                              <p className="text-sm text-muted-foreground">{alert.signal_type}</p>
+                              <p className="font-medium">
+                                {alert.business_name || `Signal ${alert.company_id.substring(0, 8)}`}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {alert.signal_type.replace(/_/g, ' ')}
+                              </p>
                             </div>
-                            <Badge variant="outline">{alert.priority}</Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{alert.priority}</Badge>
+                              <Badge variant="secondary">{alert.signal_strength}%</Badge>
+                            </div>
                           </div>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {new Date(alert.created_at).toLocaleString()}
+                            {new Date(alert.created_at || alert.detected_at).toLocaleString()}
                           </p>
                         </div>
                       </div>

@@ -107,16 +107,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For small batches, return placeholder response
-    // TODO: Implement PDF/Excel generation
-    return NextResponse.json(
-      {
-        error: 'not_implemented',
-        message: 'PDF and Excel export are not yet implemented. Please use CSV format.',
-        code: 501
-      },
-      { status: 501 }
-    );
+    // For small batches (<= 100), generate synchronously
+    const predictionsData: any[] = [];
+
+    for (const companyId of company_ids) {
+      try {
+        const prediction = await getPrediction(companyId);
+        predictionsData.push(prediction);
+      } catch (error) {
+        console.error(`Failed to fetch prediction for ${companyId}:`, error);
+        // Skip companies without predictions
+      }
+    }
+
+    // Generate export based on format
+    if (format === 'pdf') {
+      const { generateMAPredictionsPDF } = await import('@/lib/ma-prediction/exporters/pdf-exporter');
+
+      const pdfBuffer = await generateMAPredictionsPDF({
+        predictions: predictionsData,
+        includeFields: include_fields,
+      });
+
+      const filename = `ma-predictions-${new Date().toISOString().split('T')[0]}.pdf`;
+
+      return new NextResponse(pdfBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': pdfBuffer.length.toString(),
+        }
+      });
+    } else {
+      // Excel format
+      const { generateMAPredictionsExcel } = await import('@/lib/ma-prediction/exporters/excel-exporter');
+
+      const excelBuffer = await generateMAPredictionsExcel({
+        predictions: predictionsData,
+        includeFields: include_fields,
+      });
+
+      const filename = `ma-predictions-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      return new NextResponse(excelBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': excelBuffer.length.toString(),
+        }
+      });
+    }
   } catch (error) {
     console.error('Error exporting predictions:', error);
 

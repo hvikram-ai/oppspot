@@ -97,13 +97,14 @@ export async function GET(
       });
     } else {
       // PDF export
-      const pdf = await generatePDF(allFlags.flags, includeExplainer, includeEvidence);
+      const pdf = await generatePDF(allFlags.flags, includeExplainer, includeEvidence, companyId);
 
       return new NextResponse(pdf, {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="red-flags-${companyId}-${Date.now()}.pdf"`,
+          'Content-Length': pdf.length.toString(),
         },
       });
     }
@@ -189,23 +190,32 @@ async function generateCSV(
 
 /**
  * Generate PDF export
- * TODO: Implement using @react-pdf/renderer
- * For now, return a simple text-based PDF placeholder
  */
 async function generatePDF(
-  flags: Array<unknown>,
+  flags: Array<{
+    id: string;
+    category: string;
+    severity: string;
+    confidence: number | null;
+    title: string;
+    description: string | null;
+    status: string;
+    first_detected_at: string;
+    last_updated_at: string;
+    meta: { explainer?: { why: string; suggested_remediation: string }; evidence?: Array<{ source: string; description: string }> };
+  }>,
   includeExplainer: boolean,
-  includeEvidence: boolean
+  includeEvidence: boolean,
+  companyId: string,
+  companyName?: string
 ): Promise<Buffer> {
-  // Placeholder: In production, use @react-pdf/renderer to create proper PDF
-  const content = `Red Flag Report
+  const { generateRedFlagsPDF } = await import('@/lib/red-flags/exporters/pdf-exporter');
 
-Generated: ${new Date().toISOString()}
-Total Flags: ${flags.length}
-
-Note: PDF generation with @react-pdf/renderer not yet implemented.
-Use CSV export for now.
-`;
-
-  return Buffer.from(content, 'utf-8');
+  return await generateRedFlagsPDF({
+    flags,
+    companyId,
+    companyName,
+    includeExplainer,
+    includeEvidence,
+  });
 }

@@ -46,7 +46,24 @@ export const CreateCompetitiveAnalysisSchema = CompetitiveAnalysisSchema.pick({
   geography: true,
   target_company_id: true,
   organization_id: true,
-});
+}).refine(
+  (data) => {
+    // Additional validation: if website provided, ensure it's valid
+    if (data.target_company_website) {
+      try {
+        new URL(data.target_company_website);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  },
+  {
+    message: 'Invalid website URL format',
+    path: ['target_company_website'],
+  }
+);
 
 export type CreateCompetitiveAnalysis = z.infer<typeof CreateCompetitiveAnalysisSchema>;
 
