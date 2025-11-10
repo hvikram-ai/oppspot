@@ -149,8 +149,26 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error('[Feedback API] Insert error:', insertError);
+      console.error('[Feedback API] Insert error code:', insertError.code);
+      console.error('[Feedback API] Insert error details:', insertError.details);
+      console.error('[Feedback API] Insert error hint:', insertError.hint);
+      console.error('[Feedback API] Insert error message:', insertError.message);
+      console.error('[Feedback API] Data being inserted:', {
+        user_id: user.id,
+        title,
+        category: type,
+        status: 'pending',
+        priority: priorityMap[type as FeedbackCategory],
+      });
       return NextResponse.json(
-        { error: 'Failed to submit feedback' },
+        {
+          error: 'Failed to submit feedback',
+          debug: {
+            code: insertError.code,
+            message: insertError.message,
+            hint: insertError.hint
+          }
+        },
         { status: 500 }
       );
     }
