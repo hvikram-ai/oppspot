@@ -72,7 +72,7 @@ export async function GET(
     }
 
     // Format response
-    const formattedItems = (items || []).map((item: any) => ({
+    const formattedItems = (items || []).map((item) => ({
       ...item,
       added_by_name: item.profiles?.full_name,
       added_by_email: item.profiles?.email

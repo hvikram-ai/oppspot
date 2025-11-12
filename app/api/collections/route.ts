@@ -66,13 +66,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Format owned collections with item count
-    const ownedFormatted = (owned || []).map((col: any) => ({
+    const ownedFormatted = (owned || []).map((col) => ({
       ...col,
       item_count: col.collection_items?.[0]?.count || 0
     }))
 
     // Format shared collections
-    const sharedFormatted = (sharedAccess || []).map((access: any) => ({
+    const sharedFormatted = (sharedAccess || []).map((access) => ({
       ...access.collections,
       role: access.role,
       item_count: access.collections.collection_items?.[0]?.count || 0

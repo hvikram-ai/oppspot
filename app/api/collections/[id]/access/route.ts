@@ -59,7 +59,7 @@ export async function GET(
     }
 
     // Format response
-    const formatted = (grants || []).map((grant: any) => ({
+    const formatted = (grants || []).map((grant) => ({
       id: grant.id,
       collection_id: grant.collection_id,
       user_id: grant.user_id,
