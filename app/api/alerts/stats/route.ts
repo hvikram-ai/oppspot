@@ -6,6 +6,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { AlertService } from '@/lib/alerts/alert-service'
 
+interface ProfileRole {
+  role?: string;
+}
+
 /**
  * GET /api/alerts/stats
  * Get alert statistics
@@ -29,7 +33,7 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!profile || !['admin', 'super_admin'].includes((profile as any)?.role)) {
+    if (!profile || !['admin', 'super_admin'].includes((profile as ProfileRole)?.role || '')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

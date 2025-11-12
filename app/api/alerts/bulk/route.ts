@@ -10,6 +10,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { AlertService } from '@/lib/alerts'
 
+interface ProfileRole {
+  role?: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // 1. Verify user authentication
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single())
 
-    if (!profile || !['admin', 'super_admin'].includes((profile as any)?.role)) {
+    if (!profile || !['admin', 'super_admin'].includes((profile as ProfileRole)?.role || '')) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
@@ -113,8 +117,8 @@ export async function POST(request: NextRequest) {
         // Bulk delete (for false positives)
         for (const alertId of alertIds) {
           try {
-            const { error } = await (supabase
-              .from('system_alerts') as any)
+            const { error } = await supabase
+              .from('system_alerts')
               .update({ status: 'false_positive' })
               .eq('id', alertId)
 
