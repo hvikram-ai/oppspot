@@ -10,6 +10,11 @@ import { test, expect } from '@playwright/test';
 
 const API_BASE = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
+interface Profile {
+  analysis_status: string;
+  [key: string]: unknown;
+}
+
 test.describe('GET /api/profiles - List Profiles', () => {
   let authToken: string;
   const testProfileIds: string[] = [];
@@ -189,7 +194,7 @@ test.describe('GET /api/profiles - List Profiles', () => {
     const body = await response.json();
 
     // All returned profiles should have status=completed
-    body.profiles.forEach((profile: any) => {
+    body.profiles.forEach((profile: Profile) => {
       expect(profile.analysis_status).toBe('completed');
     });
   });
@@ -208,7 +213,7 @@ test.describe('GET /api/profiles - List Profiles', () => {
     expect(body.profiles.length).toBeGreaterThan(0);
 
     // All returned profiles should have status=pending
-    body.profiles.forEach((profile: any) => {
+    body.profiles.forEach((profile: Profile) => {
       expect(profile.analysis_status).toBe('pending');
     });
   });
@@ -227,7 +232,7 @@ test.describe('GET /api/profiles - List Profiles', () => {
     expect(Array.isArray(body.profiles)).toBe(true);
 
     // All returned profiles should have status=analyzing
-    body.profiles.forEach((profile: any) => {
+    body.profiles.forEach((profile: Profile) => {
       expect(profile.analysis_status).toBe('analyzing');
     });
   });

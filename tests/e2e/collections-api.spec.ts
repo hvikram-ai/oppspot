@@ -7,7 +7,7 @@
  * They MUST FAIL initially (TDD approach) and pass after implementation.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 // Test configuration
 const API_BASE = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
@@ -24,9 +24,9 @@ test.describe('Collection Management API', () => {
   });
 
   // Helper to get auth cookie
-  async function getAuthCookie(page: any) {
+  async function getAuthCookie(page: Page) {
     const cookies = await page.context().cookies();
-    const authCookie = cookies.find((c: any) => c.name.includes('auth'));
+    const authCookie = cookies.find((c) => c.name.includes('auth'));
     return authCookie ? `${authCookie.name}=${authCookie.value}` : '';
   }
 
