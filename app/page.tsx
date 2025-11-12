@@ -78,12 +78,11 @@ export default function LandingPage() {
           </Badge>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Discover UK & Ireland Business Opportunities
+            AI-Powered Deal Intelligence. Worldwide.
           </h1>
-          
+
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            oppSpot uses AI to help you find, analyze, and connect with businesses across the UK and Ireland. 
-            Transform your B2B strategy with intelligent insights.
+            Uncover acquisition targets, competitive threats, and market opportunities across every industry, everywhere. Powered by advanced AI that works 24/7.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -118,7 +117,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Coverage</p>
-                  <p className="text-2xl font-bold">UK & Ireland</p>
+                  <p className="text-2xl font-bold">Global</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">

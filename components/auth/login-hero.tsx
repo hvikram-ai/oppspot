@@ -47,9 +47,9 @@ const valuePropositions: ValueProposition[] = [
     id: 1,
     theme: 'speed',
     accentColor: 'text-yellow-300',
-    headline: 'Discover your next business opportunity in',
-    headlineEmphasis: 'under 30 seconds',
-    subheadline: 'AI-powered intelligence for UK & Ireland businesses',
+    headline: 'AI that finds deals',
+    headlineEmphasis: 'you didn\'t know existed',
+    subheadline: 'Advanced intelligence for Private Equity & M&A professionals',
     features: [
       {
         icon: Zap,
@@ -57,11 +57,11 @@ const valuePropositions: ValueProposition[] = [
       },
       {
         icon: Target,
-        text: '50,000+ UK & Ireland businesses tracked',
+        text: 'Millions of companies tracked globally',
       },
       {
         icon: Sparkles,
-        text: 'AI-powered company intelligence',
+        text: 'AI-powered deal intelligence',
       },
     ],
     testimonial: {
@@ -117,8 +117,8 @@ const valuePropositions: ValueProposition[] = [
       },
     ],
     testimonial: {
-      text: 'Real-time alerts mean we never miss an opportunity. Increased our close rate by 15%.',
-      author: 'James K., Sales Operations at DataFlow',
+      text: `Real-time alerts mean we never miss an opportunity. Increased our close rate by 15%.`,
+      author: `James K., Sales Operations at DataFlow`,
     },
   },
   {
@@ -336,7 +336,7 @@ export function LoginHero() {
                 onMouseLeave={() => setIsPaused(false)}
               >
                 <p className="text-sm text-white/90 italic mb-2">
-                  "{currentProp.testimonial.text}"
+                  {`"${currentProp.testimonial.text}"`}
                 </p>
                 <p className="text-xs text-white/70">
                   — {currentProp.testimonial.author}

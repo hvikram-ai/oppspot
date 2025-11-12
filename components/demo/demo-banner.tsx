@@ -153,7 +153,7 @@ export function DemoRestrictionModal({
           <div className="bg-muted p-3 rounded-md">
             <p className="text-sm font-medium mb-2">With a free account you get:</p>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Search real UK & Ireland businesses</li>
+              <li>• Search millions of global companies</li>
               <li>• Save searches and create alerts</li>
               <li>• Export data and reports</li>
               <li>• Contact businesses directly</li>

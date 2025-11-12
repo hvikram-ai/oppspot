@@ -27,9 +27,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "oppSpot - Discover UK & Ireland Business Opportunities",
-  description: "AI-powered business intelligence platform for finding and analyzing UK & Ireland business opportunities",
-  keywords: "business intelligence, UK business, Ireland business, B2B leads, market research",
+  title: "oppSpot - AI-Powered Global Deal Intelligence for Private Equity & M&A",
+  description: "Advanced AI platform for PE firms and M&A teams. Discover acquisition targets, analyze markets, and uncover opportunities across 200+ countries. Intelligence that never sleeps.",
+  keywords: "private equity, M&A intelligence, acquisition targets, global deals, worldwide business intelligence, business intelligence, deal sourcing, market research",
   authors: [{ name: "oppSpot" }],
   manifest: '/manifest.json',
   appleWebApp: {
@@ -63,17 +63,17 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "oppSpot - Discover UK & Ireland Business Opportunities",
-    description: "AI-powered business intelligence platform",
+    title: "oppSpot - AI-Powered Global Deal Intelligence",
+    description: "Advanced AI platform for PE firms and M&A teams. Discover acquisition targets and uncover opportunities worldwide.",
     url: "https://oppspot.com",
     siteName: "oppSpot",
-    locale: "en_GB",
+    locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "oppSpot",
-    description: "Discover UK & Ireland business opportunities with AI",
+    title: "oppSpot - AI-Powered Global Deal Intelligence",
+    description: "Discover acquisition targets and market opportunities worldwide with advanced AI",
   },
   robots: {
     index: true,

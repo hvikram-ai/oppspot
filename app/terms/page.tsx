@@ -36,7 +36,7 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
             <p>
-              oppSpot provides business intelligence and M&A opportunity discovery services for UK and Ireland companies. 
+              oppSpot provides business intelligence and M&A opportunity discovery services for companies worldwide. 
               Our platform includes company search, similarity analysis, market insights, and data export capabilities.
             </p>
           </section>

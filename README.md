@@ -1,6 +1,6 @@
-# oppSpot - UK & Ireland Business Intelligence Platform
+# oppSpot - Global AI-Powered Deal Intelligence Platform
 
-An AI-powered business discovery platform for finding and analyzing UK & Ireland business opportunities.
+An AI-powered business discovery platform for PE firms and M&A teams to find acquisition targets and market opportunities worldwide.
 
 ## 🚀 Features
 

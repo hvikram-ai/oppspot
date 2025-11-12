@@ -178,7 +178,7 @@ export function LoginForm() {
         <CardHeader>
           <CardTitle id="login-title">Welcome to oppSpot</CardTitle>
           <CardDescription>
-            Sign in to discover UK & Ireland business opportunities
+            Sign in to access global deal intelligence
           </CardDescription>
         </CardHeader>
         <CardContent>

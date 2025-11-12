@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**oppSpot** is a production SaaS B2B business intelligence platform for discovering UK & Ireland business opportunities. It's built with Next.js 15, TypeScript, Supabase, and AI-powered features.
+**oppSpot** is a production SaaS B2B business intelligence platform for discovering global acquisition targets and market intelligence for PE/M&A professionals. It's built with Next.js 15, TypeScript, Supabase, and AI-powered features.
 
 ## Development Commands
 

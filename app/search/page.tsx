@@ -191,7 +191,7 @@ function SearchPageContent() {
               <div>
                 <h1 className="text-2xl font-bold">Search Businesses</h1>
                 <p className="text-muted-foreground">
-                  Find UK & Ireland businesses with AI-powered search
+                  Find acquisition targets anywhere with AI-powered search
                 </p>
               </div>
               <div className="flex gap-2">

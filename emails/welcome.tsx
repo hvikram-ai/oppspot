@@ -40,9 +40,8 @@ export default function WelcomeEmail({
               </Text>
               
               <Text className="text-gray-700 mb-4">
-                Thank you for joining OppSpot! We&apos;re excited to have you on board. 
-                OppSpot is your gateway to discovering and connecting with businesses 
-                across the UK and Ireland.
+                Thank you for joining OppSpot! We&apos;re excited to have you on board.
+                OppSpot is your gateway to discovering acquisition opportunities and market intelligence across every continent.
               </Text>
 
               <Section className="bg-blue-50 rounded-lg p-6 mb-6">
