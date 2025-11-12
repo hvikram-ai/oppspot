@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import fs from 'fs';
 
 /**
  * T045: E2E Test - Cohort Analysis View
@@ -199,7 +200,6 @@ test.describe('Cohort Analysis: Export', () => {
       // Optional: Verify file size > 0
       const path = await download.path();
       if (path) {
-        const fs = require('fs');
         const stats = fs.statSync(path);
         expect(stats.size).toBeGreaterThan(0);
       }

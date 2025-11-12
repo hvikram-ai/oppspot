@@ -3,7 +3,9 @@
  * Verify Pinecone is configured correctly
  */
 
-require('dotenv').config({ path: '.env.local' })
+import dotenv from 'dotenv';
+import { getPineconeClient } from '../lib/ai/rag/pinecone-client.js';
+dotenv.config({ path: '.env.local' });
 
 async function testPineconeConnection() {
   console.log('🧪 Testing Pinecone Configuration...\n')
@@ -30,9 +32,7 @@ async function testPineconeConnection() {
   }
 
   try {
-    // Import and test connection
-    const { getPineconeClient } = require('../lib/ai/rag/pinecone-client')
-
+    // Test connection
     console.log('🔌 Connecting to Pinecone...')
     const pinecone = getPineconeClient()
 

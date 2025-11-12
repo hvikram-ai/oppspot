@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     // Send email notifications (fire and forget - don't block response)
-    let emailsSent = { admin: false, user: false };
+    const emailsSent = { admin: false, user: false };
 
     // Get user profile for name
     const { data: profile } = await supabase

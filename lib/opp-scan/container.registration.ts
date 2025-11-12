@@ -83,7 +83,7 @@ export function registerServices(
     const c = args[0] as IContainer
     const redisClient = c.resolve<RedisClient>('redisClient') || undefined
     // Adapter to match RateLimitingService expected interface
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const rateLimitClient = redisClient ? {
       get: (key: string) => redisClient.get(key),
       set: (key: string, value: string) => redisClient.set(key, value),
@@ -112,7 +112,7 @@ export function registerServices(
     const c = args[0] as IContainer
     const database = c.resolve<DatabaseClient>('database')
     // Wrap database to match expected interface - CompanyRepository expects specific QueryResult type
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const wrappedDb = {
       query: async (sql: string, params: unknown[]) => {
         const result = await database.query(sql, params)

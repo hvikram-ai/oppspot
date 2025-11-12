@@ -11,9 +11,9 @@ test.describe("Active Collection & Archive API", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto("/login");
-    await page.fill("[name="email"]", "demo@oppspot.com");
-    await page.fill("[name="password"]", "Demo123456!");
-    await page.click("button[type="submit"]");
+    await page.fill('[name="email"]', "demo@oppspot.com");
+    await page.fill('[name="password"]', "Demo123456!");
+    await page.click('button[type="submit"]');
     await page.waitForURL("/");
   });
 

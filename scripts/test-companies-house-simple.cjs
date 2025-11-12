@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 #!/usr/bin/env node
+ 
 
 /**
  * Simple test for Companies House API integration

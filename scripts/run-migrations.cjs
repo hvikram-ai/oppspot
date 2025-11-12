@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 #!/usr/bin/env node
+ 
 
 /**
  * Script to run database migrations on Supabase

@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 #!/usr/bin/env node
+ 
 
 /**
  * Set up a complete user with organization for testing

@@ -3,10 +3,11 @@
  * Uses direct SQL execution through Supabase
  */
 
-const { createClient } = require('@supabase/supabase-js')
-const fs = require('fs')
-const path = require('path')
-require('dotenv').config({ path: '.env.local' })
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,

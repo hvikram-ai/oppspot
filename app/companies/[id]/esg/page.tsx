@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Loader2, Download, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,11 +36,7 @@ export default function ESGDashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState<ESGCategory | null>(null);
 
   // Fetch ESG summary data
-  useEffect(() => {
-    fetchESGSummary();
-  }, [companyId, selectedYear]);
-
-  const fetchESGSummary = async () => {
+  const fetchESGSummary = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -61,7 +57,11 @@ export default function ESGDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, selectedYear]);
+
+  useEffect(() => {
+    fetchESGSummary();
+  }, [fetchESGSummary]);
 
   const handleCitationClick = (metric: ESGMetric) => {
     setSelectedMetric(metric);

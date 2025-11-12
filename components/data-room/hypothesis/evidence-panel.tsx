@@ -5,7 +5,7 @@
  * Displays linked document evidence with excerpts and AI reasoning
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -63,11 +63,7 @@ export function EvidencePanel({ hypothesisId, dataRoomId, onViewDocument }: Evid
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<EvidenceType | 'all'>('all');
 
-  useEffect(() => {
-    fetchEvidence();
-  }, [hypothesisId]);
-
-  const fetchEvidence = async () => {
+  const fetchEvidence = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/data-room/hypotheses/${hypothesisId}/evidence`);
@@ -81,7 +77,11 @@ export function EvidencePanel({ hypothesisId, dataRoomId, onViewDocument }: Evid
     } finally {
       setLoading(false);
     }
-  };
+  }, [hypothesisId]);
+
+  useEffect(() => {
+    fetchEvidence();
+  }, [fetchEvidence]);
 
   const filteredEvidence =
     filter === 'all' ? evidence : evidence.filter((e) => e.evidence_type === filter);
@@ -237,7 +237,7 @@ function EvidenceCard({
         {evidence.excerpt_text && (
           <div className="p-3 bg-muted rounded-lg">
             <p className="text-sm italic text-muted-foreground line-clamp-4">
-              "{evidence.excerpt_text}"
+              {`"${evidence.excerpt_text}"`}
             </p>
           </div>
         )}

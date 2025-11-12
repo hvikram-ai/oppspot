@@ -78,7 +78,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              We encountered an error while loading this component. This has been logged and we'll look into it.
+              {`We encountered an error while loading this component. This has been logged and we'll look into it.`}
             </p>
 
             {this.state.error && process.env.NODE_ENV === 'development' && (

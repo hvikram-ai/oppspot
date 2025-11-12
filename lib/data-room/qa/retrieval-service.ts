@@ -111,7 +111,7 @@ export async function retrieveChunksWithStats(
   const supabase = await createClient();
 
   // Build query with permission filtering
-  let queryBuilder = supabase
+  const queryBuilder = supabase
     .from('document_chunks')
     .select(
       includeMetadata

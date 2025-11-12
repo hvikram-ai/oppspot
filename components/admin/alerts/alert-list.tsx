@@ -244,7 +244,7 @@ export function AlertList({ filter = {} }: AlertListProps) {
                 onCheckedChange={toggleAll}
                 ref={(checkbox) => {
                   if (checkbox) {
-                    // @ts-ignore - indeterminate is a valid property
+                    // @ts-expect-error - indeterminate is a valid property
                     checkbox.indeterminate = isIndeterminate
                   }
                 }}

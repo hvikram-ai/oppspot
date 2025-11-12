@@ -12,7 +12,7 @@ const API_BASE = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 test.describe('GET /api/profiles - List Profiles', () => {
   let authToken: string;
-  let testProfileIds: string[] = [];
+  const testProfileIds: string[] = [];
 
   test.beforeAll(async ({ request }) => {
     // Authenticate

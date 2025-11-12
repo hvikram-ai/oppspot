@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,12 +89,8 @@ export function CountrySelectionStep({ config, updateConfig }: CountrySelectionP
 
   const selectedCountries = (config.selectedCountries || []) as string[];
 
-  // Fetch countries from API
-  useEffect(() => {
-    fetchCountries();
-  }, [continentFilter, dataCoverageFilter, showOnlyFreeAPI]);
-
-  async function fetchCountries() {
+  // Wrap fetchCountries in useCallback to prevent stale closures
+  const fetchCountries = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -122,7 +118,12 @@ export function CountrySelectionStep({ config, updateConfig }: CountrySelectionP
     } finally {
       setLoading(false);
     }
-  }
+  }, [continentFilter, dataCoverageFilter, showOnlyFreeAPI]);
+
+  // Fetch countries from API
+  useEffect(() => {
+    fetchCountries();
+  }, [fetchCountries]);
 
   // Filter countries by search term
   const filteredCountries = countries.filter(

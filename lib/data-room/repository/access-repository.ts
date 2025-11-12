@@ -5,7 +5,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { sign } from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import { DataRoomAccess, PermissionLevel } from '../types';
 import {
   CreateAccessInput,
@@ -402,7 +402,6 @@ export class AccessRepository {
   } {
     try {
       const secret = process.env.JWT_SECRET || 'your-secret-key';
-      const { verify } = require('jsonwebtoken');
       return verify(token, secret);
     } catch {
       throw new DataRoomError(

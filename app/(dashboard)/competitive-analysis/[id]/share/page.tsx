@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,13 +44,7 @@ export default function SharePermissionsPage() {
   const [email, setEmail] = useState('');
   const [accessLevel, setAccessLevel] = useState<'view' | 'edit'>('view');
 
-  useEffect(() => {
-    if (analysisId) {
-      fetchData();
-    }
-  }, [analysisId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch analysis details
@@ -72,7 +66,13 @@ export default function SharePermissionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [analysisId]);
+
+  useEffect(() => {
+    if (analysisId) {
+      fetchData();
+    }
+  }, [analysisId, fetchData]);
 
   const handleInvite = async () => {
     if (!email || !email.includes('@')) {

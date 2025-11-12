@@ -35,6 +35,7 @@ import {
   Plus,
   FileText,
   User,
+  Users,
   Calendar,
   Loader2
 } from 'lucide-react'

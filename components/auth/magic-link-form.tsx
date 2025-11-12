@@ -113,12 +113,12 @@ export function MagicLinkForm({ onSwitchToPassword }: MagicLinkFormProps) {
 
         <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm space-y-2">
           <p className="font-medium text-blue-900 dark:text-blue-100">
-            What's next?
+            {`What's next?`}
           </p>
           <ol className="text-left text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
             <li>Open your email inbox</li>
-            <li>Click the "Login to oppSpot" button</li>
-            <li>You'll be signed in automatically!</li>
+            <li>{`Click the "Login to oppSpot" button`}</li>
+            <li>{`You'll be signed in automatically!`}</li>
           </ol>
         </div>
 
@@ -130,7 +130,7 @@ export function MagicLinkForm({ onSwitchToPassword }: MagicLinkFormProps) {
           {/* Resend Button */}
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Didn't receive the email?
+              {`Didn't receive the email?`}
             </p>
             <Button
               variant="outline"
@@ -168,7 +168,7 @@ export function MagicLinkForm({ onSwitchToPassword }: MagicLinkFormProps) {
         <div className="text-sm text-purple-900 dark:text-purple-100">
           <p className="font-medium">No password needed!</p>
           <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
-            We'll email you a secure link to log in instantly.
+            {`We'll email you a secure link to log in instantly.`}
           </p>
         </div>
       </div>

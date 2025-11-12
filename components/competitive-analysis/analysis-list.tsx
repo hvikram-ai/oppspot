@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Plus, Search, MoreVertical, Eye, Edit, Trash2, Users } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DataAgeBadge } from './data-age-badge';
 import Link from 'next/link';
 import type { CompetitiveAnalysis } from '@/lib/competitive-analysis/types';
@@ -48,11 +48,7 @@ export function AnalysisList({ onCreateNew }: AnalysisListProps) {
   const [page, setPage] = useState(0);
   const limit = 20;
 
-  useEffect(() => {
-    fetchAnalyses();
-  }, [statusFilter, page]);
-
-  const fetchAnalyses = async () => {
+  const fetchAnalyses = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -79,7 +75,11 @@ export function AnalysisList({ onCreateNew }: AnalysisListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, page, limit]);
+
+  useEffect(() => {
+    fetchAnalyses();
+  }, [fetchAnalyses]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this analysis?')) {

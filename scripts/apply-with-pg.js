@@ -3,10 +3,12 @@
  * Direct PostgreSQL connection
  */
 
-const { Client } = require('pg')
-const fs = require('fs')
-const path = require('path')
-require('dotenv').config({ path: '.env.local' })
+import pkg from 'pg';
+const { Client } = pkg;
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
 // Extract project ref from Supabase URL
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

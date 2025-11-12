@@ -961,3 +961,771 @@ export interface HypothesisSummary {
   total_evidence: number;
   recent_validations: HypothesisValidation[];
 }
+
+// ============================================================================
+// TECH STACK ANALYSIS
+// ============================================================================
+
+export type TechRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+export type TechAnalysisStatus = 'pending' | 'analyzing' | 'completed' | 'failed';
+export type TechCategory =
+  | 'frontend'
+  | 'backend'
+  | 'database'
+  | 'infrastructure'
+  | 'devops'
+  | 'ml_ai'
+  | 'security'
+  | 'testing'
+  | 'monitoring'
+  | 'other';
+export type TechAuthenticity =
+  | 'proprietary'
+  | 'wrapper'
+  | 'hybrid'
+  | 'third_party'
+  | 'unknown';
+export type TechFindingType =
+  | 'red_flag'
+  | 'risk'
+  | 'opportunity'
+  | 'strength'
+  | 'recommendation';
+export type TechFindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+// ----------------------------------------------------------------------------
+// Database Types (matching migration schema)
+// ----------------------------------------------------------------------------
+
+export interface TechStackAnalysis {
+  id: string;
+  data_room_id: string;
+  created_by: string;
+  title: string;
+  description: string | null;
+  status: TechAnalysisStatus;
+  technologies_identified: number;
+  risk_level: TechRiskLevel | null;
+  modernization_score: number | null;
+  ai_authenticity_score: number | null;
+  technical_debt_score: number | null;
+  frontend_count: number;
+  backend_count: number;
+  database_count: number;
+  infrastructure_count: number;
+  ai_ml_count: number;
+  ai_model: string | null;
+  analysis_time_ms: number | null;
+  documents_analyzed: number;
+  error_message: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  last_analyzed_at: string | null;
+  deleted_at: string | null;
+}
+
+export interface TechStackTechnology {
+  id: string;
+  analysis_id: string;
+  name: string;
+  category: TechCategory;
+  version: string | null;
+  authenticity: TechAuthenticity | null;
+  confidence_score: number;
+  risk_score: number | null;
+  is_outdated: boolean;
+  is_deprecated: boolean;
+  source_document_id: string | null;
+  source_page_number: number | null;
+  excerpt_text: string | null;
+  chunk_id: string | null;
+  ai_reasoning: string | null;
+  ai_confidence: number | null;
+  license_type: string | null;
+  has_security_issues: boolean;
+  security_details: string | null;
+  manual_note: string | null;
+  manually_verified: boolean;
+  verified_by: string | null;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TechStackFinding {
+  id: string;
+  analysis_id: string;
+  finding_type: TechFindingType;
+  severity: TechFindingSeverity;
+  title: string;
+  description: string;
+  technology_ids: string[];
+  impact_score: number | null;
+  recommendation: string | null;
+  is_resolved: boolean;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  resolution_notes: string | null;
+  source_document_id: string | null;
+  source_page_number: number | null;
+  excerpt_text: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TechStackComparison {
+  id: string;
+  analysis_id: string;
+  compared_with_analysis_id: string;
+  comparison_summary: string;
+  shared_technologies: number;
+  unique_technologies: number;
+  risk_delta: number | null;
+  modernization_delta: number | null;
+  key_differences: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ----------------------------------------------------------------------------
+// API Request/Response Types
+// ----------------------------------------------------------------------------
+
+export interface CreateTechStackAnalysisRequest {
+  data_room_id: string;
+  title: string;
+  description?: string;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface UpdateTechStackAnalysisRequest {
+  title?: string;
+  description?: string;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface TriggerTechStackAnalysisRequest {
+  document_ids?: string[]; // If omitted, analyze all documents
+  force_reanalysis?: boolean; // Re-analyze even if already analyzed
+}
+
+export interface TechStackAnalysisFilter {
+  data_room_id: string;
+  status?: TechAnalysisStatus;
+  risk_level?: TechRiskLevel;
+  modernization_score_min?: number;
+  modernization_score_max?: number;
+  ai_authenticity_score_min?: number;
+  ai_authenticity_score_max?: number;
+  tags?: string[];
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TechStackTechnologyFilter {
+  analysis_id: string;
+  category?: TechCategory;
+  authenticity?: TechAuthenticity;
+  risk_score_min?: number;
+  risk_score_max?: number;
+  is_outdated?: boolean;
+  is_deprecated?: boolean;
+  has_security_issues?: boolean;
+  manually_verified?: boolean;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TechStackFindingFilter {
+  analysis_id: string;
+  finding_type?: TechFindingType;
+  severity?: TechFindingSeverity;
+  is_resolved?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface AddTechnologyManuallyRequest {
+  analysis_id: string;
+  name: string;
+  category: TechCategory;
+  version?: string;
+  authenticity?: TechAuthenticity;
+  confidence_score: number;
+  risk_score?: number;
+  license_type?: string;
+  manual_note?: string;
+}
+
+export interface UpdateTechnologyRequest {
+  version?: string;
+  authenticity?: TechAuthenticity;
+  risk_score?: number;
+  license_type?: string;
+  has_security_issues?: boolean;
+  security_details?: string;
+  manual_note?: string;
+  manually_verified?: boolean;
+}
+
+export interface VerifyTechnologyRequest {
+  verified: boolean;
+  notes?: string;
+}
+
+export interface CreateFindingRequest {
+  analysis_id: string;
+  finding_type: TechFindingType;
+  severity: TechFindingSeverity;
+  title: string;
+  description: string;
+  technology_ids?: string[];
+  impact_score?: number;
+  recommendation?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ResolveFindingRequest {
+  resolution_notes: string;
+}
+
+// ----------------------------------------------------------------------------
+// Enriched Response Types
+// ----------------------------------------------------------------------------
+
+export interface TechStackAnalysisWithDetails extends TechStackAnalysis {
+  // Creator info
+  creator_name: string;
+  creator_email: string;
+
+  // Technology breakdown
+  technologies: TechStackTechnology[];
+
+  // Findings summary
+  critical_findings_count: number;
+  high_findings_count: number;
+  medium_findings_count: number;
+  low_findings_count: number;
+  resolved_findings_count: number;
+  total_findings_count: number;
+
+  // Category breakdown
+  technologies_by_category: {
+    category: TechCategory;
+    count: number;
+    avg_risk_score: number;
+  }[];
+
+  // Authenticity breakdown (for AI/ML)
+  ai_breakdown?: {
+    proprietary: number;
+    wrapper: number;
+    hybrid: number;
+    third_party: number;
+    unknown: number;
+  };
+}
+
+export interface TechStackAnalysisListItem {
+  id: string;
+  title: string;
+  status: TechAnalysisStatus;
+  risk_level: TechRiskLevel | null;
+  technologies_identified: number;
+  modernization_score: number | null;
+  ai_authenticity_score: number | null;
+  technical_debt_score: number | null;
+  critical_findings_count: number;
+  created_by: string;
+  creator_name: string;
+  created_at: string;
+  updated_at: string;
+  last_analyzed_at: string | null;
+}
+
+export interface TechStackTechnologyWithSource extends TechStackTechnology {
+  // Document source info
+  document_filename: string | null;
+  document_type: DocumentType | null;
+  document_storage_path: string | null;
+}
+
+export interface TechStackFindingWithTechnologies extends TechStackFinding {
+  // Related technologies
+  technologies: {
+    id: string;
+    name: string;
+    category: TechCategory;
+    version: string | null;
+  }[];
+}
+
+export interface TechStackSummary {
+  total_analyses: number;
+  completed_analyses: number;
+  analyzing_count: number;
+  failed_count: number;
+  avg_modernization_score: number;
+  avg_ai_authenticity_score: number;
+  avg_technical_debt_score: number;
+  total_technologies: number;
+  total_critical_findings: number;
+  total_high_findings: number;
+  risk_distribution: {
+    low: number;
+    medium: number;
+    high: number;
+    critical: number;
+  };
+  recent_analyses: TechStackAnalysisListItem[];
+}
+
+export interface TechStackAnalysisProgress {
+  analysis_id: string;
+  status: TechAnalysisStatus;
+  documents_total: number;
+  documents_analyzed: number;
+  technologies_found: number;
+  current_document: string | null;
+  started_at: string;
+  estimated_completion: string | null;
+  error_message: string | null;
+}
+
+// ============================================================================
+// INTEGRATION PLAYBOOK GENERATOR
+// ============================================================================
+
+// Core Enums
+export type PlaybookStatus = 'draft' | 'active' | 'completed' | 'archived';
+export type PlaybookGenerationStatus = 'pending' | 'generating' | 'completed' | 'failed';
+export type DealType = 'acquisition' | 'merger' | 'investment' | 'partnership' | 'joint_venture';
+export type PhaseType = 'day_1_30' | 'day_31_60' | 'day_61_100' | 'post_100';
+export type ActivityStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked' | 'at_risk';
+export type ActivityPriority = 'critical' | 'high' | 'medium' | 'low';
+export type ActivityCategory = 'planning' | 'execution' | 'monitoring' | 'communication' | 'approval';
+export type ResponsibleParty = 'buyer' | 'seller' | 'joint';
+export type SynergyType = 'cost' | 'revenue';
+export type SynergyCategory =
+  | 'headcount'
+  | 'facilities'
+  | 'procurement'
+  | 'IT'
+  | 'cross_sell'
+  | 'upsell'
+  | 'pricing'
+  | 'market_expansion'
+  | 'other';
+export type SynergyStatus = 'planned' | 'in_progress' | 'realized' | 'at_risk' | 'failed';
+export type RiskImpact = 'low' | 'medium' | 'high' | 'critical';
+export type RiskProbability = 'low' | 'medium' | 'high';
+export type RiskStatus = 'open' | 'mitigating' | 'closed' | 'realized';
+export type KPICategory = 'financial' | 'customer' | 'employee' | 'operational' | 'synergy';
+export type KPIStatus = 'on_track' | 'at_risk' | 'off_track';
+
+// Integration Playbook (Main Entity)
+export interface IntegrationPlaybook {
+  id: string;
+  data_room_id: string;
+  created_by: string;
+
+  // Metadata
+  playbook_name: string;
+  deal_type: DealType;
+  deal_rationale?: string;
+  integration_objectives?: string[];
+  success_metrics?: Record<string, unknown>;
+
+  // Status
+  status: PlaybookStatus;
+  generation_status: PlaybookGenerationStatus;
+
+  // Aggregate metrics (auto-calculated)
+  total_phases: number;
+  total_workstreams: number;
+  total_activities: number;
+  completed_activities: number;
+  total_synergies: number;
+  realized_synergies: number;
+  total_risks: number;
+  high_risk_count: number;
+
+  // AI metadata
+  ai_model?: string;
+  generation_time_ms?: number;
+  confidence_score?: number;
+  error_message?: string;
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+  target_close_date?: string;
+  actual_close_date?: string;
+  deleted_at?: string;
+}
+
+// Integration Phase
+export interface IntegrationPhase {
+  id: string;
+  playbook_id: string;
+
+  phase_name: string;
+  phase_type: PhaseType;
+  phase_order: number;
+  phase_description?: string;
+
+  // Objectives
+  objectives?: string[];
+  success_criteria?: string[];
+  key_milestones?: string[];
+
+  // Dates
+  start_date?: string;
+  end_date?: string;
+  duration_days?: number;
+
+  // Progress (auto-calculated)
+  total_activities: number;
+  completed_activities: number;
+  status: ActivityStatus;
+
+  created_at: string;
+}
+
+// Integration Workstream
+export interface IntegrationWorkstream {
+  id: string;
+  playbook_id: string;
+
+  workstream_name: string;
+  workstream_description?: string;
+  workstream_lead?: string;
+
+  // Objectives
+  objectives?: string[];
+  key_deliverables?: string[];
+
+  // Progress (auto-calculated)
+  total_activities: number;
+  completed_activities: number;
+  status: ActivityStatus;
+
+  // Budget
+  budget_allocated?: number;
+  budget_spent?: number;
+
+  created_at: string;
+}
+
+// Integration Activity
+export interface IntegrationActivity {
+  id: string;
+  playbook_id: string;
+  phase_id?: string;
+  workstream_id?: string;
+
+  // Activity details
+  activity_name: string;
+  description?: string;
+  category: ActivityCategory;
+
+  // Ownership
+  owner_id?: string;
+  responsible_party: ResponsibleParty;
+
+  // Scheduling
+  target_start_date?: string;
+  target_end_date?: string;
+  actual_start_date?: string;
+  actual_end_date?: string;
+  duration_days?: number;
+
+  // Dependencies
+  depends_on?: string[];
+  blocks_activity_ids?: string[];
+  critical_path: boolean;
+
+  // Priority and status
+  priority: ActivityPriority;
+  status: ActivityStatus;
+  completion_percentage: number;
+
+  // Deliverables
+  deliverables?: string[];
+  deliverable_document_ids?: string[];
+
+  // Risks
+  risk_level?: RiskImpact;
+  risk_description?: string;
+  mitigation_plan?: string;
+
+  // Notes
+  notes?: string;
+  blockers?: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// Day 1 Checklist Item
+export interface IntegrationDay1ChecklistItem {
+  id: string;
+  playbook_id: string;
+
+  checklist_item: string;
+  category: string;
+  item_order?: number;
+  item_description?: string;
+
+  // Ownership
+  responsible_party: ResponsibleParty;
+  owner_id?: string;
+
+  // Status
+  status: 'pending' | 'in_progress' | 'completed' | 'not_applicable';
+  completed_at?: string;
+  completed_by?: string;
+
+  // Evidence
+  evidence_document_id?: string;
+  notes?: string;
+
+  // Importance
+  is_critical: boolean;
+
+  created_at: string;
+}
+
+// Integration Synergy
+export interface IntegrationSynergy {
+  id: string;
+  playbook_id: string;
+
+  synergy_type: SynergyType;
+  category: SynergyCategory;
+
+  // Description
+  synergy_name: string;
+  description?: string;
+
+  // Financial projections
+  year_1_target?: number;
+  year_2_target?: number;
+  year_3_target?: number;
+  total_target?: number;
+
+  // Realization
+  year_1_actual: number;
+  year_2_actual: number;
+  year_3_actual: number;
+  total_actual: number;
+
+  // Implementation
+  implementation_cost?: number;
+  implementation_timeline_days?: number;
+  probability_of_realization?: number;
+  risk_adjusted_value?: number;
+
+  // Ownership
+  owner_id?: string;
+  workstream_id?: string;
+
+  // Status
+  status: SynergyStatus;
+
+  // Tracking
+  last_measured_date?: string;
+  measurement_frequency?: string;
+
+  // Source
+  source_hypothesis_id?: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// Integration Risk
+export interface IntegrationRisk {
+  id: string;
+  playbook_id: string;
+
+  risk_name: string;
+  risk_description: string;
+  risk_category: string;
+
+  // Impact and probability
+  impact: RiskImpact;
+  probability: RiskProbability;
+  risk_score?: number;
+
+  // Mitigation
+  mitigation_plan?: string;
+  mitigation_owner?: string;
+  contingency_plan?: string;
+
+  // Status
+  status: RiskStatus;
+  realized_at?: string;
+  realized_impact?: string;
+
+  // Monitoring
+  review_frequency?: string;
+  last_reviewed_date?: string;
+  next_review_date?: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// Integration KPI
+export interface IntegrationKPI {
+  id: string;
+  playbook_id: string;
+
+  kpi_name: string;
+  kpi_category: KPICategory;
+  kpi_description?: string;
+
+  // Measurement
+  unit?: string;
+  target_value?: number;
+  current_value?: number;
+  baseline_value?: number;
+
+  // Trend
+  trend?: string;
+  variance_percentage?: number;
+
+  // Ownership
+  owner_id?: string;
+
+  // Status
+  status?: KPIStatus;
+
+  // Measurement
+  measurement_frequency?: string;
+  last_measured_date?: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// Extended Playbook with Details
+export interface IntegrationPlaybookWithDetails extends IntegrationPlaybook {
+  phases: IntegrationPhase[];
+  workstreams: IntegrationWorkstream[];
+  activities: IntegrationActivity[];
+  day1_checklist: IntegrationDay1ChecklistItem[];
+  synergies: IntegrationSynergy[];
+  risks: IntegrationRisk[];
+  kpis: IntegrationKPI[];
+  creator_name?: string;
+  creator_email?: string;
+  data_room_name?: string;
+}
+
+// Request/Response Types
+
+export interface CreatePlaybookRequest {
+  data_room_id: string;
+  playbook_name: string;
+  deal_type: DealType;
+  deal_rationale?: string;
+  integration_objectives?: string[];
+  target_close_date?: string;
+}
+
+export interface GeneratePlaybookRequest {
+  use_tech_stack_analysis?: boolean;
+  use_deal_hypotheses?: boolean;
+  template_id?: string;
+  custom_objectives?: string[];
+}
+
+export interface UpdateActivityRequest {
+  activity_name?: string;
+  description?: string;
+  owner_id?: string;
+  status?: ActivityStatus;
+  completion_percentage?: number;
+  actual_start_date?: string;
+  actual_end_date?: string;
+  notes?: string;
+  blockers?: string;
+}
+
+export interface UpdateSynergyRequest {
+  year_1_actual?: number;
+  year_2_actual?: number;
+  year_3_actual?: number;
+  status?: SynergyStatus;
+  last_measured_date?: string;
+  notes?: string;
+}
+
+export interface UpdateRiskRequest {
+  status?: RiskStatus;
+  mitigation_plan?: string;
+  realized_at?: string;
+  realized_impact?: string;
+  last_reviewed_date?: string;
+  next_review_date?: string;
+}
+
+export interface PlaybookGenerationContext {
+  data_room_id: string;
+  deal_info: {
+    deal_type: DealType;
+    target_company_name?: string;
+    industry?: string;
+    deal_size?: number;
+  };
+  tech_stack_findings?: {
+    technologies: TechStackTechnology[];
+    integration_complexity?: string;
+    risks: TechStackFindingWithTechnologies[];
+  };
+  deal_hypotheses?: {
+    cost_synergies: unknown[];
+    revenue_synergies: unknown[];
+    risks: unknown[];
+  };
+  user_inputs?: {
+    objectives?: string[];
+    priorities?: string[];
+  };
+}
+
+export interface PlaybookGenerationResult {
+  playbook: IntegrationPlaybook;
+  phases: IntegrationPhase[];
+  workstreams: IntegrationWorkstream[];
+  activities: IntegrationActivity[];
+  day1_checklist: IntegrationDay1ChecklistItem[];
+  synergies: IntegrationSynergy[];
+  risks: IntegrationRisk[];
+  kpis: IntegrationKPI[];
+  generation_time_ms: number;
+  confidence_score: number;
+}
+
+export interface PlaybookTemplate {
+  id: string;
+  template_name: string;
+  deal_type: DealType;
+  industry?: string;
+  phases: Partial<IntegrationPhase>[];
+  workstreams: Partial<IntegrationWorkstream>[];
+  activities: Partial<IntegrationActivity>[];
+  day1_checklist: Partial<IntegrationDay1ChecklistItem>[];
+  typical_synergies: Partial<IntegrationSynergy>[];
+  typical_risks: Partial<IntegrationRisk>[];
+  typical_kpis: Partial<IntegrationKPI>[];
+}

@@ -3,8 +3,10 @@
  * Check if RAG columns and tables exist
  */
 
-const { createClient } = require('@supabase/supabase-js')
-require('dotenv').config({ path: '.env.local' })
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import fs from 'fs';
+dotenv.config({ path: '.env.local' });
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -60,11 +62,11 @@ checkSchema().then(success => {
     console.log('   https://supabase.com/dashboard/project/fuqdbewftdthbjfcecrz/sql/new')
     console.log('\n2. Copy and execute this SQL:\n')
     console.log('-'.repeat(60))
-    console.log(require('fs').readFileSync('supabase/migrations/20251026000001_add_rag_preferences.sql', 'utf8'))
+    console.log(fs.readFileSync('supabase/migrations/20251026000001_add_rag_preferences.sql', 'utf8'))
     console.log('-'.repeat(60))
     console.log('\n3. Then execute:\n')
     console.log('-'.repeat(60))
-    console.log(require('fs').readFileSync('supabase/migrations/20251026000002_create_rag_query_logs.sql', 'utf8'))
+    console.log(fs.readFileSync('supabase/migrations/20251026000002_create_rag_query_logs.sql', 'utf8'))
     console.log('-'.repeat(60))
   }
   process.exit(success ? 0 : 1)

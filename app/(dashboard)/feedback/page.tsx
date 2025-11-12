@@ -170,7 +170,7 @@ export default function FeedbackPage() {
                 </h3>
                 <div className="mt-2 text-sm text-green-700">
                   <p>
-                    Thank you for your feedback. We've received your message and will review it shortly.
+                    {`Thank you for your feedback. We've received your message and will review it shortly.`}
                   </p>
                   {referenceId && (
                     <p className="mt-2">

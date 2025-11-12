@@ -8,6 +8,7 @@
 import { usePresence } from '@/hooks/use-presence'
 import { Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 
 interface TeamPresenceProps {
   entityType: 'company' | 'stream' | 'data_room' | 'list'
@@ -77,9 +78,11 @@ export function TeamPresence({ entityType, entityId, className = '' }: TeamPrese
               title={viewer.user_name}
             >
               {viewer.avatar_url ? (
-                <img
+                <Image
                   src={viewer.avatar_url}
                   alt={viewer.user_name}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform"
                 />
               ) : (

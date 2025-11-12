@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Camera, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 interface ScreenshotCaptureProps {
   screenshot: string | null;
@@ -100,10 +101,13 @@ export default function ScreenshotCapture({ screenshot, onScreenshotCapture }: S
 
       {screenshot ? (
         <div className="relative border border-gray-300 rounded-md overflow-hidden">
-          <img
+          <Image
             src={screenshot}
             alt="Screenshot"
+            width={800}
+            height={600}
             className="w-full h-auto max-h-96 object-contain"
+            style={{ width: '100%', height: 'auto' }}
           />
           <div className="absolute top-2 right-2 flex gap-2">
             <Button

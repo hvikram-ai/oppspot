@@ -9,7 +9,7 @@
  * export functionality, and deletion options
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -59,11 +59,8 @@ export function HistoryPanel({
 
   const DEFAULT_LIMIT = 50
 
-  useEffect(() => {
-    loadHistory()
-  }, [dataRoomId])
-
-  const loadHistory = async (cursor?: string) => {
+  // Wrap loadHistory in useCallback to prevent stale closures
+  const loadHistory = useCallback(async (cursor?: string) => {
     setLoading(true)
     setError(null)
 
@@ -95,7 +92,11 @@ export function HistoryPanel({
     } finally {
       setLoading(false)
     }
-  }
+  }, [dataRoomId])
+
+  useEffect(() => {
+    loadHistory()
+  }, [loadHistory])
 
   const loadMore = () => {
     if (nextCursor && !loading) {

@@ -239,7 +239,7 @@ export function QADocumentPreview({
               <p className="text-sm font-medium">Citation highlighted</p>
               {highlightInfo.text && (
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                  "{highlightInfo.text}"
+                  {`"${highlightInfo.text}"`}
                 </p>
               )}
             </div>
@@ -328,7 +328,7 @@ export function QADocumentPreview({
                       <CardContent className="p-3">
                         <p className="text-xs font-medium mb-1">Citation Context:</p>
                         <p className="text-sm text-muted-foreground italic">
-                          "{highlightInfo.text}"
+                          {`"${highlightInfo.text}"`}
                         </p>
                       </CardContent>
                     </Card>

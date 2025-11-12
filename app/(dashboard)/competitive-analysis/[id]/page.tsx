@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,13 +34,7 @@ export default function AnalysisDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    if (analysisId) {
-      fetchDashboardData();
-    }
-  }, [analysisId, refreshKey]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/competitive-analysis/${analysisId}`);
@@ -67,7 +61,13 @@ export default function AnalysisDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [analysisId, router]);
+
+  useEffect(() => {
+    if (analysisId) {
+      fetchDashboardData();
+    }
+  }, [analysisId, refreshKey, fetchDashboardData]);
 
   const handleRefreshComplete = () => {
     setRefreshKey((k) => k + 1);

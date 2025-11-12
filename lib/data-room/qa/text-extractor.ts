@@ -80,7 +80,7 @@ export async function extractText(
   config: OCRConfig = DEFAULT_OCR_CONFIG
 ): Promise<TextExtractionResult> {
   try {
-    // @ts-ignore - pdf-parse is a CommonJS module
+    // @ts-expect-error - pdf-parse is a CommonJS module
     const pdf = pdfParse.default || pdfParse;
 
     // Extract text using pdf-parse
@@ -147,7 +147,7 @@ async function extractPerPageText(
   const pages: PageText[] = [];
 
   try {
-    // @ts-ignore - pdf-parse is a CommonJS module
+    // @ts-expect-error - pdf-parse is a CommonJS module
     const pdf = pdfParse.default || pdfParse;
 
     // For now, we'll use pdf-parse to get the full text and estimate page boundaries

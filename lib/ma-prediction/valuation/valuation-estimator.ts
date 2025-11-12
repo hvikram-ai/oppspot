@@ -103,7 +103,7 @@ async function calculateRevenueMultipleValuation(
   );
 
   // Base multiple (industry average or fallback)
-  let baseMultiple = industryMultiple || getDefaultRevenueMultiple(financials.industry);
+  const baseMultiple = industryMultiple || getDefaultRevenueMultiple(financials.industry);
 
   // Adjust multiple based on prediction score
   // Higher likelihood = lower multiple (distressed/forced sale)
@@ -168,7 +168,7 @@ async function calculateEBITDAMultipleValuation(
   );
 
   // Base multiple (industry average or fallback)
-  let baseMultiple = industryMultiple || getDefaultEBITDAMultiple(financials.industry);
+  const baseMultiple = industryMultiple || getDefaultEBITDAMultiple(financials.industry);
 
   // Adjust multiple based on prediction score
   let adjustedMultipleLow = baseMultiple;

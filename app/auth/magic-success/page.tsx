@@ -145,7 +145,7 @@ export default function MagicSuccessPage() {
                   Welcome back!
                 </h1>
                 <p className="text-muted-foreground">
-                  You've been successfully authenticated
+                  {`You've been successfully authenticated`}
                 </p>
               </div>
 
@@ -167,7 +167,7 @@ export default function MagicSuccessPage() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                If you're not redirected automatically, click the button above
+                {`If you're not redirected automatically, click the button above`}
               </p>
             </CardContent>
           </Card>

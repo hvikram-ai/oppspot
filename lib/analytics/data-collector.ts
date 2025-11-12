@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { format, startOfDay, endOfDay, subDays } from 'date-fns'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 interface MetricData {
   category: string
@@ -10,8 +12,17 @@ interface MetricData {
   metadata?: Record<string, unknown>
 }
 
+interface BusinessWithRating {
+  id: string
+  name?: string
+  rating?: number | null
+  review_count?: number | null
+  created_at?: string
+  updated_at?: string
+}
+
 export class DataCollector {
-  private supabase: any
+  private supabase: SupabaseClient<Database> | null = null
 
   constructor() {
     this.initSupabase()
@@ -121,10 +132,10 @@ export class DataCollector {
     }
 
     const { data } = await query
-    
+
     if (!data || data.length === 0) return 0
-    
-    const sum = data.reduce((acc: number, b: any) => acc + (b.rating || 0), 0)
+
+    const sum = data.reduce((acc: number, b: BusinessWithRating) => acc + (b.rating || 0), 0)
     return sum / data.length
   }
 
@@ -139,10 +150,10 @@ export class DataCollector {
     }
 
     const { data } = await query
-    
+
     if (!data || data.length === 0) return 0
-    
-    return data.reduce((acc: number, b: any) => acc + (b.review_count || 0), 0)
+
+    return data.reduce((acc: number, b: BusinessWithRating) => acc + (b.review_count || 0), 0)
   }
 
   private async calculateGrowthRate(category: string, locationId?: string): Promise<number> {
@@ -208,13 +219,13 @@ export class DataCollector {
     }
 
     const { data } = await query
-    
+
     if (!data || data.length === 0) return 0.5 // Default medium demand
-    
+
     // Simple demand calculation based on review activity
-    const totalReviews = data.reduce((acc: number, b: any) => acc + (b.review_count || 0), 0)
+    const totalReviews = data.reduce((acc: number, b: BusinessWithRating) => acc + (b.review_count || 0), 0)
     const avgReviewsPerBusiness = totalReviews / data.length
-    
+
     // Normalize to 0-1 scale (assuming 100 reviews/business/month is high demand)
     return Math.min(avgReviewsPerBusiness / 100, 1)
   }
@@ -424,15 +435,15 @@ export class DataCollector {
 
     // Calculate statistical features
     const features: Record<string, unknown> = {}
-    
+
     for (const [metricType, values] of Object.entries(groupedMetrics)) {
-      const nums = values.map((v: any) => v.value)
+      const nums = values.map((v: { date: string; value: number }) => v.value)
       features[metricType] = {
         mean: this.calculateMean(nums),
         std: this.calculateStd(nums),
         min: Math.min(...nums),
         max: Math.max(...nums),
-        trend: this.calculateTrend(values),
+        trend: this.calculateTrend(values as Array<{ date: string; value: number }>),
         volatility: this.calculateVolatility(nums)
       }
     }

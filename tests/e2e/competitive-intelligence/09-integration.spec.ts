@@ -328,7 +328,7 @@ test.describe('Integration: Tab Switching Persistence', () => {
 });
 
 test.describe('Integration: Multiple Analyses Management', () => {
-  let analysisIds: string[] = [];
+  const analysisIds: string[] = [];
 
   test.afterAll(async ({ request }) => {
     for (const id of analysisIds) {

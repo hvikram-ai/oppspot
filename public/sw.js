@@ -4,13 +4,13 @@ const RUNTIME_CACHE = 'oppspot-runtime';
 const API_CACHE = 'oppspot-api';
 
 // Critical assets to cache immediately
+// Note: manifest.json removed from precache - browser loads it naturally
 const PRECACHE_ASSETS = [
   '/',
   '/dashboard',
   '/search',
   '/map',
   '/offline',
-  '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
 ];

@@ -37,41 +37,8 @@ export function UploadZone({ dataRoomId, onUploadComplete }: UploadZoneProps) {
     setIsDragging(false)
   }, [])
 
-  const handleFiles = useCallback(async (files: File[]) => {
-    // Add files to uploading state
-    const newUploadingFiles: UploadingFile[] = files.map(file => ({
-      file,
-      status: 'uploading',
-      progress: 0
-    }))
-
-    setUploadingFiles(prev => [...prev, ...newUploadingFiles])
-
-    // Upload each file
-    for (let i = 0; i < files.length; i++) {
-      await uploadFile(files[i], i + uploadingFiles.length)
-    }
-
-    // Notify parent
-    onUploadComplete()
-  }, [uploadingFiles.length, onUploadComplete])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-
-    const files = Array.from(e.dataTransfer.files)
-    handleFiles(files)
-  }, [handleFiles])
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files)
-      handleFiles(files)
-    }
-  }, [handleFiles])
-
-  const uploadFile = async (file: File, index: number) => {
+  // Wrap uploadFile in useCallback first to prevent dependency cycles
+  const uploadFile = useCallback(async (file: File, index: number) => {
     try {
       // Create FormData for file upload
       const formData = new FormData()
@@ -136,7 +103,41 @@ export function UploadZone({ dataRoomId, onUploadComplete }: UploadZoneProps) {
         )
       )
     }
-  }
+  }, [dataRoomId])
+
+  const handleFiles = useCallback(async (files: File[]) => {
+    // Add files to uploading state
+    const newUploadingFiles: UploadingFile[] = files.map(file => ({
+      file,
+      status: 'uploading',
+      progress: 0
+    }))
+
+    setUploadingFiles(prev => [...prev, ...newUploadingFiles])
+
+    // Upload each file
+    for (let i = 0; i < files.length; i++) {
+      await uploadFile(files[i], i + uploadingFiles.length)
+    }
+
+    // Notify parent
+    onUploadComplete()
+  }, [uploadingFiles.length, onUploadComplete, uploadFile])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const files = Array.from(e.dataTransfer.files)
+    handleFiles(files)
+  }, [handleFiles])
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files)
+      handleFiles(files)
+    }
+  }, [handleFiles])
 
   const removeFile = (index: number) => {
     setUploadingFiles(prev => prev.filter((_, i) => i !== index))

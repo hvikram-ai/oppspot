@@ -28,7 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Share2, UserPlus, Trash2, Loader2, Eye, Edit } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { AnalysisAccessGrant } from '@/lib/competitive-analysis/types';
 
@@ -48,14 +48,7 @@ export function ShareDialog({ analysisId, isOwner }: ShareDialogProps) {
   const [grants, setGrants] = useState<AnalysisAccessGrant[]>([]);
   const [loadingGrants, setLoadingGrants] = useState(false);
 
-  // Fetch existing grants when dialog opens
-  useEffect(() => {
-    if (open && isOwner) {
-      fetchGrants();
-    }
-  }, [open, isOwner]);
-
-  const fetchGrants = async () => {
+  const fetchGrants = useCallback(async () => {
     setLoadingGrants(true);
     try {
       const response = await fetch(`/api/competitive-analysis/${analysisId}/share`);
@@ -68,7 +61,14 @@ export function ShareDialog({ analysisId, isOwner }: ShareDialogProps) {
     } finally {
       setLoadingGrants(false);
     }
-  };
+  }, [analysisId]);
+
+  // Fetch existing grants when dialog opens
+  useEffect(() => {
+    if (open && isOwner) {
+      fetchGrants();
+    }
+  }, [open, isOwner, fetchGrants]);
 
   const handleInvite = async () => {
     if (!email || !email.includes('@')) {

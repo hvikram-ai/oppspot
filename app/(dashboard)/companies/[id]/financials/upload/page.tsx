@@ -211,7 +211,7 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
               </li>
               <li>
                 <strong>Ensure single currency</strong> - all amounts must be in the same currency
-                as your company's reporting currency
+                {`as your company's reporting currency`}
               </li>
               <li>
                 <strong>Use ISO date format</strong> (YYYY-MM-DD) for all date fields

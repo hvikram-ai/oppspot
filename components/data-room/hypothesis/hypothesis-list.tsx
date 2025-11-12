@@ -5,7 +5,7 @@
  * Grid/list view of hypotheses with filters
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { HypothesisCard } from './hypothesis-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,12 +44,8 @@ export function HypothesisList({
   const filters = useHypothesisFilters();
   const { setHypothesisFilters, clearHypothesisFilters } = useHypothesisStore();
 
-  // Fetch hypotheses
-  useEffect(() => {
-    fetchHypotheses();
-  }, [dataRoomId, filters]);
-
-  const fetchHypotheses = async () => {
+  // Wrap fetchHypotheses in useCallback to prevent stale closures
+  const fetchHypotheses = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -76,7 +72,12 @@ export function HypothesisList({
     } finally {
       setLoading(false);
     }
-  };
+  }, [dataRoomId, filters]);
+
+  // Fetch hypotheses
+  useEffect(() => {
+    fetchHypotheses();
+  }, [fetchHypotheses]);
 
   const handleSearch = (search: string) => {
     setHypothesisFilters({ ...filters, search });

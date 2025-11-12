@@ -795,7 +795,7 @@ export default function AISettingsPage() {
                     <ol className="text-sm list-decimal list-inside space-y-1">
                       <li>Visit <a href="https://ollama.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">ollama.ai</a></li>
                       <li>Download and install Ollama for your OS</li>
-                      <li>After installation, click the "Start Server" button above</li>
+                      <li>{`After installation, click the "Start Server" button above`}</li>
                       <li>Or manually run: <code className="bg-muted px-1 rounded">ollama serve</code></li>
                     </ol>
                   </AlertDescription>
@@ -808,7 +808,7 @@ export default function AISettingsPage() {
                   <Info className="h-4 w-4" />
                   <AlertDescription>
                     <p className="font-medium mb-2">Ollama is installed but not running</p>
-                    <p className="text-sm mb-2">Click the "Start Server" button above to automatically start the Ollama server, or start it manually:</p>
+                    <p className="text-sm mb-2">{`Click the "Start Server" button above to automatically start the Ollama server, or start it manually:`}</p>
                     <code className="text-sm bg-muted px-2 py-1 rounded block">ollama serve</code>
                   </AlertDescription>
                 </Alert>

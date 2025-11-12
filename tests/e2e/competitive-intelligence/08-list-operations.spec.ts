@@ -13,7 +13,7 @@ import {
 } from './fixtures';
 
 test.describe('Search Functionality', () => {
-  let analysisIds: string[] = [];
+  const analysisIds: string[] = [];
 
   test.beforeAll(async ({ request }) => {
     // Create multiple analyses with distinct titles
@@ -127,7 +127,7 @@ test.describe('Search Functionality', () => {
 });
 
 test.describe('Filter Functionality', () => {
-  let analysisIds: string[] = [];
+  const analysisIds: string[] = [];
 
   test.beforeAll(async ({ request }) => {
     // Create analyses with different statuses (if status field exists)
@@ -387,7 +387,7 @@ test.describe('Empty State', () => {
 });
 
 test.describe('Sorting', () => {
-  let analysisIds: string[] = [];
+  const analysisIds: string[] = [];
 
   test.beforeAll(async ({ request }) => {
     // Create analyses with different dates

@@ -292,6 +292,35 @@ export default function DataRoomDetailPage() {
         </Card>
       )}
 
+      {/* Integration Playbook CTA */}
+      <Card className="mb-6 border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                <div className="p-3 rounded-lg bg-blue-600">
+                  <FileText className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1">Generate Integration Playbook</h3>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered 100-day M&A integration plan with activities, synergies, and risks
+                </p>
+              </div>
+            </div>
+            <Button
+              size="lg"
+              onClick={() => router.push(`/data-rooms/${params.id}/integration-playbook`)}
+              className="gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <Sparkles className="h-5 w-5" />
+              View Playbook
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">

@@ -5,6 +5,37 @@
 
 import { create } from 'zustand'
 
+// Speech Recognition types for browser APIs
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList
+  resultIndex: number
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string
+  message: string
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  maxAlternatives: number
+  lang: string
+  start(): void
+  stop(): void
+  onresult: ((event: SpeechRecognitionEvent) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
+  onend: (() => void) | null
+  onstart: (() => void) | null
+}
+
+declare global {
+  interface Window {
+    webkitSpeechRecognition: new () => SpeechRecognition
+    SpeechRecognition: new () => SpeechRecognition
+  }
+}
+
 export interface VoiceCommand {
   transcript: string
   intent: string
@@ -31,7 +62,7 @@ export const useVoiceStore = create<VoiceState>()((set) => ({
 }))
 
 export class VoiceCommandService {
-  private recognition: any
+  private recognition: SpeechRecognition | null = null
   private synthesis: SpeechSynthesis | null = null
   private isListening: boolean = false
   private commandCallbacks: Set<(command: VoiceCommand) => void> = new Set()
@@ -40,10 +71,10 @@ export class VoiceCommandService {
     // Initialize Speech Recognition
     if (typeof window !== 'undefined') {
       if ('webkitSpeechRecognition' in window) {
-        this.recognition = new (window as any).webkitSpeechRecognition()
+        this.recognition = new window.webkitSpeechRecognition()
         this.setupRecognition()
       } else if ('SpeechRecognition' in window) {
-        this.recognition = new (window as any).SpeechRecognition()
+        this.recognition = new window.SpeechRecognition()
         this.setupRecognition()
       }
 
@@ -66,7 +97,7 @@ export class VoiceCommandService {
     this.recognition.lang = 'en-GB'           // Default language
 
     // Handle results
-    this.recognition.onresult = (event: any) => {
+    this.recognition.onresult = (event: SpeechRecognitionEvent) => {
       const results = event.results
       const last = results.length - 1
       const transcript = results[last][0].transcript
@@ -83,7 +114,7 @@ export class VoiceCommandService {
     }
 
     // Handle errors
-    this.recognition.onerror = (event: any) => {
+    this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('[VoiceCommand] Recognition error:', event.error)
       useVoiceStore.setState({
         error: this.getErrorMessage(event.error),

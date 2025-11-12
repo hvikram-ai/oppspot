@@ -476,19 +476,34 @@ export async function GET(request: NextRequest) {
 
     // Check LLM Manager status
     if (action === 'status') {
-      const manager = await getUserLLMManager('system')
-
+      // Try to get LLM Manager status with graceful fallback
       try {
+        const manager = await getUserLLMManager('system')
+
+        try {
+          return NextResponse.json({
+            llm_manager: {
+              enabled: true,
+              system: 'multi-provider',
+              description: 'Automatic provider selection with fallback support',
+              providers: 'Local Ollama, OpenAI, Anthropic, OpenRouter'
+            }
+          })
+        } finally {
+          await manager.cleanup()
+        }
+      } catch (managerError) {
+        // If LLM Manager initialization fails, return degraded status instead of error
+        console.warn('[AI Chat API] LLM Manager initialization failed:', managerError)
         return NextResponse.json({
           llm_manager: {
-            enabled: true,
-            system: 'multi-provider',
-            description: 'Automatic provider selection with fallback support',
-            providers: 'Local Ollama, OpenAI, Anthropic, OpenRouter'
+            enabled: false,
+            system: 'unavailable',
+            description: 'LLM Manager initialization failed - degraded mode',
+            providers: 'None available',
+            error: managerError instanceof Error ? managerError.message : 'Unknown error'
           }
         })
-      } finally {
-        await manager.cleanup()
       }
     }
 
@@ -498,7 +513,7 @@ export async function GET(request: NextRequest) {
       messages: []
     })
   } catch (error) {
-    console.error('[AI Chat API] Error:', error)
+    console.error('[AI Chat API] Unexpected error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch data' },
       { status: 500 }

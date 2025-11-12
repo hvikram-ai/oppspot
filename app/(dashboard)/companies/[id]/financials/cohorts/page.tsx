@@ -189,10 +189,10 @@ export default async function CohortsAnalysisPage({ params: paramsPromise, searc
                   <div>
                     <h3 className="font-semibold mb-1">What is Cohort Analysis?</h3>
                     <p className="text-muted-foreground">
-                      Cohort analysis groups customers by the month they first subscribed (their
+                      {`Cohort analysis groups customers by the month they first subscribed (their
                       "cohort month") and tracks how many remain active over time. This helps
                       identify retention trends and the lifetime value of different customer
-                      groups.
+                      groups.`}
                     </p>
                   </div>
 

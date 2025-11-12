@@ -378,7 +378,7 @@ test.describe('Data Room Q&A - Performance Validation', () => {
             const timeValue = parseInt(timeMatch[1]);
             const timeUnit = timeMatch[2];
 
-            let timeInSeconds = timeUnit.startsWith('m') ? timeValue / 1000 : timeValue;
+            const timeInSeconds = timeUnit.startsWith('m') ? timeValue / 1000 : timeValue;
 
             console.log(`Document: ${pageCount} pages processed in ${timeInSeconds}s`);
 

@@ -5,7 +5,7 @@
  * Display AI analysis results for documents + Structured Smart Summaries
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -67,52 +67,8 @@ export function AIInsightsSidebar({ document, analyses, loading = false }: AIIns
     }))
   }
 
-  // Fetch templates and existing summary
-  useEffect(() => {
-    fetchTemplates()
-    fetchSummary()
-
-    // Cleanup poll interval on unmount
-    return () => {
-      if (pollInterval) clearInterval(pollInterval)
-    }
-  }, [document.id])
-
-  const fetchTemplates = async () => {
-    try {
-      const response = await fetch('/api/data-room/templates')
-      const data = await response.json()
-      setTemplates(data.templates.map((t: any) => t.template))
-    } catch (error) {
-      console.error('Failed to fetch templates:', error)
-    }
-  }
-
-  const fetchSummary = async () => {
-    try {
-      setSummaryLoading(true)
-      // Try to get the latest summary for this document
-      const response = await fetch(`/api/data-room/summaries?documentId=${document.id}`)
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.summary) {
-          setSummary(data)
-
-          // If status is running, start polling
-          if (data.summary?.run?.status === 'running') {
-            startPolling(data.summary.run_id)
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch summary:', error)
-    } finally {
-      setSummaryLoading(false)
-    }
-  }
-
-  const startPolling = (runId: string) => {
+  // Start polling for summary status updates
+  const startPolling = useCallback((runId: string) => {
     // Clear existing interval
     if (pollInterval) clearInterval(pollInterval)
 
@@ -149,7 +105,52 @@ export function AIInsightsSidebar({ document, analyses, loading = false }: AIIns
     }, 3000)
 
     setPollInterval(interval)
-  }
+  }, [pollInterval])
+
+  const fetchTemplates = useCallback(async () => {
+    try {
+      const response = await fetch('/api/data-room/templates')
+      const data = await response.json()
+      setTemplates(data.templates.map((t: any) => t.template))
+    } catch (error) {
+      console.error('Failed to fetch templates:', error)
+    }
+  }, [])
+
+  const fetchSummary = useCallback(async () => {
+    try {
+      setSummaryLoading(true)
+      // Try to get the latest summary for this document
+      const response = await fetch(`/api/data-room/summaries?documentId=${document.id}`)
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.summary) {
+          setSummary(data)
+
+          // If status is running, start polling
+          if (data.summary?.run?.status === 'running') {
+            startPolling(data.summary.run_id)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch summary:', error)
+    } finally {
+      setSummaryLoading(false)
+    }
+  }, [document.id, startPolling])
+
+  // Fetch templates and existing summary
+  useEffect(() => {
+    fetchTemplates()
+    fetchSummary()
+
+    // Cleanup poll interval on unmount
+    return () => {
+      if (pollInterval) clearInterval(pollInterval)
+    }
+  }, [document.id, fetchTemplates, fetchSummary, pollInterval])
 
   const handleSummaryStarted = (runId: string) => {
     toast.info('Summary extraction started', {

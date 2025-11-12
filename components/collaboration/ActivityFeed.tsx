@@ -9,6 +9,7 @@ import { useActivityFeed } from '@/hooks/use-activity-feed'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format, formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Eye,
   Bookmark,
@@ -133,9 +134,11 @@ function ActivityItem({ activity, index }: { activity: Activity; index: number }
       {/* Avatar */}
       <div className="flex-shrink-0">
         {activity.user_avatar ? (
-          <img
+          <Image
             src={activity.user_avatar}
             alt={activity.user_name || 'User'}
+            width={32}
+            height={32}
             className="w-8 h-8 rounded-full"
           />
         ) : (

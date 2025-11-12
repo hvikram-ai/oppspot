@@ -232,7 +232,7 @@ export function CreateAnalysisDialog({ open, onOpenChange }: CreateAnalysisDialo
               maxLength={100}
             />
             <p className="text-xs text-muted-foreground">
-              E.g., "B2B SaaS", "E-commerce", "Fintech"
+              {`E.g., "B2B SaaS", "E-commerce", "Fintech"`}
             </p>
           </div>
 

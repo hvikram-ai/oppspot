@@ -7,6 +7,9 @@
 import { NextResponse } from 'next/server';
 import { advancedFilterService } from '@/lib/search/advanced-filter-service';
 
+// Mark as dynamic since we use cookies() for authentication
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const filterOptions = await advancedFilterService.getFilterOptions();

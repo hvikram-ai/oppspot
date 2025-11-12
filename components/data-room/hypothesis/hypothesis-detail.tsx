@@ -5,7 +5,7 @@
  * Full detail view with tabs for overview, evidence, metrics, and activity
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,11 +63,8 @@ export function HypothesisDetail({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    fetchHypothesis();
-  }, [hypothesisId]);
-
-  const fetchHypothesis = async () => {
+  // Wrap fetchHypothesis in useCallback to prevent stale closures
+  const fetchHypothesis = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/data-room/hypotheses/${hypothesisId}`);
@@ -81,7 +78,11 @@ export function HypothesisDetail({
     } finally {
       setLoading(false);
     }
-  };
+  }, [hypothesisId]);
+
+  useEffect(() => {
+    fetchHypothesis();
+  }, [fetchHypothesis]);
 
   const handleRefresh = () => {
     fetchHypothesis();

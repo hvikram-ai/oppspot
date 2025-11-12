@@ -12,7 +12,7 @@
  * Integrates with Zustand store for state management.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRedFlagsStore } from '@/lib/stores/red-flags-store';
 import { RedFlag, RedFlagEvidence, RedFlagAction } from '@/lib/red-flags/types';
 import {
@@ -110,18 +110,10 @@ export function RedFlagDetailDrawer() {
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
 
   /**
-   * Fetch flag details when drawer opens
-   */
-  useEffect(() => {
-    if (isDetailDrawerOpen && selectedFlagId && currentEntityId) {
-      fetchFlagDetails();
-    }
-  }, [isDetailDrawerOpen, selectedFlagId, currentEntityId]);
-
-  /**
    * Fetch flag details from API
+   * Wrapped in useCallback to prevent stale closures
    */
-  const fetchFlagDetails = async () => {
+  const fetchFlagDetails = useCallback(async () => {
     if (!selectedFlagId || !currentEntityId) return;
 
     setIsLoading(true);
@@ -145,7 +137,16 @@ export function RedFlagDetailDrawer() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedFlagId, currentEntityId]);
+
+  /**
+   * Fetch flag details when drawer opens
+   */
+  useEffect(() => {
+    if (isDetailDrawerOpen && selectedFlagId && currentEntityId) {
+      fetchFlagDetails();
+    }
+  }, [isDetailDrawerOpen, selectedFlagId, currentEntityId, fetchFlagDetails]);
 
   /**
    * Handle status change

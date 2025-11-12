@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ArrowLeft,
@@ -431,11 +432,14 @@ export default function FeedbackDetailPage() {
 
               {/* Screenshot */}
               {feedback.screenshot_url && (
-                <div className="mt-4">
-                  <img
+                <div className="mt-4 relative w-full">
+                  <Image
                     src={feedback.screenshot_url}
                     alt="Screenshot"
+                    width={800}
+                    height={600}
                     className="max-w-full h-auto rounded-md border border-gray-200"
+                    style={{ width: '100%', height: 'auto' }}
                   />
                 </div>
               )}

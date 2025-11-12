@@ -5,7 +5,7 @@
  * Table for tracking hypothesis validation metrics and KPIs
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -72,11 +72,8 @@ export function MetricsTracker({ hypothesisId, onMetricsChange }: MetricsTracker
   const [editingMetric, setEditingMetric] = useState<HypothesisMetric | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchMetrics();
-  }, [hypothesisId]);
-
-  const fetchMetrics = async () => {
+  // Wrap fetchMetrics in useCallback to prevent stale closures
+  const fetchMetrics = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/data-room/hypotheses/${hypothesisId}/metrics`);
@@ -90,7 +87,11 @@ export function MetricsTracker({ hypothesisId, onMetricsChange }: MetricsTracker
     } finally {
       setLoading(false);
     }
-  };
+  }, [hypothesisId]);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   const handleAddMetric = () => {
     setEditingMetric(null);

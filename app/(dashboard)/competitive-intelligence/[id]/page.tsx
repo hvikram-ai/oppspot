@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,13 +52,7 @@ export default function CompetitiveAnalysisDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (analysisId) {
-      fetchAnalysisData();
-    }
-  }, [analysisId]);
-
-  const fetchAnalysisData = async () => {
+  const fetchAnalysisData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -91,7 +85,13 @@ export default function CompetitiveAnalysisDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [analysisId]);
+
+  useEffect(() => {
+    if (analysisId) {
+      fetchAnalysisData();
+    }
+  }, [analysisId, fetchAnalysisData]);
 
   const handleRefreshComplete = () => {
     fetchAnalysisData();

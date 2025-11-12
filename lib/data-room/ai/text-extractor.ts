@@ -28,7 +28,7 @@ export async function extractTextFromPDF(
   buffer: Buffer
 ): Promise<TextExtractionResult> {
   try {
-    // @ts-ignore - pdf-parse is a CommonJS module
+    // @ts-expect-error - pdf-parse is a CommonJS module
     const pdf = pdfParse.default || pdfParse;
     const data = await pdf(buffer);
 

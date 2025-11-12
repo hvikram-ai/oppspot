@@ -5,7 +5,7 @@
  * Form dialog for creating/editing hypotheses
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -102,17 +102,8 @@ export function HypothesisEditor({
 
   const isEditMode = !!hypothesisId;
 
-  // Load existing hypothesis in edit mode
-  useEffect(() => {
-    if (open && hypothesisId) {
-      loadHypothesis(hypothesisId);
-    } else if (open && !hypothesisId) {
-      // Reset form for create mode
-      resetForm();
-    }
-  }, [open, hypothesisId]);
-
-  const loadHypothesis = async (id: string) => {
+  // Wrap loadHypothesis in useCallback to prevent stale closures
+  const loadHypothesis = useCallback(async (id: string) => {
     setLoadingExisting(true);
     try {
       const response = await fetch(`/api/data-room/hypotheses/${id}`);
@@ -140,7 +131,17 @@ export function HypothesisEditor({
     } finally {
       setLoadingExisting(false);
     }
-  };
+  }, [toast]);
+
+  // Load existing hypothesis in edit mode
+  useEffect(() => {
+    if (open && hypothesisId) {
+      loadHypothesis(hypothesisId);
+    } else if (open && !hypothesisId) {
+      // Reset form for create mode
+      resetForm();
+    }
+  }, [open, hypothesisId, loadHypothesis]);
 
   const resetForm = () => {
     setTitle('');
@@ -291,7 +292,7 @@ export function HypothesisEditor({
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Be specific about what you're testing and how you'll validate it
+                {`Be specific about what you're testing and how you'll validate it`}
               </p>
             </div>
 

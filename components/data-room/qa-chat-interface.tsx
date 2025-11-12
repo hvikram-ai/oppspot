@@ -147,7 +147,7 @@ export function QAChatInterface({
   const handleStreamingResponse = async (body: ReadableStream<Uint8Array>) => {
     const reader = body.getReader()
     const decoder = new TextDecoder()
-    let currentCitations: CitationResponse[] = []
+    const currentCitations: CitationResponse[] = []
     let queryId = ''
     let metrics: QueryMetrics | undefined
 
@@ -285,7 +285,7 @@ export function QAChatInterface({
               <div className="space-y-2">
                 <MessageSquare className="h-12 w-12 mx-auto opacity-50" />
                 <p className="text-sm">Ask questions about the documents in this data room</p>
-                <p className="text-xs">I'll provide answers with citations to specific pages</p>
+                <p className="text-xs">{`I'll provide answers with citations to specific pages`}</p>
               </div>
             </div>
           )}
