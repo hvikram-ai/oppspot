@@ -25,7 +25,8 @@ import {
   Twitter,
   Linkedin,
   BookmarkCheck,
-  Shield
+  Shield,
+  Leaf
 } from 'lucide-react'
 import NextLink from 'next/link'
 import { toast } from 'sonner'
@@ -260,6 +261,14 @@ export function BusinessActions({ business }: BusinessActionsProps) {
           <Button variant="outline" className="w-full">
             <Shield className="mr-2 h-4 w-4 text-red-600" />
             Red Flag Radar
+          </Button>
+        </NextLink>
+
+        {/* ESG Risk Screening */}
+        <NextLink href={`/companies/${business.id}/esg`} className="w-full">
+          <Button variant="outline" className="w-full">
+            <Leaf className="mr-2 h-4 w-4 text-green-600" />
+            ESG Risk Screening
           </Button>
         </NextLink>
 
