@@ -3,7 +3,7 @@
  * Tests: T016-T019
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const API_BASE = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
@@ -17,9 +17,9 @@ test.describe("Collection Access API", () => {
     await page.waitForURL("/");
   });
 
-  async function getAuthCookie(page: any) {
+  async function getAuthCookie(page: Page) {
     const cookies = await page.context().cookies();
-    const authCookie = cookies.find((c: any) => c.name.includes("auth"));
+    const authCookie = cookies.find((c) => c.name.includes("auth"));
     return authCookie ? `${authCookie.name}=${authCookie.value}` : "";
   }
 
