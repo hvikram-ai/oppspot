@@ -70,10 +70,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[Scraping API] Error:', error);
+    console.error('[Scraping API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       {
         error: 'Failed to create scraping job',
         message: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : String(error),
       },
       { status: 500 }
     );
