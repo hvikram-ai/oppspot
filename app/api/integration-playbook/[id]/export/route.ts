@@ -15,7 +15,7 @@ import { PlaybookPDFDocument } from '@/lib/data-room/integration-playbook/pdf-ex
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -29,7 +29,8 @@ export async function GET(
       );
     }
 
-    const playbookId = params.id;
+    const resolvedParams = await params;
+    const playbookId = resolvedParams.id;
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'json';
 

@@ -30,9 +30,8 @@ import {
 } from '@/lib/hooks/use-tech-stack'
 import { useToast } from '@/hooks/use-toast'
 
-export default function TechStackPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params)
-  const dataRoomId = resolvedParams.id
+export default function TechStackPage({ params }: { params: { id: string } }) {
+  const dataRoomId = params.id
   const router = useRouter()
   const { toast } = useToast()
 
