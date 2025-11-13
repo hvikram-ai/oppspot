@@ -599,11 +599,13 @@ Current git configuration for this repository:
 ## Deployment Information
 
 ### Production URLs
-- **Primary Vercel Deployment**: https://oppspot-one.vercel.app/
+- **Primary Vercel Deployment**: https://oppspot-one.vercel.app/ ⭐ **USE THIS URL**
 - **Vercel Account**: hirendra.vikram@boardguru.ai
 - **Vercel Project Dashboard**: https://vercel.com/boardguruhv/oppspot-one
-- **Custom Domain**: Not yet configured (potential: https://oppspot.ai/)
+- **Custom Domain (oppspot.ai)**: ⚠️ Currently pointing to old deployment - DO NOT USE until fixed
 - **Note**: OAuth uses `window.location.origin` dynamically - works with any deployment URL
+
+**Important**: The custom domain `oppspot.ai` is currently pointing to a stale/old deployment and is NOT receiving the latest updates from GitHub. Always use `oppspot-one.vercel.app` for testing and sharing until the domain routing is fixed in Vercel dashboard.
 
 ### Deployment Platform
 - **Hosting**: Vercel (automatic deployment on push to main branch)
