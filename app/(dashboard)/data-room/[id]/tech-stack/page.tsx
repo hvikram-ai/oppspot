@@ -119,7 +119,7 @@ export default function TechStackPage({ params }: { params: { id: string } }) {
     }
   }
 
-  const handleDelete = async (analysisId: string) {
+  const handleDelete = async (analysisId: string) => {
     if (
       !confirm(
         'Are you sure you want to delete this tech stack analysis? This action cannot be undone.'
