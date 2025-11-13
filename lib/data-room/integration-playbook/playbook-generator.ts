@@ -3,7 +3,7 @@
  * Main orchestrator for AI-powered 100-day M&A integration plan generation
  */
 
-import { LLMManager } from '@/lib/ai/llm-manager';
+import { createLLMManager, type LLMManager } from '@/lib/llm/manager/LLMManager';
 import { PlaybookRepository } from '@/lib/data-room/repository/playbook-repository';
 import { TechStackRepository } from '@/lib/data-room/repository/tech-stack-repository';
 import { getTemplateByDealType } from './template-library';
@@ -22,14 +22,30 @@ import type {
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export class PlaybookGenerator {
-  private llmManager: LLMManager;
+  private llmManager: LLMManager | null = null;
   private repository: PlaybookRepository;
   private techStackRepo: TechStackRepository;
+  private userId: string;
 
-  constructor(supabase: SupabaseClient) {
-    this.llmManager = new LLMManager();
+  constructor(supabase: SupabaseClient, userId: string) {
+    this.userId = userId;
     this.repository = new PlaybookRepository(supabase);
     this.techStackRepo = new TechStackRepository(supabase);
+  }
+
+  /**
+   * Initialize LLM manager (lazy initialization)
+   */
+  private async ensureLLMManager(): Promise<LLMManager> {
+    if (!this.llmManager) {
+      this.llmManager = await createLLMManager({
+        userId: this.userId,
+        enableFallback: true,
+        enableCaching: true,
+        enableUsageTracking: true,
+      });
+    }
+    return this.llmManager;
   }
 
   /**
@@ -215,14 +231,17 @@ export class PlaybookGenerator {
     const prompt = this.buildActivitiesPrompt(context, template);
 
     try {
-      const response = await this.llmManager.generateText({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'anthropic/claude-3.5-sonnet',
-        maxTokens: 4000,
-        temperature: 0.3,
-      });
+      const llmManager = await this.ensureLLMManager();
+      const response = await llmManager.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          model: 'anthropic/claude-3.5-sonnet',
+          maxTokens: 4000,
+          temperature: 0.3,
+        }
+      );
 
-      const parsed = JSON.parse(response.text);
+      const parsed = JSON.parse(response.content);
       return parsed.activities || [];
     } catch (error) {
       console.error('Activity generation failed, using template fallback:', error);

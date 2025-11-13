@@ -27,7 +27,8 @@ import {
   Clock,
   Download,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  DollarSign
 } from 'lucide-react'
 import type { DataRoom } from '@/lib/data-room/types'
 import { UploadZone } from '@/components/data-room/upload-zone'
@@ -323,10 +324,14 @@ export default function DataRoomDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="documents" className="gap-2">
             <FileText className="h-4 w-4" />
             Documents
+          </TabsTrigger>
+          <TabsTrigger value="valuations" className="gap-2">
+            <DollarSign className="h-4 w-4" />
+            Valuations
           </TabsTrigger>
           <TabsTrigger value="activity" className="gap-2">
             <Activity className="h-4 w-4" />
@@ -355,6 +360,27 @@ export default function DataRoomDetailPage() {
             documents={(dataRoom.documents || []) as any}
             onDocumentDeleted={fetchDataRoom}
           />
+        </TabsContent>
+
+        {/* Valuations Tab */}
+        <TabsContent value="valuations">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <DollarSign className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">SaaS Valuation Models</h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-md">
+                  Generate AI-powered company valuations with revenue multiples, comparables, and confidence scoring.
+                </p>
+                <Link href={`/data-room/${dataRoom.id}/valuations`}>
+                  <Button>
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Go to Valuations
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Activity Tab */}

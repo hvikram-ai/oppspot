@@ -135,7 +135,7 @@ export async function POST(
     );
 
     // Initialize services
-    const detector = new TechnologyDetector();
+    const detector = new TechnologyDetector(user.id);
     const evidenceExtractor = new EvidenceExtractor(supabase);
     const riskAssessor = new RiskAssessor();
     const findingsGenerator = new FindingsGenerator();

@@ -3,7 +3,7 @@
  * AI-powered technology detection and classification from document text
  */
 
-import { LLMManager } from '@/lib/ai/llm-manager';
+import { createLLMManager, type LLMManager } from '@/lib/llm/manager/LLMManager';
 import {
   TechCategory,
   TechAuthenticity,
@@ -56,10 +56,26 @@ export interface DocumentTechnologyAnalysis {
  * TechnologyDetector - AI-powered technology detection
  */
 export class TechnologyDetector {
-  private llmManager: LLMManager;
+  private llmManager: LLMManager | null = null;
+  private userId: string;
 
-  constructor() {
-    this.llmManager = new LLMManager();
+  constructor(userId: string) {
+    this.userId = userId;
+  }
+
+  /**
+   * Initialize LLM manager (lazy initialization)
+   */
+  private async ensureLLMManager(): Promise<LLMManager> {
+    if (!this.llmManager) {
+      this.llmManager = await createLLMManager({
+        userId: this.userId,
+        enableFallback: true,
+        enableCaching: true,
+        enableUsageTracking: true,
+      });
+    }
+    return this.llmManager;
   }
 
   /**
@@ -180,12 +196,15 @@ Example format:
 ]`;
 
     try {
-      const response = await this.llmManager.generateText({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'anthropic/claude-3.5-sonnet',
-        maxTokens: 4000,
-        temperature: 0.1, // Low temperature for consistent output
-      });
+      const llmManager = await this.ensureLLMManager();
+      const response = await llmManager.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          model: 'anthropic/claude-3.5-sonnet',
+          maxTokens: 4000,
+          temperature: 0.1, // Low temperature for consistent output
+        }
+      );
 
       // Parse AI response
       const content = response.content.trim();

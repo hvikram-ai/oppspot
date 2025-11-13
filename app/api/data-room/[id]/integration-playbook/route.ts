@@ -67,7 +67,7 @@ export async function POST(
     };
 
     // Generate playbook
-    const generator = new PlaybookGenerator(supabase);
+    const generator = new PlaybookGenerator(supabase, user.id);
     const result = await generator.generatePlaybook(
       playbookRequest,
       generateRequest,
