@@ -6,6 +6,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { WebsiteScraper } from './providers/website-scraper';
 import { AIDataNormalizer } from './ai-normalizer';
+import { discoverCompanyWebsite } from './website-discovery';
 import type {
   ScrapingJobRequest,
   ScrapingJob,
@@ -81,12 +82,19 @@ export class ScrapingOrchestrator {
         }
       }
 
-      // Normalize data using AI
-      const normalizedData = await this.normalizeWithAI(
-        job.company_name,
-        scrapedResults,
-        job.user_id
-      );
+      // Normalize data using AI (skip if API key not configured)
+      let normalizedData: NormalizedCompanyData;
+      try {
+        normalizedData = await this.normalizeWithAI(
+          job.company_name,
+          scrapedResults,
+          job.user_id
+        );
+      } catch (aiError) {
+        console.warn('[ScrapingOrchestrator] AI normalization failed, using basic extraction:', aiError);
+        // Fallback to basic normalization without AI
+        normalizedData = this.basicNormalization(job.company_name, scrapedResults);
+      }
 
       // Update or create business record
       await this.upsertBusiness(job.company_name, normalizedData, scrapedResults);
@@ -139,10 +147,37 @@ export class ScrapingOrchestrator {
    * Scrape company website
    */
   private async scrapeWebsite(job: ScrapingJob): Promise<ScrapingResult> {
-    const website = job.company_identifier;
+    let website = job.company_identifier;
 
+    // If no website provided, try to discover it
     if (!website) {
-      throw new Error('No website provided for scraping');
+      console.log(`[ScrapingOrchestrator] No website provided, attempting discovery for "${job.company_name}"`);
+
+      const discoveryResult = await discoverCompanyWebsite(job.company_name);
+
+      if (discoveryResult.website) {
+        website = discoveryResult.website;
+        console.log(`[ScrapingOrchestrator] Discovered website: ${website} (method: ${discoveryResult.method}, confidence: ${discoveryResult.confidence})`);
+
+        // Update job with discovered website
+        await this.supabase
+          .from('scraping_jobs')
+          .update({
+            company_identifier: website,
+            metadata: {
+              ...job.metadata,
+              discovered_website: true,
+              discovery_method: discoveryResult.method,
+              discovery_confidence: discoveryResult.confidence,
+              attempted_urls: discoveryResult.attempted,
+            },
+          })
+          .eq('id', job.id);
+      } else {
+        throw new Error(
+          `No website found for "${job.company_name}". Attempted: ${discoveryResult.attempted.join(', ')}`
+        );
+      }
     }
 
     const scraper = new WebsiteScraper(website);
@@ -255,6 +290,33 @@ export class ScrapingOrchestrator {
       // Create new
       await this.supabase.from('businesses').insert(businessData);
     }
+  }
+
+  /**
+   * Basic normalization without AI (fallback)
+   */
+  private basicNormalization(
+    companyName: string,
+    results: ScrapingResult[]
+  ): NormalizedCompanyData {
+    // Extract basic data from raw scraping results
+    const successfulResults = results.filter((r) => r.success && r.data);
+
+    // Combine all data
+    const combinedData = successfulResults.reduce(
+      (acc, result) => ({ ...acc, ...result.data }),
+      {} as Record<string, any>
+    );
+
+    return {
+      name: companyName,
+      website: combinedData.website || undefined,
+      description: combinedData.description || undefined,
+      industry: combinedData.industry || undefined,
+      confidence_score: 50, // Medium confidence for basic extraction
+      data_sources: results.map((r) => r.metadata?.provider || 'website') as any[],
+      last_updated: new Date().toISOString(),
+    };
   }
 
   /**
