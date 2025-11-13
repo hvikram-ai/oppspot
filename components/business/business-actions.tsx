@@ -32,12 +32,15 @@ import NextLink from 'next/link'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { SaveToCollectionButton } from '@/components/collections/save-to-collection-button'
+import { ScrapeButton } from './scrape-button'
 
 interface BusinessActionsProps {
   business: {
     id: string
     name: string
     description?: string | null
+    website?: string | null
+    company_number?: string | null
     [key: string]: unknown
   }
 }
@@ -271,6 +274,14 @@ export function BusinessActions({ business }: BusinessActionsProps) {
             ESG Risk Screening
           </Button>
         </NextLink>
+
+        {/* Scrape Company Data */}
+        <ScrapeButton
+          businessId={business.id}
+          companyName={business.name}
+          companyWebsite={business.website || undefined}
+          companyNumber={business.company_number || undefined}
+        />
 
         {/* Share Button */}
         <DropdownMenu>

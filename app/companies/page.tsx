@@ -17,7 +17,9 @@ import {
   Download,
   TrendingUp,
   Database,
-  TestTube
+  TestTube,
+  Globe,
+  Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -73,6 +75,8 @@ export default function CompaniesPage() {
   const [searchStats, setSearchStats] = useState<SearchStats | null>(null)
   const [enrichmentStatus, setEnrichmentStatus] = useState<Record<string, string>>({})
   const [useRealData, setUseRealData] = useState(true)
+  const [scrapingInProgress, setScrapingInProgress] = useState(false)
+  const [scrapingJobId, setScrapingJobId] = useState<string | null>(null)
 
   // Function to fetch enriched company data
   const fetchEnrichedData = useCallback(async (companyNumber: string) => {
@@ -237,14 +241,14 @@ export default function CompaniesPage() {
   const handleRefresh = async (companyId: string) => {
     try {
       toast.loading('Refreshing company data...')
-      
+
       const response = await fetch(`/api/companies/${companyId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ enrichments: ['profile', 'officers', 'filings'] })
       })
-      
+
       if (response.ok) {
         toast.success('Company data refreshed successfully!')
         // Refresh the search results
@@ -258,6 +262,105 @@ export default function CompaniesPage() {
       console.error('Refresh failed:', err)
       toast.error('An error occurred while refreshing')
     }
+  }
+
+  const handleFetchFromWeb = async () => {
+    if (!searchQuery.trim()) return
+
+    setScrapingInProgress(true)
+
+    try {
+      const response = await fetch('/api/scraping/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_name: searchQuery,
+          providers: ['website'],
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(`Scraping web for "${searchQuery}"...`, {
+          description: 'Gathering information from the web. This may take 10-30 seconds.',
+        })
+
+        // Store job ID and start polling
+        if (data.job_id) {
+          setScrapingJobId(data.job_id)
+          pollScrapingJob(data.job_id)
+        }
+      } else {
+        toast.error('Failed to start web scraping', {
+          description: data.error || 'Please try again later',
+        })
+        setScrapingInProgress(false)
+      }
+    } catch (error) {
+      console.error('Scrape error:', error)
+      toast.error('Failed to scrape company data', {
+        description: 'An unexpected error occurred',
+      })
+      setScrapingInProgress(false)
+    }
+  }
+
+  const pollScrapingJob = async (jobId: string) => {
+    let attempts = 0
+    const maxAttempts = 20 // 20 attempts * 3 seconds = 60 seconds max
+
+    const poll = async () => {
+      attempts++
+
+      try {
+        const response = await fetch(`/api/scraping/scrape?job_id=${jobId}`)
+        const data = await response.json()
+
+        if (response.ok && data.job) {
+          const job = data.job
+
+          if (job.status === 'completed') {
+            toast.success('Company data enriched!', {
+              description: 'Searching for the company again...',
+            })
+            setScrapingInProgress(false)
+            setScrapingJobId(null)
+
+            // Automatically re-run search to show newly scraped company
+            setTimeout(() => {
+              handleSearch()
+            }, 1000)
+            return
+          } else if (job.status === 'failed') {
+            toast.error('Web scraping failed', {
+              description: job.error_message || 'Unable to scrape company data',
+            })
+            setScrapingInProgress(false)
+            setScrapingJobId(null)
+            return
+          } else if (job.status === 'in_progress' || job.status === 'pending') {
+            // Continue polling
+            if (attempts < maxAttempts) {
+              setTimeout(poll, 3000) // Poll every 3 seconds
+            } else {
+              toast.info('Scraping is taking longer than expected', {
+                description: 'Try searching again in a few minutes',
+              })
+              setScrapingInProgress(false)
+              setScrapingJobId(null)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Poll error:', error)
+        setScrapingInProgress(false)
+        setScrapingJobId(null)
+      }
+    }
+
+    // Start polling after 3 seconds
+    setTimeout(poll, 3000)
   }
 
   return (
@@ -378,7 +481,7 @@ export default function CompaniesPage() {
                 Export CSV
               </Button>
             </div>
-            
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {searchResults.map((company) => (
                 <CompanyCard
@@ -391,6 +494,49 @@ export default function CompaniesPage() {
               ))}
             </div>
           </>
+        )}
+
+        {/* Empty State - No Results */}
+        {searchResults.length === 0 && !loading && searchQuery && (
+          <Card className="mt-8">
+            <CardContent className="pt-8 pb-8">
+              <div className="flex flex-col items-center justify-center text-center space-y-4">
+                <Globe className="h-16 w-16 text-muted-foreground opacity-50" />
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
+                  <p className="text-muted-foreground mb-1">
+                    No companies found in Companies House for &quot;{searchQuery}&quot;
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Try fetching company data directly from the web
+                  </p>
+                </div>
+                <Button
+                  onClick={handleFetchFromWeb}
+                  disabled={scrapingInProgress}
+                  size="lg"
+                  className="mt-4"
+                >
+                  {scrapingInProgress ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Scraping Web...
+                    </>
+                  ) : (
+                    <>
+                      <Database className="mr-2 h-5 w-5" />
+                      Fetch from Web
+                    </>
+                  )}
+                </Button>
+                {scrapingInProgress && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This may take 10-30 seconds. We&apos;ll automatically search again when done.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
       {/* Company Details Modal */}
