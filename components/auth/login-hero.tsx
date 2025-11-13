@@ -236,7 +236,7 @@ export function LoginHero() {
   }, [])
 
   return (
-    <div className="relative hidden lg:flex flex-col justify-center p-12 xl:p-16 overflow-hidden">
+    <div className="relative max-lg:hidden lg:flex flex-col justify-center p-12 xl:p-16 overflow-hidden">
       {/* Animated gradient background */}
       <AnimatedGradient />
 
