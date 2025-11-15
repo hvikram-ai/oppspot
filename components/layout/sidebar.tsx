@@ -32,7 +32,8 @@ import {
   Shield,
   AlertTriangle,
   GitBranch,
-  MessageCircle
+  MessageCircle,
+  Bell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/lib/hooks/use-sidebar'
@@ -433,6 +434,13 @@ export function Sidebar() {
           icon={CreditCard}
           label="Billing"
           tooltip="Manage subscription and billing information"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarItem
+          href="/weekly-updates"
+          icon={Bell}
+          label="What's New"
+          tooltip="Weekly platform updates, new features, and improvements"
           isCollapsed={isCollapsed}
         />
         <SidebarItem
