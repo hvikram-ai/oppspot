@@ -19,10 +19,12 @@ export const config = {
      * - public folder
      * - static assets
      */
-    '/(dashboard|profile|settings|search|map|companies|updates|lists|analytics)/:path*',
+    '/(dashboard|profile|settings|search|map|companies|updates|lists|analytics|data-rooms)/:path*',
     '/(auth)/:path*',
     '/api/companies/:path*',
     '/api/search/:path*',
     '/api/similar-companies/:path*',
+    '/api/data-rooms/:path*',
+    '/api/data-room/:path*',
   ],
 }
