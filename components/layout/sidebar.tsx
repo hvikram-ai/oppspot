@@ -137,6 +137,13 @@ export function Sidebar() {
               isCollapsed={isCollapsed}
             />
             <SidebarItem
+              href="/itp"
+              icon={Target}
+              label="Target Profiles"
+              tooltip="Create and manage Ideal Target Profiles with AI-powered matching"
+              isCollapsed={isCollapsed}
+            />
+            <SidebarItem
               href="/map"
               icon={Map}
               label="Map"
@@ -159,7 +166,7 @@ export function Sidebar() {
             />
             <SidebarItem
               href="/opp-scan"
-              icon={Target}
+              icon={Sparkles}
               label="Opp Scan"
               tooltip="Premium: Comprehensive acquisition intelligence and strategic fit analysis"
               isCollapsed={isCollapsed}

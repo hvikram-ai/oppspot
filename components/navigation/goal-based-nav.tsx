@@ -25,6 +25,7 @@ import {
   TrendingUp,
   List,
   Star,
+  Target,
 } from 'lucide-react';
 import {
   NavigationMenu,
@@ -83,6 +84,12 @@ const navGroups: NavGroup[] = [
         description: 'Find businesses by criteria',
         href: '/search',
         icon: <Search className="h-4 w-4" />,
+      },
+      {
+        label: 'Ideal Target Profiles',
+        description: 'AI-powered target matching',
+        href: '/itp',
+        icon: <Target className="h-4 w-4" />,
       },
       {
         label: 'Map View',

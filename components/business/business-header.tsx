@@ -3,15 +3,16 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Star, 
-  CheckCircle, 
-  MapPin, 
-  Globe, 
+import {
+  Star,
+  CheckCircle,
+  MapPin,
+  Globe,
   ExternalLink,
   Building2,
   TrendingUp
 } from 'lucide-react'
+import { ITPTagBadge } from '@/components/itp'
 
 interface BusinessHeaderProps {
   business: {
@@ -28,6 +29,11 @@ interface BusinessHeaderProps {
       country?: string
       [key: string]: unknown
     } | null
+    itp_matches?: Array<{
+      itp_id: string
+      itp_name: string
+      match_score: number
+    }>
     [key: string]: unknown
   }
 }
@@ -98,6 +104,25 @@ export function BusinessHeader({ business }: BusinessHeaderProps) {
                     {category}
                   </Badge>
                 ))}
+              </div>
+            )}
+
+            {/* ITP Matches */}
+            {business.itp_matches && business.itp_matches.length > 0 && (
+              <div className="space-y-2 mb-4">
+                <p className="text-sm font-medium text-muted-foreground">Matches Target Profiles:</p>
+                <div className="flex flex-wrap gap-2">
+                  {business.itp_matches.map((match) => (
+                    <ITPTagBadge
+                      key={match.itp_id}
+                      itpId={match.itp_id}
+                      itpName={match.itp_name}
+                      matchScore={match.match_score}
+                      showScore={true}
+                      onViewITP={(id) => window.location.href = `/itp?highlight=${id}`}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 

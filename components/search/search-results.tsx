@@ -21,6 +21,7 @@ import {
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import PredictionScoreBadge from '@/components/ma-prediction/prediction-score-badge'
+import { ITPTagBadge } from '@/components/itp'
 
 interface Business {
   id: string
@@ -45,6 +46,11 @@ interface Business {
     prediction_score: number
     likelihood_category: string
   }
+  itp_matches?: Array<{
+    itp_id: string
+    itp_name: string
+    match_score: number
+  }>
 }
 
 interface SearchResultsProps {
@@ -184,6 +190,25 @@ export function SearchResults({
                                 {category}
                               </Badge>
                             ))}
+                          </div>
+                        )}
+                        {business.itp_matches && business.itp_matches.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {business.itp_matches.slice(0, 2).map((match) => (
+                              <ITPTagBadge
+                                key={match.itp_id}
+                                itpId={match.itp_id}
+                                itpName={match.itp_name}
+                                matchScore={match.match_score}
+                                showScore={true}
+                                onViewITP={(id) => window.location.href = `/itp?highlight=${id}`}
+                              />
+                            ))}
+                            {business.itp_matches.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{business.itp_matches.length - 2} more
+                              </Badge>
+                            )}
                           </div>
                         )}
                       </div>
