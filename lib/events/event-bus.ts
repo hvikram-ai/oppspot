@@ -69,8 +69,9 @@ export class EventBus {
       priority: 1,
       async: true,
       handler: async (event) => {
-        if ((event.data as any).company_id) {
-          await this.triggerLeadScoring((event.data as any).company_id)
+        const eventData = event.data as { company_id?: string };
+        if (eventData.company_id) {
+          await this.triggerLeadScoring(eventData.company_id)
         }
       }
     })
@@ -83,8 +84,9 @@ export class EventBus {
       priority: 2,
       async: true,
       handler: async (event) => {
-        if ((event.data as any).company_id) {
-          await this.triggerBANTCalculation((event.data as any).company_id)
+        const eventData = event.data as { company_id?: string };
+        if (eventData.company_id) {
+          await this.triggerBANTCalculation(eventData.company_id)
         }
       }
     })
@@ -318,9 +320,10 @@ export class EventBus {
 
       // Update lead score in database
       const supabase = await createClient()
+      const predictionOutput = prediction.output as { score?: number };
       await supabase.from('lead_scores').upsert({
         company_id: companyId,
-        score: (prediction.output as any).score,
+        score: predictionOutput.score,
         updated_at: new Date().toISOString()
       })
     } catch (error) {
@@ -335,7 +338,8 @@ export class EventBus {
       const prediction = await modelManager.predict('bant-classifier-v1', companyData)
 
       // Emit qualification event if needed
-      if ((prediction.output as any).status === 'highly_qualified') {
+      const predictionOutput = prediction.output as { status?: string };
+      if (predictionOutput.status === 'highly_qualified') {
         this.emit({
           type: 'lead.qualified',
           source: 'bant-calculator',
@@ -419,7 +423,8 @@ export class EventBus {
 
   private async triggerModelTraining(event: SystemEvent): Promise<void> {
     try {
-      console.log('[ML] Training requested for model:', (event.data as any).model_id)
+      const eventData = event.data as { model_id?: string };
+      console.log('[ML] Training requested for model:', eventData.model_id)
       // In production, this would trigger actual model training pipeline
     } catch (error) {
       console.error('[EventBus] ML training error:', error)
