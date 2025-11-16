@@ -291,9 +291,9 @@ export class QualificationNotificationService {
     try {
       const supabase = await this.getSupabase()
 
-      // Query notification_settings without type assertion (table may not exist in types yet)
+      // Query notification_settings (table may not exist in types yet)
       const { data: settings, error } = await supabase
-        .from('notification_settings' as any)
+        .from('notification_settings' as 'notification_settings')
         .select('email_enabled, email_types')
         .eq('user_id', userId)
         .single()
@@ -315,9 +315,9 @@ export class QualificationNotificationService {
     try {
       const supabase = await this.getSupabase()
 
-      // Query notification_settings without type assertion (table may not exist in types yet)
+      // Query notification_settings (table may not exist in types yet)
       const { data: settings, error } = await supabase
-        .from('notification_settings' as any)
+        .from('notification_settings' as 'notification_settings')
         .select('push_enabled, push_types')
         .eq('user_id', userId)
         .single()
@@ -426,16 +426,25 @@ export class QualificationNotificationService {
       const now = new Date()
       const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000)
 
-      // Query lead_assignments without type assertion (table may not exist in types yet)
+      interface LeadAssignment {
+        lead_id: string;
+        assigned_to: string;
+        priority: string;
+        sla_deadline: string;
+        status: string;
+      }
+
+      // Query lead_assignments (table may not exist in types yet)
       const { data: assignments } = await supabase
-        .from('lead_assignments' as any)
+        .from('lead_assignments' as 'lead_assignments')
         .select('*')
         .in('status', ['assigned', 'accepted'])
         .lte('sla_deadline', oneHourFromNow.toISOString())
         .gte('sla_deadline', now.toISOString())
 
       if (assignments && assignments.length > 0) {
-        for (const assignment of assignments) {
+        const typedAssignments = assignments as unknown as LeadAssignment[];
+        for (const assignment of typedAssignments) {
           const timeRemaining = Math.floor(
             (new Date(assignment.sla_deadline).getTime() - now.getTime()) / (1000 * 60)
           )

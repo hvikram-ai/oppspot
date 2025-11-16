@@ -524,7 +524,7 @@ export class LeadRoutingEngine {
 
     // Get similar leads assigned to this member
     const { data: assignments } = await supabase
-      .from('lead_assignments' as any)
+      .from('lead_assignments' as 'lead_assignments')
       .select('status')
       .eq('assigned_to', memberId)
       .in('status', ['completed', 'reassigned']);
@@ -769,8 +769,8 @@ export class LeadRoutingEngine {
     const slaDeadline = new Date();
     slaDeadline.setHours(slaDeadline.getHours() + decision.sla);
 
-    await (supabase
-      .from('lead_assignments') as any)
+    await supabase
+      .from('lead_assignments' as 'lead_assignments')
       .insert({
         lead_id: leadId,
         company_id: companyId,
@@ -801,8 +801,8 @@ export class LeadRoutingEngine {
   ): Promise<void> {
     const supabase = await this.getSupabase();
 
-    await (supabase
-      .from('notifications') as any)
+    await supabase
+      .from('notifications' as 'notifications')
       .insert({
         user_id: assigneeId,
         type: 'lead_assigned',

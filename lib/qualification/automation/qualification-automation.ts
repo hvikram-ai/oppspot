@@ -432,7 +432,7 @@ export class QualificationAutomation {
       (leadId || context.leadId) as string,
       (companyId || context.companyId) as string,
       (framework || 'AUTO') as 'BANT' | 'MEDDIC' | 'AUTO',
-      (data || context.qualificationData) as any
+      (data || context.qualificationData) as BANTQualification | MEDDICQualification
     )
   }
 
@@ -443,6 +443,15 @@ export class QualificationAutomation {
     const supabase = await this.getSupabase()
     const { leadId, assignTo, priority, sla } = config
 
+    interface LeadAssignmentInsert {
+      lead_id: string;
+      assigned_to: string;
+      priority: 'low' | 'medium' | 'high' | 'urgent';
+      sla_deadline: string | null;
+      status: 'assigned';
+      created_at: string;
+    }
+
     await supabase.from('lead_assignments').insert({
       lead_id: (leadId || context.leadId) as string,
       assigned_to: assignTo,
@@ -450,7 +459,7 @@ export class QualificationAutomation {
       sla_deadline: sla ? new Date(Date.now() + sla * 60 * 60 * 1000).toISOString() : null,
       status: 'assigned' as const,
       created_at: new Date().toISOString()
-    } as any)
+    } as LeadAssignmentInsert)
   }
 
   /**
@@ -459,6 +468,10 @@ export class QualificationAutomation {
   private async executeNotifyAction(config: NotifyActionConfig, context: AutomationContext): Promise<void> {
     const { type, recipient, message } = config
 
+    interface NotificationData extends AutomationContext {
+      actionMessage: string;
+    }
+
     await this.notificationService.sendNotification({
       type: (type || 'action_required') as 'lead_qualified' | 'lead_assigned' | 'score_change' | 'action_required' | 'alert_triggered' | 'sla_warning' | 'checklist_completed' | 'lead_recycled',
       recipient: (recipient || context.userId) as string,
@@ -466,8 +479,8 @@ export class QualificationAutomation {
       data: {
         actionMessage: message,
         ...context
-      }
-    } as any)
+      } as NotificationData
+    })
   }
 
   /**
@@ -589,6 +602,11 @@ export class QualificationAutomation {
     const { escalateTo, reason, priority } = config
 
     // Send escalation notification
+    interface EscalationData extends AutomationContext {
+      actionMessage: string;
+      priority: string;
+    }
+
     await this.notificationService.sendNotification({
       type: 'action_required' as const,
       recipient: escalateTo,
@@ -597,8 +615,8 @@ export class QualificationAutomation {
         actionMessage: `Escalation: ${reason}`,
         priority: priority || 'high',
         ...context
-      } as AutomationContext
-    } as any)
+      } as EscalationData
+    })
   }
 
   /**
@@ -606,14 +624,18 @@ export class QualificationAutomation {
    */
   private getFieldValue(context: AutomationContext, field: string): unknown {
     const parts = field.split('.')
-    let value: any = context
+    let value: unknown = context
 
     for (const part of parts) {
-      value = value?.[part]
-      if (value === undefined) break
+      if (value && typeof value === 'object' && part in value) {
+        value = (value as Record<string, unknown>)[part]
+      } else {
+        value = undefined
+        break
+      }
     }
 
-    return value as AutomationContext
+    return value
   }
 
   /**

@@ -313,6 +313,7 @@ export class ChecklistEngine {
       });
 
       if (populated) {
+        const itemRecord = item as unknown as { id: string };
         await supabase
           .from('checklist_items')
           .update({
@@ -323,7 +324,7 @@ export class ChecklistEngine {
             ml_suggestion: populated.suggestion,
             confidence_score: populated.confidence
           })
-          .eq('id', (item as any).id);
+          .eq('id', itemRecord.id);
       }
     }
 
@@ -520,31 +521,44 @@ export class ChecklistEngine {
 
     if (!items) return;
 
+    interface ChecklistItemWithDeps {
+      id: string;
+      status: string;
+      dependencies?: {
+        prerequisite_items?: string[];
+      };
+    }
+
     // Find items that depend on this completed item
     const dependentItems = items.filter(item => {
-      const deps = (item as any).dependencies as { prerequisite_items?: string[] } | undefined;
+      const itemWithDeps = item as unknown as ChecklistItemWithDeps;
+      const deps = itemWithDeps.dependencies;
       return deps?.prerequisite_items?.includes(itemId);
     });
 
     // Update dependent items
     for (const item of dependentItems) {
-      const deps = (item as any).dependencies as { prerequisite_items?: string[] } | undefined;
+      const itemWithDeps = item as unknown as ChecklistItemWithDeps;
+      const deps = itemWithDeps.dependencies;
       const prereqs = deps?.prerequisite_items || [];
 
       // Check if all prerequisites are met
       const prereqsMet = prereqs.every((prereqId: string) => {
-        const prereqItem = items.find(i => (i as any).id === prereqId) as Record<string, unknown> | undefined;
+        const prereqItem = items.find(i => {
+          const pItem = i as unknown as ChecklistItemWithDeps;
+          return pItem.id === prereqId;
+        }) as unknown as ChecklistItemWithDeps | undefined;
         return prereqItem?.status === 'completed';
       });
 
-      if (prereqsMet && (item as any).status === 'blocked') {
+      if (prereqsMet && itemWithDeps.status === 'blocked') {
         await supabase
           .from('checklist_items')
           .update({
             status: 'pending',
             updated_at: new Date().toISOString()
           })
-          .eq('id', (item as any).id);
+          .eq('id', itemWithDeps.id);
       }
     }
   }
