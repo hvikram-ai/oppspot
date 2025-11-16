@@ -24,21 +24,21 @@ export interface CompanyIdentifier {
 export interface ResolvedCompanyData {
   source: 'companies_house' | 'irish_cro' | 'gleif_lei' | 'sec_edgar' | 'wikidata' | 'opencorporates'
   confidence: number // 0-1
-  data: any
+  data: Record<string, unknown>
   enrichments?: {
     // Additional data from other sources
     website?: string
     industry?: string
     founded_year?: number
     founders?: string[]
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 
 export interface DataSourceStrategy {
   priority: number // Lower = higher priority
   canHandle: (identifier: CompanyIdentifier) => boolean
-  fetch: (identifier: CompanyIdentifier) => Promise<any | null>
+  fetch: (identifier: CompanyIdentifier) => Promise<Record<string, unknown> | null>
   confidence: number // Base confidence for this source
 }
 
@@ -240,7 +240,7 @@ export class MultiSourceResolver {
       founded_year?: number
       founders?: string[]
       wikipedia_url?: string
-      [key: string]: any
+      [key: string]: unknown
     }
   }> {
     const primary = await this.resolveCompany(identifier)
@@ -385,7 +385,7 @@ export class MultiSourceResolver {
   private getSourceName(
     priority: number
   ): 'companies_house' | 'irish_cro' | 'gleif_lei' | 'sec_edgar' | 'wikidata' | 'opencorporates' {
-    const sourceMap: Record<number, any> = {
+    const sourceMap: Record<number, string> = {
       1: 'companies_house',
       2: 'irish_cro',
       3: 'sec_edgar',
@@ -393,7 +393,7 @@ export class MultiSourceResolver {
       5: 'wikidata',
       6: 'opencorporates',
     }
-    return sourceMap[priority] || 'opencorporates'
+    return (sourceMap[priority] || 'opencorporates') as 'companies_house' | 'irish_cro' | 'gleif_lei' | 'sec_edgar' | 'wikidata' | 'opencorporates'
   }
 
   /**
@@ -405,7 +405,7 @@ export class MultiSourceResolver {
     founded_year?: number
     founders?: string[]
     wikipedia_url?: string
-    [key: string]: any
+    [key: string]: unknown
   }> {
     try {
       const client = getWikidataSPARQLClient()

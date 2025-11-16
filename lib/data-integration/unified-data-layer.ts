@@ -550,7 +550,7 @@ export class UnifiedDataLayer {
 
     if (source === 'supabase-primary') {
       const supabase = await createClient()
-      await supabase.from(entity).insert(data as any)
+      await supabase.from(entity).insert(data as Record<string, unknown> | Record<string, unknown>[])
     } else {
       console.warn(`Destination ${destination} not implemented`)
     }
