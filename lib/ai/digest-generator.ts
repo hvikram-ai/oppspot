@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface UserActivity {
-  recentSaves: any[]
-  staleLeads: any[]
-  completedReports: any[]
-  recentSearches: any[]
+  recentSaves: Array<Record<string, unknown>>
+  staleLeads: Array<Record<string, unknown>>
+  completedReports: Array<Record<string, unknown>>
+  recentSearches: Array<Record<string, unknown>>
   pipelineValue: number
   activeLeadCount: number
 }
@@ -58,7 +59,7 @@ export async function generateDigest(userId: string): Promise<DigestSection> {
 /**
  * Gather all relevant user activity from the last 24 hours
  */
-async function gatherUserActivity(supabase: any, userId: string): Promise<UserActivity> {
+async function gatherUserActivity(supabase: SupabaseClient, userId: string): Promise<UserActivity> {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -151,13 +152,14 @@ function buildOvernightDiscoveries(activity: UserActivity): DigestSection['overn
   const industries = activity.recentSaves
     .map((s) => s.businesses?.industry)
     .filter(Boolean)
-  const industryCount = industries.reduce((acc: any, ind) => {
-    acc[ind] = (acc[ind] || 0) + 1
+  const industryCount = industries.reduce((acc: Record<string, number>, ind) => {
+    const industry = String(ind);
+    acc[industry] = (acc[industry] || 0) + 1
     return acc
-  }, {})
+  }, {} as Record<string, number>)
 
   const topIndustry = Object.entries(industryCount)
-    .sort(([, a]: any, [, b]: any) => b - a)[0]
+    .sort(([, a], [, b]) => (b as number) - (a as number))[0]
 
   if (topIndustry && topIndustry[1] > 2) {
     discoveries.push({
