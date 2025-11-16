@@ -9,6 +9,36 @@
 import { createClient } from '@/lib/supabase/server'
 import { AlertSeverity, AlertCategory, AlertStatus } from './alert-service'
 
+interface SystemAlert {
+  id: string;
+  severity: AlertSeverity;
+  status: AlertStatus;
+  category: AlertCategory;
+  title: string;
+  message: string;
+  source_service: string | null;
+  source_endpoint: string | null;
+  source_method: string | null;
+  occurrence_count: number | null;
+  created_at: string;
+  first_occurred_at: string | null;
+  last_occurred_at: string | null;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution_notes: string | null;
+  channels_notified: string[] | null;
+  notification_sent_at: string | null;
+  notification_failed: boolean | null;
+  context: Record<string, unknown> | null;
+  error_stack: string | null;
+  fingerprint: string | null;
+  tags: string[] | null;
+  related_alert_ids: string[] | null;
+  runbook_url: string | null;
+}
+
 export interface ExportFilters {
   severity?: AlertSeverity[]
   status?: AlertStatus[]
@@ -42,7 +72,7 @@ export class AlertExportService {
   /**
    * Fetch alerts from database with filters
    */
-  private async fetchAlerts(filters?: ExportFilters): Promise<any[]> {
+  private async fetchAlerts(filters?: ExportFilters): Promise<SystemAlert[]> {
     try {
       const supabase = await createClient()
 
@@ -91,7 +121,7 @@ export class AlertExportService {
    * Export alerts to CSV format
    */
   private exportToCSV(
-    alerts: any[],
+    alerts: SystemAlert[],
     options: ExportOptions
   ): { data: string; filename: string; mimeType: string } {
     if (alerts.length === 0) {
@@ -186,12 +216,12 @@ export class AlertExportService {
    * Export alerts to JSON format
    */
   private exportToJSON(
-    alerts: any[],
+    alerts: SystemAlert[],
     options: ExportOptions
   ): { data: string; filename: string; mimeType: string } {
     // Transform alerts for export
     const exportData = alerts.map((alert) => {
-      const exported: any = {
+      const exported: Record<string, unknown> = {
         id: alert.id,
         severity: alert.severity,
         status: alert.status,

@@ -81,7 +81,7 @@ export interface StreamItemWithDetails extends StreamItem {
   added_by_email?: string;
   // Polymorphic reference details (populated based on item_type)
   item_title?: string;
-  item_metadata?: Record<string, any>;
+  item_metadata?: Record<string, unknown>;
 }
 
 /**
@@ -154,7 +154,7 @@ export interface ErrorResponse {
   error: string;
   message: string;
   code?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 /**

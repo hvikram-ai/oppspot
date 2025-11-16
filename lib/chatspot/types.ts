@@ -64,13 +64,13 @@ export interface ChatAction {
   type: ActionType
   label: string
   status: 'pending' | 'in_progress' | 'completed' | 'failed'
-  result?: any
+  result?: unknown
   error?: string
 }
 
 export interface ChatResult {
   type: 'companies' | 'research' | 'list' | 'export' | 'summary' | 'error'
-  data: any
+  data: unknown
   count?: number
   preview?: string
 }

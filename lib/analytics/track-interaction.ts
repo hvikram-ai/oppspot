@@ -7,7 +7,7 @@ interface InteractionData {
     source?: string
     page?: string
     position?: number
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 
