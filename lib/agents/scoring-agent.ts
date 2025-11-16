@@ -38,7 +38,7 @@ export class ScoringAgent extends BaseAgent {
         .single() as { data: (Row<'streams'> & {
           goal_criteria?: unknown
           target_metrics?: unknown
-        }) | null; error: unknown }
+        }) | null; error: Error | null }
 
       if (!stream) {
         throw new Error(`Stream not found: ${stream_id}`)
@@ -66,7 +66,7 @@ export class ScoringAgent extends BaseAgent {
           .from('businesses')
           .select('*')
           .eq('id', item.business_id)
-          .single() as { data: Row<'businesses'> | null; error: unknown }
+          .single() as { data: Row<'businesses'> | null; error: Error | null }
 
         if (!company) continue
 
@@ -138,7 +138,7 @@ export class ScoringAgent extends BaseAgent {
   /**
    * Get stream items to score
    */
-  private async getItemsToScore(streamId: string): Promise<any[]> {
+  private async getItemsToScore(streamId: string): Promise<Array<Row<'stream_items'>>> {
     const supabase = await createClient()
 
     const { data: items, error } = await supabase
@@ -146,7 +146,7 @@ export class ScoringAgent extends BaseAgent {
       .select('*')
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
-      .not('business_id', 'is', null) as { data: Row<'stream_items'>[] | null; error: unknown }
+      .not('business_id', 'is', null) as { data: Row<'stream_items'>[] | null; error: Error | null }
 
     if (error) {
       this.log(`Error fetching stream items: ${error.message}`, 'error')
@@ -311,7 +311,7 @@ export class ScoringAgent extends BaseAgent {
       .from('buying_signals')
       .select('signal_strength, confidence_score')
       .eq('company_id', companyId)
-      .eq('status', 'active') as { data: Row<'buying_signals'>[] | null; error: unknown }
+      .eq('status', 'active') as { data: Row<'buying_signals'>[] | null; error: Error | null }
 
     if (!signals || signals.length === 0) return 0
 
@@ -359,7 +359,7 @@ export class ScoringAgent extends BaseAgent {
       .from('stream_items')
       .select('metadata')
       .eq('id', itemId)
-      .single() as { data: Row<'stream_items'> | null; error: unknown }
+      .single() as { data: Row<'stream_items'> | null; error: Error | null }
 
     const metadata = item?.metadata || {}
 
@@ -390,7 +390,7 @@ export class ScoringAgent extends BaseAgent {
       .select('id, metadata')
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
-      .order('priority', { ascending: false }) as { data: Row<'stream_items'>[] | null; error: unknown }
+      .order('priority', { ascending: false }) as { data: Row<'stream_items'>[] | null; error: Error | null }
 
     if (!items) return
 
@@ -431,7 +431,7 @@ export async function createScoringAgent(agentId: string): Promise<ScoringAgent>
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single() as { data: Row<'ai_agents'> | null; error: unknown }
+    .single() as { data: Row<'ai_agents'> | null; error: Error | null }
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)

@@ -88,16 +88,16 @@ export class EnrichmentAgent extends BaseAgent {
   /**
    * Get companies from stream that need enrichment
    */
-  private async getCompaniesToEnrich(streamId: string): Promise<any[]> {
+  private async getCompaniesToEnrich(streamId: string): Promise<Array<Row<'stream_items'>>> {
     const supabase = await createClient()
 
-    const { data: items, error } = await supabase
+    const { data: items, error} = await supabase
       .from('stream_items')
       .select('id, business_id, metadata')
       .eq('stream_id', streamId)
       .eq('item_type', 'company')
       .not('business_id', 'is', null)
-      .limit(50) as { data: Row<'stream_items'>[] | null; error: any }
+      .limit(50) as { data: Row<'stream_items'>[] | null; error: Error | null }
 
     if (error) {
       this.log(`Error fetching stream items: ${error.message}`, 'error')
@@ -126,7 +126,7 @@ export class EnrichmentAgent extends BaseAgent {
       .single() as { data: (Row<'businesses'> & {
         companies_house_number?: string
         employee_count?: number
-      }) | null; error: any }
+      }) | null; error: Error | null }
 
     if (error || !company) {
       return null
@@ -164,7 +164,7 @@ export class EnrichmentAgent extends BaseAgent {
   /**
    * Fetch Companies House data
    */
-  private async fetchCompaniesHouseData(companyNumber: string): Promise<any> {
+  private async fetchCompaniesHouseData(companyNumber: string): Promise<Record<string, unknown>> {
     // Mock implementation - replace with actual API call
     this.log(`Fetching Companies House data for ${companyNumber}`)
 
@@ -203,7 +203,7 @@ export class EnrichmentAgent extends BaseAgent {
   /**
    * Estimate employee growth rate
    */
-  private estimateEmployeeGrowth(company: any): number {
+  private estimateEmployeeGrowth(company: Record<string, unknown>): number {
     // Mock implementation - could integrate with LinkedIn, Crunchbase, etc.
     const employeeCount = company.employee_count || 0
 
@@ -217,7 +217,7 @@ export class EnrichmentAgent extends BaseAgent {
   /**
    * Calculate social media presence score
    */
-  private calculateSocialMediaScore(company: any): number {
+  private calculateSocialMediaScore(company: Record<string, unknown>): number {
     let score = 0
 
     if (company.linkedin_url) score += 30
@@ -244,7 +244,7 @@ export class EnrichmentAgent extends BaseAgent {
       .from('stream_items')
       .select('metadata')
       .eq('id', itemId)
-      .single() as { data: Row<'stream_items'> | null; error: any }
+      .single() as { data: Row<'stream_items'> | null; error: Error | null }
 
     const currentMetadata = item?.metadata || {}
 
@@ -281,7 +281,7 @@ export async function createEnrichmentAgent(agentId: string): Promise<Enrichment
     .from('ai_agents')
     .select('*')
     .eq('id', agentId)
-    .single() as { data: Row<'ai_agents'> | null; error: any }
+    .single() as { data: Row<'ai_agents'> | null; error: Error | null }
 
   if (error || !agent) {
     throw new Error(`Agent not found: ${agentId}`)

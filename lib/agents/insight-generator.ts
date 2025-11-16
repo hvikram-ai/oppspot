@@ -82,7 +82,7 @@ export class InsightGenerator {
       .single() as { data: (Row<'streams'> & {
         target_metrics?: { companies_to_find?: number }
         goal_deadline?: string
-      }) | null; error: any }
+      }) | null; error: Error | null }
 
     if (!stream) {
       throw new Error(`Stream not found: ${streamId}`)
@@ -92,7 +92,7 @@ export class InsightGenerator {
     const { data: items = [] } = await supabase
       .from('stream_items')
       .select('id, status, stage_id, metadata')
-      .eq('stream_id', streamId) as { data: (Row<'stream_items'> & { status?: string })[] | null; error: any }
+      .eq('stream_id', streamId) as { data: (Row<'stream_items'> & { status?: string })[] | null; error: Error | null }
 
     // Calculate progress
     const total = stream.target_metrics?.companies_to_find || items.length
@@ -126,15 +126,15 @@ export class InsightGenerator {
       .from('stream_agent_assignments')
       .select(`
         *,
-        agent:agent_id(id, name, agent_type) as { data: Row<'stream_agent_assignments'>[] | null; error: any }
+        agent:agent_id(id, name, agent_type)
       `)
-      .eq('stream_id', streamId)
+      .eq('stream_id', streamId) as { data: Array<Row<'stream_agent_assignments'> & { agent?: { id: string; name: string; agent_type: string } | null }> | null; error: Error | null }
 
-    const agentPerformance = agentAssignments
-      .filter((a: any) => a.agent)
-      .map((a: any) => ({
-        agent_name: a.agent.name || 'Unknown',
-        agent_type: a.agent.agent_type || 'unknown',
+    const agentPerformance = (agentAssignments || [])
+      .filter((a) => a.agent)
+      .map((a) => ({
+        agent_name: a.agent?.name || 'Unknown',
+        agent_type: a.agent?.agent_type || 'unknown',
         total_executions: a.total_executions || 0,
         success_rate: a.total_executions > 0
           ? Math.round((a.successful_executions / a.total_executions) * 100)
@@ -462,7 +462,7 @@ export class InsightGenerator {
         agent_execution_id: executionId || null
       })
       .select('id')
-      .single() as { data: { id: string } | null; error: any }
+      .single() as { data: { id: string } | null; error: Error | null }
 
     if (error) {
       console.error('[InsightGenerator] Error saving insight:', error)
