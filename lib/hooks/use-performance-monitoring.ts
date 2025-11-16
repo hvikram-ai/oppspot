@@ -12,6 +12,11 @@ interface PerformanceMetrics {
   tti?: number // Time to Interactive
 }
 
+interface LayoutShiftEntry extends PerformanceEntry {
+  hadRecentInput?: boolean;
+  value?: number;
+}
+
 /**
  * Hook to monitor Web Vitals and send to analytics
  */
@@ -38,8 +43,9 @@ export function usePerformanceMonitoring() {
         }
 
         // Cumulative Layout Shift
-        if (entry.entryType === 'layout-shift' && !(entry as any).hadRecentInput) {
-          metrics.cls = (metrics.cls || 0) + (entry as any).value
+        const layoutShiftEntry = entry as LayoutShiftEntry;
+        if (entry.entryType === 'layout-shift' && !layoutShiftEntry.hadRecentInput) {
+          metrics.cls = (metrics.cls || 0) + (layoutShiftEntry.value || 0)
         }
       }
     })
