@@ -111,11 +111,13 @@ export class TechnologyAdoptionDetector {
       }
 
       // Get company context
-      const { data: company } = await supabase
+      const { data: company, error: companyError } = await supabase
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single() as { data: Row<'businesses'> | null; error: any };
+        .single();
+
+      if (companyError) throw companyError;
 
       if (!company) {
         throw new Error('Company not found');
@@ -728,7 +730,7 @@ export class TechnologyAdoptionDetector {
       .select('*')
       .eq('company_id', companyId)
       .eq('technology_name', adoptionData.technology_name)
-      .gte('created_at', thirtyDaysAgo.toISOString() as { data: Row<'technology_adoption_signals'>[] | null; error: any });
+      .gte('created_at', thirtyDaysAgo.toISOString());
 
     return existing && existing.length > 0;
   }
@@ -751,12 +753,18 @@ export class TechnologyAdoptionDetector {
   async predictTechnologyAdoption(companyId: string): Promise<TechnologyPrediction> {
     const supabase = await createClient();
 
+    interface TechnologyRecord {
+      technology_name?: string;
+      technology_category?: string;
+      [key: string]: unknown;
+    }
+
     // Get company's current technology profile
     const { data: currentTech } = await supabase
       .from('technology_adoption_signals')
       .select('*')
       .eq('company_id', companyId)
-      .eq('adoption_stage', 'production') as { data: Row<'technology_adoption_signals'>[] | null; error: any };
+      .eq('adoption_stage', 'production');
 
     // Analyze patterns and predict next adoptions
     const predictions = {
@@ -767,11 +775,17 @@ export class TechnologyAdoptionDetector {
     };
 
     // Simple prediction logic (would be ML model in production)
-    if (currentTech?.some(t => (t as any).technology_name?.toLowerCase().includes('kubernetes'))) {
+    if (currentTech?.some(t => {
+      const tech = t as unknown as TechnologyRecord;
+      return tech.technology_name?.toLowerCase().includes('kubernetes');
+    })) {
       predictions.likely_adoptions.push('Service mesh', 'GitOps tools');
     }
 
-    if (currentTech?.some(t => (t as any).technology_category === 'cloud')) {
+    if (currentTech?.some(t => {
+      const tech = t as unknown as TechnologyRecord;
+      return tech.technology_category === 'cloud';
+    })) {
       predictions.expansion_opportunities.push('Multi-cloud', 'Cloud cost optimization');
     }
 

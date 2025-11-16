@@ -1,0 +1,664 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Command Palette" [level=2] [ref=e3]
+    - paragraph [ref=e4]: Search for a command to run...
+  - generic [ref=e8]:
+    - button [ref=e9]:
+      - img
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - heading "Pro Tip!" [level=3] [ref=e15]
+      - paragraph [ref=e16]:
+        - text: Press
+        - generic [ref=e17]:
+          - img [ref=e18]
+          - text: K
+        - text: to instantly search companies, streams, scans, and more. Try it now!
+      - button "Got it!" [ref=e21]
+  - generic [ref=e22]:
+    - navigation [ref=e23]:
+      - generic [ref=e25]:
+        - link "oppSpot" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e29]
+          - generic [ref=e32]: oppSpot
+        - generic [ref=e34]:
+          - link "Sign In" [ref=e35] [cursor=pointer]:
+            - /url: /login
+            - button "Sign In" [ref=e36]
+          - link "Get Started" [ref=e37] [cursor=pointer]:
+            - /url: /login
+            - button "Get Started" [ref=e38]
+    - complementary [ref=e39]:
+      - generic [ref=e40]:
+        - button "Collapse sidebar" [ref=e42]:
+          - img
+        - generic [ref=e46]:
+          - button "Search... K" [ref=e48]:
+            - img
+            - generic [ref=e49]: Search...
+            - generic [ref=e50]:
+              - img
+              - text: K
+          - generic [ref=e51]:
+            - link "Dashboard" [ref=e52] [cursor=pointer]:
+              - /url: /dashboard
+              - generic [ref=e53]:
+                - img [ref=e55]
+                - generic [ref=e58]: Dashboard
+            - link "Live Monitoring Pro" [ref=e60] [cursor=pointer]:
+              - /url: /monitoring
+              - generic [ref=e61]:
+                - img [ref=e63]
+                - generic [ref=e65]: Live Monitoring
+                - generic [ref=e66]: Pro
+            - link "ChatSpot Pro" [ref=e68] [cursor=pointer]:
+              - /url: /chatspot
+              - generic [ref=e69]:
+                - img [ref=e71]
+                - generic [ref=e74]: ChatSpot
+                - generic [ref=e75]: Pro
+          - button "Discover" [ref=e78]:
+            - generic [ref=e79]:
+              - img [ref=e80]
+              - generic [ref=e83]: Discover
+            - img [ref=e84]
+          - button "Diligence" [ref=e87]:
+            - generic [ref=e88]:
+              - img [ref=e89]
+              - generic [ref=e94]: Diligence
+            - img [ref=e95]
+          - button "Collaboration" [ref=e98]:
+            - generic [ref=e99]:
+              - img [ref=e100]
+              - generic [ref=e105]: Collaboration
+            - img [ref=e106]
+          - button "Outreach" [ref=e109]:
+            - generic [ref=e110]:
+              - img [ref=e111]
+              - generic [ref=e114]: Outreach
+            - img [ref=e115]
+          - button "Streams" [ref=e118]:
+            - generic [ref=e119]:
+              - img [ref=e120]
+              - generic [ref=e122]: Streams
+            - img [ref=e123]
+        - generic [ref=e125]:
+          - link "Profile" [ref=e126] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e127]:
+              - img [ref=e129]
+              - generic [ref=e132]: Profile
+          - link "Team Management" [ref=e134] [cursor=pointer]:
+            - /url: /team
+            - generic [ref=e135]:
+              - img [ref=e137]
+              - generic [ref=e149]: Team Management
+          - link "Settings" [ref=e151] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e152]:
+              - img [ref=e154]
+              - generic [ref=e157]: Settings
+          - link "Billing" [ref=e159] [cursor=pointer]:
+            - /url: /billing
+            - generic [ref=e160]:
+              - img [ref=e162]
+              - generic [ref=e164]: Billing
+          - link "What's New" [ref=e166] [cursor=pointer]:
+            - /url: /weekly-updates
+            - generic [ref=e167]:
+              - img [ref=e169]
+              - generic [ref=e172]: What's New
+          - link "Feedback" [ref=e174] [cursor=pointer]:
+            - /url: /feedback
+            - generic [ref=e175]:
+              - img [ref=e177]
+              - generic [ref=e179]: Feedback
+    - generic [ref=e181]:
+      - generic [ref=e184]:
+        - generic [ref=e185]:
+          - generic [ref=e186]:
+            - heading "Search Businesses" [level=1] [ref=e187]
+            - paragraph [ref=e188]: Find acquisition targets anywhere with AI-powered search
+          - generic [ref=e189]:
+            - button "Export" [ref=e190]:
+              - img
+              - text: Export
+            - button "Save to List (0)" [disabled]:
+              - img
+              - text: Save to List (0)
+        - generic [ref=e194]:
+          - img [ref=e195]
+          - textbox "Search by name, category, or describe what you're looking for..." [active] [ref=e198]: technology consulting
+          - button [ref=e199]:
+            - img [ref=e200]
+          - button [ref=e203]:
+            - img
+          - img [ref=e206]
+        - generic [ref=e208]:
+          - generic [ref=e209]: 11 results found
+          - generic [ref=e210]:
+            - img [ref=e211]
+            - text: Searching...
+      - generic [ref=e214]:
+        - generic [ref=e216]:
+          - generic [ref=e218]:
+            - generic [ref=e219]:
+              - img [ref=e220]
+              - text: Filters
+            - button "Reset" [disabled]:
+              - img
+              - text: Reset
+          - generic [ref=e222]:
+            - generic [ref=e223]:
+              - generic [ref=e224]: Sort By
+              - combobox [ref=e225]:
+                - generic: Most Relevant
+                - img
+            - generic [ref=e226]:
+              - button "Categories" [ref=e227]:
+                - generic [ref=e228]:
+                  - img [ref=e229]
+                  - text: Categories
+                - img [ref=e233]
+              - generic [ref=e235]:
+                - generic [ref=e236]:
+                  - checkbox "Technology" [ref=e237]
+                  - generic [ref=e238] [cursor=pointer]: Technology
+                - generic [ref=e239]:
+                  - checkbox "Healthcare" [ref=e240]
+                  - generic [ref=e241] [cursor=pointer]: Healthcare
+                - generic [ref=e242]:
+                  - checkbox "Retail" [ref=e243]
+                  - generic [ref=e244] [cursor=pointer]: Retail
+                - generic [ref=e245]:
+                  - checkbox "Food & Beverage" [ref=e246]
+                  - generic [ref=e247] [cursor=pointer]: Food & Beverage
+                - generic [ref=e248]:
+                  - checkbox "Finance" [ref=e249]
+                  - generic [ref=e250] [cursor=pointer]: Finance
+                - generic [ref=e251]:
+                  - checkbox "Real Estate" [ref=e252]
+                  - generic [ref=e253] [cursor=pointer]: Real Estate
+                - button "Show 6 more" [ref=e254]
+            - generic [ref=e255]:
+              - button "Location" [ref=e256]:
+                - generic [ref=e257]:
+                  - img [ref=e258]
+                  - text: Location
+                - img [ref=e261]
+              - generic [ref=e263]:
+                - textbox "City, postcode, or area" [ref=e264]
+                - generic [ref=e265]:
+                  - generic [ref=e266]:
+                    - generic [ref=e267]: Search Radius
+                    - generic [ref=e268]: 10 miles
+                  - slider [ref=e273]
+            - button "Rating" [ref=e275]:
+              - generic [ref=e276]:
+                - img [ref=e277]
+                - text: Rating
+              - img [ref=e279]
+            - button "M&A Target Likelihood" [ref=e282]:
+              - generic [ref=e283]:
+                - img [ref=e284]
+                - text: M&A Target Likelihood
+              - img [ref=e288]
+            - button "Advanced Options" [ref=e291]:
+              - generic [ref=e292]: Advanced Options
+              - img [ref=e293]
+            - paragraph [ref=e296]: 11 businesses match your criteria
+        - generic [ref=e298]:
+          - generic [ref=e299]:
+            - generic [ref=e300]:
+              - checkbox [ref=e301]
+              - generic [ref=e302]: Select all
+            - generic [ref=e303]: Showing 11 results
+          - generic [ref=e304]:
+            - generic [ref=e305]:
+              - generic [ref=e308]:
+                - checkbox [ref=e309]
+                - generic [ref=e310]:
+                  - generic [ref=e311]:
+                    - generic [ref=e312]:
+                      - heading "TechVentures UK" [level=3] [ref=e313]:
+                        - text: TechVentures UK
+                        - img [ref=e314]
+                      - generic [ref=e317]:
+                        - generic [ref=e318]: Technology
+                        - generic [ref=e319]: AI & Machine Learning
+                        - generic [ref=e320]: Consulting
+                    - generic [ref=e321]:
+                      - img [ref=e322]
+                      - generic [ref=e324]: "4.8"
+                  - paragraph [ref=e325]: Leading technology consultancy specializing in AI and machine learning solutions for enterprise clients.
+              - generic [ref=e326]:
+                - generic [ref=e327]:
+                  - generic [ref=e328]:
+                    - img [ref=e329]
+                    - generic [ref=e332]: 123 Tech Street, London, EC2A 4BX
+                  - generic [ref=e333]:
+                    - img [ref=e334]
+                    - link "+44 20 7123 4567" [ref=e336] [cursor=pointer]:
+                      - /url: tel:+44 20 7123 4567
+                  - generic [ref=e337]:
+                    - img [ref=e338]
+                    - link "info@techventures.co.uk" [ref=e341] [cursor=pointer]:
+                      - /url: mailto:info@techventures.co.uk
+                  - generic [ref=e342]:
+                    - img [ref=e343]
+                    - link "techventures.co.uk" [ref=e346] [cursor=pointer]:
+                      - /url: https://techventures.co.uk
+                      - text: techventures.co.uk
+                      - img [ref=e347]
+                - link "View Details" [ref=e352] [cursor=pointer]:
+                  - /url: /business/demo-1
+                  - text: View Details
+                  - img
+            - generic [ref=e353]:
+              - generic [ref=e356]:
+                - checkbox [ref=e357]
+                - generic [ref=e358]:
+                  - generic [ref=e359]:
+                    - generic [ref=e360]:
+                      - heading "The Ivy Restaurant" [level=3] [ref=e361]:
+                        - text: The Ivy Restaurant
+                        - img [ref=e362]
+                      - generic [ref=e365]:
+                        - generic [ref=e366]: Restaurant
+                        - generic [ref=e367]: British Cuisine
+                        - generic [ref=e368]: Fine Dining
+                    - generic [ref=e369]:
+                      - img [ref=e370]
+                      - generic [ref=e372]: "4.5"
+                  - paragraph [ref=e373]: Iconic British restaurant serving modern British cuisine in an elegant setting.
+              - generic [ref=e374]:
+                - generic [ref=e375]:
+                  - generic [ref=e376]:
+                    - img [ref=e377]
+                    - generic [ref=e380]: 1-5 West Street, London, WC2H 9NQ
+                  - generic [ref=e381]:
+                    - img [ref=e382]
+                    - link "+44 20 7836 4751" [ref=e384] [cursor=pointer]:
+                      - /url: tel:+44 20 7836 4751
+                  - generic [ref=e385]:
+                    - img [ref=e386]
+                    - link "reservations@the-ivy.co.uk" [ref=e389] [cursor=pointer]:
+                      - /url: mailto:reservations@the-ivy.co.uk
+                  - generic [ref=e390]:
+                    - img [ref=e391]
+                    - link "the-ivy.co.uk" [ref=e394] [cursor=pointer]:
+                      - /url: https://the-ivy.co.uk
+                      - text: the-ivy.co.uk
+                      - img [ref=e395]
+                - link "View Details" [ref=e400] [cursor=pointer]:
+                  - /url: /business/demo-restaurant-1
+                  - text: View Details
+                  - img
+            - generic [ref=e401]:
+              - generic [ref=e404]:
+                - checkbox [ref=e405]
+                - generic [ref=e406]:
+                  - generic [ref=e407]:
+                    - generic [ref=e408]:
+                      - heading "Dishoom London" [level=3] [ref=e409]:
+                        - text: Dishoom London
+                        - img [ref=e410]
+                      - generic [ref=e413]:
+                        - generic [ref=e414]: Restaurant
+                        - generic [ref=e415]: Indian Cuisine
+                        - generic [ref=e416]: Casual Dining
+                    - generic [ref=e417]:
+                      - img [ref=e418]
+                      - generic [ref=e420]: "4.7"
+                  - paragraph [ref=e421]: Bombay-style cafe serving innovative Indian cuisine with a vintage atmosphere.
+              - generic [ref=e422]:
+                - generic [ref=e423]:
+                  - generic [ref=e424]:
+                    - img [ref=e425]
+                    - generic [ref=e428]: 12 Upper St Martin's Lane, London, WC2H 9FB
+                  - generic [ref=e429]:
+                    - img [ref=e430]
+                    - link "+44 20 7420 9320" [ref=e432] [cursor=pointer]:
+                      - /url: tel:+44 20 7420 9320
+                  - generic [ref=e433]:
+                    - img [ref=e434]
+                    - link "coventgarden@dishoom.com" [ref=e437] [cursor=pointer]:
+                      - /url: mailto:coventgarden@dishoom.com
+                  - generic [ref=e438]:
+                    - img [ref=e439]
+                    - link "dishoom.com" [ref=e442] [cursor=pointer]:
+                      - /url: https://dishoom.com
+                      - text: dishoom.com
+                      - img [ref=e443]
+                - link "View Details" [ref=e448] [cursor=pointer]:
+                  - /url: /business/demo-restaurant-2
+                  - text: View Details
+                  - img
+            - generic [ref=e449]:
+              - generic [ref=e452]:
+                - checkbox [ref=e453]
+                - generic [ref=e454]:
+                  - generic [ref=e455]:
+                    - generic [ref=e456]:
+                      - heading "Hawksmoor Seven Dials" [level=3] [ref=e457]:
+                        - text: Hawksmoor Seven Dials
+                        - img [ref=e458]
+                      - generic [ref=e461]:
+                        - generic [ref=e462]: Restaurant
+                        - generic [ref=e463]: Steakhouse
+                        - generic [ref=e464]: British Cuisine
+                    - generic [ref=e465]:
+                      - img [ref=e466]
+                      - generic [ref=e468]: "4.8"
+                  - paragraph [ref=e469]: Premium steakhouse known for British grass-fed beef and seafood.
+              - generic [ref=e470]:
+                - generic [ref=e471]:
+                  - generic [ref=e472]:
+                    - img [ref=e473]
+                    - generic [ref=e476]: 11 Langley Street, London, WC2H 9JG
+                  - generic [ref=e477]:
+                    - img [ref=e478]
+                    - link "+44 20 7420 9390" [ref=e480] [cursor=pointer]:
+                      - /url: tel:+44 20 7420 9390
+                  - generic [ref=e481]:
+                    - img [ref=e482]
+                    - link "sevendials@thehawksmoor.com" [ref=e485] [cursor=pointer]:
+                      - /url: mailto:sevendials@thehawksmoor.com
+                  - generic [ref=e486]:
+                    - img [ref=e487]
+                    - link "thehawksmoor.com" [ref=e490] [cursor=pointer]:
+                      - /url: https://thehawksmoor.com
+                      - text: thehawksmoor.com
+                      - img [ref=e491]
+                - link "View Details" [ref=e496] [cursor=pointer]:
+                  - /url: /business/demo-restaurant-3
+                  - text: View Details
+                  - img
+            - generic [ref=e497]:
+              - generic [ref=e500]:
+                - checkbox [ref=e501]
+                - generic [ref=e502]:
+                  - generic [ref=e503]:
+                    - generic [ref=e504]:
+                      - heading "GreenTech Solutions" [level=3] [ref=e505]:
+                        - text: GreenTech Solutions
+                        - img [ref=e506]
+                      - generic [ref=e509]:
+                        - generic [ref=e510]: Technology
+                        - generic [ref=e511]: Sustainability
+                        - generic [ref=e512]: Environmental Services
+                    - generic [ref=e513]:
+                      - img [ref=e514]
+                      - generic [ref=e516]: "4.6"
+                  - paragraph [ref=e517]: Sustainable technology solutions for businesses looking to reduce their carbon footprint.
+              - generic [ref=e518]:
+                - generic [ref=e519]:
+                  - generic [ref=e520]:
+                    - img [ref=e521]
+                    - generic [ref=e524]: 45 Eco Park, Manchester, M1 2NE
+                  - generic [ref=e525]:
+                    - img [ref=e526]
+                    - link "+44 161 234 5678" [ref=e528] [cursor=pointer]:
+                      - /url: tel:+44 161 234 5678
+                  - generic [ref=e529]:
+                    - img [ref=e530]
+                    - link "contact@greentech.co.uk" [ref=e533] [cursor=pointer]:
+                      - /url: mailto:contact@greentech.co.uk
+                  - generic [ref=e534]:
+                    - img [ref=e535]
+                    - link "greentech-solutions.co.uk" [ref=e538] [cursor=pointer]:
+                      - /url: https://greentech-solutions.co.uk
+                      - text: greentech-solutions.co.uk
+                      - img [ref=e539]
+                - link "View Details" [ref=e544] [cursor=pointer]:
+                  - /url: /business/demo-2
+                  - text: View Details
+                  - img
+            - generic [ref=e545]:
+              - generic [ref=e548]:
+                - checkbox [ref=e549]
+                - generic [ref=e550]:
+                  - generic [ref=e551]:
+                    - generic [ref=e552]:
+                      - heading "Digital Marketing Pro" [level=3] [ref=e553]
+                      - generic [ref=e554]:
+                        - generic [ref=e555]: Marketing
+                        - generic [ref=e556]: Digital Services
+                        - generic [ref=e557]: Advertising
+                    - generic [ref=e558]:
+                      - img [ref=e559]
+                      - generic [ref=e561]: "4.7"
+                  - paragraph [ref=e562]: Full-service digital marketing agency helping businesses grow their online presence.
+              - generic [ref=e563]:
+                - generic [ref=e564]:
+                  - generic [ref=e565]:
+                    - img [ref=e566]
+                    - generic [ref=e569]: 78 Creative Quarter, Birmingham, B1 1BA
+                  - generic [ref=e570]:
+                    - img [ref=e571]
+                    - link "+44 121 345 6789" [ref=e573] [cursor=pointer]:
+                      - /url: tel:+44 121 345 6789
+                  - generic [ref=e574]:
+                    - img [ref=e575]
+                    - link "hello@digitalmarketingpro.co.uk" [ref=e578] [cursor=pointer]:
+                      - /url: mailto:hello@digitalmarketingpro.co.uk
+                  - generic [ref=e579]:
+                    - img [ref=e580]
+                    - link "digitalmarketingpro.co.uk" [ref=e583] [cursor=pointer]:
+                      - /url: https://digitalmarketingpro.co.uk
+                      - text: digitalmarketingpro.co.uk
+                      - img [ref=e584]
+                - link "View Details" [ref=e589] [cursor=pointer]:
+                  - /url: /business/demo-3
+                  - text: View Details
+                  - img
+            - generic [ref=e590]:
+              - generic [ref=e593]:
+                - checkbox [ref=e594]
+                - generic [ref=e595]:
+                  - generic [ref=e596]:
+                    - generic [ref=e597]:
+                      - heading "FinTech Innovations" [level=3] [ref=e598]:
+                        - text: FinTech Innovations
+                        - img [ref=e599]
+                      - generic [ref=e602]:
+                        - generic [ref=e603]: FinTech
+                        - generic [ref=e604]: Banking
+                        - generic [ref=e605]: Technology
+                    - generic [ref=e606]:
+                      - img [ref=e607]
+                      - generic [ref=e609]: "4.9"
+                  - paragraph [ref=e610]: Revolutionary financial technology solutions for modern banking and payments.
+              - generic [ref=e611]:
+                - generic [ref=e612]:
+                  - generic [ref=e613]:
+                    - img [ref=e614]
+                    - generic [ref=e617]: 200 Canary Wharf, London, E14 5LB
+                  - generic [ref=e618]:
+                    - img [ref=e619]
+                    - link "+44 20 7987 6543" [ref=e621] [cursor=pointer]:
+                      - /url: tel:+44 20 7987 6543
+                  - generic [ref=e622]:
+                    - img [ref=e623]
+                    - link "info@fintechinnovations.com" [ref=e626] [cursor=pointer]:
+                      - /url: mailto:info@fintechinnovations.com
+                  - generic [ref=e627]:
+                    - img [ref=e628]
+                    - link "fintechinnovations.com" [ref=e631] [cursor=pointer]:
+                      - /url: https://fintechinnovations.com
+                      - text: fintechinnovations.com
+                      - img [ref=e632]
+                - link "View Details" [ref=e637] [cursor=pointer]:
+                  - /url: /business/demo-4
+                  - text: View Details
+                  - img
+            - generic [ref=e638]:
+              - generic [ref=e641]:
+                - checkbox [ref=e642]
+                - generic [ref=e643]:
+                  - generic [ref=e644]:
+                    - generic [ref=e645]:
+                      - heading "Healthcare Analytics Ltd" [level=3] [ref=e646]:
+                        - text: Healthcare Analytics Ltd
+                        - img [ref=e647]
+                      - generic [ref=e650]:
+                        - generic [ref=e651]: Healthcare
+                        - generic [ref=e652]: Analytics
+                        - generic [ref=e653]: Technology
+                    - generic [ref=e654]:
+                      - img [ref=e655]
+                      - generic [ref=e657]: "4.5"
+                  - paragraph [ref=e658]: Data-driven healthcare solutions improving patient outcomes through advanced analytics.
+              - generic [ref=e659]:
+                - generic [ref=e660]:
+                  - generic [ref=e661]:
+                    - img [ref=e662]
+                    - generic [ref=e665]: 32 Medical District, Cambridge, CB2 1TN
+                  - generic [ref=e666]:
+                    - img [ref=e667]
+                    - link "+44 1223 456 789" [ref=e669] [cursor=pointer]:
+                      - /url: tel:+44 1223 456 789
+                  - generic [ref=e670]:
+                    - img [ref=e671]
+                    - link "contact@healthcareanalytics.co.uk" [ref=e674] [cursor=pointer]:
+                      - /url: mailto:contact@healthcareanalytics.co.uk
+                  - generic [ref=e675]:
+                    - img [ref=e676]
+                    - link "healthcareanalytics.co.uk" [ref=e679] [cursor=pointer]:
+                      - /url: https://healthcareanalytics.co.uk
+                      - text: healthcareanalytics.co.uk
+                      - img [ref=e680]
+                - link "View Details" [ref=e685] [cursor=pointer]:
+                  - /url: /business/demo-5
+                  - text: View Details
+                  - img
+            - generic [ref=e686]:
+              - generic [ref=e689]:
+                - checkbox [ref=e690]
+                - generic [ref=e691]:
+                  - generic [ref=e692]:
+                    - generic [ref=e693]:
+                      - heading "EduTech Platforms" [level=3] [ref=e694]
+                      - generic [ref=e695]:
+                        - generic [ref=e696]: Education
+                        - generic [ref=e697]: Technology
+                        - generic [ref=e698]: E-Learning
+                    - generic [ref=e699]:
+                      - img [ref=e700]
+                      - generic [ref=e702]: "4.4"
+                  - paragraph [ref=e703]: Innovative educational technology solutions for schools and universities.
+              - generic [ref=e704]:
+                - generic [ref=e705]:
+                  - generic [ref=e706]:
+                    - img [ref=e707]
+                    - generic [ref=e710]: 15 University Road, Oxford, OX1 3DQ
+                  - generic [ref=e711]:
+                    - img [ref=e712]
+                    - link "+44 1865 123 456" [ref=e714] [cursor=pointer]:
+                      - /url: tel:+44 1865 123 456
+                  - generic [ref=e715]:
+                    - img [ref=e716]
+                    - link "info@edutechplatforms.co.uk" [ref=e719] [cursor=pointer]:
+                      - /url: mailto:info@edutechplatforms.co.uk
+                  - generic [ref=e720]:
+                    - img [ref=e721]
+                    - link "edutechplatforms.co.uk" [ref=e724] [cursor=pointer]:
+                      - /url: https://edutechplatforms.co.uk
+                      - text: edutechplatforms.co.uk
+                      - img [ref=e725]
+                - link "View Details" [ref=e730] [cursor=pointer]:
+                  - /url: /business/demo-6
+                  - text: View Details
+                  - img
+            - generic [ref=e731]:
+              - generic [ref=e734]:
+                - checkbox [ref=e735]
+                - generic [ref=e736]:
+                  - generic [ref=e737]:
+                    - generic [ref=e738]:
+                      - heading "CleanEnergy Co" [level=3] [ref=e739]:
+                        - text: CleanEnergy Co
+                        - img [ref=e740]
+                      - generic [ref=e743]:
+                        - generic [ref=e744]: Energy
+                        - generic [ref=e745]: Sustainability
+                        - generic [ref=e746]: Construction
+                    - generic [ref=e747]:
+                      - img [ref=e748]
+                      - generic [ref=e750]: "4.8"
+                  - paragraph [ref=e751]: Renewable energy solutions and solar panel installations for commercial properties.
+              - generic [ref=e752]:
+                - generic [ref=e753]:
+                  - generic [ref=e754]:
+                    - img [ref=e755]
+                    - generic [ref=e758]: 88 Green Lane, Bristol, BS1 4ST
+                  - generic [ref=e759]:
+                    - img [ref=e760]
+                    - link "+44 117 987 6543" [ref=e762] [cursor=pointer]:
+                      - /url: tel:+44 117 987 6543
+                  - generic [ref=e763]:
+                    - img [ref=e764]
+                    - link "enquiries@cleanenergyco.uk" [ref=e767] [cursor=pointer]:
+                      - /url: mailto:enquiries@cleanenergyco.uk
+                  - generic [ref=e768]:
+                    - img [ref=e769]
+                    - link "cleanenergyco.uk" [ref=e772] [cursor=pointer]:
+                      - /url: https://cleanenergyco.uk
+                      - text: cleanenergyco.uk
+                      - img [ref=e773]
+                - link "View Details" [ref=e778] [cursor=pointer]:
+                  - /url: /business/demo-7
+                  - text: View Details
+                  - img
+            - generic [ref=e779]:
+              - generic [ref=e782]:
+                - checkbox [ref=e783]
+                - generic [ref=e784]:
+                  - generic [ref=e785]:
+                    - generic [ref=e786]:
+                      - heading "LegalTech Solutions" [level=3] [ref=e787]:
+                        - text: LegalTech Solutions
+                        - img [ref=e788]
+                      - generic [ref=e791]:
+                        - generic [ref=e792]: Legal
+                        - generic [ref=e793]: Technology
+                        - generic [ref=e794]: AI
+                    - generic [ref=e795]:
+                      - img [ref=e796]
+                      - generic [ref=e798]: "4.6"
+                  - paragraph [ref=e799]: AI-powered legal technology streamlining document review and contract analysis.
+              - generic [ref=e800]:
+                - generic [ref=e801]:
+                  - generic [ref=e802]:
+                    - img [ref=e803]
+                    - generic [ref=e806]: 50 Law Courts, Leeds, LS1 2DA
+                  - generic [ref=e807]:
+                    - img [ref=e808]
+                    - link "+44 113 234 5678" [ref=e810] [cursor=pointer]:
+                      - /url: tel:+44 113 234 5678
+                  - generic [ref=e811]:
+                    - img [ref=e812]
+                    - link "info@legaltechsolutions.co.uk" [ref=e815] [cursor=pointer]:
+                      - /url: mailto:info@legaltechsolutions.co.uk
+                  - generic [ref=e816]:
+                    - img [ref=e817]
+                    - link "legaltechsolutions.co.uk" [ref=e820] [cursor=pointer]:
+                      - /url: https://legaltechsolutions.co.uk
+                      - text: legaltechsolutions.co.uk
+                      - img [ref=e821]
+                - link "View Details" [ref=e826] [cursor=pointer]:
+                  - /url: /business/demo-8
+                  - text: View Details
+                  - img
+  - button [ref=e827]:
+    - img
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e833] [cursor=pointer]:
+    - img [ref=e834]
+  - alert [ref=e837]: Search Businesses
+```

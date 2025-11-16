@@ -80,19 +80,32 @@ function SearchPageContent() {
         })
 
         const response = await fetch(`/api/search?${params}`)
-        if (!response.ok) throw new Error('Search failed')
-        
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Search failed')
+        }
+
         const data = await response.json()
         setResults(data.results || [])
         setTotalResults(data.totalCount || data.total || 0)
-        
+
         // Update URL with search params
         const newParams = new URLSearchParams()
         if (query) newParams.set('q', query)
         router.push(`/search?${newParams.toString()}`, { scroll: false })
       } catch (error) {
         console.error('Search error:', error)
-        toast.error('Failed to perform search. Please try again.')
+        const errorMessage = error instanceof Error
+          ? error.message
+          : 'Unable to complete search. Please try again.'
+
+        toast.error(errorMessage, {
+          action: {
+            label: 'Retry',
+            onClick: () => performSearch(query, searchFilters)
+          }
+        })
       } finally {
         setLoading(false)
       }
@@ -122,13 +135,25 @@ function SearchPageContent() {
         })
       })
 
-      if (!response.ok) throw new Error('Failed to save list')
-      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to save list')
+      }
+
       toast.success(`Saved ${selectedResults.size} businesses to list`)
       setSelectedResults(new Set())
     } catch (error) {
       console.error('Save to list error:', error)
-      toast.error('Failed to save to list')
+      const errorMessage = error instanceof Error
+        ? error.message
+        : 'Unable to save businesses to list. Please try again.'
+
+      toast.error(errorMessage, {
+        action: {
+          label: 'Retry',
+          onClick: handleSaveToList
+        }
+      })
     }
   }
 
@@ -146,10 +171,19 @@ function SearchPageContent() {
 
       const csv = convertToCSV(dataToExport)
       downloadCSV(csv, `search-results-${Date.now()}.csv`)
-      toast.success('Results exported successfully')
+      toast.success(`Exported ${dataToExport.length} businesses to CSV`)
     } catch (error) {
       console.error('Export error:', error)
-      toast.error('Failed to export results')
+      const errorMessage = error instanceof Error
+        ? error.message
+        : 'Unable to export results. Please try again.'
+
+      toast.error(errorMessage, {
+        action: {
+          label: 'Retry',
+          onClick: handleExport
+        }
+      })
     }
   }
 

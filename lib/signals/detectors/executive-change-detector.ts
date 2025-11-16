@@ -109,11 +109,13 @@ export class ExecutiveChangeDetector {
       }
 
       // Get company context
-      const { data: company } = await supabase
+      const { data: company, error: companyError } = await supabase
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single() as { data: Row<'businesses'> | null; error: any };
+        .single();
+
+      if (companyError) throw companyError;
 
       if (!company) {
         throw new Error('Company not found');
@@ -615,7 +617,7 @@ export class ExecutiveChangeDetector {
       .select('*')
       .eq('company_id', companyId)
       .eq('position_title', changeData.position)
-      .gte('created_at', thirtyDaysAgo.toISOString() as { data: Row<'executive_change_signals'>[] | null; error: any });
+      .gte('created_at', thirtyDaysAgo.toISOString());
 
     return existing && existing.length > 0;
   }

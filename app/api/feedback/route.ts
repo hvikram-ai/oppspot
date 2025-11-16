@@ -54,52 +54,92 @@ function detectFeatureFromUrl(url: string | null): string | null {
  * Submit user feedback
  */
 export async function POST(request: NextRequest) {
+  console.log('[Feedback API] ===== NEW FEEDBACK SUBMISSION REQUEST =====');
+  console.log('[Feedback API] Timestamp:', new Date().toISOString());
+  console.log('[Feedback API] Request URL:', request.url);
+  console.log('[Feedback API] Request method:', request.method);
+
   try {
-    const supabase = await createClient();
+    // Debug: Check ALL headers
+    const headers: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headers[key] = key.toLowerCase().includes('auth') || key.toLowerCase().includes('cookie') ? value : '***';
+    });
+    console.log('[Feedback API] Request headers:', JSON.stringify(headers, null, 2));
 
     // Debug: Check cookies
     const cookies = request.cookies.getAll();
     console.log('[Feedback API] Cookies present:', cookies.map(c => c.name).join(', '));
+    console.log('[Feedback API] Cookie details:', cookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length })));
+
+    // Create Supabase client
+    console.log('[Feedback API] Creating Supabase client...');
+    const supabase = await createClient();
+    console.log('[Feedback API] Supabase client created successfully');
 
     // Parse request body
+    console.log('[Feedback API] Parsing request body...');
     const body = await request.json();
+    console.log('[Feedback API] Request body parsed:', {
+      hasType: !!body.type,
+      hasTitle: !!body.title,
+      hasDescription: !!body.description,
+      titleLength: body.title?.length,
+      descriptionLength: body.description?.length,
+      isPublic: body.is_public
+    });
 
     // Validate input
+    console.log('[Feedback API] Validating input schema...');
     const validation = feedbackSchema.safeParse(body);
     if (!validation.success) {
+      console.error('[Feedback API] Validation failed:', validation.error.issues);
       return NextResponse.json(
         { error: 'Invalid input data', details: validation.error.issues },
         { status: 400 }
       );
     }
+    console.log('[Feedback API] Validation passed');
 
     const { type, title, description, screenshot, is_public } = validation.data;
 
     // Get authenticated user
+    console.log('[Feedback API] Attempting to get authenticated user...');
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // Debug: Log auth state
-    console.log('[Feedback API] Auth check:', {
+    // Debug: Log auth state with full details
+    console.log('[Feedback API] Auth check result:', {
       hasUser: !!user,
       userId: user?.id,
       userEmail: user?.email,
-      authError: authError?.message
+      hasAuthError: !!authError,
+      authErrorName: authError?.name,
+      authErrorMessage: authError?.message,
+      authErrorStatus: authError?.status,
+      authErrorCode: (authError as any)?.code,
     });
 
     if (authError || !user) {
-      console.error('[Feedback API] Authentication failed:', authError);
+      console.error('[Feedback API] ❌ Authentication failed!');
+      console.error('[Feedback API] Auth error details:', JSON.stringify(authError, null, 2));
+      console.error('[Feedback API] Cookies count:', cookies.length);
+      console.error('[Feedback API] Cookie names:', cookies.map(c => c.name));
       return NextResponse.json(
         {
           error: 'Authentication required',
           debug: {
             hasAuthError: !!authError,
             errorMessage: authError?.message,
-            cookiesCount: cookies.length
+            errorStatus: authError?.status,
+            cookiesCount: cookies.length,
+            cookieNames: cookies.map(c => c.name)
           }
         },
         { status: 401 }
       );
     }
+
+    console.log('[Feedback API] ✅ User authenticated successfully:', user.email);
 
     // Get additional context
     const userAgent = request.headers.get('user-agent') || undefined;
@@ -128,62 +168,75 @@ export async function POST(request: NextRequest) {
     };
 
     // Insert feedback
+    console.log('[Feedback API] Preparing to insert feedback into database...');
+    const insertData = {
+      user_id: user.id,
+      title,
+      description,
+      category: type,
+      status: 'pending' as const,
+      priority: priorityMap[type as FeedbackCategory] || 'medium',
+      is_public,
+      tags: [type],
+      affected_feature: affectedFeature,
+      page_url: referer,
+      browser_info: browserInfo,
+      screenshot_url: screenshot || null,
+    };
+    console.log('[Feedback API] Insert data prepared:', {
+      user_id: insertData.user_id,
+      title: insertData.title,
+      category: insertData.category,
+      status: insertData.status,
+      priority: insertData.priority,
+      is_public: insertData.is_public,
+      has_screenshot: !!insertData.screenshot_url,
+    });
+
     const { data: feedback, error: insertError } = await supabase
       .from('feedback')
-      .insert({
-        user_id: user.id,
-        title,
-        description,
-        category: type,
-        status: 'pending',
-        priority: priorityMap[type as FeedbackCategory] || 'medium',
-        is_public,
-        tags: [type],
-        affected_feature: affectedFeature,
-        page_url: referer,
-        browser_info: browserInfo,
-        screenshot_url: screenshot || null,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (insertError) {
+      console.error('[Feedback API] ❌ Database insert failed!');
       console.error('[Feedback API] Insert error:', insertError);
       console.error('[Feedback API] Insert error code:', insertError.code);
       console.error('[Feedback API] Insert error details:', insertError.details);
       console.error('[Feedback API] Insert error hint:', insertError.hint);
       console.error('[Feedback API] Insert error message:', insertError.message);
-      console.error('[Feedback API] Data being inserted:', {
-        user_id: user.id,
-        title,
-        category: type,
-        status: 'pending',
-        priority: priorityMap[type as FeedbackCategory],
-      });
+      console.error('[Feedback API] Full data being inserted:', JSON.stringify(insertData, null, 2));
       return NextResponse.json(
         {
           error: 'Failed to submit feedback',
           debug: {
             code: insertError.code,
             message: insertError.message,
-            hint: insertError.hint
+            hint: insertError.hint,
+            details: insertError.details
           }
         },
         { status: 500 }
       );
     }
 
+    console.log('[Feedback API] ✅ Feedback inserted successfully:', feedback.id);
+
     // Auto-follow the feedback
-    await supabase
+    const { error: followError } = await supabase
       .from('feedback_followers')
       .insert({
         feedback_id: feedback.id,
         user_id: user.id,
-      })
-      .catch((err) => console.log('[Feedback API] Auto-follow failed:', err));
+      });
+
+    if (followError) {
+      console.log('[Feedback API] Auto-follow failed:', followError);
+    }
 
     // Log activity
-    await supabase
+    const { error: activityError } = await supabase
       .from('feedback_activity')
       .insert({
         feedback_id: feedback.id,
@@ -195,8 +248,11 @@ export async function POST(request: NextRequest) {
           priority: priorityMap[type as FeedbackCategory],
           is_public
         },
-      })
-      .catch((err) => console.log('[Feedback API] Activity log failed:', err));
+      });
+
+    if (activityError) {
+      console.log('[Feedback API] Activity log failed:', activityError);
+    }
 
     // Create submission tracking record
     const { data: submission, error: submissionError } = await supabase
@@ -279,14 +335,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response, { status: 200 });
 
   } catch (error) {
-    console.error('[Feedback API] Unexpected error:', error);
+    console.error('[Feedback API] ❌❌❌ UNEXPECTED ERROR CAUGHT ❌❌❌');
+    console.error('[Feedback API] Error type:', typeof error);
+    console.error('[Feedback API] Error name:', (error as any)?.name);
+    console.error('[Feedback API] Error message:', (error as any)?.message);
+    console.error('[Feedback API] Error stack:', (error as any)?.stack);
+    console.error('[Feedback API] Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
 
     const errorReferenceId = generateReferenceId();
+    console.error('[Feedback API] Generated error reference ID:', errorReferenceId);
 
     return NextResponse.json(
       {
         error: `Failed to submit feedback. Please try again or contact support with reference: ${errorReferenceId}`,
         referenceId: errorReferenceId,
+        debug: {
+          errorType: typeof error,
+          errorName: (error as any)?.name,
+          errorMessage: (error as any)?.message,
+        }
       },
       { status: 500 }
     );

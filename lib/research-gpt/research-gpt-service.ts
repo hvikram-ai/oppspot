@@ -135,12 +135,34 @@ export class ResearchGPTService {
     }
   }
 
+  interface AggregatedData {
+    snapshot: unknown;
+    buying_signals: unknown[];
+    decision_makers: unknown[];
+    revenue_signals: unknown[];
+    sources: Array<{
+      source_type: string;
+      url: string;
+      title: string;
+      published_date?: string | null;
+      reliability_score?: number;
+      domain?: string;
+      content_snippet?: string;
+      [key: string]: unknown;
+    }>;
+    metadata: {
+      sources_fetched: number;
+      sources_failed: number;
+      [key: string]: unknown;
+    };
+  }
+
   /**
    * Analyze data and store all sections
    */
   private async analyzeAndStore(
     reportId: string,
-    aggregatedData: any,
+    aggregatedData: AggregatedData,
     options: ResearchOptions
   ): Promise<void> {
     const sectionTimes: Record<string, number> = {};
@@ -155,7 +177,7 @@ export class ResearchGPTService {
       'snapshot',
       snapshotResult.snapshot,
       snapshotResult.confidence,
-      aggregatedData.sources.filter((s: any) => s.source_type === 'companies_house').length,
+      aggregatedData.sources.filter((s) => s.source_type === 'companies_house').length,
       sectionTimes.snapshot
     );
 
@@ -262,7 +284,7 @@ export class ResearchGPTService {
     const sourcesStart = Date.now();
     await this.repository.addSources(
       reportId,
-      aggregatedData.sources.map((s: any) => ({
+      aggregatedData.sources.map((s) => ({
         section_type: null,
         url: s.url,
         title: s.title,
@@ -411,8 +433,8 @@ export class ResearchGPTService {
     userId?: string
   ): Promise<{
     report: ResearchReport;
-    sections: any[];
-    sources: any[];
+    sections: unknown[];
+    sources: unknown[];
   } | null> {
     return this.repository.getCompleteReport(reportId, userId);
   }

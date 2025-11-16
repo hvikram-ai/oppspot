@@ -121,11 +121,13 @@ export class JobPostingAnalyzer {
       }
 
       // Get company context
-      const { data: company } = await supabase
+      const { data: company, error: companyError } = await supabase
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single() as { data: Row<'businesses'> | null; error: any };
+        .single();
+
+      if (companyError) throw companyError;
 
       if (!company) {
         throw new Error('Company not found');
@@ -204,7 +206,7 @@ export class JobPostingAnalyzer {
           detected_at: new Date()
         })
         .select()
-        .single() as { data: (Record<string, unknown> & { id: string }) | null; error: any };
+        .single();
 
       if (error) throw error;
 
@@ -454,7 +456,7 @@ export class JobPostingAnalyzer {
       .from('job_posting_signals')
       .select('*')
       .eq('company_id', companyId)
-      .gte('posted_date', ninetyDaysAgo.toISOString()) as { data: (Row<'job_posting_signals'> & { department?: string; posted_date?: string })[] | null; error: any };
+      .gte('posted_date', ninetyDaysAgo.toISOString());
 
     const totalOpen = recentPostings?.length || 0;
 
@@ -759,7 +761,7 @@ export class JobPostingAnalyzer {
       .select('*')
       .eq('company_id', companyId)
       .eq('job_title', jobData.title)
-      .gte('created_at', sevenDaysAgo.toISOString() as { data: Row<'job_posting_signals'>[] | null; error: any });
+      .gte('created_at', sevenDaysAgo.toISOString());
 
     return existing && existing.length > 0;
   }
@@ -768,12 +770,18 @@ export class JobPostingAnalyzer {
   async detectHiringTrends(companyId: string): Promise<HiringTrends | null> {
     const supabase = await createClient();
 
+    interface JobPostingData {
+      department?: string;
+      technologies_mentioned?: string[];
+      [key: string]: unknown;
+    }
+
     const { data: postings } = await supabase
       .from('job_posting_signals')
       .select('*')
       .eq('company_id', companyId)
       .order('posted_date', { ascending: false })
-      .limit(100) as { data: Row<'job_posting_signals'>[] | null; error: any };
+      .limit(100);
 
     if (!postings || postings.length === 0) {
       return null;
@@ -784,13 +792,13 @@ export class JobPostingAnalyzer {
     const technologyTrends: { [key: string]: number } = {};
 
     postings.forEach(posting => {
-      const postingAny = posting as any
+      const postingData = posting as unknown as JobPostingData;
       // Department trends
-      const dept = postingAny.department || 'Unknown';
+      const dept = postingData.department || 'Unknown';
       departmentGrowth[dept] = (departmentGrowth[dept] || 0) + 1;
 
       // Technology trends
-      postingAny.technologies_mentioned?.forEach((tech: string) => {
+      postingData.technologies_mentioned?.forEach((tech: string) => {
         technologyTrends[tech] = (technologyTrends[tech] || 0) + 1;
       });
     });

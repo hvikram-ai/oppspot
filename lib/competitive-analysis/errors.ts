@@ -11,13 +11,13 @@
 export class CompetitiveAnalysisError extends Error {
   public readonly statusCode: number;
   public readonly errorCode: string;
-  public readonly context?: Record<string, any>;
+  public readonly context?: Record<string, unknown>;
 
   constructor(
     message: string,
     errorCode: string,
     statusCode: number,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'CompetitiveAnalysisError';
@@ -82,7 +82,7 @@ export class ForbiddenError extends CompetitiveAnalysisError {
  * Request validation failed (400)
  */
 export class ValidationError extends CompetitiveAnalysisError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, 'VALIDATION_ERROR', 400, { details });
     this.name = 'ValidationError';
   }
@@ -207,13 +207,17 @@ export function isCompetitiveAnalysisError(
   return error instanceof CompetitiveAnalysisError;
 }
 
+interface ZodError {
+  issues: unknown[];
+}
+
 /**
  * Error handler utility for API routes
  * Converts errors to appropriate HTTP responses
  */
 export function handleError(error: unknown): {
   statusCode: number;
-  body: Record<string, any>;
+  body: Record<string, unknown>;
 } {
   // Handle our custom errors
   if (isCompetitiveAnalysisError(error)) {
@@ -225,12 +229,13 @@ export function handleError(error: unknown): {
 
   // Handle Zod validation errors
   if (error && typeof error === 'object' && 'issues' in error) {
+    const zodError = error as ZodError;
     return {
       statusCode: 400,
       body: {
         error: 'Validation error',
         code: 'VALIDATION_ERROR',
-        details: (error as any).issues,
+        details: zodError.issues,
       },
     };
   }
@@ -253,7 +258,7 @@ export function handleError(error: unknown): {
  * Async error wrapper for API route handlers
  * Automatically catches and converts errors to HTTP responses
  */
-export function withErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends unknown[], R>(
   handler: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
@@ -262,10 +267,10 @@ export function withErrorHandling<T extends any[], R>(
     } catch (error) {
       const { statusCode, body } = handleError(error);
       throw new CompetitiveAnalysisError(
-        body.error,
-        body.code,
+        body.error as string,
+        body.code as string,
         statusCode,
-        body.context || body.details
+        (body.context || body.details) as Record<string, unknown>
       );
     }
   };

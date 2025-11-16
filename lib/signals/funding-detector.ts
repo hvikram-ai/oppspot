@@ -313,7 +313,7 @@ export class FundingDetector {
   private calculateConfidence(
     text: string,
     companyName: string,
-    amount: any,
+    amount: number | null,
     roundType: string
   ): number {
     let confidence = 0.3 // Base confidence

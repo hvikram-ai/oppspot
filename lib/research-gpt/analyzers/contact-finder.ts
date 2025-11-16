@@ -201,8 +201,16 @@ Rules:
     // Parse JSON response
     const jsonMatch = response.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
-      return parsed.map((c: any) => ({
+      interface AIContact {
+        name: string;
+        role: string;
+        email?: string;
+        linkedin?: string;
+        phone?: string;
+        confidence: number;
+      }
+      const parsed = JSON.parse(jsonMatch[0]) as AIContact[]
+      return parsed.map((c) => ({
         ...c,
         source: 'AI inference'
       }))

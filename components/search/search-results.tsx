@@ -126,9 +126,19 @@ export function SearchResults({
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Search className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No results found</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-md">
-            Try adjusting your search query or filters to find what you&apos;re looking for.
+          <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
+            We couldn&apos;t find any businesses matching your search criteria.
           </p>
+
+          <div className="bg-muted/50 rounded-lg p-4 max-w-md w-full">
+            <p className="text-sm font-medium mb-2">Try these suggestions:</p>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Check your spelling or try different keywords</li>
+              <li>Use broader search terms (e.g., &quot;tech&quot; instead of &quot;artificial intelligence&quot;)</li>
+              <li>Remove some filters to expand your results</li>
+              <li>Try searching by location or industry category</li>
+            </ul>
+          </div>
         </CardContent>
       </Card>
     )

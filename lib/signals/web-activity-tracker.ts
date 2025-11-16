@@ -275,7 +275,7 @@ export class WebActivityTracker {
   private async sendActivity(
     activity: WebActivity,
     eventType: string,
-    metadata?: any
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     try {
       const response = await fetch(this.config.apiEndpoint, {

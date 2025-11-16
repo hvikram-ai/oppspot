@@ -291,10 +291,31 @@ export function validateYear(year: number | null | undefined): number | null {
 // BATCH VALIDATION
 // ================================================================
 
+interface AnalysisInput {
+  title: string;
+  target_company_name: string;
+  target_company_website?: string | null;
+  description?: string | null;
+  market_segment?: string | null;
+  [key: string]: unknown;
+}
+
+interface CompetitorInput {
+  competitor_name: string;
+  competitor_website?: string | null;
+  notes?: string | null;
+  [key: string]: unknown;
+}
+
+interface ShareInput {
+  user_email: string;
+  [key: string]: unknown;
+}
+
 /**
  * Validate and sanitize competitive analysis input
  */
-export function validateAnalysisInput(input: any): any {
+export function validateAnalysisInput(input: AnalysisInput): AnalysisInput {
   return {
     ...input,
     title: validateTitle(input.title),
@@ -308,7 +329,7 @@ export function validateAnalysisInput(input: any): any {
 /**
  * Validate and sanitize competitor input
  */
-export function validateCompetitorInput(input: any): any {
+export function validateCompetitorInput(input: CompetitorInput): CompetitorInput {
   return {
     ...input,
     competitor_name: validateCompanyName(input.competitor_name),
@@ -320,7 +341,7 @@ export function validateCompetitorInput(input: any): any {
 /**
  * Validate and sanitize share invitation input
  */
-export function validateShareInput(input: any): any {
+export function validateShareInput(input: ShareInput): ShareInput {
   return {
     ...input,
     user_email: validateShareEmail(input.user_email),

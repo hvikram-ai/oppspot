@@ -127,7 +127,7 @@ export class AgentTaskRunner {
       .or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`)
       .order('priority', { ascending: false })
       .order('created_at', { ascending: true })
-      .limit(limit) as { data: Row<'agent_tasks'>[] | null; error: any }
+      .limit(limit) as { data: Row<'agent_tasks'>[] | null; error: Error | null }
 
     if (error) {
       console.error('[AgentTaskRunner] Error fetching tasks:', error)
@@ -193,7 +193,7 @@ export class AgentTaskRunner {
       .from('ai_agents')
       .select('*')
       .eq('id', task.agent_id)
-      .single() as { data: Row<'ai_agents'> | null; error: any }
+      .single() as { data: Row<'ai_agents'> | null; error: Error | null }
 
     if (agentError || !agent) {
       throw new Error(`Agent not found: ${task.agent_id}`)
@@ -219,7 +219,7 @@ export class AgentTaskRunner {
    * Execute stream-specific task
    */
   private async executeStreamTask(
-    agent: any,
+    agent: Row<'ai_agents'>,
     task: AgentTask
   ): Promise<AgentExecutionResult> {
     const {
@@ -266,7 +266,7 @@ export class AgentTaskRunner {
    * Execute scheduled run
    */
   private async executeScheduledRun(
-    agent: any,
+    agent: Row<'ai_agents'>,
     task: AgentTask
   ): Promise<AgentExecutionResult> {
     console.log(`[AgentTaskRunner] Running scheduled task for ${agent.name}`)
@@ -279,7 +279,7 @@ export class AgentTaskRunner {
    * Execute manual trigger
    */
   private async executeManualTrigger(
-    agent: any,
+    agent: Row<'ai_agents'>,
     task: AgentTask
   ): Promise<AgentExecutionResult> {
     console.log(`[AgentTaskRunner] Running manual trigger for ${agent.name}`)
@@ -291,7 +291,7 @@ export class AgentTaskRunner {
   /**
    * Get agent instance based on type
    */
-  private async getAgentInstance(agent: any): Promise<BaseAgent> {
+  private async getAgentInstance(agent: Row<'ai_agents'>): Promise<BaseAgent> {
     switch (agent.agent_type) {
       case 'opportunity_bot':
         return await createOpportunityBot(agent.id)
@@ -322,7 +322,7 @@ export class AgentTaskRunner {
       .from('streams')
       .select('current_progress, target_metrics')
       .eq('id', streamId)
-      .single() as { data: Row<'streams'> | null; error: any }
+      .single() as { data: Row<'streams'> | null; error: Error | null }
 
     if (!stream) return
 

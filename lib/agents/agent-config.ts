@@ -28,7 +28,7 @@ export interface AgentConfig {
 
   // Caching
   cacheTTL?: number // Cache responses for N seconds
-  cacheKey?: (query: string, context: any) => string
+  cacheKey?: (query: string, context: Record<string, unknown>) => string
 }
 
 // ============================================================================

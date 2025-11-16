@@ -1,0 +1,212 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Command Palette" [level=2] [ref=e3]
+    - paragraph [ref=e4]: Search for a command to run...
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e8]:
+        - link "oppSpot" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img [ref=e12]
+          - generic [ref=e15]: oppSpot
+        - generic [ref=e17]:
+          - link "Sign In" [ref=e18] [cursor=pointer]:
+            - /url: /login
+            - button "Sign In" [ref=e19]
+          - link "Get Started" [ref=e20] [cursor=pointer]:
+            - /url: /login
+            - button "Get Started" [ref=e21]
+    - complementary [ref=e22]:
+      - generic [ref=e23]:
+        - button "Collapse sidebar" [ref=e25]:
+          - img
+        - generic [ref=e29]:
+          - button "Search... K" [ref=e31]:
+            - img
+            - generic [ref=e32]: Search...
+            - generic [ref=e33]:
+              - img
+              - text: K
+          - generic [ref=e34]:
+            - link "Dashboard" [ref=e35] [cursor=pointer]:
+              - /url: /dashboard
+              - generic [ref=e36]:
+                - img [ref=e38]
+                - generic [ref=e41]: Dashboard
+            - link "Live Monitoring Pro" [ref=e43] [cursor=pointer]:
+              - /url: /monitoring
+              - generic [ref=e44]:
+                - img [ref=e46]
+                - generic [ref=e48]: Live Monitoring
+                - generic [ref=e49]: Pro
+            - link "ChatSpot Pro" [ref=e51] [cursor=pointer]:
+              - /url: /chatspot
+              - generic [ref=e52]:
+                - img [ref=e54]
+                - generic [ref=e57]: ChatSpot
+                - generic [ref=e58]: Pro
+          - button "Discover" [ref=e61]:
+            - generic [ref=e62]:
+              - img [ref=e63]
+              - generic [ref=e66]: Discover
+            - img [ref=e67]
+          - button "Diligence" [ref=e70]:
+            - generic [ref=e71]:
+              - img [ref=e72]
+              - generic [ref=e77]: Diligence
+            - img [ref=e78]
+          - button "Collaboration" [ref=e81]:
+            - generic [ref=e82]:
+              - img [ref=e83]
+              - generic [ref=e88]: Collaboration
+            - img [ref=e89]
+          - button "Outreach" [ref=e92]:
+            - generic [ref=e93]:
+              - img [ref=e94]
+              - generic [ref=e97]: Outreach
+            - img [ref=e98]
+          - button "Streams" [ref=e101]:
+            - generic [ref=e102]:
+              - img [ref=e103]
+              - generic [ref=e105]: Streams
+            - img [ref=e106]
+        - generic [ref=e108]:
+          - link "Profile" [ref=e109] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e110]:
+              - img [ref=e112]
+              - generic [ref=e115]: Profile
+          - link "Team Management" [ref=e117] [cursor=pointer]:
+            - /url: /team
+            - generic [ref=e118]:
+              - img [ref=e120]
+              - generic [ref=e132]: Team Management
+          - link "Settings" [ref=e134] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e135]:
+              - img [ref=e137]
+              - generic [ref=e140]: Settings
+          - link "Billing" [ref=e142] [cursor=pointer]:
+            - /url: /billing
+            - generic [ref=e143]:
+              - img [ref=e145]
+              - generic [ref=e147]: Billing
+          - link "What's New" [ref=e149] [cursor=pointer]:
+            - /url: /weekly-updates
+            - generic [ref=e150]:
+              - img [ref=e152]
+              - generic [ref=e155]: What's New
+          - link "Feedback" [ref=e157] [cursor=pointer]:
+            - /url: /feedback
+            - generic [ref=e158]:
+              - img [ref=e160]
+              - generic [ref=e162]: Feedback
+    - generic [ref=e164]:
+      - generic [ref=e167]:
+        - generic [ref=e168]:
+          - generic [ref=e169]:
+            - heading "Search Businesses" [level=1] [ref=e170]
+            - paragraph [ref=e171]: Find acquisition targets anywhere with AI-powered search
+          - generic [ref=e172]:
+            - button "Export" [disabled]:
+              - img
+              - text: Export
+            - button "Save to List (0)" [disabled]:
+              - img
+              - text: Save to List (0)
+        - generic [ref=e176]:
+          - img [ref=e177]
+          - textbox "Search by name, category, or describe what you're looking for..." [ref=e180]
+          - button [ref=e181]:
+            - img
+          - button [ref=e183]:
+            - img
+      - generic [ref=e185]:
+        - generic [ref=e187]:
+          - generic [ref=e189]:
+            - generic [ref=e190]:
+              - img [ref=e191]
+              - text: Filters
+            - button "Reset" [disabled]:
+              - img
+              - text: Reset
+          - generic [ref=e193]:
+            - generic [ref=e194]:
+              - generic [ref=e195]: Sort By
+              - combobox [ref=e196]:
+                - img
+              - combobox [ref=e197]
+            - generic [ref=e198]:
+              - button "Categories" [ref=e199]:
+                - generic [ref=e200]:
+                  - img [ref=e201]
+                  - text: Categories
+                - img [ref=e205]
+              - generic [ref=e207]:
+                - generic [ref=e208]:
+                  - checkbox "Technology" [ref=e209]
+                  - checkbox
+                  - generic [ref=e210] [cursor=pointer]: Technology
+                - generic [ref=e211]:
+                  - checkbox "Healthcare" [ref=e212]
+                  - checkbox
+                  - generic [ref=e213] [cursor=pointer]: Healthcare
+                - generic [ref=e214]:
+                  - checkbox "Retail" [ref=e215]
+                  - checkbox
+                  - generic [ref=e216] [cursor=pointer]: Retail
+                - generic [ref=e217]:
+                  - checkbox "Food & Beverage" [ref=e218]
+                  - checkbox
+                  - generic [ref=e219] [cursor=pointer]: Food & Beverage
+                - generic [ref=e220]:
+                  - checkbox "Finance" [ref=e221]
+                  - checkbox
+                  - generic [ref=e222] [cursor=pointer]: Finance
+                - generic [ref=e223]:
+                  - checkbox "Real Estate" [ref=e224]
+                  - checkbox
+                  - generic [ref=e225] [cursor=pointer]: Real Estate
+                - button "Show 6 more" [ref=e226]
+            - generic [ref=e227]:
+              - button "Location" [ref=e228]:
+                - generic [ref=e229]:
+                  - img [ref=e230]
+                  - text: Location
+                - img [ref=e233]
+              - generic [ref=e235]:
+                - textbox "City, postcode, or area" [ref=e236]
+                - generic [ref=e238]:
+                  - generic [ref=e239]: Search Radius
+                  - generic [ref=e240]: 10 miles
+            - button "Rating" [ref=e245]:
+              - generic [ref=e246]:
+                - img [ref=e247]
+                - text: Rating
+              - img [ref=e249]
+            - button "M&A Target Likelihood" [ref=e252]:
+              - generic [ref=e253]:
+                - img [ref=e254]
+                - text: M&A Target Likelihood
+              - img [ref=e258]
+            - button "Advanced Options" [ref=e261]:
+              - generic [ref=e262]: Advanced Options
+              - img [ref=e263]
+        - generic [ref=e267]:
+          - img [ref=e268]
+          - heading "No results found" [level=3] [ref=e271]
+          - paragraph [ref=e272]: We couldn't find any businesses matching your search criteria.
+          - generic [ref=e273]:
+            - paragraph [ref=e274]: "Try these suggestions:"
+            - list [ref=e275]:
+              - listitem [ref=e276]: Check your spelling or try different keywords
+              - listitem [ref=e277]: Use broader search terms (e.g., "tech" instead of "artificial intelligence")
+              - listitem [ref=e278]: Remove some filters to expand your results
+              - listitem [ref=e279]: Try searching by location or industry category
+  - button [ref=e280]:
+    - img
+  - region "Notifications alt+T"
+```

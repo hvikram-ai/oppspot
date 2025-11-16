@@ -234,13 +234,17 @@ export class CompetitiveAnalysisRepository {
   async getCompetitors(analysisId: string): Promise<CompetitorCompany[]> {
     const supabase = await createClient();
 
+    interface CompetitorJoin {
+      competitor_companies: CompetitorCompany;
+    }
+
     const { data, error } = await supabase
       .from('competitive_analysis_competitors')
       .select('competitor_companies(*)')
       .eq('analysis_id', analysisId);
 
     if (error) throw new DatabaseError('fetch competitors', error);
-    return (data || []).map((item: any) => item.competitor_companies) as CompetitorCompany[];
+    return (data || []).map((item: CompetitorJoin) => item.competitor_companies);
   }
 
   // ================================================================
@@ -605,6 +609,12 @@ export class CompetitiveAnalysisRepository {
   async getStaleAnalyses(userId: string, thresholdDays: number = 30) {
     const supabase = await createClient();
 
+    interface StaleAnalysisRow {
+      id: string;
+      title: string;
+      last_refreshed_at: string | null;
+    }
+
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() - thresholdDays);
 
@@ -617,7 +627,7 @@ export class CompetitiveAnalysisRepository {
 
     if (error) throw new DatabaseError('fetch stale analyses', error);
 
-    return (data || []).map((analysis: any) => ({
+    return (data || []).map((analysis: StaleAnalysisRow) => ({
       id: analysis.id,
       title: analysis.title,
       last_refreshed_at: analysis.last_refreshed_at,

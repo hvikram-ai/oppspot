@@ -72,10 +72,33 @@ export class CompaniesHouseDataSource {
     }
   }
 
+  interface CompaniesHouseProfile {
+    company_name: string;
+    company_number: string;
+    date_of_incorporation?: string;
+    type: string;
+    company_status: string;
+    registered_office_address?: {
+      address_line_1?: string;
+      locality?: string;
+      postal_code?: string;
+      country?: string;
+    };
+    sic_codes?: string[];
+    jurisdiction?: string;
+    accounts?: {
+      overdue: boolean;
+      next_due?: string;
+      last_accounts?: {
+        made_up_to?: string;
+      };
+    };
+  }
+
   /**
    * Extract company snapshot data
    */
-  private extractSnapshot(profile: any): Partial<CompanySnapshot> {
+  private extractSnapshot(profile: CompaniesHouseProfile): Partial<CompanySnapshot> {
     return {
       company_name: profile.company_name,
       company_number: profile.company_number,
@@ -98,10 +121,20 @@ export class CompaniesHouseDataSource {
     };
   }
 
+  interface CompaniesHouseFiling {
+    category: string;
+    date: string;
+    type?: string;
+    description: string;
+    links?: {
+      self?: string;
+    };
+  }
+
   /**
    * Extract revenue signals from accounts data
    */
-  private extractRevenueSignals(profile: any, filings: any[]): RevenueSignal[] {
+  private extractRevenueSignals(profile: CompaniesHouseProfile, filings: CompaniesHouseFiling[]): RevenueSignal[] {
     const signals: RevenueSignal[] = [];
 
     // Financial health from accounts status
@@ -178,10 +211,21 @@ export class CompaniesHouseDataSource {
     return signals;
   }
 
+  interface CompaniesHouseOfficer {
+    appointed_on?: string;
+    resigned_on?: string;
+    officer_role: string;
+    name: string;
+    nationality?: string;
+    links?: {
+      self?: string;
+    };
+  }
+
   /**
    * Extract buying signals (leadership changes, capital raises)
    */
-  private extractBuyingSignals(officers: any[], filings: any[]): BuyingSignal[] {
+  private extractBuyingSignals(officers: CompaniesHouseOfficer[], filings: CompaniesHouseFiling[]): BuyingSignal[] {
     const signals: BuyingSignal[] = [];
 
     // Recent leadership changes (last 12 months)
@@ -265,7 +309,7 @@ export class CompaniesHouseDataSource {
   /**
    * Extract decision makers (directors and officers)
    */
-  private extractDecisionMakers(officers: any[]): DecisionMaker[] {
+  private extractDecisionMakers(officers: CompaniesHouseOfficer[]): DecisionMaker[] {
     return officers
       .filter((officer) => !officer.resigned_on) // Only active officers
       .filter((officer) => this.isKeyRole(officer.officer_role))

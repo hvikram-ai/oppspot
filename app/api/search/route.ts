@@ -787,8 +787,18 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('Search error:', error)
+
+    // Provide user-friendly error message based on error type
+    const errorMessage = error instanceof Error
+      ? error.message
+      : 'Unable to complete your search. Please try again.'
+
     return NextResponse.json(
-      { error: 'Search failed' },
+      {
+        error: 'Unable to complete your search at this time. Please try again in a moment.',
+        details: errorMessage,
+        canRetry: true
+      },
       { status: 500 }
     )
   }

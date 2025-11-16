@@ -372,7 +372,7 @@ export class DataSourceFactory {
   async fetchSingleSource(
     source: 'companies_house' | 'news' | 'jobs' | 'website',
     options: DataSourceOptions
-  ): Promise<any> {
+  ): Promise<CompaniesHouseData | NewsData | JobsData | WebsiteData> {
     switch (source) {
       case 'companies_house':
         return this.fetchCompaniesHouseData(options);
