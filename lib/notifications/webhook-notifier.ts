@@ -135,7 +135,7 @@ export class WebhookNotifier {
   /**
    * Build webhook payload
    */
-  private buildPayload(alert: WebhookAlert): any {
+  private buildPayload(alert: WebhookAlert): Record<string, unknown> {
     return {
       event: 'alert.triggered',
       timestamp: new Date().toISOString(),
@@ -156,7 +156,7 @@ export class WebhookNotifier {
   /**
    * Send HTTP request to webhook
    */
-  private async sendRequest(payload: any, attemptNumber: number): Promise<boolean> {
+  private async sendRequest(payload: Record<string, unknown>, attemptNumber: number): Promise<boolean> {
     if (!this.config) return false
 
     const payloadString = JSON.stringify(payload)
@@ -343,7 +343,7 @@ export class WebhookNotifier {
   /**
    * Get recent webhook logs
    */
-  async getLogs(limit: number = 50): Promise<any[]> {
+  async getLogs(limit: number = 50): Promise<Array<Record<string, unknown>>> {
     try {
       const supabase = await createClient()
 
