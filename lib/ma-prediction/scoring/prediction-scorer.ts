@@ -15,7 +15,7 @@ import { analyzeMarket } from '../analyzers/market-analyzer';
 import { matchPatterns } from '../analyzers/pattern-matcher';
 // Temporarily disabled - LLM manager not yet implemented
 // import { LLMManager } from '@/lib/ai/llm-manager';
-import type { AnalysisFactor } from '../analyzers/financial-analyzer';
+import type { AnalysisFactor, AnalysisResult } from '../analyzers/financial-analyzer';
 
 export interface PredictionScore {
   prediction_score: number; // 0-100 (final hybrid score)
@@ -147,10 +147,10 @@ function calculateRuleBasedScore(
 async function calculateAIScore(
   companyId: string,
   analyzerResults: {
-    financial: any;
-    operational: any;
-    market: any;
-    pattern: any;
+    financial: AnalysisResult;
+    operational: AnalysisResult;
+    market: AnalysisResult;
+    pattern: AnalysisResult;
   }
 ): Promise<number> {
   try {
@@ -202,7 +202,12 @@ async function calculateAIScore(
  */
 function buildAIPrompt(
   companyId: string,
-  analyzerResults: any
+  analyzerResults: {
+    financial: AnalysisResult;
+    operational: AnalysisResult;
+    market: AnalysisResult;
+    pattern: AnalysisResult;
+  }
 ): string {
   const { financial, operational, market, pattern } = analyzerResults;
 

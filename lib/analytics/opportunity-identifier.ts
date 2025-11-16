@@ -363,12 +363,14 @@ export class OpportunityIdentifier {
 
       // Calculate metrics with type safety
       const avgRating = weakCompetitors.reduce((sum, c) => {
-        const rating = typeof (c as any).rating === 'number' ? (c as any).rating : 0
+        const business = c as unknown as BusinessForAnalysis
+        const rating = typeof business.rating === 'number' ? business.rating : 0
         return sum + rating
       }, 0) / weakCompetitors.length
 
       const totalReviews = weakCompetitors.reduce((sum, c) => {
-        const reviews = typeof (c as any).review_count === 'number' ? (c as any).review_count : 0
+        const business = c as unknown as BusinessForAnalysis
+        const reviews = typeof business.review_count === 'number' ? business.review_count : 0
         return sum + reviews
       }, 0)
 
@@ -410,7 +412,8 @@ export class OpportunityIdentifier {
 
     // Analyze common patterns
     const avgRating = competitors.reduce((sum, c) => {
-      const rating = typeof (c as any).rating === 'number' ? (c as any).rating : 0
+      const business = c as unknown as BusinessForAnalysis
+      const rating = typeof business.rating === 'number' ? business.rating : 0
       return sum + rating
     }, 0) / competitors.length
 
@@ -419,7 +422,8 @@ export class OpportunityIdentifier {
     }
 
     const lowReviewCount = competitors.filter(c => {
-      const reviewCount = typeof (c as any).review_count === 'number' ? (c as any).review_count : 0
+      const business = c as unknown as BusinessForAnalysis
+      const reviewCount = typeof business.review_count === 'number' ? business.review_count : 0
       return reviewCount < 50
     }).length
     if (lowReviewCount > competitors.length / 2) {
@@ -527,12 +531,12 @@ export class OpportunityIdentifier {
       query.eq('location_id', locationId)
     }
 
-    const { data } = await query as { data: any[] | null; error: unknown }
+    const { data } = await query as { data: BusinessForAnalysis[] | null; error: unknown }
 
     if (!data || data.length === 0) return 0
 
     return data.reduce((sum, b) => {
-      const rating = typeof (b as any).rating === 'number' ? (b as any).rating : 0
+      const rating = typeof b.rating === 'number' ? b.rating : 0
       return sum + rating
     }, 0) / data.length
   }
@@ -577,7 +581,7 @@ export class OpportunityIdentifier {
       expires_at: opp.timeWindowEnd
     }))
 
-    await (this.supabase! as any)
+    await this.supabase!
       .from('opportunities')
       .insert(records)
   }

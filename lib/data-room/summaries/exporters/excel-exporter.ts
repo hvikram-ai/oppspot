@@ -7,7 +7,7 @@
  * - Quality sheet: Quality issues and validation
  */
 
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import type {
   SummaryWithFields,
   ExportOptions,

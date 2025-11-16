@@ -3,7 +3,7 @@
  * Generates Excel workbooks with multiple sheets for M&A prediction data
  */
 
-import * as XLSX from 'xlsx'
+import * as XLSX from '@e965/xlsx'
 import type { MAPredictionDetail } from '@/lib/types/ma-prediction'
 
 interface ExportData {

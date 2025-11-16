@@ -13,6 +13,10 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
+
+type DbClient = SupabaseClient<Database>;
 
 export interface ValuationEstimate {
   min_valuation_gbp: number;
@@ -29,6 +33,11 @@ interface CompanyFinancials {
   employees?: number;
   sic_code?: string;
   industry?: string;
+}
+
+interface HistoricalDealData {
+  deal_value_gbp: number;
+  target_revenue_at_deal_gbp: number;
 }
 
 /**
@@ -91,7 +100,7 @@ export async function estimateValuation(
 async function calculateRevenueMultipleValuation(
   financials: CompanyFinancials,
   predictionScore: number,
-  supabase: any
+  supabase: DbClient
 ): Promise<ValuationEstimate> {
   const revenue = financials.revenue || 0;
 
@@ -152,7 +161,7 @@ async function calculateRevenueMultipleValuation(
 async function calculateEBITDAMultipleValuation(
   financials: CompanyFinancials,
   predictionScore: number,
-  supabase: any
+  supabase: DbClient
 ): Promise<ValuationEstimate> {
   const profitability = financials.profitability || 0;
   const revenue = financials.revenue || 0;
@@ -215,7 +224,7 @@ async function calculateEBITDAMultipleValuation(
 async function getIndustryRevenueMultiple(
   sicCode?: string,
   industry?: string,
-  supabase?: any
+  supabase?: DbClient
 ): Promise<number | null> {
   if (!supabase || (!sicCode && !industry)) {
     return null;
@@ -236,7 +245,7 @@ async function getIndustryRevenueMultiple(
   }
 
   // Calculate multiples from historical deals
-  const multiples = deals.map((deal: any) => deal.deal_value_gbp / deal.target_revenue_at_deal_gbp);
+  const multiples = deals.map((deal: HistoricalDealData) => deal.deal_value_gbp / deal.target_revenue_at_deal_gbp);
 
   // Return median multiple (more robust than average)
   multiples.sort((a, b) => a - b);
@@ -251,7 +260,7 @@ async function getIndustryRevenueMultiple(
 async function getIndustryEBITDAMultiple(
   sicCode?: string,
   industry?: string,
-  supabase?: any
+  supabase?: DbClient
 ): Promise<number | null> {
   if (!supabase || (!sicCode && !industry)) {
     return null;

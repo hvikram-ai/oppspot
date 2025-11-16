@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { addDays, format, subDays } from 'date-fns'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/database.types'
 
 interface ForecastResult {
   category: string
@@ -28,7 +30,7 @@ interface HistoricalDemand {
 }
 
 export class DemandForecaster {
-  private supabase: any
+  private supabase: SupabaseClient<Database> | null = null
 
   constructor() {
     this.initSupabase()
@@ -157,8 +159,21 @@ export class DemandForecaster {
     // In production, this would use actual transaction or search data
     const baselineDemand = 100
     const businessCount = businesses.length
-    const avgRating = businesses.reduce((sum, b) => sum + ((b as any).rating || 0), 0) / businessCount
-    const totalReviews = businesses.reduce((sum, b) => sum + ((b as any).review_count || 0), 0)
+
+    interface BusinessData {
+      rating?: number
+      review_count?: number
+    }
+
+    const avgRating = businesses.reduce((sum, b) => {
+      const business = b as BusinessData
+      return sum + (business.rating || 0)
+    }, 0) / businessCount
+
+    const totalReviews = businesses.reduce((sum, b) => {
+      const business = b as BusinessData
+      return sum + (business.review_count || 0)
+    }, 0)
     const totalReviewsNum = typeof totalReviews === 'number' ? totalReviews : 0
 
     // Demand formula (simplified)

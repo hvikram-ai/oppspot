@@ -14,6 +14,10 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
+
+type DbClient = SupabaseClient<Database>;
 
 export interface AcquirerProfile {
   rank: number; // 1-10
@@ -117,7 +121,7 @@ export async function generateAcquirerProfiles(
  */
 async function generateHorizontalProfile(
   target: CompanyProfile,
-  supabase: any
+  supabase: DbClient
 ): Promise<AcquirerProfile | null> {
   if (!target.sic_code && !target.industry) {
     return null;
@@ -158,7 +162,7 @@ async function generateHorizontalProfile(
  */
 async function generateVerticalProfile(
   target: CompanyProfile,
-  supabase: any
+  supabase: DbClient
 ): Promise<AcquirerProfile | null> {
   // Vertical integration is industry-specific
   const industryLower = (target.industry || '').toLowerCase();
@@ -198,7 +202,7 @@ async function generateVerticalProfile(
  */
 async function generateStrategicProfile(
   target: CompanyProfile,
-  supabase: any
+  supabase: DbClient
 ): Promise<AcquirerProfile | null> {
   const industryLower = (target.industry || '').toLowerCase();
 
@@ -238,7 +242,7 @@ async function generateStrategicProfile(
  */
 async function generateExpansionProfile(
   target: CompanyProfile,
-  supabase: any
+  supabase: DbClient
 ): Promise<AcquirerProfile | null> {
   if (!target.region) {
     return null;

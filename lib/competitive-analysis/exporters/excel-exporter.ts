@@ -3,7 +3,7 @@
  * Generates Excel workbooks with multiple sheets for competitive analysis data
  */
 
-import * as XLSX from 'xlsx'
+import * as XLSX from '@e965/xlsx'
 import type {
   CompetitiveAnalysis,
   CompetitorCompany,

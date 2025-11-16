@@ -14,6 +14,20 @@ import {
 
 type Business = Database['public']['Tables']['businesses']['Row']
 
+interface BusinessAddress {
+  formatted?: string
+  vicinity?: string
+}
+
+interface GoogleData {
+  types?: string[]
+  price_level?: number
+}
+
+interface BusinessMetadata {
+  google_data?: GoogleData
+}
+
 interface OpenRouterResponse {
   id: string
   model: string
@@ -164,8 +178,8 @@ export class OpenRouterClient implements LLMProvider, LLMService {
     }
     
     if (business.address) {
-      const addr = business.address as unknown
-      parts.push(`Location: ${(addr as any).formatted || (addr as any).vicinity || 'UK/Ireland'}`)
+      const addr = business.address as unknown as BusinessAddress
+      parts.push(`Location: ${addr.formatted || addr.vicinity || 'UK/Ireland'}`)
     }
     
     if (business.website) {
@@ -177,12 +191,12 @@ export class OpenRouterClient implements LLMProvider, LLMService {
     }
     
     if (business.metadata) {
-      const meta = business.metadata as unknown
-      if ((meta as any).google_data?.types) {
-        parts.push(`Business Types: ${(meta as any).google_data.types.join(', ')}`)
+      const meta = business.metadata as unknown as BusinessMetadata
+      if (meta.google_data?.types) {
+        parts.push(`Business Types: ${meta.google_data.types.join(', ')}`)
       }
-      if ((meta as any).google_data?.price_level) {
-        const priceLevel = '£'.repeat((meta as any).google_data.price_level)
+      if (meta.google_data?.price_level) {
+        const priceLevel = '£'.repeat(meta.google_data.price_level)
         parts.push(`Price Level: ${priceLevel}`)
       }
     }
@@ -338,7 +352,7 @@ export class OpenRouterClient implements LLMProvider, LLMService {
   /**
    * Get model capabilities and configuration
    */
-  getModelCapabilities(): Record<string, ModelCapabilities | any> {
+  getModelCapabilities(): Record<string, ModelCapabilities> {
     return {
       'anthropic/claude-3-haiku': {
         name: 'Claude 3 Haiku',

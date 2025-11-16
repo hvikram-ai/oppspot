@@ -11,6 +11,10 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
+
+type DbClient = SupabaseClient<Database>;
 
 export interface AnalysisResult {
   score: number; // 0-100
@@ -43,6 +47,18 @@ interface CompanyProfile {
   revenue?: number;
   employees?: number;
   incorporation_date?: string;
+}
+
+interface HistoricalDealData {
+  target_company_name: string;
+  acquirer_company_name: string;
+  deal_date: string;
+  deal_value_gbp: number | null;
+  target_sic_code?: string;
+  target_industry_description?: string;
+  target_revenue_at_deal_gbp?: number;
+  target_employee_count_at_deal?: number;
+  target_age_years?: number;
 }
 
 /**
@@ -181,7 +197,7 @@ export async function matchPatterns(companyId: string): Promise<AnalysisResult> 
 async function findComparableDeals(
   profile: CompanyProfile,
   companyAge: number,
-  supabase: any
+  supabase: DbClient
 ): Promise<ComparableDeal[]> {
   // Query all verified historical deals
   const { data: allDeals, error } = await supabase
@@ -195,7 +211,7 @@ async function findComparableDeals(
   }
 
   // Calculate similarity score for each deal
-  const scoredDeals = allDeals.map((deal: any) => {
+  const scoredDeals = allDeals.map((deal: HistoricalDealData) => {
     let similarityScore = 0;
     const matchingFactors: string[] = [];
 

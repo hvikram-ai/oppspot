@@ -23,6 +23,17 @@ interface TimeSeriesData {
   value: number
 }
 
+interface PatternData {
+  exists: boolean
+  strength: number
+}
+
+interface SeasonalityData {
+  hasSeasonality: boolean
+  weekly?: PatternData
+  monthly?: PatternData
+}
+
 export class TrendAnalyzer {
   private supabase: DbClient | null = null
 
@@ -132,7 +143,7 @@ export class TrendAnalyzer {
         .from('businesses')
         .select('rating, review_count')
         .eq('id', entityId)
-        .single() as { data: (Row<'businesses'> & { rating?: number; review_count?: number }) | null; error: any }
+        .single() as { data: (Row<'businesses'> & { rating?: number; review_count?: number }) | null; error: unknown }
 
       if (business && business.rating) {
         // Generate synthetic historical data for demonstration
@@ -250,7 +261,7 @@ export class TrendAnalyzer {
     return (recentValue - pastValue) / pastValue
   }
 
-  private detectSeasonality(data: TimeSeriesData[]): Record<string, unknown> {
+  private detectSeasonality(data: TimeSeriesData[]): SeasonalityData {
     // Simple seasonality detection
     // In production, would use FFT or more sophisticated methods
     
@@ -357,7 +368,7 @@ export class TrendAnalyzer {
       
       // Add seasonal adjustment if applicable
       let seasonalAdjustment = 0
-      if (seasonality.hasSeasonality && (seasonality.weekly as any).exists && days >= 7) {
+      if (seasonality.hasSeasonality && seasonality.weekly?.exists && days >= 7) {
         seasonalAdjustment = (Math.random() - 0.5) * 0.1 // Simplified
       }
       
@@ -417,10 +428,10 @@ export class TrendAnalyzer {
     
     // Seasonality insight
     if (seasonality.hasSeasonality) {
-      if ((seasonality.weekly as any).exists) {
-        insights.push(`Weekly patterns detected with ${((seasonality.weekly as any).strength * 100).toFixed(0)}% consistency`)
+      if (seasonality.weekly?.exists) {
+        insights.push(`Weekly patterns detected with ${(seasonality.weekly.strength * 100).toFixed(0)}% consistency`)
       }
-      if ((seasonality.monthly as any).exists) {
+      if (seasonality.monthly?.exists) {
         insights.push(`Monthly cyclical patterns observed in the data`)
       }
     }

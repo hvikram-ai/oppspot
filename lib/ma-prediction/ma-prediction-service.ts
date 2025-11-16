@@ -18,7 +18,7 @@ import { calculateConfidence } from './scoring/confidence-calculator';
 import { estimateValuation } from './valuation/valuation-estimator';
 import { generateAcquirerProfiles } from './analyzers/acquirer-profiler';
 import { savePrediction, getActivePrediction, logAuditTrail } from './repository/prediction-repository';
-import type { MAPredictionDetail } from '@/lib/types/ma-prediction';
+import type { MAPredictionDetail, MAAcquirerProfile } from '@/lib/types/ma-prediction';
 
 /**
  * Generate complete M&A prediction for a company
@@ -65,7 +65,7 @@ export async function generatePrediction(companyId: string): Promise<MAPredictio
     }
 
     // Step 4: Generate acquirer profiles (if High+ likelihood)
-    let acquirerProfiles: any[] = [];
+    let acquirerProfiles: MAAcquirerProfile[] = [];
     if (scoreResult.prediction_score >= 51) {
       try {
         acquirerProfiles = await generateAcquirerProfiles(companyId, scoreResult.prediction_score);

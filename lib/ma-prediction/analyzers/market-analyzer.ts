@@ -11,6 +11,10 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
+
+type DbClient = SupabaseClient<Database>;
 
 export interface AnalysisResult {
   score: number; // 0-100
@@ -145,7 +149,7 @@ export async function analyzeMarket(companyId: string): Promise<AnalysisResult> 
 async function analyzeIndustryConsolidation(
   sicCode?: string,
   industry?: string,
-  supabase?: any
+  supabase?: DbClient
 ): Promise<{ score: number; factor?: AnalysisFactor }> {
   if (!sicCode && !industry) {
     return { score: 0 };
@@ -311,7 +315,7 @@ function analyzeSectorMaturity(sicCode?: string, industry?: string): { score: nu
  */
 async function analyzeGeographicClustering(
   region?: string,
-  supabase?: any
+  supabase?: DbClient
 ): Promise<{ score: number; factor?: AnalysisFactor }> {
   if (!region) {
     return { score: 0 };
