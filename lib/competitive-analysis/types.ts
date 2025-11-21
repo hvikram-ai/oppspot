@@ -300,7 +300,7 @@ export const CompetitiveMoatScoreSchema = z.object({
   brand_recognition_score: z.number().nullable().optional(),
   customer_lock_in_score: z.number().nullable().optional(),
   network_effects_score: z.number().nullable().optional(),
-  supporting_evidence: z.record(z.string(), z.any()).nullable().optional(),
+  supporting_evidence: z.record(z.string(), z.unknown()).nullable().optional(),
   risk_factors: z.array(z.string()).nullable().optional(),
   last_calculated_at: z.string().datetime(),
   created_at: z.string().datetime(),
@@ -376,11 +376,11 @@ export type CreateDataSourceCitation = z.infer<typeof CreateDataSourceCitationSc
 export const AnalysisSnapshotSchema = z.object({
   id: z.string().uuid(),
   analysis_id: z.string().uuid(),
-  snapshot_data: z.record(z.string(), z.any()),
+  snapshot_data: z.record(z.string(), z.unknown()),
   snapshot_date: z.string().datetime(),
   snapshot_trigger: z.string().max(50).nullable().optional(),
   created_by: z.string().uuid().nullable().optional(),
-  changes_summary: z.record(z.string(), z.any()).nullable().optional(),
+  changes_summary: z.record(z.string(), z.unknown()).nullable().optional(),
   created_at: z.string().datetime(),
 });
 

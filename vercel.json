@@ -19,6 +19,9 @@
     },
     "app/api/ma-predictions/batch/route.ts": {
       "maxDuration": 600
+    },
+    "app/api/cron/competitive-intelligence/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
@@ -41,6 +44,10 @@
     {
       "path": "/api/cron/ma-predictions",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/competitive-intelligence",
+      "schedule": "0 2 * * 1"
     }
   ],
   "headers": [
