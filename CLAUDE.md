@@ -590,26 +590,23 @@ Current git configuration for this repository:
 - **Email**: hirendra.vikram@boardguru.ai
 
 ### GitHub Account
-- **Organization**: BoardGuruHV
-- **Repository**: https://github.com/BoardGuruHV/oppspot
-- **Previous Account**: hvikram-ai (legacy)
+- **Account**: hvikram-ai
+- **Repository**: https://github.com/hvikram-ai/oppspot
 
 **Note**: GitHub CLI authentication may be required for operations like creating pull requests. Use `gh auth login` if needed.
 
 ## Deployment Information
 
 ### Production URLs
-- **Primary Vercel Deployment**: https://oppspot-one.vercel.app/ ⭐ **USE THIS URL**
-- **Vercel Account**: hirendra.vikram@boardguru.ai
-- **Vercel Project Dashboard**: https://vercel.com/boardguruhv/oppspot-one
-- **Custom Domain (oppspot.ai)**: ⚠️ Currently pointing to old deployment - DO NOT USE until fixed
+- **Vercel Project**: h-viks-projects/oppspot
+- **Vercel Dashboard**: https://vercel.com/h-viks-projects/oppspot
+- **Deployments**: https://vercel.com/h-viks-projects/oppspot/deployments
+- **Custom Domain**: oppspot.ai (if configured)
 - **Note**: OAuth uses `window.location.origin` dynamically - works with any deployment URL
-
-**Important**: The custom domain `oppspot.ai` is currently pointing to a stale/old deployment and is NOT receiving the latest updates from GitHub. Always use `oppspot-one.vercel.app` for testing and sharing until the domain routing is fixed in Vercel dashboard.
 
 ### Deployment Platform
 - **Hosting**: Vercel (automatic deployment on push to main branch)
-- **Repository**: https://github.com/BoardGuruHV/oppspot
+- **Repository**: https://github.com/hvikram-ai/oppspot
 - **Build Command**: `npm run build`
 - **Output Directory**: `.next`
 - **Install Command**: `npm install --legacy-peer-deps`
@@ -633,8 +630,8 @@ When configuring OAuth providers, use these URLs:
 ```
 http://localhost:3000
 http://localhost:3001
-https://oppspot-one.vercel.app
 https://oppspot.ai
+https://*.vercel.app
 ```
 
 **Authorized Redirect URIs:**
@@ -642,6 +639,6 @@ https://oppspot.ai
 https://fuqdbewftdthbjfcecrz.supabase.co/auth/v1/callback
 http://localhost:3000/auth/callback
 http://localhost:3001/auth/callback
-https://oppspot-one.vercel.app/auth/callback
 https://oppspot.ai/auth/callback
+https://*.vercel.app/auth/callback
 ```
