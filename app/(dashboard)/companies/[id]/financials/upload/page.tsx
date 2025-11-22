@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
@@ -13,9 +13,9 @@ import { CSVUploadZone } from '@/components/financials'
 import type { UploadResult } from '@/components/financials/csv-upload-zone'
 
 interface UploadPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 interface UploadHistory {
@@ -30,6 +30,7 @@ interface UploadHistory {
 }
 
 export default function FinancialsUploadPage({ params }: UploadPageProps) {
+  const resolvedParams = use(params)
   const router = useRouter()
   const [companyName, setCompanyName] = useState<string>('')
   const [hasPermission, setHasPermission] = useState<boolean>(true)
@@ -42,21 +43,21 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
     async function loadData() {
       try {
         // Fetch company
-        const companyRes = await fetch(`/api/companies/${params.id}`)
+        const companyRes = await fetch(`/api/companies/${resolvedParams.id}`)
         if (companyRes.ok) {
           const company = await companyRes.json()
           setCompanyName(company.name || 'Company')
         }
 
         // Check user has Financial Editor role
-        const permissionRes = await fetch(`/api/companies/${params.id}/financials/permissions`)
+        const permissionRes = await fetch(`/api/companies/${resolvedParams.id}/financials/permissions`)
         if (permissionRes.ok) {
           const permissions = await permissionRes.json()
           setHasPermission(permissions.can_edit || false)
         }
 
         // Fetch upload history (last 10 uploads)
-        const historyRes = await fetch(`/api/companies/${params.id}/financials/uploads`)
+        const historyRes = await fetch(`/api/companies/${resolvedParams.id}/financials/uploads`)
         if (historyRes.ok) {
           const history = await historyRes.json()
           setUploadHistory(history.data || [])
@@ -67,7 +68,7 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
     }
 
     loadData()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   const handleUploadComplete = (result: UploadResult) => {
     setLastUploadResult(result)
@@ -87,7 +88,7 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
     // Redirect to dashboard after 3 seconds
     setIsRedirecting(true)
     setTimeout(() => {
-      router.push(`/companies/${params.id}/financials`)
+      router.push(`/companies/${resolvedParams.id}/financials`)
     }, 3000)
   }
 
@@ -103,9 +104,9 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
           <Breadcrumbs
             items={[
               { label: 'Companies', href: '/companies' },
-              { label: companyName, href: `/business/${params.id}` },
-              { label: 'Financials', href: `/companies/${params.id}/financials` },
-              { label: 'Upload', href: `/companies/${params.id}/financials/upload` },
+              { label: companyName, href: `/business/${resolvedParams.id}` },
+              { label: 'Financials', href: `/companies/${resolvedParams.id}/financials` },
+              { label: 'Upload', href: `/companies/${resolvedParams.id}/financials/upload` },
             ]}
           />
 
@@ -119,7 +120,7 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
           </Alert>
 
           <Button variant="outline" asChild>
-            <Link href={`/companies/${params.id}/financials`}>
+            <Link href={`/companies/${resolvedParams.id}/financials`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Link>
@@ -136,9 +137,9 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
         <Breadcrumbs
           items={[
             { label: 'Companies', href: '/companies' },
-            { label: companyName, href: `/business/${params.id}` },
-            { label: 'Financials', href: `/companies/${params.id}/financials` },
-            { label: 'Upload', href: `/companies/${params.id}/financials/upload` },
+            { label: companyName, href: `/business/${resolvedParams.id}` },
+            { label: 'Financials', href: `/companies/${resolvedParams.id}/financials` },
+            { label: 'Upload', href: `/companies/${resolvedParams.id}/financials/upload` },
           ]}
         />
 
@@ -151,7 +152,7 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
             </p>
           </div>
           <Button variant="outline" asChild>
-            <Link href={`/companies/${params.id}/financials`}>
+            <Link href={`/companies/${resolvedParams.id}/financials`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Link>
@@ -188,7 +189,7 @@ export default function FinancialsUploadPage({ params }: UploadPageProps) {
 
         {/* Upload Zone */}
         <CSVUploadZone
-          companyId={params.id}
+          companyId={resolvedParams.id}
           onUploadComplete={handleUploadComplete}
           onUploadError={handleUploadError}
         />

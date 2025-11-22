@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
 /**
  * Generate CSV for watchlist export
  */
-function generateWatchlistCSV(predictions: any[]): string {
+function generateWatchlistCSV(predictions: Array<Record<string, unknown>>): string {
   const headers = [
     'Company Name',
     'Company ID',

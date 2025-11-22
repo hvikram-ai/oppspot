@@ -27,9 +27,10 @@ import {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -40,7 +41,7 @@ export async function POST(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
 
     // Enforce rate limiting (5 refreshes per hour per user)
     await withRateLimit('refresh', user.id, async () => {});
@@ -112,9 +113,10 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -125,7 +127,7 @@ export async function GET(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
 
     // Check access permissions
     const hasAccess = await competitiveAnalysisRepository.checkUserAccess(id, user.id);
@@ -160,8 +162,8 @@ export async function GET(
  */
 async function performRefresh(
   analysisId: string,
-  analysis: any,
-  competitors: any[]
+  analysis: Record<string, unknown>,
+  competitors: unknown[]
 ): Promise<void> {
   try {
     console.log(`[Refresh] Starting refresh for analysis ${analysisId}`);

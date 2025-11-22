@@ -23,18 +23,31 @@ interface CompanyAnalysisResult {
 }
 import { ScanEntity } from '../../domain/entities/scan.entity'
 
+// Cost service extension type
+interface CostServiceExtension {
+  calculateFinalCosts?: (scanId: string) => Promise<CostBreakdown>
+  getCurrentCosts?: (scanId: string) => Promise<CostBreakdown>
+  estimateCost?: (config: ScanConfiguration) => Promise<CostBreakdown>
+}
+
+// Scan repository extension type
+interface ScanRepositoryExtension {
+  findActiveScans?: () => Promise<ScanEntity[]>
+}
+
+// Cost breakdown interface
+interface CostBreakdown {
+  totalCost: number
+  breakdown: Record<string, number>
+  estimatedRequestCounts?: Record<string, Record<string, number>>
+}
+
 export class ScanOrchestrationService implements IScanOrchestrationService {
   constructor(
     private readonly dataCollectionService: IDataCollectionService,
     private readonly analysisService: ICompanyAnalysisService,
-    private readonly costService: ICostManagementService & {
-      calculateFinalCosts?: (scanId: string) => Promise<any>
-      getCurrentCosts?: (scanId: string) => Promise<any>
-      estimateCost?: (config: ScanConfiguration) => Promise<any>
-    },
-    private readonly scanRepository: IScanRepository & {
-      findActiveScans?: () => Promise<any[]>
-    },
+    private readonly costService: ICostManagementService & CostServiceExtension,
+    private readonly scanRepository: IScanRepository & ScanRepositoryExtension,
     private readonly eventBus: IEventBus
   ) {}
 
@@ -310,7 +323,7 @@ export class ScanOrchestrationService implements IScanOrchestrationService {
   private countHighQualityTargets(analysisResults: CompanyAnalysisResult[]): number {
     return analysisResults.filter(result =>
       (result.score >= 80 &&
-      (result.qualityIndicators as any)?.riskLevel !== 'critical')
+      (result.qualityIndicators as { riskLevel?: string })?.riskLevel !== 'critical')
     ).length
   }
 
@@ -326,9 +339,9 @@ export class ScanOrchestrationService implements IScanOrchestrationService {
   ): number {
     // Base duration estimate in milliseconds
     const baseTimePerCompany = 100 // 100ms per company
-    const estimatedRequestCounts = (costEstimate.estimatedRequestCounts || {}) as Record<string, unknown>
+    const estimatedRequestCounts = (costEstimate as CostBreakdown).estimatedRequestCounts || {}
     const estimatedCompanies = Object.values(estimatedRequestCounts)
-      .reduce((sum: number, sourceCounts) => sum + ((sourceCounts as any).company_detail || 0), 0) as number
+      .reduce((sum: number, sourceCounts) => sum + (sourceCounts.company_detail || 0), 0)
 
     let duration = (estimatedCompanies as number) * baseTimePerCompany
 
@@ -363,7 +376,7 @@ interface ScanProgressInfo {
   currentStage: string
   companiesDiscovered: number
   companiesAnalyzed: number
-  currentCosts: any
+  currentCosts: CostBreakdown
   estimatedTimeRemaining: number | null
   errors: unknown[]
   createdAt: Date
@@ -385,6 +398,6 @@ interface ConfigurationValidation {
   isValid: boolean
   issues: string[]
   warnings: string[]
-  costEstimate: any
+  costEstimate: CostBreakdown
   estimatedDuration: number
 }

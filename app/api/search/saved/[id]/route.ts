@@ -83,7 +83,7 @@ export async function PUT(
     const { name, description, filters, is_favorite } = body
 
     // Build update object
-    const updates: Record<string, any> = {}
+    const updates: Record<string, unknown> = {}
 
     if (name !== undefined) {
       if (name.trim().length === 0) {

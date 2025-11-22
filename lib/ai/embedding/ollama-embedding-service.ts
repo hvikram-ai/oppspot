@@ -185,9 +185,9 @@ export class OllamaEmbeddingService {
       const data = await response.json()
 
       // Filter for embedding models
-      const embeddingModels = data.models
-        ?.filter((m: any) => m.name.includes('embed'))
-        .map((m: any) => m.name) || []
+      const embeddingModels = (data.models as Array<{ name: string }> | undefined)
+        ?.filter((m) => m.name.includes('embed'))
+        .map((m) => m.name) || []
 
       return embeddingModels
     } catch {

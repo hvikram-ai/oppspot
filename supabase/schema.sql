@@ -186,6 +186,16 @@ BEGIN
 END;
 $$ language plpgsql;
 
+-- OpenCorporates rate limit state (persisted for quota tracking)
+CREATE TABLE IF NOT EXISTS opencorporates_rate_limits (
+    id TEXT PRIMARY KEY,
+    daily_requests INT DEFAULT 0,
+    monthly_requests INT DEFAULT 0,
+    day_reset_date TIMESTAMPTZ,
+    month_reset_date TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create triggers for updated_at
 CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON organizations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -29,7 +29,7 @@ export const generateEmbeddingFunction = inngest.createFunction(
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single() as { data: Row<'businesses'> | null; error: unknown }
 
       if (error || !data) {
         throw new Error(`Company not found: ${companyId}`)
@@ -47,7 +47,7 @@ export const generateEmbeddingFunction = inngest.createFunction(
         sic_codes: company.sic_codes || [],
         website: company.website,
         categories: company.categories || []
-      }, { model: model as any })
+      }, { model })
     })
 
     // Step 3: Save to database

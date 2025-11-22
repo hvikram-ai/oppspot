@@ -28,9 +28,10 @@ const ListFindingsSchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -43,7 +44,7 @@ export async function GET(
     const repository = new TechStackRepository(supabase);
 
     // Get analysis to verify access
-    const analysis = await repository.getAnalysis(params.id);
+    const analysis = await repository.getAnalysis(id);
 
     // Verify user has access to data room
     const { data: dataRoom } = await supabase
@@ -82,7 +83,7 @@ export async function GET(
 
     // List findings
     const filter: TechStackFindingFilter = {
-      analysis_id: params.id,
+      analysis_id: id,
       ...validated,
     };
 

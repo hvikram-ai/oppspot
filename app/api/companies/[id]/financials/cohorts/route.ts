@@ -46,9 +46,10 @@ interface ErrorResponse {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<CohortsResponse | ErrorResponse>> {
-  const companyId = params.id;
+  const { id } = await params;
+  const companyId = id;
 
   try {
     // Initialize Supabase client

@@ -35,7 +35,7 @@ export interface WorkflowExecution {
 
 export interface WorkflowContext {
   streamId: string
-  goalContext: any
+  goalContext: Record<string, unknown>
   sharedData: Record<string, unknown> // Data shared between agents
   agentOutputs: Record<string, unknown> // Output from each agent
   metrics: {
@@ -52,7 +52,7 @@ export interface DependencyGraph {
 }
 
 export class WorkflowOrchestrator {
-  private supabase: any
+  private supabase: Awaited<ReturnType<typeof createClient>> | null
 
   constructor() {
     this.supabase = null
@@ -387,7 +387,15 @@ export class WorkflowOrchestrator {
   /**
    * Wait for agent execution to complete
    */
-  private async waitForExecution(executionId: string, timeout: number): Promise<any> {
+  private async waitForExecution(executionId: string, timeout: number): Promise<{
+    output_data?: Record<string, unknown>;
+    results_summary?: {
+      items_created?: number;
+      avg_score?: number;
+    };
+    status: string;
+    error_message?: string;
+  }> {
     const supabase = await this.getSupabase()
     const startTime = Date.now()
     const pollInterval = 2000 // Poll every 2 seconds

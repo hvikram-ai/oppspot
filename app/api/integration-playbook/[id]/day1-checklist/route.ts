@@ -13,9 +13,10 @@ import { PlaybookRepository } from '@/lib/data-room/repository/playbook-reposito
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -27,7 +28,7 @@ export async function GET(
       );
     }
 
-    const playbookId = params.id;
+    const playbookId = id;
     const { searchParams } = new URL(request.url);
 
     // Parse filters

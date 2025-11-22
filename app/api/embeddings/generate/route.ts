@@ -16,6 +16,8 @@ import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { z } from 'zod'
 import { getErrorMessage } from '@/lib/utils/error-handler'
 import type { Row } from '@/lib/supabase/helpers'
+import { requireAdminRole } from '@/lib/auth/role-check'
+import { simpleJobQueue } from '@/lib/jobs/simple-job-queue'
 
 const generateSchema = z.object({
   companyIds: z.array(z.string().uuid()).optional(),
@@ -24,9 +26,9 @@ const generateSchema = z.object({
   limit: z.number().int().min(1).max(10000).optional() // Max companies to process
 })
 
-export async function POST(request: NextRequest) {
-  const startTime = Date.now()
+const MAX_SYNC_COMPANIES = 20
 
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -40,16 +42,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Add admin check - only admins should generate embeddings
-    // const { data: profile, error: profileError } = await supabase
-    //   .from('profiles')
-    //   .select('role')
-    //   .eq('id', user.id)
-    //   .single()
-    //
-    // if (profile?.role !== 'admin') {
-    //   return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-    // }
+    const isAdmin = await requireAdminRole(supabase, user.id)
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
 
     // Parse request
     const body = await request.json()
@@ -98,74 +94,27 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Process in batches
-    let processed = 0
-    let failed = 0
-    const errors: string[] = []
+    if (targetIds.length > MAX_SYNC_COMPANIES) {
+      const jobId = simpleJobQueue.enqueue('embeddings-generate', user.id, async () => {
+        return await processEmbeddingsBatch(supabase, targetIds, batchSize)
+      })
 
-    for (let i = 0; i < targetIds.length; i += batchSize) {
-      const batch = targetIds.slice(i, i + batchSize)
-
-      try {
-        // Fetch company data
-        const { data: companies, error: fetchError } = await supabase
-          .from('businesses')
-          .select('id, name, description, sic_codes, website, categories, address')
-          .in('id', batch)
-
-        if (fetchError || !companies) {
-          throw new Error(`Failed to fetch batch: ${fetchError?.message}`)
-        }
-
-        const typedCompanies = companies as Row<'businesses'>[]
-
-        // Generate embeddings
-        const embeddings = await embeddingService.generateBatchEmbeddings(
-          typedCompanies.map(c => {
-            const address = c.address as Record<string, unknown> | null
-            return {
-              name: c.name,
-              description: c.description,
-              sic_codes: c.sic_codes,
-              website: c.website,
-              categories: c.categories,
-              address: (address?.city as string | undefined) || (address?.region as string | undefined)
-            }
-          })
-        )
-
-        // Save to database
-        const updates = typedCompanies.map((company, index) => ({
-          companyId: company.id,
-          embeddingResult: embeddings[index]
-        }))
-
-        await embeddingService.saveBatchEmbeddings(updates)
-
-        processed += companies.length
-
-        console.log(`[Generate Embeddings] Batch ${i / batchSize + 1}: Processed ${companies.length} companies`)
-      } catch (error: unknown) {
-        failed += batch.length
-        errors.push(`Batch ${i / batchSize + 1}: ${getErrorMessage(error)}`)
-        console.error(`[Generate Embeddings] Batch error:`, error)
-      }
+      return NextResponse.json(
+        {
+          success: true,
+          queued: true,
+          job_id: jobId,
+          status_url: `/api/embeddings/jobs/${jobId}`,
+          total: targetIds.length,
+          batchSize,
+        },
+        { status: 202 }
+      )
     }
 
-    const duration = Date.now() - startTime
-    const stats = await embeddingService.getEmbeddingStats()
+    const result = await processEmbeddingsBatch(supabase, targetIds, batchSize)
 
-    return NextResponse.json({
-      success: true,
-      processed,
-      failed,
-      total: targetIds.length,
-      durationMs: duration,
-      durationSeconds: Math.round(duration / 1000),
-      companiesPerSecond: processed > 0 ? Math.round((processed / duration) * 1000) : 0,
-      errors: errors.length > 0 ? errors : undefined,
-      stats
-    })
+    return NextResponse.json(result)
   } catch (error: unknown) {
     console.error('[Generate Embeddings] Error:', error)
 
@@ -180,6 +129,79 @@ export async function POST(request: NextRequest) {
       { error: 'Embedding generation failed', message: getErrorMessage(error) },
       { status: 500 }
     )
+  }
+}
+
+async function processEmbeddingsBatch(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  targetIds: string[],
+  batchSize: number
+) {
+  const startTime = Date.now()
+
+  let processed = 0
+  let failed = 0
+  const errors: string[] = []
+
+  for (let i = 0; i < targetIds.length; i += batchSize) {
+    const batch = targetIds.slice(i, i + batchSize)
+
+    try {
+      const { data: companies, error: fetchError } = await supabase
+        .from('businesses')
+        .select('id, name, description, sic_codes, website, categories, address')
+        .in('id', batch)
+
+      if (fetchError || !companies) {
+        throw new Error(`Failed to fetch batch: ${fetchError?.message}`)
+      }
+
+      const typedCompanies = companies as Row<'businesses'>[]
+
+      const embeddings = await embeddingService.generateBatchEmbeddings(
+        typedCompanies.map(c => {
+          const address = c.address as Record<string, unknown> | null
+          return {
+            name: c.name,
+            description: c.description,
+            sic_codes: c.sic_codes,
+            website: c.website,
+            categories: c.categories,
+            address: (address?.city as string | undefined) || (address?.region as string | undefined)
+          }
+        })
+      )
+
+      const updates = typedCompanies.map((company, index) => ({
+        companyId: company.id,
+        embeddingResult: embeddings[index]
+      }))
+
+      await embeddingService.saveBatchEmbeddings(updates)
+
+      processed += companies.length
+
+      console.log(`[Generate Embeddings] Batch ${i / batchSize + 1}: Processed ${companies.length} companies`)
+    } catch (error: unknown) {
+      failed += batch.length
+      errors.push(`Batch ${i / batchSize + 1}: ${getErrorMessage(error)}`)
+      console.error(`[Generate Embeddings] Batch error:`, error)
+    }
+  }
+
+  const duration = Date.now() - startTime
+  const stats = await embeddingService.getEmbeddingStats()
+
+  return {
+    success: true,
+    processed,
+    failed,
+    total: targetIds.length,
+    durationMs: duration,
+    durationSeconds: Math.round(duration / 1000),
+    companiesPerSecond: processed > 0 ? Math.round((processed / duration) * 1000) : 0,
+    errors: errors.length > 0 ? errors : undefined,
+    stats
   }
 }
 

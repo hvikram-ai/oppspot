@@ -13,10 +13,11 @@ import type { ListMatchesResponse } from '@/types/itp';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[ITP Matches API] GET - Fetching matches for ITP:', params.id);
+    const { id } = await params;
+    console.log('[ITP Matches API] GET - Fetching matches for ITP:', id);
     const supabase = await createClient();
 
     // Get authenticated user
@@ -32,7 +33,7 @@ export async function GET(
       );
     }
 
-    const itpId = params.id;
+    const itpId = id;
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;

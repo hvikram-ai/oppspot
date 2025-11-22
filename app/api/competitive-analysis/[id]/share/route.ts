@@ -24,9 +24,10 @@ const ShareRequestSchema = z.object({
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -37,7 +38,7 @@ export async function POST(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
 
     // Check if analysis exists
     const analysis = await competitiveAnalysisRepository.findById(id);
@@ -113,9 +114,10 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -126,7 +128,7 @@ export async function GET(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
 
     // Check if analysis exists
     const analysis = await competitiveAnalysisRepository.findById(id);

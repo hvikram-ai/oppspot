@@ -33,6 +33,50 @@ export interface CompaniesHouseData {
   sources: Source[];
 }
 
+interface CompaniesHouseProfile {
+  company_name: string;
+  company_number: string;
+  date_of_incorporation?: string;
+  type: string;
+  company_status: string;
+  registered_office_address?: {
+    address_line_1?: string;
+    locality?: string;
+    postal_code?: string;
+    country?: string;
+  };
+  sic_codes?: string[];
+  jurisdiction?: string;
+  accounts?: {
+    overdue: boolean;
+    next_due?: string;
+    last_accounts?: {
+      made_up_to?: string;
+    };
+  };
+}
+
+interface CompaniesHouseFiling {
+  category: string;
+  date: string;
+  type?: string;
+  description: string;
+  links?: {
+    self?: string;
+  };
+}
+
+interface CompaniesHouseOfficer {
+  appointed_on?: string;
+  resigned_on?: string;
+  officer_role: string;
+  name: string;
+  nationality?: string;
+  links?: {
+    self?: string;
+  };
+}
+
 // ============================================================================
 // COMPANIES HOUSE DATA SOURCE
 // ============================================================================
@@ -72,29 +116,6 @@ export class CompaniesHouseDataSource {
     }
   }
 
-  interface CompaniesHouseProfile {
-    company_name: string;
-    company_number: string;
-    date_of_incorporation?: string;
-    type: string;
-    company_status: string;
-    registered_office_address?: {
-      address_line_1?: string;
-      locality?: string;
-      postal_code?: string;
-      country?: string;
-    };
-    sic_codes?: string[];
-    jurisdiction?: string;
-    accounts?: {
-      overdue: boolean;
-      next_due?: string;
-      last_accounts?: {
-        made_up_to?: string;
-      };
-    };
-  }
-
   /**
    * Extract company snapshot data
    */
@@ -118,16 +139,6 @@ export class CompaniesHouseDataSource {
       industry: this.extractIndustry(profile.sic_codes),
       sic_codes: profile.sic_codes || [],
       jurisdiction: profile.jurisdiction || 'England & Wales',
-    };
-  }
-
-  interface CompaniesHouseFiling {
-    category: string;
-    date: string;
-    type?: string;
-    description: string;
-    links?: {
-      self?: string;
     };
   }
 
@@ -209,17 +220,6 @@ export class CompaniesHouseDataSource {
     }
 
     return signals;
-  }
-
-  interface CompaniesHouseOfficer {
-    appointed_on?: string;
-    resigned_on?: string;
-    officer_role: string;
-    name: string;
-    nationality?: string;
-    links?: {
-      self?: string;
-    };
   }
 
   /**

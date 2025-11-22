@@ -218,8 +218,8 @@ export interface KnowledgeQuery {
   query_type: QueryType
 
   // Query specification
-  query_pattern?: any
-  query_filters?: any
+  query_pattern?: Record<string, unknown>
+  query_filters?: Record<string, unknown>
   query_params?: Record<string, unknown>
 
   // Usage
@@ -272,7 +272,7 @@ export interface KnowledgeInsight {
   // Impact
   impact_score: number // 1-10
   action_required: boolean
-  recommended_actions?: any[]
+  recommended_actions?: Array<{ action: string; priority?: number; description?: string }>
 
   // Status
   status: InsightStatus

@@ -32,7 +32,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Format with item counts
-    const formatted = (archived || []).map((col: any) => ({
+    interface ArchivedCollection {
+      id: string;
+      name: string;
+      archived_at: string;
+      collection_items?: Array<{ count: number }>;
+      [key: string]: unknown;
+    }
+
+    const formatted = (archived || []).map((col: ArchivedCollection) => ({
       ...col,
       item_count: col.collection_items?.[0]?.count || 0
     }))

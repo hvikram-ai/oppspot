@@ -105,8 +105,8 @@ export class WebsiteScraper {
   /**
    * Extract structured data from HTML (JSON-LD, meta tags, etc.)
    */
-  private extractStructuredData(html: string): Record<string, any> {
-    const data: Record<string, any> = {};
+  private extractStructuredData(html: string): Record<string, unknown> {
+    const data: Record<string, unknown> = {};
 
     // Extract JSON-LD
     const jsonLdMatch = html.match(

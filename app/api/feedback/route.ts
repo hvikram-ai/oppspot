@@ -298,7 +298,7 @@ export async function POST(request: NextRequest) {
           .update({ admin_email_sent: true })
           .eq('id', submission?.id || '');
       })
-      .catch((err) => console.log('[Feedback API] Admin email failed:', err));
+      .catch((err: unknown) => console.log('[Feedback API] Admin email failed:', err));
 
     // Send user confirmation
     if (user.email) {
@@ -319,7 +319,7 @@ export async function POST(request: NextRequest) {
             .eq('id', submission?.id || '');
           emailsSent.user = true;
         })
-        .catch((err) => console.log('[Feedback API] User email failed:', err));
+        .catch((err: unknown) => console.log('[Feedback API] User email failed:', err));
     }
 
     const response: FeedbackSubmissionResponse = {

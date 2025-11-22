@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { requireAdminRole } from '@/lib/auth/role-check';
 
 // Validation schema
 const commentSchema = z.object({
@@ -18,10 +19,11 @@ const commentSchema = z.object({
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const { id } = await params;
+    const supabase = await createClient();
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -33,7 +35,7 @@ export async function GET(
       );
     }
 
-    const feedbackId = params.id;
+    const feedbackId = id;
 
     // Get comments with user info
     const { data: comments, error } = await supabase
@@ -78,10 +80,11 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const { id } = await params;
+    const supabase = await createClient();
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -93,7 +96,7 @@ export async function POST(
       );
     }
 
-    const feedbackId = params.id;
+    const feedbackId = id;
 
     // Parse and validate body
     const body = await request.json();
@@ -107,6 +110,7 @@ export async function POST(
     }
 
     const { comment, parent_comment_id } = validation.data;
+    const isAdmin = await requireAdminRole(supabase, user.id);
 
     // Check if feedback exists
     const { data: feedback, error: feedbackError } = await supabase
@@ -130,7 +134,7 @@ export async function POST(
         user_id: user.id,
         comment,
         parent_comment_id: parent_comment_id || null,
-        is_admin: false, // TODO: Check if user is admin
+        is_admin: isAdmin,
       })
       .select()
       .single();
@@ -155,7 +159,7 @@ export async function POST(
           parent_comment_id: parent_comment_id || null,
         },
       })
-      .catch((err) => console.log('[Feedback Comments API] Activity log failed:', err));
+      .catch((err: unknown) => console.log('[Feedback Comments API] Activity log failed:', err));
 
     // TODO: Notify followers
 

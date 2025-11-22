@@ -4,7 +4,19 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { PostgrestError } from '@supabase/supabase-js'
 import type { Row } from '@/lib/supabase/helpers'
+
+// Company type for benchmarking (subset of businesses table)
+interface BenchmarkCompany {
+  id: string
+  employee_count?: number
+  date_of_creation?: string
+  incorporation_date?: string
+  sic_codes?: string[]
+  location?: string
+  region?: string
+}
 
 export interface BenchmarkComparison {
   company_id: string
@@ -64,7 +76,7 @@ export class BenchmarkingService {
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single() as { data: (Row<'businesses'> & { employee_count?: number }) | null; error: any }
+        .single() as { data: (Row<'businesses'> & { employee_count?: number }) | null; error: PostgrestError | null }
 
       if (!company) {
         throw new Error('Company not found')
@@ -125,7 +137,7 @@ export class BenchmarkingService {
         .from('businesses')
         .select('*')
         .eq('id', companyId)
-        .single() as { data: (Row<'businesses'> & { employee_count?: number }) | null; error: any }
+        .single() as { data: (Row<'businesses'> & { employee_count?: number }) | null; error: PostgrestError | null }
 
       if (!company) {
         throw new Error('Company not found')
@@ -171,7 +183,7 @@ export class BenchmarkingService {
       .from('industry_benchmarks')
       .select('*')
       .eq('industry_code', industryCode)
-      .gte('period_end', new Date(Date.now() as { data: Row<'industry_benchmarks'>[] | null; error: any } - 365 * 24 * 60 * 60 * 1000).toISOString()) // Last year
+      .gte('period_end', new Date(Date.now() as { data: Row<'industry_benchmarks'>[] | null; error: PostgrestError | null } - 365 * 24 * 60 * 60 * 1000).toISOString()) // Last year
 
     return benchmarks || []
   }
@@ -179,7 +191,7 @@ export class BenchmarkingService {
   /**
    * Calculate company metrics
    */
-  private async calculateCompanyMetrics(company: any): Promise<Record<string, number>> {
+  private async calculateCompanyMetrics(company: BenchmarkCompany): Promise<Record<string, number>> {
     const supabase = await createClient()
 
     const metrics: Record<string, number> = {}
@@ -194,7 +206,7 @@ export class BenchmarkingService {
         financial_health_score?: number
         technology_fit_score?: number
         engagement_score?: number
-      }) | null; error: any }
+      }) | null; error: PostgrestError | null }
 
     // Basic metrics from company data
     if (company.employee_count) {
@@ -413,7 +425,7 @@ export class BenchmarkingService {
   /**
    * Calculate similarity score between two companies
    */
-  private calculateSimilarityScore(company1: any, company2: any): number {
+  private calculateSimilarityScore(company1: BenchmarkCompany, company2: BenchmarkCompany): number {
     let score = 0
     let factors = 0
 

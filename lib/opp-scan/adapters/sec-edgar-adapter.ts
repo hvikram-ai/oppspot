@@ -226,12 +226,20 @@ export class SECEdgarAdapter {
     exchange: string;
   } | null> {
     const url = `${BASE_URL}/files/company_tickers.json`;
-    const data = await this.request<Record<string, any>>(url);
+
+    interface SECTickerEntry {
+      cik_str: number | string;
+      ticker: string;
+      title: string;
+      exchange?: string;
+    }
+
+    const data = await this.request<Record<string, SECTickerEntry>>(url);
 
     // Find matching ticker
     const tickerUpper = ticker.toUpperCase();
     const match = Object.values(data).find(
-      (company: any) => company.ticker === tickerUpper
+      (company) => company.ticker === tickerUpper
     );
 
     if (!match) return null;
@@ -253,14 +261,21 @@ export class SECEdgarAdapter {
     ticker?: string;
   }>> {
     const url = `${BASE_URL}/files/company_tickers.json`;
-    const data = await this.request<Record<string, any>>(url);
+
+    interface SECTickerEntry {
+      cik_str: number | string;
+      ticker: string;
+      title: string;
+    }
+
+    const data = await this.request<Record<string, SECTickerEntry>>(url);
 
     const nameLower = name.toLowerCase();
     const matches = Object.values(data)
-      .filter((company: any) =>
+      .filter((company) =>
         company.title.toLowerCase().includes(nameLower)
       )
-      .map((company: any) => ({
+      .map((company) => ({
         cik: this.normalizeCIK(company.cik_str),
         name: company.title,
         ticker: company.ticker,
@@ -276,7 +291,7 @@ export class SECEdgarAdapter {
     const normalizedCIK = this.normalizeCIK(cik);
     const url = `${BASE_URL}/submissions/CIK${normalizedCIK}.json`;
 
-    const data = await this.request<any>(url);
+    const data = await this.request<Record<string, unknown>>(url);
 
     return SECCompanySchema.parse({
       cik: normalizedCIK,
@@ -311,7 +326,7 @@ export class SECEdgarAdapter {
     const normalizedCIK = this.normalizeCIK(cik);
     const url = `${BASE_URL}/api/xbrl/companyfacts/CIK${normalizedCIK}.json`;
 
-    const data = await this.request<any>(url);
+    const data = await this.request<Record<string, unknown>>(url);
     return SECCompanyFactsSchema.parse(data);
   }
 

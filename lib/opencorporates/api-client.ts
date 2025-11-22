@@ -20,13 +20,14 @@ import {
   OpenCorporatesRateLimitState,
   OpenCorporatesAPIUsage,
 } from '@/types/opencorporates'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 
 export class OpenCorporatesAPI {
   private baseUrl = 'https://api.opencorporates.com/v0.4'
   private apiKey: string
   private rateLimitConfig: OpenCorporatesRateLimitConfig
   private rateLimitState: OpenCorporatesRateLimitState
+  private rateLimitStateId = 'global'
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.OPENCORPORATES_API_KEY || ''
@@ -158,7 +159,7 @@ export class OpenCorporatesAPI {
     const query = queryParams.toString()
     const endpoint = `/companies/${jurisdiction}/${companyNumber}/officers${query ? `?${query}` : ''}`
 
-    const response = await this.makeRequest<OpenCorporatesAPIResponse<{ officers: any[] }>>(
+    const response = await this.makeRequest<OpenCorporatesAPIResponse<{ officers: unknown[] }>>(
       endpoint
     )
 
@@ -183,7 +184,7 @@ export class OpenCorporatesAPI {
     const query = queryParams.toString()
     const endpoint = `/companies/${jurisdiction}/${companyNumber}/filings${query ? `?${query}` : ''}`
 
-    const response = await this.makeRequest<OpenCorporatesAPIResponse<{ filings: any[] }>>(
+    const response = await this.makeRequest<OpenCorporatesAPIResponse<{ filings: unknown[] }>>(
       endpoint
     )
 
@@ -392,7 +393,7 @@ export class OpenCorporatesAPI {
     const status = response.status
     let errorMessage = `HTTP ${status}: ${response.statusText}`
     let errorCode = 'HTTP_ERROR'
-    let errorDetails: any = { endpoint, status }
+    let errorDetails: Record<string, unknown> = { endpoint, status }
 
     try {
       const errorData = await response.json()
@@ -463,16 +464,54 @@ export class OpenCorporatesAPI {
    * Load rate limit state from database
    */
   private async loadRateLimitState(): Promise<void> {
-    // TODO: Implement state persistence in database
-    // For now, state is in-memory only
+    try {
+      const supabase = createAdminClient()
+      const { data, error } = await supabase
+        .from('opencorporates_rate_limits')
+        .select('daily_requests, monthly_requests, day_reset_date, month_reset_date')
+        .eq('id', this.rateLimitStateId)
+        .single()
+
+      if (error) {
+        console.warn('[OpenCorporates] Rate limit state not loaded (missing table or row):', error.message)
+        return
+      }
+
+      if (data) {
+        this.rateLimitState.dailyRequests = data.daily_requests ?? this.rateLimitState.dailyRequests
+        this.rateLimitState.monthlyRequests = data.monthly_requests ?? this.rateLimitState.monthlyRequests
+        this.rateLimitState.dayResetDate = data.day_reset_date ? new Date(data.day_reset_date) : this.rateLimitState.dayResetDate
+        this.rateLimitState.monthResetDate = data.month_reset_date ? new Date(data.month_reset_date) : this.rateLimitState.monthResetDate
+        console.log('[OpenCorporates] Loaded rate limit state from database')
+      }
+    } catch (error) {
+      console.warn('[OpenCorporates] Failed to load rate limit state:', error)
+    }
   }
 
   /**
    * Save rate limit state to database
    */
   private async saveRateLimitState(): Promise<void> {
-    // TODO: Implement state persistence in database
-    // For now, state is in-memory only
+    try {
+      const supabase = createAdminClient()
+      const { error } = await supabase
+        .from('opencorporates_rate_limits')
+        .upsert({
+          id: this.rateLimitStateId,
+          daily_requests: this.rateLimitState.dailyRequests,
+          monthly_requests: this.rateLimitState.monthlyRequests,
+          day_reset_date: this.rateLimitState.dayResetDate.toISOString(),
+          month_reset_date: this.rateLimitState.monthResetDate.toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+      if (error) {
+        console.warn('[OpenCorporates] Failed to persist rate limit state:', error.message)
+      }
+    } catch (error) {
+      console.warn('[OpenCorporates] Failed to persist rate limit state:', error)
+    }
   }
 
   // =====================================================

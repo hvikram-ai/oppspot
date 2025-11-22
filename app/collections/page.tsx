@@ -62,7 +62,7 @@ export default function CollectionsPage() {
   };
 
   const handleShareCollection = (collectionId: string) => {
-    const collection = [...archived].find((c: any) => c.id === collectionId);
+    const collection = [...archived].find((c: { id: string }) => c.id === collectionId);
     setSelectedCollectionId(collectionId);
     setSelectedCollectionName(collection?.name || 'Collection');
     setShareDialogOpen(true);

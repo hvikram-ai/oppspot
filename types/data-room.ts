@@ -261,7 +261,7 @@ export interface ActivityLog {
   actor_name: string;
   actor_email: string;
   action: ActivityAction;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
@@ -352,7 +352,7 @@ export interface LogActivityInput {
   data_room_id: string;
   document_id?: string;
   action: ActivityAction;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 // ============================================================================

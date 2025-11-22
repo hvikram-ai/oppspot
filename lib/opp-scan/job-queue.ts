@@ -11,7 +11,7 @@ interface JobData {
   priority: 'low' | 'medium' | 'high'
   retryAttempts: number
   estimatedDuration: number
-  metadata: any
+  metadata: Record<string, unknown>
 }
 
 interface JobProgress {
@@ -346,7 +346,7 @@ export class ScanJobProcessor {
    */
   async getQueueHealth(): Promise<{
     status: 'healthy' | 'degraded' | 'critical'
-    stats: any
+    stats: Record<string, unknown>
     recommendations: string[]
   }> {
     const stats = await this.queue.getQueueStats()

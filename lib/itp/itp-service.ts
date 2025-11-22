@@ -392,7 +392,20 @@ export class ITPService {
     // Get ITP name
     const itp = await this.getITP(userId, itpId);
 
-    const matches: ITPMatchResult[] = (data || []).map((row: any) => ({
+    interface MatchRow {
+      id: string;
+      itp_id: string;
+      business_id: string;
+      match_score: number;
+      matching_details: Record<string, unknown> | null;
+      user_action: string | null;
+      user_notes: string | null;
+      action_taken_at: string | null;
+      matched_at: string;
+      business: unknown;
+    }
+
+    const matches: ITPMatchResult[] = (data || []).map((row: MatchRow) => ({
       match: {
         id: row.id,
         itp_id: row.itp_id,

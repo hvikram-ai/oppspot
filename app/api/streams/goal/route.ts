@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Increment template use count
-        const updateData: any = { use_count: (template.use_count || 0) + 1 }
+        const updateData: Record<string, unknown> = { use_count: (template.use_count || 0) + 1 }
         await supabase
           .from('goal_templates')
           // @ts-expect-error - goal_templates table not fully typed in schema
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the stream
-    const insertData: any = {
+    const insertData: Record<string, unknown> = {
       org_id: profile.org_id,
       name,
       description: description || null,
@@ -328,7 +328,7 @@ export async function POST(request: NextRequest) {
 
     // Update goal status to in_progress if agents assigned
     if (assignedAgentRecords.length > 0) {
-      const statusUpdate: any = { goal_status: 'in_progress' }
+      const statusUpdate: Record<string, unknown> = { goal_status: 'in_progress' }
       await supabase
         .from('streams')
         // @ts-expect-error - Complex Supabase update type mismatch

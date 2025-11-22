@@ -151,7 +151,7 @@ export interface ESGDisclosure {
   metric_key: string | null;
 
   excerpt: string;
-  normalized_value: any;
+  normalized_value: string | number | boolean | null;
 
   confidence: number | null;
   ai_model: string | null;

@@ -159,7 +159,7 @@ export class OpenCorporatesAdapter {
   /**
    * Build API URL with authentication
    */
-  private buildUrl(endpoint: string, params: Record<string, any> = {}): string {
+  private buildUrl(endpoint: string, params: Record<string, string | number | boolean | undefined> = {}): string {
     const url = new URL(`${BASE_URL}${endpoint}`);
 
     // Add API key if available
@@ -221,7 +221,7 @@ export class OpenCorporatesAdapter {
       page = 1,
     } = options;
 
-    const params: Record<string, any> = {
+    const params: Record<string, string | number | boolean | undefined> = {
       q: query,
       per_page,
       page,
@@ -270,9 +270,22 @@ export class OpenCorporatesAdapter {
     }>
   > {
     const url = this.buildUrl('/jurisdictions');
-    const data = await this.request<any>(url);
 
-    return data.results.jurisdictions.map((j: any) => ({
+    interface JurisdictionResponse {
+      results: {
+        jurisdictions: Array<{
+          jurisdiction: {
+            code: string;
+            name: string;
+            country_code: string;
+          };
+        }>;
+      };
+    }
+
+    const data = await this.request<JurisdictionResponse>(url);
+
+    return data.results.jurisdictions.map((j) => ({
       code: j.jurisdiction.code,
       name: j.jurisdiction.name,
       country_code: j.jurisdiction.country_code,

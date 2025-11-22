@@ -15,6 +15,17 @@ import { createClient } from '@/lib/supabase/server';
 import SmartCacheManager from '../cache/smart-cache-manager';
 
 import type { Database } from '@/types/database';
+import type { PostgrestError } from '@supabase/supabase-js';
+
+// Type for person data in decision_makers section
+interface DecisionMakerPerson {
+  name?: string;
+  title?: string;
+  department?: string;
+  business_email?: string | null;
+  phone_number?: string | null;
+  linkedin_url?: string | null;
+}
 import type { Row } from '@/lib/supabase/helpers'
 import type {
   ResearchReport,
@@ -131,8 +142,7 @@ export class ResearchRepository {
       .single();
 
     if (error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((error as any).code === 'PGRST116') {
+      if ((error as PostgrestError).code === 'PGRST116') {
         return null;
       }
       console.error('Failed to get latest report:', error);
@@ -252,8 +262,7 @@ export class ResearchRepository {
       .single();
 
     if (error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((error as any).code === 'PGRST116') {
+      if ((error as PostgrestError).code === 'PGRST116') {
         return null;
       }
       console.error('Failed to get section:', error);
@@ -344,8 +353,7 @@ export class ResearchRepository {
       .returns<UserResearchQuotaRow[]>()
       .single();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (error && (error as any).code === 'PGRST116') {
+    if (error && (error as PostgrestError).code === 'PGRST116') {
       // Create new quota
       const now = new Date();
       const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -526,8 +534,7 @@ export class ResearchRepository {
         const content = section.content;
         if (section.section_type === 'decision_makers' && Array.isArray(content)) {
           // Remove personal contact info
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const anonymized = content.map((person: any) => ({
+          const anonymized = content.map((person: DecisionMakerPerson) => ({
             ...person,
             business_email: null,
             phone_number: null,

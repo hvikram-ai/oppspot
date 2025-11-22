@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
       acc[key].cost += parseFloat(usage.total_cost) || 0;
       acc[key].totalLatency += usage.latency_ms || 0;
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
 
     stats.byProvider = Object.fromEntries(
       Object.entries(byProvider).map(([key, value]: [string, any]) => [
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
       acc[key].tokens += usage.total_tokens || 0;
       acc[key].cost += parseFloat(usage.total_cost) || 0;
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
 
     stats.byFeature = byFeature;
 
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
       acc[key].tokens += usage.total_tokens || 0;
       acc[key].cost += parseFloat(usage.total_cost) || 0;
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
 
     stats.byModel = byModel;
 

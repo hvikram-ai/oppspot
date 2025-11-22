@@ -265,6 +265,91 @@ export interface Database {
           updated_at?: string
         }
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          body: string
+          data: Json
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          action_url: string | null
+          image_url: string | null
+          delivered_channels: string[]
+          is_read: boolean
+          read_at: string | null
+          email_sent: boolean
+          email_sent_at: string | null
+          is_archived: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          title: string
+          body: string
+          data?: Json
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          action_url?: string | null
+          image_url?: string | null
+          delivered_channels?: string[]
+          is_read?: boolean
+          read_at?: string | null
+          email_sent?: boolean
+          email_sent_at?: string | null
+          is_archived?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          body?: string
+          data?: Json
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          action_url?: string | null
+          image_url?: string | null
+          delivered_channels?: string[]
+          is_read?: boolean
+          read_at?: string | null
+          email_sent?: boolean
+          email_sent_at?: string | null
+          is_archived?: boolean
+          created_at?: string
+        }
+      }
+      saved_businesses: {
+        Row: {
+          id: string
+          user_id: string
+          business_id: string
+          list_id: string | null
+          notes: string | null
+          tags: string[]
+          saved_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          business_id: string
+          list_id?: string | null
+          notes?: string | null
+          tags?: string[]
+          saved_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          business_id?: string
+          list_id?: string | null
+          notes?: string | null
+          tags?: string[]
+          saved_at?: string
+        }
+      }
       events: {
         Row: {
           id: string
@@ -285,6 +370,169 @@ export interface Database {
           user_id?: string
           event_type?: string
           metadata?: Json
+          created_at?: string
+        }
+      }
+      feedback: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string
+          category: 'bug' | 'feature' | 'improvement' | 'data_quality' | 'integration' | 'performance' | 'documentation' | 'other'
+          status: 'pending' | 'under_review' | 'planned' | 'in_progress' | 'completed' | 'declined'
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          is_public: boolean
+          tags: string[]
+          affected_feature: string | null
+          page_url: string | null
+          browser_info: Json | null
+          screenshot_url: string | null
+          votes_count: number
+          comments_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          description: string
+          category: 'bug' | 'feature' | 'improvement' | 'data_quality' | 'integration' | 'performance' | 'documentation' | 'other'
+          status?: 'pending' | 'under_review' | 'planned' | 'in_progress' | 'completed' | 'declined'
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          is_public?: boolean
+          tags?: string[]
+          affected_feature?: string | null
+          page_url?: string | null
+          browser_info?: Json | null
+          screenshot_url?: string | null
+          votes_count?: number
+          comments_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          description?: string
+          category?: 'bug' | 'feature' | 'improvement' | 'data_quality' | 'integration' | 'performance' | 'documentation' | 'other'
+          status?: 'pending' | 'under_review' | 'planned' | 'in_progress' | 'completed' | 'declined'
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          is_public?: boolean
+          tags?: string[]
+          affected_feature?: string | null
+          page_url?: string | null
+          browser_info?: Json | null
+          screenshot_url?: string | null
+          votes_count?: number
+          comments_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      feedback_activity: {
+        Row: {
+          id: string
+          feedback_id: string
+          user_id: string
+          action: string
+          old_value: Json | null
+          new_value: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          feedback_id: string
+          user_id: string
+          action: string
+          old_value?: Json | null
+          new_value?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          feedback_id?: string
+          user_id?: string
+          action?: string
+          old_value?: Json | null
+          new_value?: Json | null
+          created_at?: string
+        }
+      }
+      feedback_followers: {
+        Row: {
+          id: string
+          feedback_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          feedback_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          feedback_id?: string
+          user_id?: string
+          created_at?: string
+        }
+      }
+      feedback_submissions: {
+        Row: {
+          id: string
+          feedback_id: string
+          reference_id: string
+          user_id: string
+          user_email: string
+          admin_email_sent: boolean
+          user_email_sent: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          feedback_id: string
+          reference_id: string
+          user_id: string
+          user_email: string
+          admin_email_sent?: boolean
+          user_email_sent?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          feedback_id?: string
+          reference_id?: string
+          user_id?: string
+          user_email?: string
+          admin_email_sent?: boolean
+          user_email_sent?: boolean
+          created_at?: string
+        }
+      }
+      feedback_votes: {
+        Row: {
+          id: string
+          feedback_id: string
+          user_id: string
+          vote_type: 'up' | 'down'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          feedback_id: string
+          user_id: string
+          vote_type: 'up' | 'down'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          feedback_id?: string
+          user_id?: string
+          vote_type?: 'up' | 'down'
           created_at?: string
         }
       }
@@ -1552,6 +1800,557 @@ export interface Database {
           created_by?: string
           created_at?: string
           updated_at?: string
+        }
+      }
+      stream_activities: {
+        Row: {
+          id: string
+          stream_id: string
+          user_id: string
+          activity_type: 'stream_created' | 'stream_updated' | 'stream_archived' | 'member_added' | 'member_removed' | 'role_changed' | 'item_added' | 'item_updated' | 'item_moved' | 'item_deleted' | 'comment_added' | 'task_completed' | 'stage_changed' | 'assignment_changed' | 'ai_update'
+          target_type: string | null
+          target_id: string | null
+          description: string
+          metadata: Json
+          is_system: boolean
+          importance: 'low' | 'normal' | 'high' | 'critical'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          stream_id: string
+          user_id: string
+          activity_type: 'stream_created' | 'stream_updated' | 'stream_archived' | 'member_added' | 'member_removed' | 'role_changed' | 'item_added' | 'item_updated' | 'item_moved' | 'item_deleted' | 'comment_added' | 'task_completed' | 'stage_changed' | 'assignment_changed' | 'ai_update'
+          target_type?: string | null
+          target_id?: string | null
+          description: string
+          metadata?: Json
+          is_system?: boolean
+          importance?: 'low' | 'normal' | 'high' | 'critical'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          stream_id?: string
+          user_id?: string
+          activity_type?: 'stream_created' | 'stream_updated' | 'stream_archived' | 'member_added' | 'member_removed' | 'role_changed' | 'item_added' | 'item_updated' | 'item_moved' | 'item_deleted' | 'comment_added' | 'task_completed' | 'stage_changed' | 'assignment_changed' | 'ai_update'
+          target_type?: string | null
+          target_id?: string | null
+          description?: string
+          metadata?: Json
+          is_system?: boolean
+          importance?: 'low' | 'normal' | 'high' | 'critical'
+          created_at?: string
+        }
+      }
+      research_reports: {
+        Row: {
+          id: string
+          user_id: string
+          company_id: string
+          company_name: string
+          company_number: string | null
+          status: 'pending' | 'processing' | 'completed' | 'failed'
+          sections_complete: number
+          total_sources: number
+          confidence_score: number | null
+          generated_at: string | null
+          cached_until: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_id: string
+          company_name: string
+          company_number?: string | null
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          sections_complete?: number
+          total_sources?: number
+          confidence_score?: number | null
+          generated_at?: string | null
+          cached_until?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_id?: string
+          company_name?: string
+          company_number?: string | null
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          sections_complete?: number
+          total_sources?: number
+          confidence_score?: number | null
+          generated_at?: string | null
+          cached_until?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      research_sections: {
+        Row: {
+          id: string
+          report_id: string
+          section_type: 'snapshot' | 'signals' | 'decision_makers' | 'revenue' | 'recommendations' | 'risks'
+          content: Json
+          confidence: 'low' | 'medium' | 'high'
+          sources_count: number
+          generation_time_ms: number
+          cached_until: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          report_id: string
+          section_type: 'snapshot' | 'signals' | 'decision_makers' | 'revenue' | 'recommendations' | 'risks'
+          content: Json
+          confidence?: 'low' | 'medium' | 'high'
+          sources_count?: number
+          generation_time_ms?: number
+          cached_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          report_id?: string
+          section_type?: 'snapshot' | 'signals' | 'decision_makers' | 'revenue' | 'recommendations' | 'risks'
+          content?: Json
+          confidence?: 'low' | 'medium' | 'high'
+          sources_count?: number
+          generation_time_ms?: number
+          cached_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      research_sources: {
+        Row: {
+          id: string
+          report_id: string
+          section_id: string | null
+          source_type: 'companies_house' | 'news' | 'jobs' | 'website' | 'other'
+          source_url: string | null
+          source_name: string
+          relevance_score: number | null
+          quality_score: number | null
+          accessed_at: string
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          report_id: string
+          section_id?: string | null
+          source_type: 'companies_house' | 'news' | 'jobs' | 'website' | 'other'
+          source_url?: string | null
+          source_name: string
+          relevance_score?: number | null
+          quality_score?: number | null
+          accessed_at?: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          report_id?: string
+          section_id?: string | null
+          source_type?: 'companies_house' | 'news' | 'jobs' | 'website' | 'other'
+          source_url?: string | null
+          source_name?: string
+          relevance_score?: number | null
+          quality_score?: number | null
+          accessed_at?: string
+          metadata?: Json | null
+          created_at?: string
+        }
+      }
+      user_research_quotas: {
+        Row: {
+          id: string
+          user_id: string
+          quota_limit: number
+          quota_used: number
+          period_start: string
+          period_end: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          quota_limit?: number
+          quota_used?: number
+          period_start?: string
+          period_end?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          quota_limit?: number
+          quota_used?: number
+          period_start?: string
+          period_end?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      data_rooms: {
+        Row: {
+          id: string
+          user_id: string
+          company_id: string | null
+          name: string
+          description: string | null
+          deal_type: 'acquisition' | 'investment' | 'partnership' | 'merger' | 'sale' | 'due_diligence' | 'other'
+          status: 'active' | 'archived' | 'deleted'
+          storage_used_bytes: number
+          document_count: number
+          metadata: Json
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_id?: string | null
+          name: string
+          description?: string | null
+          deal_type?: 'acquisition' | 'investment' | 'partnership' | 'merger' | 'sale' | 'due_diligence' | 'other'
+          status?: 'active' | 'archived' | 'deleted'
+          storage_used_bytes?: number
+          document_count?: number
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_id?: string | null
+          name?: string
+          description?: string | null
+          deal_type?: 'acquisition' | 'investment' | 'partnership' | 'merger' | 'sale' | 'due_diligence' | 'other'
+          status?: 'active' | 'archived' | 'deleted'
+          storage_used_bytes?: number
+          document_count?: number
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+      }
+      documents: {
+        Row: {
+          id: string
+          data_room_id: string
+          filename: string
+          folder_path: string
+          file_size_bytes: number
+          mime_type: string
+          storage_path: string
+          uploaded_by: string
+          upload_completed: boolean
+          document_type: 'financial' | 'contract' | 'due_diligence' | 'legal' | 'hr' | 'other'
+          confidence_score: number | null
+          processing_status: 'pending' | 'processing' | 'complete' | 'failed'
+          metadata: Json
+          error_message: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          data_room_id: string
+          filename: string
+          folder_path?: string
+          file_size_bytes: number
+          mime_type: string
+          storage_path: string
+          uploaded_by: string
+          upload_completed?: boolean
+          document_type?: 'financial' | 'contract' | 'due_diligence' | 'legal' | 'hr' | 'other'
+          confidence_score?: number | null
+          processing_status?: 'pending' | 'processing' | 'complete' | 'failed'
+          metadata?: Json
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          data_room_id?: string
+          filename?: string
+          folder_path?: string
+          file_size_bytes?: number
+          mime_type?: string
+          storage_path?: string
+          uploaded_by?: string
+          upload_completed?: boolean
+          document_type?: 'financial' | 'contract' | 'due_diligence' | 'legal' | 'hr' | 'other'
+          confidence_score?: number | null
+          processing_status?: 'pending' | 'processing' | 'complete' | 'failed'
+          metadata?: Json
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+      }
+      document_analysis: {
+        Row: {
+          id: string
+          document_id: string
+          analysis_type: 'classification' | 'financial' | 'contract' | 'risk'
+          findings: Json
+          confidence: 'low' | 'medium' | 'high'
+          risks_identified: number
+          processing_time_ms: number | null
+          ai_model: string | null
+          ai_tokens_used: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          document_id: string
+          analysis_type: 'classification' | 'financial' | 'contract' | 'risk'
+          findings?: Json
+          confidence?: 'low' | 'medium' | 'high'
+          risks_identified?: number
+          processing_time_ms?: number | null
+          ai_model?: string | null
+          ai_tokens_used?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          document_id?: string
+          analysis_type?: 'classification' | 'financial' | 'contract' | 'risk'
+          findings?: Json
+          confidence?: 'low' | 'medium' | 'high'
+          risks_identified?: number
+          processing_time_ms?: number | null
+          ai_model?: string | null
+          ai_tokens_used?: number | null
+          created_at?: string
+        }
+      }
+      data_room_access: {
+        Row: {
+          id: string
+          data_room_id: string
+          user_id: string
+          permission_level: 'owner' | 'editor' | 'viewer' | 'commenter'
+          invited_by: string
+          invite_token: string | null
+          invite_email: string
+          expires_at: string
+          accepted_at: string | null
+          revoked_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          data_room_id: string
+          user_id: string
+          permission_level?: 'owner' | 'editor' | 'viewer' | 'commenter'
+          invited_by: string
+          invite_token?: string | null
+          invite_email: string
+          expires_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          data_room_id?: string
+          user_id?: string
+          permission_level?: 'owner' | 'editor' | 'viewer' | 'commenter'
+          invited_by?: string
+          invite_token?: string | null
+          invite_email?: string
+          expires_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      activity_logs: {
+        Row: {
+          id: string
+          data_room_id: string
+          document_id: string | null
+          actor_id: string
+          actor_name: string
+          actor_email: string
+          action: 'upload' | 'view' | 'download' | 'edit' | 'delete' | 'share' | 'revoke' | 'generate_report' | 'create_room' | 'archive_room' | 'delete_room'
+          details: Json
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          data_room_id: string
+          document_id?: string | null
+          actor_id: string
+          actor_name: string
+          actor_email: string
+          action: 'upload' | 'view' | 'download' | 'edit' | 'delete' | 'share' | 'revoke' | 'generate_report' | 'create_room' | 'archive_room' | 'delete_room'
+          details?: Json
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          data_room_id?: string
+          document_id?: string | null
+          actor_id?: string
+          actor_name?: string
+          actor_email?: string
+          action?: 'upload' | 'view' | 'download' | 'edit' | 'delete' | 'share' | 'revoke' | 'generate_report' | 'create_room' | 'archive_room' | 'delete_room'
+          details?: Json
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+      }
+      document_annotations: {
+        Row: {
+          id: string
+          document_id: string
+          user_id: string
+          annotation_type: 'highlight' | 'comment' | 'sticky_note'
+          page_number: number | null
+          position: Json | null
+          text: string
+          color: string
+          resolved: boolean
+          resolved_by: string | null
+          resolved_at: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          document_id: string
+          user_id: string
+          annotation_type?: 'highlight' | 'comment' | 'sticky_note'
+          page_number?: number | null
+          position?: Json | null
+          text: string
+          color?: string
+          resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          document_id?: string
+          user_id?: string
+          annotation_type?: 'highlight' | 'comment' | 'sticky_note'
+          page_number?: number | null
+          position?: Json | null
+          text?: string
+          color?: string
+          resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+      }
+      document_pages: {
+        Row: {
+          id: string
+          document_id: string
+          page_number: number
+          text_content: string | null
+          ocr_confidence: number | null
+          layout_data: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          document_id: string
+          page_number: number
+          text_content?: string | null
+          ocr_confidence?: number | null
+          layout_data?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          document_id?: string
+          page_number?: number
+          text_content?: string | null
+          ocr_confidence?: number | null
+          layout_data?: Json | null
+          created_at?: string
+        }
+      }
+      document_chunks: {
+        Row: {
+          id: string
+          document_id: string
+          page_id: string
+          chunk_index: number
+          text_content: string
+          token_count: number
+          start_char: number
+          end_char: number
+          embedding: string | null
+          embedding_model: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          document_id: string
+          page_id: string
+          chunk_index: number
+          text_content: string
+          token_count: number
+          start_char: number
+          end_char: number
+          embedding?: string | null
+          embedding_model?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          document_id?: string
+          page_id?: string
+          chunk_index?: number
+          text_content?: string
+          token_count?: number
+          start_char?: number
+          end_char?: number
+          embedding?: string | null
+          embedding_model?: string | null
+          created_at?: string
         }
       }
     }

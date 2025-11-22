@@ -288,7 +288,7 @@ Keep responses under 200 words unless detailed explanation needed.`
         .select('*')
         .ilike('name', `%${companyName}%`)
         .limit(1)
-        .single() as { data: Row<'businesses'> | null; error: any }
+        .single() as { data: Row<'businesses'> | null; error: unknown }
 
       if (!company) {
         return {
@@ -410,7 +410,7 @@ Keep responses under 200 words unless detailed explanation needed.`
       .select('*')
       .eq('id', conversationId)
       .eq('user_id', userId)
-      .single() as { data: Row<'chat_conversations'> | null; error: any }
+      .single() as { data: Row<'chat_conversations'> | null; error: unknown }
 
     return data
   }
@@ -425,7 +425,7 @@ Keep responses under 200 words unless detailed explanation needed.`
       .from('profiles')
       .select('org_id')
       .eq('id', userId)
-      .single() as { data: Row<'profiles'> | null; error: any }
+      .single() as { data: Row<'profiles'> | null; error: unknown }
 
     if (!profile) return null
 
@@ -454,7 +454,7 @@ Keep responses under 200 words unless detailed explanation needed.`
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
-      .limit(limit) as { data: Row<'chat_messages'>[] | null; error: any }
+      .limit(limit) as { data: Row<'chat_messages'>[] | null; error: unknown }
 
     return (data || []).reverse()
   }

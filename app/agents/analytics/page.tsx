@@ -156,7 +156,7 @@ export default function AgentAnalyticsPage() {
                 <Download className="h-4 w-4" />
                 Export CSV
               </Button>
-              <Select value={timeRange} onValueChange={(value: any) => setTimeRange(value)}>
+              <Select value={timeRange} onValueChange={(value: string) => setTimeRange(value)}>
                 <SelectTrigger className="w-[120px]">
                   <SelectValue />
                 </SelectTrigger>

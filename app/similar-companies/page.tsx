@@ -55,7 +55,7 @@ interface SimilarityAnalysis {
   top_similarity_score: number
   created_at: string
   completed_at?: string
-  analysis_configuration: any
+  analysis_configuration: Record<string, unknown>
 }
 
 function SimilarCompaniesPageContent() {
@@ -457,7 +457,7 @@ function SimilarCompaniesPageContent() {
                           {validationResult.suggestions.length > 0 && (
                             <div className="mt-2">
                               <p className="text-xs text-muted-foreground mb-1">Did you mean:</p>
-                              {validationResult.suggestions.slice(0, 3).map((suggestion: any, index: number) => (
+                              {validationResult.suggestions.slice(0, 3).map((suggestion: { name: string; country: string }, index: number) => (
                                 <button
                                   key={index}
                                   className="text-xs text-blue-600 hover:underline block"

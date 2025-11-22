@@ -138,9 +138,9 @@ export class CRMEnrichmentService {
   private async generateSummary(research: ResearchReportRow): Promise<string> {
     try {
       // Extract key information from metadata
-      const metadata = research.metadata as Record<string, any> | null;
-      const snapshot = metadata?.snapshot as Record<string, any> | undefined;
-      const signals = metadata?.signals as Array<any> | undefined;
+      const metadata = research.metadata as Record<string, unknown> | null;
+      const snapshot = metadata?.snapshot as { name?: string; industry?: string; employeeCount?: number } | undefined;
+      const signals = metadata?.signals as Array<unknown> | undefined;
 
       const name = snapshot?.name || research.company_name || 'Company';
       const industry = snapshot?.industry || 'Unknown industry';
@@ -171,16 +171,16 @@ export class CRMEnrichmentService {
    */
   private extractBuyingSignals(research: ResearchReportRow): string[] {
     try {
-      const metadata = research.metadata as Record<string, any> | null;
-      const signals = metadata?.signals as Array<Record<string, any>> | undefined;
+      const metadata = research.metadata as Record<string, unknown> | null;
+      const signals = metadata?.signals as Array<{ priority?: string; strength?: string; signal?: string; description?: string }> | undefined;
 
       if (!signals || !Array.isArray(signals)) {
         return [];
       }
 
       return signals
-        .filter((s: Record<string, any>) => s.priority === 'high' || s.strength === 'strong')
-        .map((s: Record<string, any>) => (s.signal || s.description || 'Positive signal detected') as string)
+        .filter((s) => s.priority === 'high' || s.strength === 'strong')
+        .map((s) => s.signal || s.description || 'Positive signal detected')
         .slice(0, 5); // Max 5 signals
     } catch (error) {
       return [];
@@ -238,7 +238,7 @@ export class CRMEnrichmentService {
       };
     }
 
-    const breakdown = (data.score_breakdown as Record<string, any> | null) || {};
+    const breakdown = (data.score_breakdown as { financial?: number; growth?: number; engagement?: number; fit?: number } | null) || {};
 
     return {
       financial: breakdown.financial || 50,
@@ -353,8 +353,8 @@ export class CRMEnrichmentService {
       return {};
     }
 
-    const metadata = data.metadata as Record<string, any> | null;
-    const analysis = metadata?.analysis as Record<string, any> | undefined;
+    const metadata = data.metadata as Record<string, unknown> | null;
+    const analysis = metadata?.analysis as { painPoints?: string[]; competitors?: string[]; recommendations?: string } | undefined;
 
     return {
       painPoints: analysis?.painPoints || [],

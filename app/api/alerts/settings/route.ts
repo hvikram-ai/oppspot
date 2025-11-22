@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Transform to object
-    const settings: Record<string, any> = {}
+    const settings: Record<string, unknown> = {}
     configs?.forEach((config) => {
       settings[config.config_key] = config.config_value
     })

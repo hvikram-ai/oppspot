@@ -64,7 +64,7 @@ export default function KnowledgeGraphPage() {
 
       if (data.success) {
         // Convert search results to graph data
-        const nodes = data.results.map((r: any) => ({
+        const nodes = data.results.map((r: { id: string; name: string; type: string }) => ({
           id: r.entity.id,
           label: r.entity.entity_name,
           type: r.entity.entity_type,

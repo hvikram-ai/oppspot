@@ -174,12 +174,13 @@ export class CompaniesHouseServiceLite {
   /**
    * Check if cached data is still valid
    */
-  isCacheValid(metadata: any): boolean {
-    if (!metadata?.companies_house?.cache_expires_at) return false
-    
-    const expiresAt = new Date(metadata.companies_house.cache_expires_at).getTime()
+  isCacheValid(metadata: Record<string, unknown> | null | undefined): boolean {
+    const companiesHouse = metadata?.companies_house as Record<string, unknown> | undefined
+    if (!companiesHouse?.cache_expires_at) return false
+
+    const expiresAt = new Date(companiesHouse.cache_expires_at as string).getTime()
     const now = Date.now()
-    
+
     return now < expiresAt
   }
 
@@ -219,8 +220,9 @@ export class CompaniesHouseServiceLite {
   /**
    * Get Companies House data from metadata
    */
-  getCompaniesHouseData(business: Record<string, unknown>): any {
-    return business.metadata?.companies_house || null
+  getCompaniesHouseData(business: Record<string, unknown>): unknown {
+    const metadata = business.metadata as Record<string, unknown> | undefined
+    return metadata?.companies_house || null
   }
 }
 

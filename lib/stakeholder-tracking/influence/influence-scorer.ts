@@ -280,9 +280,9 @@ export class InfluenceScorer {
 
     // Referral and advocacy behaviors
     if (stakeholder.champion_tracking?.[0]) {
-      const tracking = stakeholder.champion_tracking[0] as any;
-      score += Math.min(10, ((tracking.referrals_made || 0) as number) * 5);
-      score += Math.min(10, ((tracking.internal_advocates || 0) as number) * 3);
+      const tracking = stakeholder.champion_tracking[0] as { referrals_made?: number; internal_advocates?: number };
+      score += Math.min(10, (tracking.referrals_made || 0) * 5);
+      score += Math.min(10, (tracking.internal_advocates || 0) * 3);
     }
 
     return Math.min(100, score);
@@ -596,22 +596,25 @@ export class InfluenceScorer {
       const analyzedClusters = Array.from(clusters.entries()).map(([dept, members]) => {
         // Calculate total influence
         const totalInfluence = members.reduce((sum, member) => {
-          const influence = ((member.influence_scores?.[0] as any)?.overall_influence || 0) as number;
-          return (sum as number) + influence;
-        }, 0 as number);
+          const influenceScore = member.influence_scores?.[0] as { overall_influence?: number } | undefined;
+          const influence = influenceScore?.overall_influence || 0;
+          return sum + influence;
+        }, 0);
 
         // Find key connector (highest influence + most connections)
         const keyConnector = members.reduce((key: StakeholderWithRelations | null, member) => {
+          const memberInfluence = member.influence_scores?.[0] as { overall_influence?: number } | undefined;
           const memberScore =
-            (((member.influence_scores?.[0] as any)?.overall_influence || 0) as number) +
-            ((member.stakeholder_relationships?.length || 0) as number) * 5;
+            (memberInfluence?.overall_influence || 0) +
+            (member.stakeholder_relationships?.length || 0) * 5;
 
+          const keyInfluence = key?.influence_scores?.[0] as { overall_influence?: number } | undefined;
           const keyScore = key
-            ? (((key.influence_scores?.[0] as any)?.overall_influence || 0) as number) +
-              ((key.stakeholder_relationships?.length || 0) as number) * 5
+            ? (keyInfluence?.overall_influence || 0) +
+              (key.stakeholder_relationships?.length || 0) * 5
             : 0;
 
-          return (memberScore as number) > (keyScore as number) ? member : key;
+          return memberScore > keyScore ? member : key;
         }, null);
 
         return {

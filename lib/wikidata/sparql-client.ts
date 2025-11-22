@@ -43,6 +43,48 @@ export interface WikidataSearchResult {
   confidence: number // 0-1 based on name match quality
 }
 
+// SPARQL result types
+interface SPARQLValue {
+  value: string
+  type?: string
+}
+
+interface SPARQLSearchResult {
+  company: SPARQLValue
+  companyLabel: SPARQLValue
+  companyDescription?: SPARQLValue
+}
+
+interface SPARQLCompanyResult {
+  company: SPARQLValue
+  companyLabel: SPARQLValue
+  companyDescription?: SPARQLValue
+  website?: SPARQLValue
+  industry?: SPARQLValue
+  industryLabel?: SPARQLValue
+  founded?: SPARQLValue
+  founder?: SPARQLValue
+  founderLabel?: SPARQLValue
+  hqCity?: SPARQLValue
+  hqCityLabel?: SPARQLValue
+  hqCountry?: SPARQLValue
+  hqCountryLabel?: SPARQLValue
+  ticker?: SPARQLValue
+  exchange?: SPARQLValue
+  exchangeLabel?: SPARQLValue
+  employees?: SPARQLValue
+  revenue?: SPARQLValue
+  parent?: SPARQLValue
+  parentLabel?: SPARQLValue
+  logo?: SPARQLValue
+  wikipedia?: SPARQLValue
+}
+
+interface SPARQLSubsidiaryResult {
+  subsidiary: SPARQLValue
+  subsidiaryLabel: SPARQLValue
+}
+
 export class WikidataSPARQLClient {
   private endpoint = 'https://query.wikidata.org/sparql'
   private userAgent = 'oppSpot/1.0 (https://oppspot.ai; contact@oppspot.ai)'
@@ -72,7 +114,7 @@ export class WikidataSPARQLClient {
     try {
       const results = await this.executeSPARQL(sparqlQuery)
 
-      return results.map((r: any, index: number) => ({
+      return results.map((r: SPARQLSearchResult, index: number) => ({
         wikidataId: this.extractWikidataId(r.company.value),
         name: r.companyLabel.value,
         description: r.companyDescription?.value,
@@ -134,9 +176,9 @@ export class WikidataSPARQLClient {
 
       // Aggregate multiple rows (e.g., multiple founders)
       const firstRow = results[0]
-      const founders = results
-        .filter((r: any) => r.founderLabel)
-        .map((r: any) => r.founderLabel.value)
+      const founders = (results as SPARQLCompanyResult[])
+        .filter((r) => r.founderLabel)
+        .map((r) => r.founderLabel!.value)
         .filter((v: string, i: number, arr: string[]) => arr.indexOf(v) === i) // Unique
 
       return {
@@ -196,7 +238,7 @@ export class WikidataSPARQLClient {
     try {
       const results = await this.executeSPARQL(sparqlQuery)
 
-      return results.map((r: any) => ({
+      return (results as SPARQLSubsidiaryResult[]).map((r) => ({
         wikidataId: this.extractWikidataId(r.subsidiary.value),
         name: r.subsidiaryLabel.value,
       }))
@@ -237,7 +279,7 @@ export class WikidataSPARQLClient {
     try {
       const results = await this.executeSPARQL(sparqlQuery)
 
-      return results.map((r: any, index: number) => ({
+      return (results as SPARQLSearchResult[]).map((r, index: number) => ({
         wikidataId: this.extractWikidataId(r.company.value),
         name: r.companyLabel.value,
         description: r.companyDescription?.value,
@@ -299,7 +341,7 @@ export class WikidataSPARQLClient {
   /**
    * Execute SPARQL query
    */
-  private async executeSPARQL(query: string): Promise<any[]> {
+  private async executeSPARQL(query: string): Promise<unknown[]> {
     const url = new URL(this.endpoint)
     url.searchParams.append('query', query)
     url.searchParams.append('format', 'json')

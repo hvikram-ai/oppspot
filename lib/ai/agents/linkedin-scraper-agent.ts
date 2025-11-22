@@ -15,7 +15,16 @@
 import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } from './base-agent'
 import { createClient } from '@/lib/supabase/server'
 import puppeteer, { Browser, Page } from 'puppeteer'
+import type { PostgrestError } from '@supabase/supabase-js'
 import type { Row } from '@/lib/supabase/helpers'
+
+// Company type from database query
+interface LinkedInCompany {
+  id: string
+  name: string
+  website?: string
+  linkedin_url?: string
+}
 
 export interface LinkedInScraperConfig {
   companyIds?: string[] // Specific companies to scrape
@@ -192,7 +201,7 @@ export class LinkedInScraperAgent extends BaseAgent {
     const limit = config.maxCompanies || 10
     query = query.limit(limit)
 
-    const { data, error } = await query as { data: Array<{ id: string; name: string; website?: string; linkedin_url?: string }> | null; error: unknown }
+    const { data, error } = await query as { data: LinkedInCompany[] | null; error: PostgrestError | null }
 
     if (error) {
       throw new Error(`Failed to fetch companies: ${error.message}`)
@@ -204,7 +213,7 @@ export class LinkedInScraperAgent extends BaseAgent {
   /**
    * Scrape company LinkedIn profile
    */
-  private async scrapeCompanyProfile(company: any): Promise<LinkedInCompanyData | null> {
+  private async scrapeCompanyProfile(company: LinkedInCompany): Promise<LinkedInCompanyData | null> {
     if (!this.browser) {
       throw new Error('Browser not initialized')
     }
@@ -235,7 +244,13 @@ export class LinkedInScraperAgent extends BaseAgent {
 
       // Extract company data from page
       const companyData = await page.evaluate(() => {
-        const data: any = {}
+        const data: {
+          employeeCount?: number;
+          followerCount?: number;
+          industry?: string;
+          headquarters?: string;
+          specialties?: string[];
+        } = {}
 
         // Extract employee count
         const employeeCountElement = document.querySelector('[data-test-id="about-us__size"]')
@@ -317,7 +332,7 @@ export class LinkedInScraperAgent extends BaseAgent {
     const supabase = await createClient()
 
     // Update business record with LinkedIn data
-    const updateData: any = {}
+    const updateData: Record<string, string | number> = {}
 
     if (data.employeeCount) updateData.employee_count = data.employeeCount
     if (data.linkedInUrl) updateData.linkedin_url = data.linkedInUrl
@@ -403,7 +418,7 @@ export async function createLinkedInScraperAgent(agentId: string): Promise<Linke
     .select('*')
     .eq('id', agentId)
     .eq('agent_type', 'linkedin_scraper_agent')
-    .single() as { data: Row<'ai_agents'> | null; error: any }
+    .single() as { data: Row<'ai_agents'> | null; error: PostgrestError | null }
 
   if (error || !data) {
     throw new Error(`LinkedIn scraper agent not found: ${agentId}`)

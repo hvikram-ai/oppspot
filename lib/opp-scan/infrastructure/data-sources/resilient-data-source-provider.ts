@@ -3,13 +3,28 @@
  * Wraps data source providers with comprehensive resilience patterns
  */
 
-import { 
+import {
   IDataSourceProvider,
   SearchCriteria,
   SearchOptions,
   CompanyEntity
 } from '../../core/interfaces'
 import { ResilienceDecorator, ResilienceConfigurations } from '../resilience/resilience-decorator'
+
+// Context types for resilience callbacks
+interface OperationContext {
+  attempt: number
+  totalAttempts: number
+  circuitBreakerState: string
+  startTime: number
+}
+
+// Circuit breaker metrics type
+interface CircuitBreakerMetrics {
+  state: string
+  failureCount?: number
+  lastFailure?: Date
+}
 
 export class ResilientDataSourceProvider implements IDataSourceProvider {
   private readonly searchResilience: ResilienceDecorator
@@ -105,8 +120,8 @@ export class ResilientDataSourceProvider implements IDataSourceProvider {
     try {
       // Attempt a lightweight operation to check health
       const testCriteria: SearchCriteria = {
-        industries: [{ sic_code: 'test', industry: 'test' }] as any,
-        regions: [{ code: 'test', name: 'test' }] as any,
+        industries: [{ sic_code: 'test', industry: 'test' }] as SearchCriteria['industries'],
+        regions: [{ code: 'test', name: 'test' }] as SearchCriteria['regions'],
         // scanDepth: 'basic',
         filters: {}
       }
@@ -196,7 +211,7 @@ export class ResilientDataSourceProvider implements IDataSourceProvider {
     console.log(`Reset resilience patterns for data source ${this.id}`)
   }
 
-  private onOperationError(operation: 'search' | 'details', error: Error, context: any): void {
+  private onOperationError(operation: 'search' | 'details', error: Error, context: OperationContext): void {
     console.warn(
       `${this.id} ${operation} operation failed:`,
       {
@@ -208,7 +223,7 @@ export class ResilientDataSourceProvider implements IDataSourceProvider {
     )
   }
 
-  private onOperationSuccess(operation: 'search' | 'details', result: any, context: any): void {
+  private onOperationSuccess(operation: 'search' | 'details', result: unknown, context: OperationContext): void {
     const duration = Date.now() - context.startTime
     console.debug(
       `${this.id} ${operation} operation succeeded:`,
@@ -270,8 +285,8 @@ export interface DataSourceMetrics {
   averageResponseTime: number
   lastRequestTime: Date
   circuitBreaker: {
-    search?: any
-    details?: any
+    search?: CircuitBreakerMetrics
+    details?: CircuitBreakerMetrics
   }
 }
 

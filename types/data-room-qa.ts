@@ -16,7 +16,7 @@ export interface DocumentPage {
   page_number: number;
   text_content: string | null;
   ocr_confidence: number | null; // 0.0-1.0
-  layout_data: Record<string, any> | null;
+  layout_data: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -400,17 +400,17 @@ export const DeleteHistoryRequestSchema = z.object({
 // Type Guards
 // ============================================================================
 
-export function isQueryStreamEvent(obj: any): obj is QueryStreamEvent {
+export function isQueryStreamEvent(obj: unknown): obj is QueryStreamEvent {
   return (
-    obj &&
+    obj !== null &&
     typeof obj === 'object' &&
     'type' in obj &&
-    ['chunk', 'citation', 'complete', 'error'].includes(obj.type)
+    ['chunk', 'citation', 'complete', 'error'].includes((obj as QueryStreamEvent).type)
   );
 }
 
-export function isErrorResponse(obj: any): obj is ErrorResponse {
-  return obj && typeof obj === 'object' && 'error' in obj && 'message' in obj;
+export function isErrorResponse(obj: unknown): obj is ErrorResponse {
+  return obj !== null && typeof obj === 'object' && 'error' in obj && 'message' in obj;
 }
 
 // ============================================================================

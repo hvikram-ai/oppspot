@@ -456,7 +456,7 @@ export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): {
  * Format Zod validation errors for user-friendly display
  */
 export function formatValidationErrors(error: z.ZodError): string[] {
-  return error.errors.map((err) => {
+  return error.errors.map((err: z.ZodIssue) => {
     const path = err.path.join('.');
     return `${path}: ${err.message}`;
   });

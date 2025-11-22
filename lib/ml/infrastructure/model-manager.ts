@@ -376,7 +376,7 @@ export class ModelManager {
       output: {
         churn_probability: riskScore,
         risk_level: riskScore > 0.6 ? 'high' : riskScore > 0.3 ? 'medium' : 'low',
-        factors: features.filter(f => input[f] !== undefined)
+        factors: features.filter((f: string) => input[f] !== undefined)
       },
       confidence: 0.75
     }

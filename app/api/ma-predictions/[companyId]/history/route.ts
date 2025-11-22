@@ -20,9 +20,10 @@ import { getHistoricalPredictions } from '@/lib/ma-prediction/repository/predict
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { companyId: string } }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
+    const { companyId } = await params;
     // Authenticate user
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -33,8 +34,6 @@ export async function GET(
         { status: 401 }
       );
     }
-
-    const companyId = params.companyId;
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

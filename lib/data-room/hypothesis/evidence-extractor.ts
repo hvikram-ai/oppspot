@@ -88,7 +88,7 @@ export class EvidenceExtractor {
 
       // Filter chunks from the specific document
       const documentChunks = retrievalResult.chunks.filter(
-        (chunk) => chunk.document_id === documentId
+        (chunk: RetrievedChunk) => chunk.document_id === documentId
       );
 
       if (documentChunks.length === 0) {
@@ -99,7 +99,7 @@ export class EvidenceExtractor {
       // Combine chunks into document text (limit to avoid token limits)
       const combinedText = documentChunks
         .slice(0, 5) // Use top 5 chunks
-        .map((chunk) => chunk.text_content)
+        .map((chunk: RetrievedChunk) => chunk.text_content)
         .join('\n\n');
 
       // Analyze with AI
@@ -338,7 +338,7 @@ export class EvidenceExtractor {
       });
 
       // Get document IDs from chunks
-      const documentIds = [...new Set(retrievalResult.chunks.map((c) => c.document_id))];
+      const documentIds = [...new Set(retrievalResult.chunks.map((c: RetrievedChunk) => c.document_id))];
 
       // Find hypotheses that reference these documents
       const { data: evidence } = await this.supabase

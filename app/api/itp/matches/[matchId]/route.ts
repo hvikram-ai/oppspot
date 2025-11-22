@@ -20,10 +20,11 @@ const updateMatchActionSchema = z.object({
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
-    console.log('[ITP Match Action API] PATCH - Updating match:', params.matchId);
+    const { matchId } = await params;
+    console.log('[ITP Match Action API] PATCH - Updating match:', matchId);
     const supabase = await createClient();
 
     // Get authenticated user
@@ -38,8 +39,6 @@ export async function PATCH(
         { status: 401 }
       );
     }
-
-    const matchId = params.matchId;
 
     // Parse and validate body
     const body = await request.json();

@@ -19,7 +19,7 @@ export type JobStatus =
 // GENERIC JOB INFO
 // ============================================================================
 
-export interface JobInfo<TData = any, TResult = any> {
+export interface JobInfo<TData = unknown, TResult = unknown> {
   id: string
   name: string
   queue: string
@@ -189,7 +189,7 @@ export interface JobStatusResponse {
   queue: string
   status: JobStatus
   progress?: number
-  result?: any
+  result?: unknown
   error?: string
   created_at: string
   started_at?: string

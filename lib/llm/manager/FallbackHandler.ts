@@ -121,7 +121,7 @@ export class FallbackHandler {
   async *executeStreamWithFallback(
     messages: LLMMessage[],
     generationOptions?: GenerationOptions
-  ): AsyncGenerator<{ providerId: string; chunk: any }, void, unknown> {
+  ): AsyncGenerator<{ providerId: string; chunk: unknown }, void, unknown> {
     if (!this.options.enableFallback || this.options.providers.length === 0) {
       throw new LLMError('No providers available or fallback disabled', 'NO_PROVIDERS', 500);
     }

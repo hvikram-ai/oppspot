@@ -16,9 +16,10 @@ import type { UpdatePlaybookRequest } from '@/lib/data-room/types';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -30,7 +31,7 @@ export async function GET(
       );
     }
 
-    const playbookId = params.id;
+    const playbookId = id;
     const repository = new PlaybookRepository(supabase);
 
     // Get playbook with all details
@@ -63,9 +64,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -77,7 +79,7 @@ export async function PATCH(
       );
     }
 
-    const playbookId = params.id;
+    const playbookId = id;
     const body = await request.json();
 
     // Build update request
@@ -122,9 +124,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -136,7 +139,7 @@ export async function DELETE(
       );
     }
 
-    const playbookId = params.id;
+    const playbookId = id;
     const repository = new PlaybookRepository(supabase);
 
     // Soft delete playbook

@@ -16,7 +16,7 @@ import type { ProviderType } from '@/lib/llm/interfaces/ILLMProvider';
 interface CreateConfigRequest {
   providerType: ProviderType;
   name: string;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   priority?: number;
   isPrimary?: boolean;
   monthlyTokenLimit?: number;

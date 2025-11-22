@@ -133,7 +133,7 @@ export class GrowthIndicatorScorer {
     }
   }
 
-  private scoreExpansionSignals(metadata: any): { score: number; explanation: string } | null {
+  private scoreExpansionSignals(metadata: Record<string, unknown>): { score: number; explanation: string } | null {
     const signals = []
     let score = 50
 

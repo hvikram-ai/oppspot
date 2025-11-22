@@ -76,7 +76,7 @@ export class ChampionIdentifier {
 
       // Score and rank champions
       const champions = await Promise.all(
-        (stakeholders || []).map(async (stakeholder) => {
+        (stakeholders || []).map(async (stakeholder: Record<string, unknown>) => {
           const score = await this.calculateChampionScore(stakeholder);
           const recommendation = await this.generateChampionRecommendation(
             stakeholder,
@@ -85,7 +85,7 @@ export class ChampionIdentifier {
 
           return {
             stakeholder: stakeholder as Stakeholder,
-            tracking: stakeholder.champion_tracking?.[0] as ChampionTracking | undefined,
+            tracking: (stakeholder.champion_tracking as ChampionTracking[] | undefined)?.[0] as ChampionTracking | undefined,
             score,
             recommendation
           };
@@ -204,7 +204,10 @@ export class ChampionIdentifier {
    * Generate champion recommendation based on score and status
    */
   async generateChampionRecommendation(
-    stakeholder: any,
+    stakeholder: {
+      champion_status?: string;
+      champion_tracking?: Array<Record<string, unknown>>;
+    },
     score: number
   ): Promise<string> {
     const status = stakeholder.champion_status;
@@ -248,7 +251,7 @@ export class ChampionIdentifier {
         .from('champion_tracking')
         .select('*')
         .eq('stakeholder_id', stakeholder_id)
-        .single() as { data: Row<'champion_tracking'> | null; error: any };
+        .single() as { data: Row<'champion_tracking'> | null; error: unknown };
 
       if (existing) {
         return existing as ChampionTracking;
@@ -259,7 +262,7 @@ export class ChampionIdentifier {
         .from('stakeholders')
         .select('org_id')
         .eq('id', stakeholder_id)
-        .single() as { data: Row<'stakeholders'> | null; error: any };
+        .single() as { data: Row<'stakeholders'> | null; error: unknown };
 
       // Create new tracking
       const { data, error } = await supabase
@@ -358,7 +361,7 @@ export class ChampionIdentifier {
         .from('champion_tracking')
         .select('development_actions')
         .eq('id', tracking_id)
-        .single() as { data: Row<'champion_tracking'> | null; error: any };
+        .single() as { data: Row<'champion_tracking'> | null; error: unknown };
 
       const currentActions = tracking?.development_actions || [];
 
@@ -490,8 +493,8 @@ export class ChampionIdentifier {
       // Check sentiment trend
       const recentSentiments = engagements
         .slice(0, 5)
-        .map(e => e.sentiment_score)
-        .filter(s => s !== null);
+        .map((e: { engagement_date: string; outcome: string; sentiment_score: number | null }) => e.sentiment_score)
+        .filter((s: number | null) => s !== null);
 
       if (recentSentiments.length >= 2) {
         const trend = recentSentiments[0] - recentSentiments[recentSentiments.length - 1];

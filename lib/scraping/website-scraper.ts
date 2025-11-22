@@ -11,14 +11,14 @@ interface WebsiteData {
   phones?: string[]
   socialLinks?: Record<string, string>
   addresses?: unknown[]
-  businessHours?: any
+  businessHours?: unknown
   technologies?: string[]
   hasSsl?: boolean
   mobileFriendly?: boolean
   hasOnlineStore?: boolean
   paymentMethods?: string[]
   seoScore?: number
-  structuredData?: any
+  structuredData?: unknown
   teamMembers?: Array<{
     name: string
     role?: string

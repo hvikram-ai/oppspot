@@ -72,7 +72,7 @@ export async function processDocumentForQA(
     })
 
     // Step 2: Save document pages
-    const pages: DocumentPageInsert[] = extractionResult.pages.map((page, idx) => ({
+    const pages: DocumentPageInsert[] = extractionResult.pages.map((page: { page_number: number; text: string; confidence?: number }, idx: number) => ({
       document_id: documentId,
       page_number: page.page_number,
       text_content: page.text,
@@ -100,11 +100,11 @@ export async function processDocumentForQA(
     })
 
     // Step 4: Generate embeddings for all chunks
-    const chunkTexts = chunkingResult.chunks.map(c => c.text)
+    const chunkTexts = chunkingResult.chunks.map((c: { text: string; page_number: number; token_count: number; start_char: number; end_char: number }) => c.text)
     const embeddings = await generateEmbeddings(chunkTexts)
 
     // Step 5: Save document chunks with embeddings
-    const chunks: DocumentChunkInsert[] = chunkingResult.chunks.map((chunk, idx) => {
+    const chunks: DocumentChunkInsert[] = chunkingResult.chunks.map((chunk: { text: string; page_number: number; token_count: number; start_char: number; end_char: number }, idx: number) => {
       // Find the corresponding page
       const page = insertedPages.find(p => p.page_number === chunk.page_number)
 

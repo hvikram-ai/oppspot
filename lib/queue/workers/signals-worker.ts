@@ -65,8 +65,9 @@ export async function processSignalsJob(
 
     // Save signals to database
     const signalsToSave = detectedSignals.map((signal) => {
-      const signalAny = signal as any
-      const confidence = signalAny.confidence || signalAny.confidence_score || 0.5
+      // Access confidence from signal with type coercion for optional properties
+      const signalWithConfidence = signal as typeof signal & { confidence?: number; confidence_score?: number }
+      const confidence = signalWithConfidence.confidence ?? signalWithConfidence.confidence_score ?? 0.5
       return {
         company_id: job.data.company_id,
         signal_type: signal.signal_type,
@@ -94,8 +95,8 @@ export async function processSignalsJob(
 
     // Send notifications for high-confidence signals
     const highConfidenceSignals = detectedSignals.filter((s) => {
-      const signalAny = s as any
-      const confidence = signalAny.confidence || signalAny.confidence_score || 0
+      const signalWithConfidence = s as typeof s & { confidence?: number; confidence_score?: number }
+      const confidence = signalWithConfidence.confidence ?? signalWithConfidence.confidence_score ?? 0
       return confidence >= 0.8
     })
 
@@ -104,8 +105,8 @@ export async function processSignalsJob(
         const notifier = await createTeamNotificationService()
         if (notifier) {
           for (const signal of highConfidenceSignals) {
-            const signalAny = signal as any
-            const confidence = signalAny.confidence || signalAny.confidence_score || 0
+            const signalWithConfidence = signal as typeof signal & { confidence?: number; confidence_score?: number }
+            const confidence = signalWithConfidence.confidence ?? signalWithConfidence.confidence_score ?? 0
             await notifier.notifyBuyingSignal(
               job.data.company_id,
               job.data.company_name,
@@ -133,8 +134,8 @@ export async function processSignalsJob(
       company_id: job.data.company_id,
       signals_detected: detectedSignals.length,
       signals: detectedSignals.map(s => {
-        const signalAny = s as any
-        const confidence = signalAny.confidence || signalAny.confidence_score || 0
+        const signalWithConfidence = s as typeof s & { confidence?: number; confidence_score?: number }
+        const confidence = signalWithConfidence.confidence ?? signalWithConfidence.confidence_score ?? 0
         return {
           signal_type: s.signal_type,
           confidence: confidence,

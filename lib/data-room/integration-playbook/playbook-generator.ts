@@ -21,6 +21,61 @@ import type {
 } from '@/lib/data-room/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+// Template types for playbook generation
+interface PlaybookTemplate {
+  phases: Array<{
+    phase_name?: string;
+    phase_type?: string;
+  }>;
+  workstreams: Array<{
+    workstream_name?: string;
+    key_deliverables?: string[];
+  }>;
+  day1_checklist: Array<{
+    checklist_item?: string;
+    category?: string;
+    is_critical?: boolean;
+    responsible_party?: string;
+  }>;
+  typical_synergies: Array<{
+    synergy_name?: string;
+    synergy_type?: string;
+    synergy_description?: string;
+  }>;
+  typical_risks: Array<{
+    risk_name?: string;
+    risk_description?: string;
+    risk_category?: string;
+    impact?: string;
+    probability?: string;
+    status?: string;
+  }>;
+  typical_kpis: Array<{
+    kpi_name?: string;
+    kpi_category?: string;
+  }>;
+}
+
+interface GeneratedActivity {
+  activity_name: string;
+  description: string;
+  category: string;
+  priority: string;
+  duration_days: number;
+  deliverables: string[];
+  responsible_party: string;
+  critical_path: boolean;
+  completion_percentage: number;
+  status: string;
+}
+
+interface TechStackFinding {
+  finding_type: string;
+  title: string;
+  description: string;
+  severity: string;
+}
+
 export class PlaybookGenerator {
   private llmManager: LLMManager | null = null;
   private repository: PlaybookRepository;
@@ -187,7 +242,7 @@ export class PlaybookGenerator {
     const context: PlaybookGenerationContext = {
       data_room_id: dataRoomId,
       deal_info: {
-        deal_type: dealType as any,
+        deal_type: dealType as PlaybookGenerationContext['deal_info']['deal_type'],
       },
     };
 
@@ -226,7 +281,7 @@ export class PlaybookGenerator {
    */
   private async generateActivities(
     context: PlaybookGenerationContext,
-    template: any
+    template: PlaybookTemplate
   ): Promise<Omit<IntegrationActivity, 'id' | 'created_at' | 'updated_at'>[]> {
     const prompt = this.buildActivitiesPrompt(context, template);
 
@@ -252,7 +307,7 @@ export class PlaybookGenerator {
   /**
    * Build AI prompt for activity generation
    */
-  private buildActivitiesPrompt(context: PlaybookGenerationContext, template: any): string {
+  private buildActivitiesPrompt(context: PlaybookGenerationContext, template: PlaybookTemplate): string {
     const techStackContext = context.tech_stack_findings
       ? `Tech Stack Analysis: ${context.tech_stack_findings.technologies.length} technologies found, integration complexity: ${context.tech_stack_findings.integration_complexity}`
       : '';
@@ -262,7 +317,7 @@ export class PlaybookGenerator {
 ${techStackContext}
 
 Generate 40-50 specific activities across these workstreams:
-${template.workstreams.map((w: any) => `- ${w.workstream_name}`).join('\n')}
+${template.workstreams.map((w) => `- ${w.workstream_name}`).join('\n')}
 
 For each activity, provide:
 - activity_name: Specific, actionable name
@@ -295,12 +350,12 @@ Return ONLY valid JSON in this format:
   /**
    * Generate template-based activities (fallback)
    */
-  private generateTemplateActivities(template: any): Omit<IntegrationActivity, 'id' | 'created_at' | 'updated_at'>[] {
+  private generateTemplateActivities(template: PlaybookTemplate): Omit<IntegrationActivity, 'id' | 'created_at' | 'updated_at'>[] {
     // Generate basic activities from template
-    const activities: any[] = [];
+    const activities: GeneratedActivity[] = [];
 
-    template.workstreams.forEach((ws: any) => {
-      ws.key_deliverables?.forEach((deliverable: string, idx: number) => {
+    template.workstreams.forEach((ws) => {
+      ws.key_deliverables?.forEach((deliverable: string) => {
         activities.push({
           activity_name: deliverable,
           description: `Complete ${deliverable} for ${ws.workstream_name}`,
@@ -324,10 +379,10 @@ Return ONLY valid JSON in this format:
    */
   private async generateSynergies(
     context: PlaybookGenerationContext,
-    template: any
+    template: PlaybookTemplate
   ): Promise<Omit<IntegrationSynergy, 'id' | 'created_at' | 'updated_at'>[]> {
     // Use template synergies with AI enhancement
-    return template.typical_synergies.map((s: any) => ({
+    return template.typical_synergies.map((s) => ({
       ...s,
       year_1_target: this.estimateSynergyValue(s, context, 1),
       year_2_target: this.estimateSynergyValue(s, context, 2),
@@ -341,7 +396,7 @@ Return ONLY valid JSON in this format:
   /**
    * Estimate synergy value (placeholder logic)
    */
-  private estimateSynergyValue(synergy: any, context: PlaybookGenerationContext, year: number): number {
+  private estimateSynergyValue(synergy: PlaybookTemplate['typical_synergies'][0], context: PlaybookGenerationContext, year: number): number {
     // Simple estimation based on synergy type and year
     const baseValue = synergy.synergy_type === 'cost' ? 500000 : 1000000;
     const multiplier = year === 1 ? 0.3 : year === 2 ? 0.5 : 1.0;
@@ -353,15 +408,15 @@ Return ONLY valid JSON in this format:
    */
   private async generateRisks(
     context: PlaybookGenerationContext,
-    template: any
+    template: PlaybookTemplate
   ): Promise<Omit<IntegrationRisk, 'id' | 'created_at' | 'updated_at' | 'risk_score'>[]> {
     const risks = [...template.typical_risks];
 
     // Add tech-specific risks if tech stack analysis exists
     if (context.tech_stack_findings) {
-      const techRisks = context.tech_stack_findings.risks
-        .filter((f: any) => f.finding_type === 'red_flag' || f.finding_type === 'risk')
-        .map((finding: any) => ({
+      const techRisks = (context.tech_stack_findings.risks as TechStackFinding[])
+        .filter((f) => f.finding_type === 'red_flag' || f.finding_type === 'risk')
+        .map((finding) => ({
           risk_name: finding.title,
           risk_description: finding.description,
           risk_category: 'systems',
@@ -380,7 +435,7 @@ Return ONLY valid JSON in this format:
    * Map activities to phases and workstreams
    */
   private mapActivitiesToPhasesAndWorkstreams(
-    activities: any[],
+    activities: GeneratedActivity[],
     phases: IntegrationPhase[],
     workstreams: IntegrationWorkstream[],
     playbookId: string

@@ -4,6 +4,7 @@
  */
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { PostgrestError } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import type {
   Collection,
@@ -77,7 +78,7 @@ export class StreamService {
       .from('collections')
       .insert(insertData)
       .select()
-      .single()) as { data: DBCollection | null; error: any }
+      .single()) as { data: DBCollection | null; error: PostgrestError | null }
 
     if (error || !stream) {
       console.error('[StreamService] Error creating stream:', error)
@@ -99,7 +100,7 @@ export class StreamService {
 
     const { error: memberError } = (await adminClient
       .from('collection_members')
-      .insert([memberInsert])) as { error: any }
+      .insert([memberInsert])) as { error: PostgrestError | null }
 
     if (memberError) {
       console.error('[StreamService] Error adding stream member:', memberError)
@@ -312,7 +313,7 @@ export class StreamService {
       .update(updateData as any)
       .eq('id', streamId)
       .select()
-      .single()) as { data: DBCollection | null; error: any }
+      .single()) as { data: DBCollection | null; error: PostgrestError | null }
 
     if (error || !stream) throw error || new Error('Collection not found')
 
@@ -345,7 +346,7 @@ export class StreamService {
     const { error } = (await supabase
       .from('collections')
       .update(archiveUpdate as any)
-      .eq('id', streamId)) as { error: any }
+      .eq('id', streamId)) as { error: PostgrestError | null }
 
     if (error) throw error
 
@@ -406,7 +407,7 @@ export class StreamService {
       .from('collection_members')
       .insert(memberInsertData)
       .select()
-      .single()) as { data: DBStreamMember | null; error: any }
+      .single()) as { data: DBStreamMember | null; error: PostgrestError | null }
 
     if (error || !member) throw error || new Error('Failed to add member')
 
@@ -480,7 +481,7 @@ export class StreamService {
       .eq('collection_id', streamId)
       .order('position', { ascending: false })
       .limit(1)
-      .single()) as { data: Pick<DBStreamItem, 'position'> | null; error: any }
+      .single()) as { data: Pick<DBStreamItem, 'position'> | null; error: PostgrestError | null }
 
     const nextPosition = (maxPosition?.position ?? 0) + 1
 
@@ -508,7 +509,7 @@ export class StreamService {
       .from('collection_items')
       .insert(itemInsertData)
       .select()
-      .single()) as { data: DBStreamItem | null; error: any }
+      .single()) as { data: DBStreamItem | null; error: PostgrestError | null }
 
     if (error || !item) throw error || new Error('Failed to create item')
 
@@ -545,7 +546,7 @@ export class StreamService {
       .from('collection_items')
       .select('collection_id, assigned_to, stage_id, status')
       .eq('id', itemId)
-      .single()) as { data: Pick<DBStreamItem, 'collection_id' | 'assigned_to' | 'stage_id' | 'status'> | null; error: any }
+      .single()) as { data: Pick<DBStreamItem, 'collection_id' | 'assigned_to' | 'stage_id' | 'status'> | null; error: PostgrestError | null }
 
     if (!existingItem) throw new Error('Item not found')
 
@@ -565,7 +566,7 @@ export class StreamService {
       .update(itemUpdateData as any)
       .eq('id', itemId)
       .select()
-      .single()) as { data: DBStreamItem | null; error: any }
+      .single()) as { data: DBStreamItem | null; error: PostgrestError | null }
 
     if (error) throw error
 
@@ -598,7 +599,7 @@ export class StreamService {
       .from('collection_items')
       .select('collection_id')
       .eq('id', itemId)
-      .single()) as { data: Pick<DBStreamItem, 'collection_id'> | null; error: any }
+      .single()) as { data: Pick<DBStreamItem, 'collection_id'> | null; error: PostgrestError | null }
 
     if (!item) throw new Error('Item not found')
 
@@ -701,7 +702,7 @@ export class StreamService {
       .from('collection_comments')
       .insert(commentInsertData)
       .select()
-      .single()) as { data: DBStreamComment | null; error: any }
+      .single()) as { data: DBStreamComment | null; error: PostgrestError | null }
 
     if (error || !comment) throw error || new Error('Failed to create comment')
 
@@ -739,7 +740,7 @@ export class StreamService {
       .select('id')
       .eq('collection_id', streamId)
       .eq('user_id', userId)
-      .single()) as { data: Pick<DBStreamMember, 'id'> | null; error: any }
+      .single()) as { data: Pick<DBStreamMember, 'id'> | null; error: PostgrestError | null }
 
     if (error || !data) {
       throw new Error('Access denied')
@@ -761,7 +762,7 @@ export class StreamService {
       .select('role')
       .eq('collection_id', streamId)
       .eq('user_id', userId)
-      .single()) as { data: Pick<DBStreamMember, 'role'> | null; error: any }
+      .single()) as { data: Pick<DBStreamMember, 'role'> | null; error: PostgrestError | null }
 
     const memberData = data
     if (error || !memberData || !allowedRoles.includes(memberData.role)) {

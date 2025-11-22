@@ -303,7 +303,7 @@ export default function StreamDetailPage({ params }: StreamDetailPageProps) {
           <TabsContent value="agents" className="mt-0">
             <AgentList
               streamId={streamId}
-              agents={agents.map((a: any) => ({
+              agents={agents.map((a: { id: string; name: string }) => ({
                 id: a.agent_id,
                 agent_type: a.agent?.agent_type,
                 name: a.agent?.name,

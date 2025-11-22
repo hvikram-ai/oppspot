@@ -12,7 +12,7 @@ export function countActiveFilters(filters: AdvancedFilters): number {
   let count = 0;
 
   // Helper to count non-empty values in an object
-  const countNonEmpty = (obj: any): number => {
+  const countNonEmpty = (obj: Record<string, unknown> | undefined): number => {
     if (!obj) return 0;
     return Object.values(obj).filter(v => {
       if (Array.isArray(v)) return v.length > 0;

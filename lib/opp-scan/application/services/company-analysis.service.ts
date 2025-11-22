@@ -121,7 +121,7 @@ export class CompanyAnalysisService implements ICompanyAnalysisService {
   }
 
   // Interface implementation - delegates to full implementation with basic config
-  async analyzeCompany(company: any): Promise<any> {
+  async analyzeCompany(company: CompanyEntity): Promise<CompanyAnalysisResult> {
     // Create a basic configuration for the analysis
     const basicConfig: ScanConfiguration = {
       id: 'basic-analysis',

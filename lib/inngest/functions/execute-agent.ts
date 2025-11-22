@@ -28,7 +28,7 @@ export const executeAgentFunction = inngest.createFunction(
         .from('ai_agents')
         .select('*')
         .eq('id', agentId)
-        .single() as { data: Row<'ai_agents'> | null; error: any }
+        .single() as { data: Row<'ai_agents'> | null; error: unknown }
 
       if (error || !data) {
         throw new Error(`Agent not found: ${agentId}`)
@@ -82,7 +82,8 @@ export const executeAgentFunction = inngest.createFunction(
     if (result.success && result.output.signals?.length > 0) {
       await step.run('send-notifications', async () => {
         // TODO: Send email/Slack notifications
-        console.log(`[Inngest] Agent ${agent.name} found ${(result.output.signals as any).length} signals`)
+        const signals = result.output.signals as unknown[]
+        console.log(`[Inngest] Agent ${agent.name} found ${signals.length} signals`)
       })
     }
 

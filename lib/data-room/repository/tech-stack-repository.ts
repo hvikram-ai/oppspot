@@ -35,6 +35,72 @@ import {
   validationError,
 } from '../utils/error-handler';
 
+// Query result types for joined queries
+interface AnalysisQueryResult {
+  id: string;
+  title: string;
+  status: TechAnalysisStatus;
+  risk_level: TechRiskLevel | null;
+  technologies_identified: number;
+  modernization_score: number | null;
+  ai_authenticity_score: number | null;
+  technical_debt_score: number | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  last_analyzed_at: string | null;
+  creator?: Array<{ full_name: string | null }>;
+  findings?: Array<{ severity: string }>;
+}
+
+interface TechnologyQueryResult {
+  id: string;
+  analysis_id: string;
+  name: string;
+  category: string;
+  version: string | null;
+  authenticity: string;
+  confidence_score: number;
+  risk_score: number | null;
+  license_type: string | null;
+  manual_note: string | null;
+  manually_verified: boolean;
+  verified_by: string | null;
+  verified_at: string | null;
+  is_outdated: boolean;
+  is_deprecated: boolean;
+  has_security_issues: boolean;
+  source_document_id: string | null;
+  source_excerpt: string | null;
+  security_details: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  document?: Array<{
+    filename: string;
+    document_type: string;
+    storage_path: string;
+  }>;
+}
+
+interface FindingQueryResult {
+  id: string;
+  analysis_id: string;
+  finding_type: string;
+  severity: string;
+  title: string;
+  description: string;
+  technology_ids: string[];
+  impact_score: number | null;
+  recommendation: string | null;
+  metadata: Record<string, unknown>;
+  is_resolved: boolean;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  resolution_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * TechStackRepository - CRUD operations for tech stack analyses
  */
@@ -184,7 +250,7 @@ export class TechStackRepository {
               categoryTechs.length
             : 0;
         return {
-          category: category as any,
+          category: category as TechStackTechnology['category'],
           count: categoryTechs.length,
           avg_risk_score: Math.round(avgRisk),
         };
@@ -294,8 +360,8 @@ export class TechStackRepository {
         );
       }
 
-      const analyses: TechStackAnalysisListItem[] = (data || []).map((item: any) => {
-        const criticalCount = item.findings?.filter((f: any) => f.severity === 'critical').length || 0;
+      const analyses: TechStackAnalysisListItem[] = (data || []).map((item: AnalysisQueryResult) => {
+        const criticalCount = item.findings?.filter((f) => f.severity === 'critical').length || 0;
         return {
           id: item.id,
           title: item.title,
@@ -374,7 +440,7 @@ export class TechStackRepository {
     errorMessage?: string
   ): Promise<TechStackAnalysis> {
     try {
-      const updateData: any = {
+      const updateData: Record<string, string> = {
         status,
         updated_at: new Date().toISOString(),
       };
@@ -586,12 +652,12 @@ export class TechStackRepository {
         );
       }
 
-      const technologies: TechStackTechnologyWithSource[] = (data || []).map((item: any) => ({
+      const technologies: TechStackTechnologyWithSource[] = (data || []).map((item: TechnologyQueryResult) => ({
         ...item,
         document_filename: item.document?.[0]?.filename || null,
         document_type: item.document?.[0]?.document_type || null,
         document_storage_path: item.document?.[0]?.storage_path || null,
-      }));
+      } as TechStackTechnologyWithSource));
 
       return {
         technologies,
@@ -800,7 +866,7 @@ export class TechStackRepository {
 
       // Enrich with technology info
       const findings: TechStackFindingWithTechnologies[] = await Promise.all(
-        (data || []).map(async (finding: any) => {
+        (data || []).map(async (finding: FindingQueryResult) => {
           if (finding.technology_ids && finding.technology_ids.length > 0) {
             const { data: techs } = await this.supabase
               .from('tech_stack_technologies')
@@ -810,12 +876,12 @@ export class TechStackRepository {
             return {
               ...finding,
               technologies: techs || [],
-            };
+            } as TechStackFindingWithTechnologies;
           }
           return {
             ...finding,
             technologies: [],
-          };
+          } as TechStackFindingWithTechnologies;
         })
       );
 
@@ -922,19 +988,19 @@ export class TechStackRepository {
 
       const total_analyses = analyses?.length || 0;
       const completed_analyses =
-        analyses?.filter((a: any) => a.status === 'completed').length || 0;
+        analyses?.filter((a: AnalysisQueryResult) => a.status === 'completed').length || 0;
       const analyzing_count =
-        analyses?.filter((a: any) => a.status === 'analyzing').length || 0;
+        analyses?.filter((a: AnalysisQueryResult) => a.status === 'analyzing').length || 0;
       const failed_count =
-        analyses?.filter((a: any) => a.status === 'failed').length || 0;
+        analyses?.filter((a: AnalysisQueryResult) => a.status === 'failed').length || 0;
 
       // Calculate averages
-      const completedAnalyses = analyses?.filter((a: any) => a.status === 'completed') || [];
+      const completedAnalyses = analyses?.filter((a: AnalysisQueryResult) => a.status === 'completed') || [];
       const avg_modernization_score =
         completedAnalyses.length > 0
           ? Math.round(
               completedAnalyses.reduce(
-                (sum: number, a: any) => sum + (a.modernization_score || 0),
+                (sum: number, a: AnalysisQueryResult) => sum + (a.modernization_score || 0),
                 0
               ) / completedAnalyses.length
             )
@@ -944,7 +1010,7 @@ export class TechStackRepository {
         completedAnalyses.length > 0
           ? Math.round(
               completedAnalyses.reduce(
-                (sum: number, a: any) => sum + (a.ai_authenticity_score || 0),
+                (sum: number, a: AnalysisQueryResult) => sum + (a.ai_authenticity_score || 0),
                 0
               ) / completedAnalyses.length
             )
@@ -954,7 +1020,7 @@ export class TechStackRepository {
         completedAnalyses.length > 0
           ? Math.round(
               completedAnalyses.reduce(
-                (sum: number, a: any) => sum + (a.technical_debt_score || 0),
+                (sum: number, a: AnalysisQueryResult) => sum + (a.technical_debt_score || 0),
                 0
               ) / completedAnalyses.length
             )
@@ -962,29 +1028,29 @@ export class TechStackRepository {
 
       // Sum technologies
       const total_technologies = completedAnalyses.reduce(
-        (sum: number, a: any) => sum + (a.technologies_identified || 0),
+        (sum: number, a: AnalysisQueryResult) => sum + (a.technologies_identified || 0),
         0
       );
 
       // Count findings
-      const allFindings = analyses?.flatMap((a: any) => a.findings || []) || [];
-      const total_critical_findings = allFindings.filter((f: any) => f.severity === 'critical').length;
-      const total_high_findings = allFindings.filter((f: any) => f.severity === 'high').length;
+      const allFindings = analyses?.flatMap((a: AnalysisQueryResult) => a.findings || []) || [];
+      const total_critical_findings = allFindings.filter((f) => f.severity === 'critical').length;
+      const total_high_findings = allFindings.filter((f) => f.severity === 'high').length;
 
       // Risk distribution
       const risk_distribution = {
-        low: analyses?.filter((a: any) => a.risk_level === 'low').length || 0,
-        medium: analyses?.filter((a: any) => a.risk_level === 'medium').length || 0,
-        high: analyses?.filter((a: any) => a.risk_level === 'high').length || 0,
-        critical: analyses?.filter((a: any) => a.risk_level === 'critical').length || 0,
+        low: analyses?.filter((a: AnalysisQueryResult) => a.risk_level === 'low').length || 0,
+        medium: analyses?.filter((a: AnalysisQueryResult) => a.risk_level === 'medium').length || 0,
+        high: analyses?.filter((a: AnalysisQueryResult) => a.risk_level === 'high').length || 0,
+        critical: analyses?.filter((a: AnalysisQueryResult) => a.risk_level === 'critical').length || 0,
       };
 
       // Recent analyses (top 5)
       const recent_analyses: TechStackAnalysisListItem[] = (analyses || [])
         .slice(0, 5)
-        .map((item: any) => {
+        .map((item: AnalysisQueryResult) => {
           const criticalCount =
-            item.findings?.filter((f: any) => f.severity === 'critical').length || 0;
+            item.findings?.filter((f) => f.severity === 'critical').length || 0;
           return {
             id: item.id,
             title: item.title,

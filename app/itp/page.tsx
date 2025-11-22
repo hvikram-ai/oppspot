@@ -335,7 +335,7 @@ export default function ITPManagementPage() {
                 />
               </div>
             </div>
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <Select value={sortBy} onValueChange={(value: string) => setSortBy(value)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -350,7 +350,7 @@ export default function ITPManagementPage() {
       </Card>
 
       {/* Tabs */}
-      <Tabs value={filterTab} onValueChange={(value: any) => setFilterTab(value)}>
+      <Tabs value={filterTab} onValueChange={(value: string) => setFilterTab(value)}>
         <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="all">All ITPs</TabsTrigger>
           <TabsTrigger value="active">

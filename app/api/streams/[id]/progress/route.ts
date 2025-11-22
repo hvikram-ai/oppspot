@@ -66,7 +66,7 @@ interface AgentExecutionRow {
   started_at: string | null
   completed_at: string | null
   duration_ms: number | null
-  results_summary: Record<string, any> | null
+  results_summary: Record<string, unknown> | null
   ai_agents?: {
     name?: string
     agent_type?: string
@@ -80,7 +80,7 @@ interface StreamInsightRow {
   title: string
   description: string
   severity: string
-  data: Record<string, any> | null
+  data: Record<string, unknown> | null
   generated_by: string
   is_read: boolean
   is_actionable: boolean

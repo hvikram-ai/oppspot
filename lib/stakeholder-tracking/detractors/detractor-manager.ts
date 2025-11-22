@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 import type { Row, Insert, Update } from '@/lib/supabase/helpers'
 import type {
@@ -14,10 +15,10 @@ import type {
 
 // Type aliases for database operations
 // Note: detractor_management table doesn't exist yet in database schema
-// Using any for tables that will be created later
-type DetractorManagementRow = any;
-type DetractorManagementInsert = any;
-type DetractorManagementUpdate = any;
+// Using Record<string, unknown> for tables that will be created later
+type DetractorManagementRow = Record<string, unknown>;
+type DetractorManagementInsert = Record<string, unknown>;
+type DetractorManagementUpdate = Record<string, unknown>;
 type StakeholderRow = Row<'stakeholders'>;
 type StakeholderUpdate = Update<'stakeholders'>;
 type StakeholderEngagementRow = Row<'stakeholder_engagement'>;
@@ -48,7 +49,7 @@ type StakeholderDetail = Row<'stakeholders'> & {
 };
 
 export class DetractorManager {
-  private supabase: any;
+  private supabase: SupabaseClient<Database> | null = null;
 
   constructor() {
     // Initialize in methods to handle async
@@ -97,7 +98,7 @@ export class DetractorManager {
       // Focus on detractors and at-risk stakeholders
       query = query.or('role_type.eq.detractor,relationship_status.in.(at_risk,lost)');
 
-      const { data: stakeholders, error } = await query as { data: StakeholderWithRelations[] | null; error: any };
+      const { data: stakeholders, error } = await query as { data: StakeholderWithRelations[] | null; error: PostgrestError | null };
 
       if (error) {
         console.error('Error identifying detractors:', error);
@@ -110,7 +111,7 @@ export class DetractorManager {
 
       // Assess each potential detractor
       const detractors = await Promise.all(
-        (stakeholders || []).map(async (stakeholder: any) => {
+        (stakeholders || []).map(async (stakeholder: StakeholderWithRelations) => {
           const riskScore = await this.calculateDetractorRiskScore(stakeholder);
           const priority = this.determineMitigationPriority(
             riskScore,
@@ -284,7 +285,7 @@ export class DetractorManager {
         .from('detractor_management')
         .select('*')
         .eq('stakeholder_id', stakeholder_id)
-        .single() as { data: DetractorManagementRow | null; error: any };
+        .single() as { data: DetractorManagementRow | null; error: PostgrestError | null };
 
       if (existing) {
         return existing as DetractorManagement;
@@ -295,12 +296,12 @@ export class DetractorManager {
         .from('stakeholders')
         .select('metadata')
         .eq('id', stakeholder_id)
-        .single() as { data: StakeholderRow | null; error: any };
+        .single() as { data: StakeholderRow | null; error: PostgrestError | null };
 
       // Determine influence radius based on level
       // Note: Using metadata as influence_level is stored in metadata JSON
-      const metadata = stakeholder?.metadata as any;
-      const influenceLevel = metadata?.influence_level || 0;
+      const metadata = stakeholder?.metadata as Record<string, unknown> | undefined;
+      const influenceLevel = (metadata?.influence_level as number) || 0;
 
       let influence_radius: DetractorManagement['influence_radius'] = 'individual';
       if (influenceLevel >= 8) {
@@ -332,7 +333,7 @@ export class DetractorManager {
         .from('detractor_management')
         .insert(insertData)
         .select()
-        .single() as { data: DetractorManagementRow | null; error: any };
+        .single() as { data: DetractorManagementRow | null; error: PostgrestError | null };
 
       if (error) {
         console.error('Error creating detractor management:', error);
@@ -341,7 +342,7 @@ export class DetractorManager {
 
       // Update stakeholder role type via metadata
       // Note: role_type stored in metadata JSON as schema doesn't have role_type field
-      const currentMetadata = stakeholder?.metadata as any || {};
+      const currentMetadata = (stakeholder?.metadata as Record<string, unknown>) || {};
       const updateData: StakeholderUpdate = {
         metadata: {
           ...currentMetadata,
@@ -386,7 +387,7 @@ export class DetractorManager {
           stakeholder_engagement!left(*)
         `)
         .eq('id', stakeholder_id)
-        .single() as { data: StakeholderDetail | null; error: any };
+        .single() as { data: StakeholderDetail | null; error: PostgrestError | null };
 
       if (!data) {
         return {
@@ -495,9 +496,9 @@ export class DetractorManager {
         .from('detractor_management')
         .select('mitigation_actions')
         .eq('id', management_id)
-        .single() as { data: { mitigation_actions?: any } | null; error: any };
+        .single() as { data: { mitigation_actions?: MitigationAction[] } | null; error: PostgrestError | null };
 
-      const currentActions = (management?.mitigation_actions as MitigationAction[]) || [];
+      const currentActions = management?.mitigation_actions || [];
 
       // Add new action
       const newAction: MitigationAction = {
@@ -564,7 +565,7 @@ export class DetractorManager {
           .from('detractor_management')
           .select('stakeholder_id')
           .eq('id', management_id)
-          .single() as { data: { stakeholder_id?: string } | null; error: any };
+          .single() as { data: { stakeholder_id?: string } | null; error: PostgrestError | null };
 
         if (management?.stakeholder_id) {
           // Update via metadata as role_type/relationship_status not in schema
@@ -572,9 +573,9 @@ export class DetractorManager {
             .from('stakeholders')
             .select('metadata')
             .eq('id', management.stakeholder_id)
-            .single() as { data: StakeholderRow | null; error: any };
+            .single() as { data: StakeholderRow | null; error: PostgrestError | null };
 
-          const currentMetadata = (currentStakeholder?.metadata as any) || {};
+          const currentMetadata = (currentStakeholder?.metadata as Record<string, unknown>) || {};
           const stakeholderUpdateData: StakeholderUpdate = {
             metadata: {
               ...currentMetadata,
@@ -621,7 +622,7 @@ export class DetractorManager {
           stakeholder_engagement!left(*)
         `)
         .eq('id', stakeholder_id)
-        .single() as { data: StakeholderDetail | null; error: any };
+        .single() as { data: StakeholderDetail | null; error: PostgrestError | null };
 
       if (!data) {
         return {
@@ -635,8 +636,8 @@ export class DetractorManager {
       const barriers: string[] = [];
       let approach = '';
 
-      const management = (data as StakeholderDetail).detractor_management?.[0];
-      const engagements = (data as StakeholderDetail).stakeholder_engagement || [];
+      const management = data.detractor_management?.[0];
+      const engagements = data.stakeholder_engagement || [];
 
       // Analyze detractor level
       if (management?.detractor_level) {
@@ -655,7 +656,7 @@ export class DetractorManager {
 
       // Check engagement history
       const positiveEngagements = engagements.filter(
-        (e: any) => e.outcome === 'positive'
+        (e) => e.outcome === 'positive'
       ).length;
       const totalEngagements = engagements.length;
 
@@ -673,9 +674,8 @@ export class DetractorManager {
       // Check for recent improvements
       const recentEngagements = engagements.slice(0, 3);
       const recentPositive = recentEngagements.filter(
-        (e: any) => {
-          const meta = e.metadata as any;
-          return meta?.sentiment_score && meta.sentiment_score > 0;
+        (e) => {
+          return e.sentiment_score && e.sentiment_score > 0;
         }
       ).length;
 
@@ -706,8 +706,8 @@ export class DetractorManager {
       }
 
       // Consider influence level from metadata
-      const metadata = (data as any).metadata || {};
-      const influenceLevel = metadata.influence_level || 0;
+      const dataMetadata = (data as unknown as { metadata?: Record<string, unknown> }).metadata || {};
+      const influenceLevel = (dataMetadata.influence_level as number) || 0;
       if (influenceLevel >= 7) {
         barriers.push('High influence - conversion critical');
         potential += 10; // Worth the effort
@@ -762,7 +762,7 @@ export class DetractorManager {
         .select('created_at, metadata')
         .eq('stakeholder_id', stakeholder_id)
         .order('created_at', { ascending: false })
-        .limit(10) as { data: StakeholderEngagementRow[] | null; error: any };
+        .limit(10) as { data: StakeholderEngagementRow[] | null; error: PostgrestError | null };
 
       if (!engagements || engagements.length < 2) {
         return 'stable';
@@ -770,11 +770,11 @@ export class DetractorManager {
 
       // Calculate trend from metadata
       const sentiments = engagements
-        .map((e: any) => {
-          const meta = e.metadata as any;
-          return meta?.sentiment_score;
+        .map((e) => {
+          const meta = e.metadata as Record<string, unknown> | undefined;
+          return meta?.sentiment_score as number | undefined;
         })
-        .filter((score: any): score is number => score !== null && score !== undefined);
+        .filter((score): score is number => score !== null && score !== undefined);
 
       if (sentiments.length < 2) {
         return 'stable';
@@ -811,7 +811,7 @@ export class DetractorManager {
         .from('detractor_management')
         .select('id')
         .eq('stakeholder_id', stakeholder_id)
-        .single() as { data: { id?: string } | null; error: any };
+        .single() as { data: { id?: string } | null; error: PostgrestError | null };
 
       if (management?.id) {
         const updateData: DetractorManagementUpdate = {

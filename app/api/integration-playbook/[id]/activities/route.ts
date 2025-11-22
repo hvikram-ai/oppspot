@@ -15,9 +15,10 @@ import type { ActivityStatus, ActivityCategory, ActivityPriority } from '@/lib/d
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -29,7 +30,7 @@ export async function GET(
       );
     }
 
-    const playbookId = params.id;
+    const playbookId = id;
     const { searchParams } = new URL(request.url);
 
     // Parse filters
@@ -87,9 +88,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user

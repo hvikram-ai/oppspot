@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import type { PostgrestError } from '@supabase/supabase-js'
 import type { Row } from '@/lib/supabase/helpers'
 
 export type ActivityType =
@@ -47,7 +48,7 @@ export class ActivityTracker {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
-        .single() as { data: Row<'profiles'> | null; error: any }
+        .single() as { data: Row<'profiles'> | null; error: PostgrestError | null }
 
       if (!profile?.org_id) return
 
@@ -83,7 +84,7 @@ export class ActivityTracker {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
-        .single() as { data: Row<'profiles'> | null; error: any }
+        .single() as { data: Row<'profiles'> | null; error: PostgrestError | null }
 
       if (!profile?.org_id) return []
 
@@ -96,7 +97,7 @@ export class ActivityTracker {
             full_name,
             email,
             avatar_url
-          ) as { data: Row<'team_activities'>[] | null; error: any }
+          ) as { data: Row<'team_activities'>[] | null; error: PostgrestError | null }
         `)
         .eq('org_id', profile.org_id)
         .order('created_at', { ascending: false })
@@ -125,7 +126,7 @@ export class ActivityTracker {
             full_name,
             email,
             avatar_url
-          ) as { data: Row<'team_activities'>[] | null; error: any }
+          ) as { data: Row<'team_activities'>[] | null; error: PostgrestError | null }
         `)
         .eq('entity_type', entityType)
         .eq('entity_id', entityId)
@@ -264,7 +265,7 @@ export class PresenceTracker {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
-        .single() as { data: Row<'profiles'> | null; error: any }
+        .single() as { data: Row<'profiles'> | null; error: PostgrestError | null }
 
       if (!profile?.org_id) return
 
@@ -297,7 +298,7 @@ export class PresenceTracker {
         .from('profiles')
         .select('org_id')
         .eq('id', user.id)
-        .single() as { data: Row<'profiles'> | null; error: any }
+        .single() as { data: Row<'profiles'> | null; error: PostgrestError | null }
 
       if (!profile?.org_id) return []
 
@@ -313,7 +314,7 @@ export class PresenceTracker {
             full_name,
             email,
             avatar_url
-          ) as { data: Row<'user_presence'>[] | null; error: any }
+          ) as { data: Row<'user_presence'>[] | null; error: PostgrestError | null }
         `)
         .eq('org_id', profile.org_id)
         .in('status', ['online', 'busy'])

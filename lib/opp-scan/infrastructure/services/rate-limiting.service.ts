@@ -5,6 +5,12 @@
 
 import { IRateLimitingService, RateLimitInfo } from '../../core/interfaces'
 
+// Extended RateLimitInfo with additional properties
+interface ExtendedRateLimitInfo extends RateLimitInfo {
+  requestsPerSecond: number
+  requestsPerMinute: number
+}
+
 // Local type definitions
 interface RateLimitConfig {
   maxRequests?: number
@@ -48,7 +54,7 @@ export class RateLimitingService implements IRateLimitingService {
     setInterval(() => this.cleanupExpiredLimits(), 60000) // Every minute
   }
 
-  async checkLimit(sourceId: string): Promise<RateLimitInfo> {
+  async checkLimit(sourceId: string): Promise<ExtendedRateLimitInfo> {
     const config = this.sourceConfigs.get(sourceId) || this.defaultConfig
     const limit = this.getOrCreateSourceLimit(sourceId, config)
     
@@ -61,8 +67,10 @@ export class RateLimitingService implements IRateLimitingService {
         remaining: 0,
         remainingRequests: 0,
         resetAt: new Date(limit.backoffUntil),
-        retryAfter: Math.ceil((limit.backoffUntil - now) / 1000)
-      ,requestsPerSecond:0,requestsPerMinute:0} as any
+        retryAfter: Math.ceil((limit.backoffUntil - now) / 1000),
+        requestsPerSecond: 0,
+        requestsPerMinute: 0
+      }
     }
 
     // Reset backoff if period has passed
@@ -81,8 +89,10 @@ export class RateLimitingService implements IRateLimitingService {
           remaining: 0,
           remainingRequests: 0,
           resetAt: new Date(limit.lastBurstReset + 1000),
-          retryAfter: Math.ceil((1000 - timeSinceLastBurst) / 1000)
-        ,requestsPerSecond:0,requestsPerMinute:0} as any
+          retryAfter: Math.ceil((1000 - timeSinceLastBurst) / 1000),
+          requestsPerSecond: 0,
+          requestsPerMinute: 0
+        }
       } else {
         // Reset burst counter
         limit.burstCount = 0
@@ -103,8 +113,10 @@ export class RateLimitingService implements IRateLimitingService {
         remaining: 0,
         remainingRequests: Math.max(0, (config.requestsPerSecond || 1) - limit.requestsThisSecond),
         resetAt: new Date((secondWindow + 1) * 1000),
-        retryAfter: 1
-      ,requestsPerSecond:0,requestsPerMinute:0} as any
+        retryAfter: 1,
+        requestsPerSecond: 0,
+        requestsPerMinute: 0
+      }
     }
 
     // Check per-minute limit
@@ -120,8 +132,10 @@ export class RateLimitingService implements IRateLimitingService {
         remaining: 0,
         remainingRequests: Math.max(0, (config.requestsPerMinute || 30) - limit.requestsThisMinute),
         resetAt: new Date((minuteWindow + 1) * 60000),
-        retryAfter: Math.ceil(((minuteWindow + 1) * 60000 - now) / 1000)
-      ,requestsPerSecond:0,requestsPerMinute:0} as any
+        retryAfter: Math.ceil(((minuteWindow + 1) * 60000 - now) / 1000),
+        requestsPerSecond: 0,
+        requestsPerMinute: 0
+      }
     }
 
     // Check per-hour limit
@@ -137,8 +151,10 @@ export class RateLimitingService implements IRateLimitingService {
         remaining: 0,
         remainingRequests: Math.max(0, (config.requestsPerHour || 1000) - limit.requestsThisHour),
         resetAt: new Date((hourWindow + 1) * 3600000),
-        retryAfter: Math.ceil(((hourWindow + 1) * 3600000 - now) / 1000)
-      ,requestsPerSecond:0,requestsPerMinute:0} as any
+        retryAfter: Math.ceil(((hourWindow + 1) * 3600000 - now) / 1000),
+        requestsPerSecond: 0,
+        requestsPerMinute: 0
+      }
     }
 
     // Request allowed - update counters
@@ -165,8 +181,10 @@ export class RateLimitingService implements IRateLimitingService {
         (minuteWindow + 1) * 60000,
         (hourWindow + 1) * 3600000
       )),
-      retryAfter: 0
-    ,requestsPerSecond:0,requestsPerMinute:0} as any
+      retryAfter: 0,
+      requestsPerSecond: 0,
+      requestsPerMinute: 0
+    }
   }
 
   async recordSuccess(sourceId: string): Promise<void> {

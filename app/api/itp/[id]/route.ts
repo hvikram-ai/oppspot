@@ -36,10 +36,11 @@ const updateITPSchema = z.object({
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[ITP API] GET - Fetching ITP:', params.id);
+    const { id } = await params;
+    console.log('[ITP API] GET - Fetching ITP:', id);
     const supabase = await createClient();
 
     // Get authenticated user
@@ -55,7 +56,7 @@ export async function GET(
       );
     }
 
-    const itpId = params.id;
+    const itpId = id;
 
     // Get ITP
     const itp = await itpService.getITP(user.id, itpId);
@@ -92,10 +93,11 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[ITP API] PATCH - Updating ITP:', params.id);
+    const { id } = await params;
+    console.log('[ITP API] PATCH - Updating ITP:', id);
     const supabase = await createClient();
 
     // Get authenticated user
@@ -111,7 +113,7 @@ export async function PATCH(
       );
     }
 
-    const itpId = params.id;
+    const itpId = id;
 
     // Parse and validate body
     const body = await request.json();
@@ -159,10 +161,11 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[ITP API] DELETE - Deleting ITP:', params.id);
+    const { id } = await params;
+    console.log('[ITP API] DELETE - Deleting ITP:', id);
     const supabase = await createClient();
 
     // Get authenticated user
@@ -178,7 +181,7 @@ export async function DELETE(
       );
     }
 
-    const itpId = params.id;
+    const itpId = id;
 
     // Delete ITP
     await itpService.deleteITP(user.id, itpId);

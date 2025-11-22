@@ -82,7 +82,7 @@ export class LLMMetricsCollector implements LLMMonitor {
   /**
    * Record an error
    */
-  recordError(error: LLLError): void {
+  recordError(error: LLMError): void {
     const entry: MetricEntry = {
       timestamp: Date.now(),
       provider: error.provider,
@@ -411,7 +411,7 @@ export class LLMMetricsCollector implements LLMMonitor {
  * Wraps any LLM provider with monitoring capabilities
  */
 export class MonitoredLLMProvider<T extends {
-  complete: (prompt: string, options?: any) => Promise<string>
+  complete: (prompt: string, options?: Record<string, unknown>) => Promise<string>
   estimateTokens?: (text: string) => number
   calculateCost?: (tokens: number) => number
   constructor: { name: string }
@@ -424,7 +424,7 @@ export class MonitoredLLMProvider<T extends {
     this.monitor = monitor || new LLMMetricsCollector()
   }
 
-  async complete(prompt: string, options: any = {}): Promise<string> {
+  async complete(prompt: string, options: Record<string, unknown> = {}): Promise<string> {
     const startTime = Date.now()
     let success = false
     let response = ''
@@ -486,7 +486,12 @@ export function getGlobalMetrics(): LLMMetricsCollector {
   return globalMetrics
 }
 
-export function createMonitoredProvider<T extends any>(
+export function createMonitoredProvider<T extends {
+  complete: (prompt: string, options?: Record<string, unknown>) => Promise<string>
+  estimateTokens?: (text: string) => number
+  calculateCost?: (tokens: number) => number
+  constructor: { name: string }
+}>(
   provider: T,
   monitor?: LLMMetricsCollector
 ): T & MonitoredLLMProvider<T> {

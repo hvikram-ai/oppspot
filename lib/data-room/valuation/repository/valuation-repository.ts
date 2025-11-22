@@ -18,9 +18,8 @@ import type {
   CreateComparableInput,
   CreateScenarioInput,
   ListValuationsFilters,
-  ValuationError,
-  ValuationErrorCode,
 } from '../types';
+import { ValuationError, ValuationErrorCode } from '../types';
 
 // ============================================================================
 // VALUATION MODELS

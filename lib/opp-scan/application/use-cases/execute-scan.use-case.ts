@@ -144,7 +144,7 @@ export class ExecuteScanUseCase implements UseCase<ExecuteScanRequest, ExecuteSc
       status: 'completed',
       totalTargets: companies.length,
       analyzedTargets: analysisResults.length,
-      highQualityTargets: analysisResults.filter((r: any) => (r.score || r.overallScore || 0) >= 80).length,
+      highQualityTargets: analysisResults.filter((r: { score?: number; overallScore?: number }) => (r.score || r.overallScore || 0) >= 80).length,
       duration,
       costs: finalCosts,
       completedAt: new Date()

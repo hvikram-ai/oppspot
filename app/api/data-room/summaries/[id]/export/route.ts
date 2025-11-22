@@ -12,10 +12,11 @@ import { isExportFormat } from '@/lib/data-room/summaries/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const summaryId = params.id;
+    const { id } = await params;
+    const summaryId = id;
     const searchParams = request.nextUrl.searchParams;
 
     // Get export options from query params
@@ -124,10 +125,11 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const summaryId = params.id;
+    const { id } = await params;
+    const summaryId = id;
     const body = await request.json();
 
     const {

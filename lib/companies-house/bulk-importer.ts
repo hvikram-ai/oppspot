@@ -69,6 +69,35 @@ export interface ImportFilters {
   allowedCompanyTypes?: string[]
 }
 
+// Transformed company record for database insert
+interface TransformedCompanyRecord {
+  company_number: string
+  name: string
+  company_status: string
+  company_type: string
+  incorporation_date: string | null
+  dissolution_date: string | null
+  sic_codes: string[]
+  accounts_next_due: string | null
+  confirmation_statement_next_due: string | null
+  registered_office_address: {
+    care_of?: string
+    po_box?: string
+    address_line_1?: string
+    address_line_2?: string
+    post_town?: string
+    county?: string
+    country?: string
+    post_code?: string
+  }
+  formatted_address: string
+  region: string
+  data_source: string
+  last_companies_house_update: string
+  companies_house_url: string
+  industry: string | null
+}
+
 // Default smart filters to stay under 500MB
 export const DEFAULT_FILTERS: ImportFilters = {
   // Only active companies
@@ -124,7 +153,7 @@ export class CompaniesHouseBulkImporter {
 
   private filters: ImportFilters
   private batchSize = 1000
-  private supabase: any
+  private supabase: Awaited<ReturnType<typeof createClient>> | null = null
 
   constructor(filters: ImportFilters = DEFAULT_FILTERS) {
     this.filters = filters
@@ -180,12 +209,12 @@ export class CompaniesHouseBulkImporter {
    */
   private async processCSV(csvText: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      let batch: any[] = []
+      let batch: TransformedCompanyRecord[] = []
 
       Papa.parse<CompaniesHouseRecord>(csvText, {
         header: true,
         skipEmptyLines: true,
-        chunk: async (results) => {
+        chunk: async (results: Papa.ParseResult<CompaniesHouseRecord>) => {
           for (const row of results.data) {
             this.progress.totalRows++
             this.progress.processedRows++
@@ -216,7 +245,7 @@ export class CompaniesHouseBulkImporter {
           }
           resolve()
         },
-        error: (error) => {
+        error: (error: Papa.ParseError) => {
           reject(error)
         }
       })
@@ -283,7 +312,7 @@ export class CompaniesHouseBulkImporter {
   /**
    * Transform Companies House record to database format
    */
-  private transformRecord(record: CompaniesHouseRecord): any {
+  private transformRecord(record: CompaniesHouseRecord): TransformedCompanyRecord {
     const sicCodes = [
       record['SICCode.SicText_1'],
       record['SICCode.SicText_2'],
@@ -364,7 +393,7 @@ export class CompaniesHouseBulkImporter {
   /**
    * Import batch of companies to database
    */
-  private async importBatch(batch: any[]): Promise<void> {
+  private async importBatch(batch: TransformedCompanyRecord[]): Promise<void> {
     try {
       this.progress.currentBatch++
 

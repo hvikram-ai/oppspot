@@ -157,7 +157,7 @@ export function RealtimeAnalyticsProvider({ children }: { children: ReactNode })
     }
   }
 
-  const showAnomalyNotification = (anomaly: any) => {
+  const showAnomalyNotification = (anomaly: { id: string; anomaly_type: string; metric_name: string; severity: string }) => {
     if ('Notification' in window && Notification.permission === 'granted') {
       const notification = new Notification('Anomaly Detected', {
         body: `${anomaly.anomaly_type} in ${anomaly.metric_name}`,
@@ -165,14 +165,14 @@ export function RealtimeAnalyticsProvider({ children }: { children: ReactNode })
         tag: `anomaly-${anomaly.id}`,
         requireInteraction: anomaly.severity === 'critical'
       })
-      
+
       notification.onclick = () => {
         window.focus()
       }
     }
   }
 
-  const showOpportunityNotification = (opportunity: any) => {
+  const showOpportunityNotification = (opportunity: { id: string; description: string }) => {
     if ('Notification' in window && Notification.permission === 'granted') {
       const notification = new Notification('New Opportunity', {
         body: opportunity.description,
@@ -180,7 +180,7 @@ export function RealtimeAnalyticsProvider({ children }: { children: ReactNode })
         tag: `opportunity-${opportunity.id}`,
         requireInteraction: false
       })
-      
+
       notification.onclick = () => {
         window.focus()
         window.location.href = `/analytics?tab=opportunities`

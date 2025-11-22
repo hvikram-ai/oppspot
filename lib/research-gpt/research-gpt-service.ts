@@ -50,6 +50,28 @@ export interface ResearchProgress {
   current_step?: string;
 }
 
+export interface AggregatedData {
+  snapshot: unknown;
+  buying_signals: unknown[];
+  decision_makers: unknown[];
+  revenue_signals: unknown[];
+  sources: Array<{
+    source_type: string;
+    url: string;
+    title: string;
+    published_date?: string | null;
+    reliability_score?: number;
+    domain?: string;
+    content_snippet?: string;
+    [key: string]: unknown;
+  }>;
+  metadata: {
+    sources_fetched: number;
+    sources_failed: number;
+    [key: string]: unknown;
+  };
+}
+
 // ============================================================================
 // MAIN SERVICE
 // ============================================================================
@@ -133,28 +155,6 @@ export class ResearchGPTService {
       console.error('[ResearchGPT] Error:', error);
       throw error;
     }
-  }
-
-  interface AggregatedData {
-    snapshot: unknown;
-    buying_signals: unknown[];
-    decision_makers: unknown[];
-    revenue_signals: unknown[];
-    sources: Array<{
-      source_type: string;
-      url: string;
-      title: string;
-      published_date?: string | null;
-      reliability_score?: number;
-      domain?: string;
-      content_snippet?: string;
-      [key: string]: unknown;
-    }>;
-    metadata: {
-      sources_fetched: number;
-      sources_failed: number;
-      [key: string]: unknown;
-    };
   }
 
   /**

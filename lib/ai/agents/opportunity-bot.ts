@@ -15,7 +15,34 @@ import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } f
 import { createClient } from '@/lib/supabase/server'
 import { embeddingService } from '@/lib/ai/embedding/embedding-service'
 import { ollamaEmbeddingService } from '@/lib/ai/embedding/ollama-embedding-service'
+import type { PostgrestError } from '@supabase/supabase-js'
 import type { Row } from '@/lib/supabase/helpers'
+
+// Company candidate type from database query
+interface CompanyCandidate {
+  id: string
+  name: string
+  description?: string
+  sic_codes?: string[]
+  website?: string
+  address?: {
+    city?: string
+    region?: string
+  }
+  categories?: string[]
+}
+
+// Buying signal type
+interface BuyingSignal {
+  id: string
+  company_id: string
+  signal_type: string
+  signal_strength: string
+  confidence_score: number
+  status: string
+  detected_at: string
+  metadata?: Record<string, unknown>
+}
 
 export interface OpportunityBotConfig {
   criteria: {
@@ -47,7 +74,7 @@ interface Opportunity {
   fitScore: number
   signalScore: number
   reasons: string[]
-  signals: any[]
+  signals: BuyingSignal[]
 }
 
 export class OpportunityBot extends BaseAgent {
@@ -172,7 +199,7 @@ export class OpportunityBot extends BaseAgent {
     // Limit initial candidates
     query = query.limit(200)
 
-    const { data, error } = await query
+    const { data, error } = await query as { data: CompanyCandidate[] | null; error: PostgrestError | null }
 
     if (error) {
       throw new Error(`Failed to fetch candidates: ${error.message}`)
@@ -185,7 +212,7 @@ export class OpportunityBot extends BaseAgent {
    * Score an opportunity
    */
   private async scoreOpportunity(
-    company: any,
+    company: CompanyCandidate,
     config: OpportunityBotConfig
   ): Promise<Opportunity> {
     const weights = config.scoringWeights || {
@@ -229,7 +256,7 @@ export class OpportunityBot extends BaseAgent {
   /**
    * Calculate how well company fits ideal customer profile
    */
-  private async calculateFitScore(company: any, config: OpportunityBotConfig): Promise<number> {
+  private async calculateFitScore(company: CompanyCandidate, config: OpportunityBotConfig): Promise<number> {
     let score = 50 // Base score
 
     // Industry match
@@ -263,7 +290,7 @@ export class OpportunityBot extends BaseAgent {
       .select('*')
       .eq('company_id', companyId)
       .eq('status', 'active')
-      .gte('detected_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) as { data: Row<'buying_signals'>[] | null; error: any } // Last 30 days
+      .gte('detected_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) as { data: BuyingSignal[] | null; error: PostgrestError | null } // Last 30 days
 
     return data || []
   }
@@ -295,7 +322,7 @@ export async function createOpportunityBot(agentId: string): Promise<Opportunity
     .select('*')
     .eq('id', agentId)
     .eq('agent_type', 'opportunity_bot')
-    .single() as { data: Row<'ai_agents'> | null; error: any }
+    .single() as { data: Row<'ai_agents'> | null; error: PostgrestError | null }
 
   if (error || !data) {
     throw new Error(`OpportunityBot not found: ${agentId}`)

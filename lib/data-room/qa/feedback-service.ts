@@ -270,10 +270,15 @@ export async function getFeedbackStats(
     };
   }
 
+  interface FeedbackRow {
+    rating: 'helpful' | 'not_helpful';
+    comment?: string | null;
+  }
+
   const totalFeedback = data.length;
-  const helpfulCount = data.filter((f: any) => f.rating === 'helpful').length;
-  const notHelpfulCount = data.filter((f: any) => f.rating === 'not_helpful').length;
-  const withComments = data.filter((f: any) => f.comment && f.comment.trim() !== '').length;
+  const helpfulCount = data.filter((f: FeedbackRow) => f.rating === 'helpful').length;
+  const notHelpfulCount = data.filter((f: FeedbackRow) => f.rating === 'not_helpful').length;
+  const withComments = data.filter((f: FeedbackRow) => f.comment && f.comment.trim() !== '').length;
   const helpfulPercentage = (helpfulCount / totalFeedback) * 100;
 
   return {
@@ -340,7 +345,15 @@ export async function getFeedbackWithComments(
     return [];
   }
 
-  return data.map((f: any) => ({
+  interface FeedbackWithQuery {
+    query_id: string;
+    rating: FeedbackRating;
+    comment: string;
+    created_at: string;
+    query: { question: string; answer: string | null };
+  }
+
+  return data.map((f: FeedbackWithQuery) => ({
     queryId: f.query_id,
     question: f.query.question,
     answer: f.query.answer || '',
@@ -395,7 +408,14 @@ export async function getRecentFeedback(
     return [];
   }
 
-  return data.map((f: any) => ({
+  interface RecentFeedbackRow {
+    query_id: string;
+    rating: FeedbackRating;
+    comment?: string | null;
+    created_at: string;
+  }
+
+  return data.map((f: RecentFeedbackRow) => ({
     queryId: f.query_id,
     rating: f.rating,
     comment: f.comment,

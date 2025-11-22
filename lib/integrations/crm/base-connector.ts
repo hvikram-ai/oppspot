@@ -135,11 +135,11 @@ export abstract class BaseCRMConnector implements ICRMConnector {
     });
   }
 
-  protected async handleAPIError(error: any): Promise<never> {
+  protected async handleAPIError(error: unknown): Promise<never> {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError;
       const status = axiosError.response?.status;
-      const data = axiosError.response?.data as any;
+      const data = axiosError.response?.data as { message?: string; code?: string; fields?: unknown } | undefined;
 
       // Authentication errors
       if (status === 401 || status === 403) {
@@ -179,7 +179,7 @@ export abstract class BaseCRMConnector implements ICRMConnector {
 
     // Non-Axios error
     throw new CRMIntegrationError(
-      error.message || 'Unknown error',
+      (error as Error).message || 'Unknown error',
       'UNKNOWN_ERROR',
       500,
       error
@@ -309,7 +309,7 @@ export abstract class BaseCRMConnector implements ICRMConnector {
     maxRetries: number = 3,
     initialDelay: number = 1000
   ): Promise<T> {
-    let lastError: any;
+    let lastError: unknown;
 
     for (let i = 0; i < maxRetries; i++) {
       try {
@@ -350,7 +350,7 @@ export abstract class BaseCRMConnector implements ICRMConnector {
   // Logging (Override for custom logging)
   // =====================================================
 
-  protected log(level: 'info' | 'warn' | 'error', message: string, data?: any): void {
+  protected log(level: 'info' | 'warn' | 'error', message: string, data?: unknown): void {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] [${this.crmType.toUpperCase()}] [${level.toUpperCase()}] ${message}`;
 

@@ -47,7 +47,7 @@ export interface SECCompany {
       primaryDocument: string[]
       primaryDocDescription: string[]
     }
-    files?: any[] // Additional files beyond recent
+    files?: SECFilingFile[] // Additional files beyond recent
   }
 
   // Insider Transactions
@@ -76,6 +76,68 @@ export interface SECAddress {
   stateOrCountry?: string
   zipCode?: string
   stateOrCountryDescription?: string
+}
+
+// Raw API response types
+interface SECFilingFile {
+  name?: string
+  filingCount?: number
+  filingFrom?: string
+  filingTo?: string
+}
+
+interface SECCompanyTicker {
+  cik_str: number | string
+  ticker?: string
+  title?: string
+}
+
+interface SECCompanyResponse {
+  cik: string
+  entityType?: string
+  sic?: string
+  sicDescription?: string
+  name?: string
+  tickers?: string[]
+  exchanges?: string[]
+  addresses?: {
+    mailing?: SECAddress
+    business?: SECAddress
+  }
+  phone?: string
+  website?: string
+  filings?: {
+    recent: {
+      accessionNumber: string[]
+      filingDate: string[]
+      reportDate: string[]
+      acceptanceDateTime: string[]
+      form: string[]
+      fileNumber: string[]
+      filmNumber: string[]
+      items?: string[]
+      size: number[]
+      isXBRL: number[]
+      isInlineXBRL: number[]
+      primaryDocument: string[]
+      primaryDocDescription: string[]
+    }
+    files?: SECFilingFile[]
+  }
+  formerNames?: Array<{
+    name: string
+    from: string
+    to: string
+  }>
+  ein?: string
+  description?: string
+  category?: string
+  fiscalYearEnd?: string
+  stateOfIncorporation?: string
+  flags?: {
+    investmentCompany?: boolean
+    investmentCompanyType?: string
+  }
 }
 
 export interface SECCompanyFacts {
@@ -150,19 +212,19 @@ export class SECEdgarAPI {
 
     try {
       // Download company tickers file (updated nightly)
-      const response = await this.makeRequest('/files/company_tickers.json')
-      const companies = Object.values(response) as any[]
+      const response = await this.makeRequest('/files/company_tickers.json') as Record<string, SECCompanyTicker>
+      const companies = Object.values(response)
 
       // Search by name or ticker
       const queryLower = query.toLowerCase()
       const matches = companies
-        .filter((c: any) => {
+        .filter((c: SECCompanyTicker) => {
           const titleMatch = c.title?.toLowerCase().includes(queryLower)
           const tickerMatch = c.ticker?.toLowerCase().includes(queryLower)
           return titleMatch || tickerMatch
         })
         .slice(0, 20)
-        .map((c: any) => ({
+        .map((c: SECCompanyTicker) => ({
           cik: String(c.cik_str).padStart(10, '0'),
           ticker: c.ticker,
           title: c.title,
@@ -323,11 +385,11 @@ export class SECEdgarAPI {
     company_number: string
     company_status: string
     company_type: string
-    registered_office_address: any
+    registered_office_address: SECAddress | null
     website?: string
     sic_codes: string[]
     data_source: 'sec_edgar'
-    data_sources: any
+    data_sources: { sec_edgar: { last_updated: Date; cik: string } }
     cache_expires_at: Date
     oc_jurisdiction_code: 'us'
     oc_uid: string
@@ -395,7 +457,7 @@ export class SECEdgarAPI {
   /**
    * Make HTTP request with rate limiting and required User-Agent
    */
-  private async makeRequest(endpoint: string): Promise<any> {
+  private async makeRequest(endpoint: string): Promise<unknown> {
     // Rate limiting: 10 requests per second (100ms between requests)
     const now = Date.now()
     const timeSinceLastRequest = now - this.lastRequestTime
@@ -430,7 +492,7 @@ export class SECEdgarAPI {
   /**
    * Transform SEC submissions data to our format
    */
-  private transformCompanyData(data: any): SECCompany {
+  private transformCompanyData(data: SECCompanyResponse): SECCompany {
     return {
       cik: data.cik,
       entityType: data.entityType,

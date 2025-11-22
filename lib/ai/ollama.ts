@@ -565,8 +565,8 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     }
     
     if (business.address) {
-      const addr = business.address as unknown
-      parts.push(`Location: ${(addr as any).formatted || (addr as any).vicinity || 'UK/Ireland'}`)
+      const addr = business.address as { formatted?: string; vicinity?: string }
+      parts.push(`Location: ${addr.formatted || addr.vicinity || 'UK/Ireland'}`)
     }
     
     if (business.website) {
@@ -578,12 +578,12 @@ export class OllamaClient implements LLMProvider, LLMService, ManagedLLMProvider
     }
     
     if (business.metadata) {
-      const meta = business.metadata as unknown
-      if ((meta as any).google_data?.types) {
-        parts.push(`Business Types: ${(meta as any).google_data.types.join(', ')}`)
+      const meta = business.metadata as { google_data?: { types?: string[]; price_level?: number } }
+      if (meta.google_data?.types) {
+        parts.push(`Business Types: ${meta.google_data.types.join(', ')}`)
       }
-      if ((meta as any).google_data?.price_level) {
-        const priceLevel = '£'.repeat((meta as any).google_data.price_level)
+      if (meta.google_data?.price_level) {
+        const priceLevel = '£'.repeat(meta.google_data.price_level)
         parts.push(`Price Level: ${priceLevel}`)
       }
     }

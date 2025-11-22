@@ -345,7 +345,7 @@ export class AgentTaskRunner {
    */
   private async createStreamInsight(
     streamId: string,
-    agent: any,
+    agent: { agent_type: string; id: string; name: string },
     executionId: string,
     result: AgentExecutionResult
   ): Promise<void> {

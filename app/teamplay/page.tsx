@@ -10,11 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ActivityTracker, PresenceTracker } from '@/lib/teamplay/activity-tracker'
-import { Users, Activity, Clock, Eye, Save, Bot, Zap } from 'lucide-react'
+import { Users, Activity, Clock, Eye, Save, Bot, Zap, LucideIcon } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 
-const ACTIVITY_ICONS: Record<string, any> = {
+const ACTIVITY_ICONS: Record<string, LucideIcon> = {
   company_viewed: Eye,
   company_saved: Save,
   research_generated: Zap,
@@ -105,7 +105,7 @@ export default function TeamPlayPage() {
               {onlineUsers.length === 0 && (
                 <p className="text-sm text-muted-foreground">No one else is online</p>
               )}
-              {onlineUsers.map((presence: any) => (
+              {onlineUsers.map((presence: { id: string; user?: { full_name?: string; email?: string }; current_page?: string; status: string }) => (
                 <div key={presence.id} className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
@@ -148,7 +148,7 @@ export default function TeamPlayPage() {
                 <div className="text-center py-12 text-muted-foreground">No recent activity</div>
               ) : (
                 <div className="space-y-4">
-                  {activities.map((activity: any) => {
+                  {activities.map((activity: { id: string; activity_type: string; user?: { full_name?: string; email?: string }; business_name?: string; created_at: string }) => {
                     const Icon = ACTIVITY_ICONS[activity.activity_type] || Activity
                     const label = ACTIVITY_LABELS[activity.activity_type] || activity.activity_type
 

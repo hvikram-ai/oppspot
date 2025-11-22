@@ -21,10 +21,11 @@ const runMatchingSchema = z.object({
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[ITP Match API] POST - Running matching for ITP:', params.id);
+    const { id } = await params;
+    console.log('[ITP Match API] POST - Running matching for ITP:', id);
     const supabase = await createClient();
 
     // Get authenticated user
@@ -40,7 +41,7 @@ export async function POST(
       );
     }
 
-    const itpId = params.id;
+    const itpId = id;
 
     // Parse and validate body
     const body = await request.json().catch(() => ({}));

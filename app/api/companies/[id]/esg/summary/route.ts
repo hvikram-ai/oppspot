@@ -84,8 +84,18 @@ export async function GET(
     };
 
     // Process scores
+    interface ESGScore {
+      category: string;
+      subcategory?: string;
+      score: number;
+      level: string;
+      metrics_count?: number;
+      metrics_with_data?: number;
+      details?: { improvements?: string[] };
+    }
+
     if (scores && scores.length > 0) {
-      scores.forEach((score: any) => {
+      scores.forEach((score: ESGScore) => {
         const categoryKey = score.category as 'environmental' | 'social' | 'governance';
 
         if (score.subcategory) {
@@ -120,11 +130,16 @@ export async function GET(
     }
 
     // Add sentiment summary if available
+    interface SentimentItem {
+      label: 'positive' | 'neutral' | 'negative';
+      score?: number;
+    }
+
     if (sentiment && sentiment.length > 0) {
-      const positiveCount = sentiment.filter((s: any) => s.label === 'positive').length;
-      const neutralCount = sentiment.filter((s: any) => s.label === 'neutral').length;
-      const negativeCount = sentiment.filter((s: any) => s.label === 'negative').length;
-      const avgScore = sentiment.reduce((sum: number, s: any) => sum + (s.score || 0), 0) / sentiment.length;
+      const positiveCount = sentiment.filter((s: SentimentItem) => s.label === 'positive').length;
+      const neutralCount = sentiment.filter((s: SentimentItem) => s.label === 'neutral').length;
+      const negativeCount = sentiment.filter((s: SentimentItem) => s.label === 'negative').length;
+      const avgScore = sentiment.reduce((sum: number, s: SentimentItem) => sum + (s.score || 0), 0) / sentiment.length;
 
       response.sentiment_summary = {
         overall_sentiment: positiveCount > negativeCount ? 'positive' : negativeCount > positiveCount ? 'negative' : 'neutral',

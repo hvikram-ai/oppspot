@@ -202,7 +202,7 @@ function formatDate(dateStr: string): string {
 
 function calculateTrend(current: number | null, previous: number | null): {
   change: string
-  style: any
+  style: Record<string, unknown>
 } {
   if (current === null || previous === null || previous === 0) {
     return { change: '-', style: styles.trendNeutral }

@@ -13,9 +13,10 @@ import type { ActivityStatus, ActivityCategory, ActivityPriority } from '@/lib/d
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; activityId: string } }
+  { params }: { params: Promise<{ id: string; activityId: string }> }
 ) {
   try {
+    const { id, activityId: actId } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -27,7 +28,7 @@ export async function PATCH(
       );
     }
 
-    const activityId = params.activityId;
+    const activityId = actId;
     const body = await request.json();
 
     // Build update object

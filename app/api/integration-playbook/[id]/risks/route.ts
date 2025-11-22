@@ -15,9 +15,10 @@ import type { RiskCategory, RiskImpact, RiskProbability, RiskStatus } from '@/li
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -29,7 +30,7 @@ export async function GET(
       );
     }
 
-    const playbookId = params.id;
+    const playbookId = id;
     const { searchParams } = new URL(request.url);
 
     // Parse filters
@@ -98,9 +99,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: _playbookId } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -123,7 +125,17 @@ export async function PATCH(
     }
 
     // Build update object
-    const updates: any = {
+    const updates: {
+      updated_at: string;
+      impact?: RiskImpact;
+      probability?: RiskProbability;
+      status?: RiskStatus;
+      mitigation_plan?: string;
+      mitigation_owner?: string;
+      mitigation_date?: string;
+      notes?: string;
+      risk_score?: number;
+    } = {
       updated_at: new Date().toISOString(),
     };
 

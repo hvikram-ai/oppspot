@@ -57,11 +57,11 @@ interface SavedBusiness {
     name: string
     description: string | null
     categories: string[]
-    address: any
+    address: Record<string, unknown> | null
     latitude: number | null
     longitude: number | null
     rating: number | null
-    phone_numbers: any
+    phone_numbers: unknown
     website: string | null
     verified: boolean
   }

@@ -24,9 +24,10 @@ const UpdateAnalysisSchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -39,7 +40,7 @@ export async function GET(
     const repository = new TechStackRepository(supabase);
 
     // Get analysis
-    const analysis = await repository.getAnalysisWithDetails(params.id);
+    const analysis = await repository.getAnalysisWithDetails(id);
 
     // Verify user has access to data room
     const { data: dataRoom } = await supabase
@@ -87,9 +88,10 @@ export async function GET(
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -106,7 +108,7 @@ export async function PATCH(
     const repository = new TechStackRepository(supabase);
 
     // Get existing analysis to check permissions
-    const existing = await repository.getAnalysis(params.id);
+    const existing = await repository.getAnalysis(id);
 
     // Verify user has access to data room (editor or owner)
     const { data: dataRoom } = await supabase
@@ -137,7 +139,7 @@ export async function PATCH(
     }
 
     // Update analysis
-    const updated = await repository.updateAnalysis(params.id, validated);
+    const updated = await repository.updateAnalysis(id, validated);
 
     // Log activity
     await supabase.from('activity_logs').insert({
@@ -176,9 +178,10 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -191,7 +194,7 @@ export async function DELETE(
     const repository = new TechStackRepository(supabase);
 
     // Get existing analysis to check permissions
-    const existing = await repository.getAnalysis(params.id);
+    const existing = await repository.getAnalysis(id);
 
     // Verify user has access to data room (owner or editor)
     const { data: dataRoom } = await supabase
@@ -222,7 +225,7 @@ export async function DELETE(
     }
 
     // Delete analysis
-    await repository.deleteAnalysis(params.id);
+    await repository.deleteAnalysis(id);
 
     // Log activity
     await supabase.from('activity_logs').insert({
@@ -231,7 +234,7 @@ export async function DELETE(
       actor_name: user.user_metadata?.name || 'Unknown',
       actor_email: user.email || '',
       action: 'delete_tech_analysis',
-      details: { analysis_id: params.id, title: existing.title },
+      details: { analysis_id: id, title: existing.title },
       ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
       user_agent: req.headers.get('user-agent'),
     });

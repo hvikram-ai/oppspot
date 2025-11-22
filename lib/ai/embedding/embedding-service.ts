@@ -59,7 +59,11 @@ export class EmbeddingService {
       }
 
       // If using OpenRouter, configure base URL
-      const config: any = { apiKey }
+      const config: {
+        apiKey: string;
+        baseURL?: string;
+        defaultHeaders?: Record<string, string>;
+      } = { apiKey }
       if (process.env.OPENROUTER_API_KEY && !process.env.OPENAI_API_KEY) {
         config.baseURL = 'https://openrouter.ai/api/v1'
         config.defaultHeaders = {
@@ -218,7 +222,7 @@ export class EmbeddingService {
       .from('businesses')
       .select('embedding')
       .eq('id', companyId)
-      .single() as { data: (Row<'businesses'> & { embedding?: number[] }) | null; error: any }
+      .single() as { data: (Row<'businesses'> & { embedding?: number[] }) | null; error: unknown }
 
     if (fetchError || !company?.embedding) {
       throw new Error(`Company embedding not found for ${companyId}`)
@@ -282,7 +286,7 @@ export class EmbeddingService {
       .from('businesses')
       .select('embedding')
       .eq('id', companyId)
-      .single() as { data: (Row<'businesses'> & { embedding?: number[] }) | null; error: any }
+      .single() as { data: (Row<'businesses'> & { embedding?: number[] }) | null; error: unknown }
 
     return !!data?.embedding
   }
@@ -304,7 +308,7 @@ export class EmbeddingService {
       .from('businesses_with_embeddings')
       .select('has_embedding, embedding_token_count') as {
         data: Array<{ has_embedding?: boolean; embedding_token_count?: number }> | null
-        error: any
+        error: unknown
       }
 
     if (!data) {

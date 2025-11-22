@@ -62,6 +62,69 @@ export interface IrishCROCacheEntry {
   updated_at: Date
 }
 
+// Raw API response types
+interface IrishCROAPIResponse {
+  results?: IrishCROAPICompany[]
+  companies?: IrishCROAPICompany[]
+  total?: number
+  totalResults?: number
+  hasMore?: boolean
+}
+
+interface IrishCROAPICompany {
+  companyNumber?: string
+  number?: string
+  registrationNumber?: string
+  companyName?: string
+  name?: string
+  companyType?: string
+  type?: string
+  companyStatus?: string
+  status?: string
+  incorporationDate?: string
+  dateOfIncorporation?: string
+  dissolutionDate?: string
+  dateOfDissolution?: string
+  address?: {
+    addressLine1?: string
+    addressLine2?: string
+    town?: string
+    county?: string
+    eircode?: string
+  }
+  registeredAddress?: {
+    line1?: string
+    line2?: string
+    city?: string
+    region?: string
+    postcode?: string
+  }
+  natureOfBusiness?: string
+  businessActivity?: string
+  shareCapital?: {
+    currency?: string
+    amount?: number
+  }
+  directors?: Array<{
+    name?: string
+    fullName?: string
+    appointmentDate?: string
+    dateAppointed?: string
+    resignationDate?: string
+    dateResigned?: string
+    nationality?: string
+  }>
+  lastAnnualReturn?: {
+    date?: string
+    filedDate?: string
+    nextDue?: string
+    dueDate?: string
+  }
+  businessNumber?: string
+  chargeCount?: number
+  activityStatus?: string
+}
+
 export class IrishCROAPI {
   private baseUrl = 'https://services.cro.ie/api/v1'
   private cacheTTLDays = 30
@@ -254,11 +317,11 @@ export class IrishCROAPI {
     company_type: string
     incorporation_date: string
     dissolution_date?: string
-    registered_office_address: any
+    registered_office_address: IrishCompany['registeredAddress']
     sic_codes: string[]
-    officers: any[]
+    officers: NonNullable<IrishCompany['directors']>
     data_source: 'irish_cro'
-    data_sources: any
+    data_sources: { irish_cro: { last_updated: Date; company_number: string } }
     cache_expires_at: Date
     oc_jurisdiction_code: 'ie'
   } {
@@ -330,11 +393,11 @@ export class IrishCROAPI {
    * Transform CRO search response to our format
    */
   private transformSearchResponse(
-    data: any,
+    data: IrishCROAPIResponse,
     page: number,
     pageSize: number
   ): IrishCROSearchResponse {
-    const companies = (data.results || data.companies || []).map((c: any) =>
+    const companies = (data.results || data.companies || []).map((c: IrishCROAPICompany) =>
       this.transformCompanyData(c)
     )
 
@@ -350,7 +413,7 @@ export class IrishCROAPI {
   /**
    * Transform CRO company data to our format
    */
-  private transformCompanyData(data: any): IrishCompany {
+  private transformCompanyData(data: IrishCROAPICompany): IrishCompany {
     return {
       companyNumber: data.companyNumber || data.number || data.registrationNumber,
       companyName: data.companyName || data.name,
@@ -373,9 +436,9 @@ export class IrishCROAPI {
             amount: data.shareCapital.amount || 0,
           }
         : undefined,
-      directors: data.directors?.map((d: any) => ({
-        name: d.name || d.fullName,
-        appointmentDate: d.appointmentDate || d.dateAppointed,
+      directors: data.directors?.map((d) => ({
+        name: d.name || d.fullName || '',
+        appointmentDate: d.appointmentDate || d.dateAppointed || '',
         resignationDate: d.resignationDate || d.dateResigned,
         nationality: d.nationality,
       })),

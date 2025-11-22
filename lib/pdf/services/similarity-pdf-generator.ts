@@ -40,7 +40,7 @@ interface SimilarityMatch {
 interface SimilarityAnalysis {
   id: string
   target_company_name: string
-  target_company_data: any
+  target_company_data: Record<string, unknown>
   status: string
   total_companies_analyzed: number
   average_similarity_score: number
@@ -49,7 +49,7 @@ interface SimilarityAnalysis {
   key_opportunities: string[]
   risk_highlights: string[]
   strategic_recommendations: string[]
-  analysis_configuration: any
+  analysis_configuration: Record<string, unknown>
   created_at: string
   completed_at: string
   similar_company_matches: SimilarityMatch[]
@@ -62,12 +62,12 @@ export interface PDFExportOptions {
   exportFormat: 'pdf'
   includeDetails?: boolean
   maxMatches?: number
-  customBranding?: any
+  customBranding?: Record<string, unknown>
   templateVersion?: string
 }
 
 export class SimilarityPDFGenerator {
-  private supabase: any
+  private supabase: Awaited<ReturnType<typeof createClient>> | null
 
   constructor() {
     this.supabase = null // Will be initialized in methods
@@ -83,7 +83,7 @@ export class SimilarityPDFGenerator {
   async generatePDF(options: PDFExportOptions): Promise<{
     buffer: Buffer
     filename: string
-    exportRecord: any
+    exportRecord: Record<string, unknown>
   }> {
     const {
       analysisId,
@@ -428,7 +428,7 @@ export class SimilarityPDFGenerator {
     }
   }
 
-  private async renderPDF(templateData: any): Promise<Buffer> {
+  private async renderPDF(templateData: Record<string, unknown>): Promise<Buffer> {
     try {
       // Import React for JSX
       const React = await import('react')

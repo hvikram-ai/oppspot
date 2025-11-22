@@ -191,7 +191,7 @@ export class ScrapingOrchestrator {
         }
         return acc;
       },
-      {} as Record<string, any>
+      {} as Record<string, unknown>
     );
 
     const hasData = Object.keys(combinedData).length > 0;
@@ -305,7 +305,7 @@ export class ScrapingOrchestrator {
     // Combine all data
     const combinedData = successfulResults.reduce(
       (acc, result) => ({ ...acc, ...result.data }),
-      {} as Record<string, any>
+      {} as Record<string, unknown>
     );
 
     return {

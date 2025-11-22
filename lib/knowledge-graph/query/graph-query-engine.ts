@@ -53,7 +53,7 @@ export class GraphQueryEngine {
         .from('profiles')
         .select('org_id')
         .eq('id', userId)
-        .single() as { data: Row<'profiles'> | null; error: any }
+        .single() as { data: Row<'profiles'> | null; error: unknown }
 
       if (!profile?.org_id) {
         return this.errorResponse('User org not found', startTime)
@@ -100,7 +100,7 @@ export class GraphQueryEngine {
         .from('profiles')
         .select('org_id')
         .eq('id', userId)
-        .single() as { data: Row<'profiles'> | null; error: any }
+        .single() as { data: Row<'profiles'> | null; error: unknown }
 
       if (!profile?.org_id) {
         return {
@@ -133,7 +133,7 @@ export class GraphQueryEngine {
           p_similarity_threshold: request.similarity_threshold || 0.7,
           p_limit: request.limit || 20
         }
-      ) as { data: SearchResult[] | null; error: any }
+      ) as { data: SearchResult[] | null; error: unknown }
 
       if (error) throw error
 
@@ -190,7 +190,7 @@ export class GraphQueryEngine {
         .from('profiles')
         .select('org_id')
         .eq('id', userId)
-        .single() as { data: Row<'profiles'> | null; error: any }
+        .single() as { data: Row<'profiles'> | null; error: unknown }
 
       if (!profile?.org_id) {
         return {
@@ -207,7 +207,7 @@ export class GraphQueryEngine {
         .select('*')
         .eq('id', request.entity_id)
         .eq('org_id', profile.org_id)
-        .single() as { data: Row<'knowledge_entities'> | null; error: any }
+        .single() as { data: Row<'knowledge_entities'> | null; error: unknown }
 
       if (!centralEntity) {
         return {
@@ -302,7 +302,11 @@ export class GraphQueryEngine {
    */
   private static async executeQuery(
     orgId: string,
-    interpretation: any,
+    interpretation: {
+      query_type: string;
+      description: string;
+      parameters: Record<string, unknown>;
+    },
     request: GraphQueryRequest
   ): Promise<{
     entities: KnowledgeEntity[]

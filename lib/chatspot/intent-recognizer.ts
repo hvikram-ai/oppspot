@@ -210,14 +210,24 @@ Be precise, extract all relevant parameters, and suggest helpful next actions.`
   /**
    * Validate and normalize intent data
    */
-  private static validateIntent(data: any): Intent {
+  private static validateIntent(data: {
+    type?: string;
+    confidence?: number;
+    parameters?: Record<string, unknown>;
+    suggested_actions?: Array<{
+      type?: string;
+      label?: string;
+      description?: string;
+      priority?: number;
+    }>;
+  }): Intent {
     return {
-      type: this.normalizeIntentType(data.type),
+      type: this.normalizeIntentType(data.type || ''),
       confidence: Math.min(1, Math.max(0, data.confidence || 0.7)),
       parameters: this.normalizeParameters(data.parameters || {}),
-      suggested_actions: (data.suggested_actions || []).map((a: any) => ({
-        type: this.normalizeActionType(a.type),
-        label: a.label || a.type,
+      suggested_actions: (data.suggested_actions || []).map((a) => ({
+        type: this.normalizeActionType(a.type || ''),
+        label: a.label || a.type || '',
         description: a.description || '',
         priority: a.priority || 5
       }))
@@ -355,7 +365,7 @@ Be precise, extract all relevant parameters, and suggest helpful next actions.`
   /**
    * Normalize parameters
    */
-  private static normalizeParameters(params: any): IntentParameters {
+  private static normalizeParameters(params: Record<string, unknown>): IntentParameters {
     const normalized: IntentParameters = {}
 
     if (params.industries) normalized.industries = Array.isArray(params.industries) ? params.industries : [params.industries]

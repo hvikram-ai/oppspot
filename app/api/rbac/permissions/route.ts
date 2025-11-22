@@ -13,8 +13,15 @@ import { PermissionService } from '@/lib/rbac/permission-service';
  * Requires authentication
  */
 export const GET = requirePermission('users.manage')(
-  async (request: NextRequest, context: any, user: any) => {
+  async (request: NextRequest, context: Record<string, unknown> | undefined, user: Record<string, unknown> | undefined) => {
     try {
+      if (!user || typeof user.id !== 'string') {
+        return NextResponse.json(
+          { error: 'UNAUTHORIZED', message: 'User not found' },
+          { status: 401 }
+        );
+      }
+
       // Get user's permissions
       const permissions = await PermissionService.getUserPermissions(user.id);
 
@@ -30,11 +37,11 @@ export const GET = requirePermission('users.manage')(
           permissionCount: permissions.length,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
         {
           error: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Failed to fetch permissions',
+          message: error instanceof Error ? error.message : 'Failed to fetch permissions',
         },
         { status: 500 }
       );
@@ -48,8 +55,15 @@ export const GET = requirePermission('users.manage')(
  * Requires Enterprise Admin role
  */
 export const POST = requireEnterpriseAdmin(
-  async (request: NextRequest, context: any, user: any) => {
+  async (request: NextRequest, context: Record<string, unknown> | undefined, user: Record<string, unknown> | undefined) => {
     try {
+      if (!user || typeof user.id !== 'string') {
+        return NextResponse.json(
+          { error: 'UNAUTHORIZED', message: 'User not found' },
+          { status: 401 }
+        );
+      }
+
       const { userId, permission, reason } = await request.json();
 
       if (!userId || !permission) {
@@ -84,11 +98,11 @@ export const POST = requireEnterpriseAdmin(
         success: true,
         message: `Permission ${permission} granted to user ${userId}`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
         {
           error: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Failed to grant permission',
+          message: error instanceof Error ? error.message : 'Failed to grant permission',
         },
         { status: 500 }
       );

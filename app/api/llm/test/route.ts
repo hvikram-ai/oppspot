@@ -17,7 +17,7 @@ import type { LLMConfig } from '@/lib/llm/interfaces/ILLMConfig';
 
 interface TestRequest {
   providerType: ProviderType;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 interface TestResult {

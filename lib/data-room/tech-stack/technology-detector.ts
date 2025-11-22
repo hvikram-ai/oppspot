@@ -217,7 +217,23 @@ Example format:
       const aiDetections = JSON.parse(jsonStr);
 
       // Validate and normalize AI results
-      return aiDetections.map((detection: any) => ({
+      interface AIDetection {
+        name: string;
+        category: string;
+        version?: string | null;
+        authenticity?: string | null;
+        confidence?: number;
+        risk_score?: number | null;
+        is_outdated?: boolean;
+        is_deprecated?: boolean;
+        has_security_issues?: boolean;
+        security_details?: string | null;
+        license_type?: string | null;
+        reasoning?: string;
+        excerpt?: string;
+      }
+
+      return aiDetections.map((detection: AIDetection) => ({
         name: detection.name,
         category: detection.category as TechCategory,
         version: detection.version || null,

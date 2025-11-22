@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getRedFlagService } from '@/lib/red-flags/red-flag-service';
 import { FlagFilters } from '@/lib/red-flags/types';
 import { stringify } from 'csv-stringify/sync';
+import { userHasCompanyAccess } from '@/lib/companies/access';
 
 /**
  * Max flags for synchronous export
@@ -35,6 +36,15 @@ export async function GET(
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Check access
+    const hasAccess = await userHasCompanyAccess(supabase, user.id, companyId);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Forbidden - no access to this company' },
+        { status: 403 }
       );
     }
 

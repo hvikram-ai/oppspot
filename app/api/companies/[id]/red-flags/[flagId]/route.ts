@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getRedFlagService } from '@/lib/red-flags/red-flag-service';
+import { userHasCompanyAccess } from '@/lib/companies/access';
 
 /**
  * GET handler - Get red flag detail
@@ -31,7 +32,7 @@ export async function GET(
     }
 
     // Check if user has access to this company
-    const hasAccess = await checkCompanyAccess(supabase, user.id, companyId);
+    const hasAccess = await userHasCompanyAccess(supabase, user.id, companyId);
     if (!hasAccess) {
       return NextResponse.json(
         { error: 'Forbidden - no access to this company' },
@@ -70,23 +71,4 @@ export async function GET(
   }
 }
 
-/**
- * Check if user has access to the company
- */
-async function checkCompanyAccess(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  companyId: string
-): Promise<boolean> {
-  const { data: company, error } = await supabase
-    .from('businesses')
-    .select('id')
-    .eq('id', companyId)
-    .single();
-
-  if (error || !company) {
-    return false;
-  }
-
-  return true;
-}
+// Access handled via userHasCompanyAccess

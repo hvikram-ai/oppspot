@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getPrediction } from '@/lib/ma-prediction/ma-prediction-service';
+import { simpleJobQueue } from '@/lib/jobs/simple-job-queue';
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,13 +94,21 @@ export async function POST(request: NextRequest) {
     if (company_ids.length > 100) {
       const exportId = generateExportId();
 
-      // TODO: Queue export job in database
-      // For now, return 202 with mock response
+      simpleJobQueue.enqueue(
+        'ma-predictions-export',
+        user.id,
+        async () => ({
+          status: 'pending_worker',
+          companyCount: company_ids.length,
+          format,
+        }),
+        exportId
+      );
 
       return NextResponse.json(
         {
           export_id: exportId,
-          status: 'processing',
+          status: 'queued',
           estimated_completion_seconds: Math.ceil(company_ids.length / 10),
           status_url: `/api/ma-predictions/export/${exportId}/status`
         },
@@ -108,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // For small batches (<= 100), generate synchronously
-    const predictionsData: any[] = [];
+    const predictionsData: Array<Record<string, unknown>> = [];
 
     for (const companyId of company_ids) {
       try {

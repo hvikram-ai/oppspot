@@ -16,9 +16,10 @@ import type { CreatePlaybookRequest, GeneratePlaybookRequest } from '@/lib/data-
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -32,7 +33,7 @@ export async function POST(
 
     // Parse request body
     const body = await request.json();
-    const dataRoomId = params.id;
+    const dataRoomId = id;
 
     // Validate data room access
     const { data: dataRoom, error: accessError } = await supabase
@@ -94,9 +95,10 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -108,7 +110,7 @@ export async function GET(
       );
     }
 
-    const dataRoomId = params.id;
+    const dataRoomId = id;
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const includeArchived = searchParams.get('include_archived') === 'true';

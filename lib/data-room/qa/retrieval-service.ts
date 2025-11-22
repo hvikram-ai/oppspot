@@ -178,9 +178,23 @@ export async function retrieveChunksWithStats(
 
   // Filter by data room (redundant with JOIN but ensures correctness)
   // Calculate cosine similarity and filter results
+  interface ChunkRow {
+    id: string;
+    document_id: string;
+    page_id: string | null;
+    chunk_index: number;
+    text_content: string;
+    token_count: number;
+    start_char: number;
+    end_char: number;
+    embedding: number[];
+    document?: { data_room_id: string; title: string };
+    page?: { page_number: number };
+  }
+
   const chunksWithSimilarity = data
-    .filter((row: any) => row.document?.data_room_id === dataRoomId)
-    .map((row: any) => {
+    .filter((row: ChunkRow) => row.document?.data_room_id === dataRoomId)
+    .map((row: ChunkRow) => {
       const embedding = row.embedding;
       const similarity = cosineSimilarity(queryEmbedding, embedding);
 

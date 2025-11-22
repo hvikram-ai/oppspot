@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import type { FeedbackDetailResponse } from '@/types/feedback';
+import { requireAdminRole } from '@/lib/auth/role-check';
 
 // Validation schema for updates
 const updateSchema = z.object({
@@ -21,10 +22,11 @@ const updateSchema = z.object({
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[Feedback Detail API] Fetching feedback:', params.id);
+    const { id } = await params;
+    console.log('[Feedback Detail API] Fetching feedback:', id);
     const supabase = await createClient();
 
     // Get authenticated user
@@ -38,7 +40,7 @@ export async function GET(
       );
     }
 
-    const feedbackId = params.id;
+    const feedbackId = id;
 
     // Get feedback
     const { data: feedback, error: feedbackError } = await supabase
@@ -103,7 +105,7 @@ export async function GET(
       .from('feedback')
       .update({ view_count: feedback.view_count + 1 })
       .eq('id', feedbackId)
-      .catch((err) => console.log('[Feedback Detail API] View count update failed:', err));
+      .catch((err: unknown) => console.log('[Feedback Detail API] View count update failed:', err));
 
     // Format response
     const formattedComments = comments?.map((c) => ({
@@ -138,9 +140,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -153,7 +156,7 @@ export async function PATCH(
       );
     }
 
-    const feedbackId = params.id;
+    const feedbackId = id;
 
     // Parse and validate body
     const body = await request.json();
@@ -183,10 +186,10 @@ export async function PATCH(
     }
 
     // Check permissions (owner can update their own, admin can update all)
-    // TODO: Implement proper admin check
     const isOwner = existingFeedback.user_id === user.id;
+    const isAdmin = await requireAdminRole(supabase, user.id);
 
-    if (!isOwner) {
+    if (!isOwner && !isAdmin) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -194,7 +197,15 @@ export async function PATCH(
     }
 
     // Prepare update object
-    const updateData: any = {};
+    const updateData: {
+      status?: string;
+      resolved_at?: string;
+      priority?: string;
+      admin_response?: string;
+      admin_response_by?: string;
+      admin_response_at?: string;
+      is_public?: boolean;
+    } = {};
 
     if (updates.status !== undefined) {
       updateData.status = updates.status;
@@ -247,7 +258,7 @@ export async function PATCH(
         },
         new_value: updateData,
       })
-      .catch((err) => console.log('[Feedback Detail API] Activity log failed:', err));
+      .catch((err: unknown) => console.log('[Feedback Detail API] Activity log failed:', err));
 
     // TODO: Notify followers if status changed
 
@@ -268,9 +279,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -283,7 +295,7 @@ export async function DELETE(
       );
     }
 
-    const feedbackId = params.id;
+    const feedbackId = id;
 
     // Get feedback to check ownership
     const { data: feedback, error: fetchError } = await supabase

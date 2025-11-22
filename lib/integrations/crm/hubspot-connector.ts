@@ -59,6 +59,11 @@ export interface HubSpotAssociation {
   type: string
 }
 
+export interface HubSpotAssociationInput {
+  to: { id: string }
+  types: Array<{ associationCategory: string; associationTypeId: number }>
+}
+
 export interface HubSpotFieldOption {
   value: string
   label: string
@@ -332,18 +337,18 @@ export class HubSpotConnector extends BaseCRMConnector {
     try {
       const properties = this.mapDealToHubSpot(deal);
 
-      const associations: any[] = [];
+      const associations: HubSpotAssociationInput[] = [];
       if (deal.contactId) {
         associations.push({
           to: { id: deal.contactId },
           types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }],
-        } as any);
+        });
       }
       if (deal.companyId) {
         associations.push({
           to: { id: deal.companyId },
           types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 5 }],
-        } as any);
+        });
       }
 
       const response = await this.httpClient!.post('/crm/v3/objects/deals', {
@@ -410,7 +415,7 @@ export class HubSpotConnector extends BaseCRMConnector {
     try {
       const properties = this.mapTaskToHubSpot(task);
 
-      const associations: any[] = [];
+      const associations: HubSpotAssociationInput[] = [];
       if (task.relatedTo) {
         const typeMap: Record<string, number> = {
           contact: 204,
@@ -423,7 +428,7 @@ export class HubSpotConnector extends BaseCRMConnector {
             associationCategory: 'HUBSPOT_DEFINED',
             associationTypeId: typeMap[task.relatedTo.type],
           }],
-        } as any);
+        });
       }
 
       const response = await this.httpClient!.post('/crm/v3/objects/tasks', {
@@ -493,7 +498,7 @@ export class HubSpotConnector extends BaseCRMConnector {
         hs_timestamp: new Date().toISOString(),
       };
 
-      const associations: any[] = [];
+      const associations: HubSpotAssociationInput[] = [];
       if (note.relatedTo) {
         const typeMap: Record<string, number> = {
           contact: 202,
@@ -506,7 +511,7 @@ export class HubSpotConnector extends BaseCRMConnector {
             associationCategory: 'HUBSPOT_DEFINED',
             associationTypeId: typeMap[note.relatedTo.type],
           }],
-        } as any);
+        });
       }
 
       const response = await this.httpClient!.post('/crm/v3/objects/notes', {

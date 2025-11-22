@@ -15,9 +15,10 @@ import {
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; competitorId: string } }
+  { params }: { params: Promise<{ id: string; competitorId: string }> }
 ) {
   try {
+    const { id: analysisId, competitorId: compId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -28,8 +29,8 @@ export async function DELETE(
     }
 
     // Validate UUID formats
-    const id = validateUUID(params.id, 'Analysis ID');
-    const competitorId = validateUUID(params.competitorId, 'Competitor ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
+    const competitorId = validateUUID(compId, 'Competitor ID');
 
     // Check if analysis exists
     const analysis = await competitiveAnalysisRepository.findById(id);

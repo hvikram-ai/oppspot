@@ -347,7 +347,17 @@ export class LLMManager {
     const providers = Array.from(this.providers.values());
 
     const providerStats: ProviderStatistics[] = providers.map(provider => {
-      const metrics = (provider as any).getMetrics?.() || {
+      // Use type assertion to access getMetrics if available on provider
+      const providerWithMetrics = provider as ILLMProvider & {
+        getMetrics?: () => {
+          totalRequests: number;
+          successfulRequests: number;
+          failedRequests: number;
+          totalLatency: number;
+          lastRequestAt?: string;
+        };
+      };
+      const metrics = providerWithMetrics.getMetrics?.() || {
         totalRequests: 0,
         successfulRequests: 0,
         failedRequests: 0,
@@ -415,15 +425,15 @@ export class LLMManager {
   private async createProvider(config: LLMConfig): Promise<ILLMProvider> {
     switch (config.providerType) {
       case 'local':
-        return new LocalLLMProvider(config as any);
+        return new LocalLLMProvider(config);
       case 'openrouter':
-        return new OpenRouterProvider(config as any);
+        return new OpenRouterProvider(config);
       case 'openai':
-        return new OpenAIProvider(config as any);
+        return new OpenAIProvider(config);
       case 'anthropic':
-        return new AnthropicProvider(config as any);
+        return new AnthropicProvider(config);
       case 'managed':
-        return new ManagedProvider(config as any, this.options.userId);
+        return new ManagedProvider(config, this.options.userId);
       default:
         throw new Error(`Unsupported provider type: ${config.providerType}`);
     }
@@ -500,7 +510,10 @@ export class LLMManager {
       for (const provider of this.providers.values()) {
         try {
           const health = await provider.healthCheck();
-          const metrics = (provider as any).getMetrics?.() || {};
+          const providerWithMetrics = provider as ILLMProvider & {
+            getMetrics?: () => { totalRequests: number; failedRequests: number };
+          };
+          const metrics = providerWithMetrics.getMetrics?.() || { totalRequests: 0, failedRequests: 0 };
 
           this.providerSelector.updateProviderHealth(
             provider.id,
@@ -544,7 +557,11 @@ export class LLMManager {
   /**
    * Log fallback event
    */
-  private async logFallback(result: any): Promise<void> {
+  private async logFallback(result: {
+    attemptsLog: Array<{ providerId: string; status: string }>;
+    success: boolean;
+    totalLatencyMs: number;
+  }): Promise<void> {
     console.log('[LLMManager] Fallback occurred:', {
       attempts: result.attemptsLog.length,
       success: result.success,

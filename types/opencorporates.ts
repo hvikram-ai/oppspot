@@ -62,15 +62,15 @@ export interface OpenCorporatesCompany {
       company_number: string
       effective_date: string
     }
-    [key: string]: any // Additional jurisdiction-specific attributes
+    [key: string]: string | number | boolean | null | undefined | { company_name: string; company_number: string; effective_date: string }
   }
 
   // Provenance
   source: OpenCorporatesSource
 
   // Registration Variants
-  subsequent_registrations?: any[]
-  alternate_registrations?: any[]
+  subsequent_registrations?: OpenCorporatesRegistration[]
+  alternate_registrations?: OpenCorporatesRegistration[]
   branch?: 'F' | 'L' | null // Foreign or Local branch
 
   // URLs
@@ -102,6 +102,14 @@ export interface OpenCorporatesAddress {
   // Geocoding (not always available)
   latitude?: number
   longitude?: number
+}
+
+export interface OpenCorporatesRegistration {
+  jurisdiction_code: string
+  company_number: string
+  opencorporates_url?: string
+  start_date?: string
+  end_date?: string
 }
 
 export interface OpenCorporatesIndustryCode {
@@ -139,7 +147,7 @@ export interface OpenCorporatesOfficer {
   other_attributes?: {
     identification_number?: string
     identification_type?: string
-    [key: string]: any
+    [key: string]: string | number | boolean | null | undefined
   }
 
   // Provenance
@@ -337,7 +345,7 @@ export interface OpenCorporatesToBusinessMapping {
   name: string
   slug: string
   description?: string
-  address: any // oppspot address format
+  address: OpenCorporatesAddress | null
   latitude?: number
   longitude?: number
   location?: string // PostGIS POINT
@@ -351,18 +359,18 @@ export interface OpenCorporatesToBusinessMapping {
   company_type: string
   incorporation_date?: string
   dissolution_date?: string
-  registered_office_address: any
+  registered_office_address: OpenCorporatesAddress | null
   sic_codes: string[]
-  officers: any[]
-  filing_history: any[]
+  officers: OpenCorporatesOfficer[]
+  filing_history: OpenCorporatesFiling[]
 
   // OpenCorporates specific fields
   oc_jurisdiction_code: string
   oc_uid: string
   oc_data: OpenCorporatesCompany
   oc_last_updated: Date
-  previous_names: any[]
-  beneficial_owners: any[]
+  previous_names: OpenCorporatesPreviousName[]
+  beneficial_owners: OpenCorporatesBeneficialOwner[]
   registry_url?: string
 
   // Metadata
@@ -386,7 +394,7 @@ export class OpenCorporatesError extends Error {
     message: string,
     public code?: string,
     public status?: number,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message)
     this.name = 'OpenCorporatesError'
@@ -464,7 +472,7 @@ export interface OpenCorporatesHelpers {
   /**
    * Maps OpenCorporates address to oppspot format
    */
-  mapAddress(ocAddress?: OpenCorporatesAddress): any
+  mapAddress(ocAddress?: OpenCorporatesAddress): OpenCorporatesAddress | null
 
   /**
    * Generates jurisdiction display name

@@ -12,10 +12,11 @@ import type { FeedbackVoteResponse } from '@/types/feedback';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const { id } = await params;
+    const supabase = await createClient();
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -27,7 +28,7 @@ export async function POST(
       );
     }
 
-    const feedbackId = params.id;
+    const feedbackId = id;
 
     // Check if feedback exists
     const { data: feedback, error: feedbackError } = await supabase
@@ -82,7 +83,7 @@ export async function POST(
           old_value: { voted: true },
           new_value: { voted: false },
         })
-        .catch((err) => console.log('[Feedback Vote API] Activity log failed:', err));
+        .catch((err: unknown) => console.log('[Feedback Vote API] Activity log failed:', err));
 
     } else {
       // Add vote
@@ -114,7 +115,7 @@ export async function POST(
           old_value: { voted: false },
           new_value: { voted: true },
         })
-        .catch((err) => console.log('[Feedback Vote API] Activity log failed:', err));
+        .catch((err: unknown) => console.log('[Feedback Vote API] Activity log failed:', err));
     }
 
     // Get updated votes count

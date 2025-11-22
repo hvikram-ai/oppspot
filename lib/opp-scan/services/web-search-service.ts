@@ -1245,7 +1245,7 @@ export class WebSearchService implements IWebSearchService {
 
   // Enrichment methods
 
-  private async getFinancialData(company: CompanyEntity): Promise<any | undefined> {
+  private async getFinancialData(company: CompanyEntity): Promise<Record<string, unknown> | undefined> {
     // This would integrate with financial data providers
     // For now, return undefined to avoid API costs
     return undefined
@@ -1279,7 +1279,7 @@ export class WebSearchService implements IWebSearchService {
     return undefined
   }
 
-  private async getTechnologyProfile(company: CompanyEntity): Promise<any | undefined> {
+  private async getTechnologyProfile(company: CompanyEntity): Promise<Record<string, unknown> | undefined> {
     // This would analyze the company's technology stack
     // For now, return undefined to avoid API costs
     return undefined

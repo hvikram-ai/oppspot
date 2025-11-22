@@ -24,6 +24,58 @@ export interface MultiAgentResearchOptions {
   focus_areas?: string[]
 }
 
+// Internal interface for aggregated data
+interface AggregatedData {
+  company?: {
+    description?: string;
+    industry?: string;
+    employee_count?: number;
+    founded_date?: string;
+  };
+  news?: unknown[];
+  financialHistory?: unknown[];
+  competitors?: unknown[];
+  technologies?: unknown[];
+  people?: unknown[];
+  sources?: unknown[];
+  metadata?: {
+    sources_fetched: number;
+    sources_failed: number;
+  };
+}
+
+// Internal interface for multi-agent report
+interface MultiAgentReport {
+  sections: Record<string, {
+    content: string;
+    keyInsights: unknown[];
+    opportunities: unknown[];
+    concerns: unknown[];
+    recommendations: unknown[];
+    confidence: number;
+    sources: unknown[];
+    metadata?: {
+      processing_time_ms?: number;
+    };
+  }>;
+  executiveSummary: string;
+  buyingSignals?: unknown[];
+  opportunityScore?: number;
+  allSources: Array<{
+    url: string;
+    title: string;
+    published_date?: string | null;
+    source_type: string;
+    reliability_score?: number;
+    domain?: string | null;
+    content_snippet?: string | null;
+  }>;
+  metadata: {
+    total_agents_used: number;
+    parallel_execution: boolean;
+  };
+}
+
 // ============================================================================
 // MULTI-AGENT RESEARCH SERVICE
 // ============================================================================
@@ -139,25 +191,6 @@ export class MultiAgentResearchService {
     }
   }
 
-  interface AggregatedData {
-    company?: {
-      description?: string;
-      industry?: string;
-      employee_count?: number;
-      founded_date?: string;
-    };
-    news?: unknown[];
-    financialHistory?: unknown[];
-    competitors?: unknown[];
-    technologies?: unknown[];
-    people?: unknown[];
-    sources?: unknown[];
-    metadata?: {
-      sources_fetched: number;
-      sources_failed: number;
-    };
-  }
-
   /**
    * Build research context from aggregated data
    */
@@ -187,37 +220,6 @@ export class MultiAgentResearchService {
         sources_failed: 0,
       },
     }
-  }
-
-  interface MultiAgentReport {
-    sections: Record<string, {
-      content: string;
-      keyInsights: unknown[];
-      opportunities: unknown[];
-      concerns: unknown[];
-      recommendations: unknown[];
-      confidence: number;
-      sources: unknown[];
-      metadata?: {
-        processing_time_ms?: number;
-      };
-    }>;
-    executiveSummary: string;
-    buyingSignals?: unknown[];
-    opportunityScore?: number;
-    allSources: Array<{
-      url: string;
-      title: string;
-      published_date?: string | null;
-      source_type: string;
-      reliability_score?: number;
-      domain?: string | null;
-      content_snippet?: string | null;
-    }>;
-    metadata: {
-      total_agents_used: number;
-      parallel_execution: boolean;
-    };
   }
 
   /**

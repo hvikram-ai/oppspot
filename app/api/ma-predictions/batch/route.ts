@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { processBatch, processAllCompanies } from '@/lib/ma-prediction/batch/batch-processor';
+import { requireAdminRole } from '@/lib/auth/role-check';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,20 +35,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Check if user is admin (for now, allow all authenticated users for testing)
-    // In production, uncomment this:
-    // const { data: profile } = await supabase
-    //   .from('profiles')
-    //   .select('role')
-    //   .eq('id', user.id)
-    //   .single();
-    //
-    // if (!profile || profile.role !== 'admin') {
-    //   return NextResponse.json(
-    //     { error: 'forbidden', message: 'Batch processing requires admin role', code: 403 },
-    //     { status: 403 }
-    //   );
-    // }
+    const isAdmin = await requireAdminRole(supabase, user.id);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'Batch processing requires admin role', code: 403 },
+        { status: 403 }
+      );
+    }
 
     // Parse request body
     const body = await request.json().catch(() => ({}));

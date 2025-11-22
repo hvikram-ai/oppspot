@@ -16,9 +16,10 @@ import {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -29,7 +30,7 @@ export async function GET(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
 
     // Check access permissions BEFORE fetching data
     const hasAccess = await competitiveAnalysisRepository.checkUserAccess(id, user.id);
@@ -54,6 +55,10 @@ export async function GET(
     return NextResponse.json(
       {
         analysis,
+        access: {
+          isOwner: analysis.created_by === user.id,
+          userId: user.id,
+        },
         ...dashboardData,
       },
       { status: 200 }
@@ -70,9 +75,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -83,7 +89,7 @@ export async function PATCH(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
 
     // Check if analysis exists
     const analysis = await competitiveAnalysisRepository.findById(id);
@@ -122,9 +128,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -135,7 +142,7 @@ export async function DELETE(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID');
+    const id = validateUUID(analysisId, 'Analysis ID');
 
     // Check if analysis exists
     const analysis = await competitiveAnalysisRepository.findById(id);

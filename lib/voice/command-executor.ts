@@ -8,7 +8,7 @@ import type { VoiceCommand } from './voice-command-service'
 export interface ExecutionResult {
   success: boolean
   message: string
-  data?: any
+  data?: unknown
   error?: string
 }
 

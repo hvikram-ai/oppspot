@@ -123,7 +123,7 @@ export class EngagementTracker {
   async recordEngagementEvent(
     companyId: string,
     eventType: string,
-    eventData: any = {},
+    eventData: Record<string, unknown> = {},
     userId?: string
   ): Promise<void> {
     const supabase = await createClient()
@@ -149,7 +149,7 @@ export class EngagementTracker {
     console.log(`[EngagementTracker] Recorded ${eventType} event for company ${companyId}`)
   }
 
-  private calculateEngagementMetrics(events: any[]) {
+  private calculateEngagementMetrics(events: Array<{ event_type: string; event_data?: Record<string, unknown> }>) {
     const metrics = {
       emailEngagement: 0,
       webEngagement: 0,

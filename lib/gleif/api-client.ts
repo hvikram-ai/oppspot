@@ -86,6 +86,50 @@ export interface LEISearchResponse {
   }
 }
 
+// Raw GLEIF API response types
+interface GLEIFAPIItem {
+  id: string
+  attributes?: {
+    entity?: {
+      legalName?: { name?: string }
+      legalForm?: { id?: string }
+      status?: string
+      category?: string
+      legalJurisdiction?: string
+      registrationAuthority?: { id?: string }
+      registeredAs?: string
+      legalAddress?: {
+        addressLines?: string[]
+        city?: string
+        region?: string
+        country?: string
+        postalCode?: string
+      }
+      headquartersAddress?: {
+        addressLines?: string[]
+        city?: string
+        region?: string
+        country?: string
+        postalCode?: string
+      }
+      bic?: string[]
+      mic?: string[]
+      validationSources?: string
+    }
+    registration?: {
+      initialRegistrationDate?: string
+      lastUpdateDate?: string
+      nextRenewalDate?: string
+      managingLOU?: string
+      status?: string
+    }
+  }
+}
+
+interface GLEIFAPIResponse {
+  data?: GLEIFAPIItem[]
+}
+
 export class GLEIFAPI {
   private baseUrl = 'https://api.gleif.org/api/v1'
   private leilexBaseUrl = 'https://api.leilex.com' // Alternative API with better fuzzy search
@@ -133,7 +177,7 @@ export class GLEIFAPI {
 
       // Extract LEI codes from fuzzy search results
       const leis = data.data
-        ?.map((item: any) => item.id)
+        ?.map((item: GLEIFAPIItem) => item.id)
         .slice(0, options?.limit || 10)
 
       if (!leis || leis.length === 0) {
@@ -143,10 +187,10 @@ export class GLEIFAPI {
       // Get simplified details for each LEI
       return leis.map((lei: string) => ({
         lei,
-        legalName: data.data.find((d: any) => d.id === lei)?.attributes?.entity?.legalName?.name || '',
-        entityStatus: data.data.find((d: any) => d.id === lei)?.attributes?.entity?.status || '',
-        legalJurisdiction: data.data.find((d: any) => d.id === lei)?.attributes?.entity?.legalJurisdiction || '',
-        registrationNumber: data.data.find((d: any) => d.id === lei)?.attributes?.entity?.registeredAs,
+        legalName: data.data.find((d: GLEIFAPIItem) => d.id === lei)?.attributes?.entity?.legalName?.name || '',
+        entityStatus: data.data.find((d: GLEIFAPIItem) => d.id === lei)?.attributes?.entity?.status || '',
+        legalJurisdiction: data.data.find((d: GLEIFAPIItem) => d.id === lei)?.attributes?.entity?.legalJurisdiction || '',
+        registrationNumber: data.data.find((d: GLEIFAPIItem) => d.id === lei)?.attributes?.entity?.registeredAs,
       }))
     } catch (error) {
       console.error('[GLEIF] Search failed:', error)
@@ -247,7 +291,7 @@ export class GLEIFAPI {
 
       const data = await response.json()
 
-      return (data.data || []).map((item: any) => ({
+      return (data.data || []).map((item: GLEIFAPIItem) => ({
         lei: item.id,
         legalName: item.attributes?.entity?.legalName?.name || '',
         entityStatus: item.attributes?.entity?.status || '',
@@ -321,9 +365,9 @@ export class GLEIFAPI {
     company_number: string
     company_status: string
     company_type: string
-    registered_office_address: any
+    registered_office_address: LEIEntity['legalAddress']
     data_source: 'gleif_lei'
-    data_sources: any
+    data_sources: { gleif_lei: { last_updated: Date; lei: string } }
     cache_expires_at: Date
     oc_jurisdiction_code: string
     oc_uid: string
@@ -388,7 +432,7 @@ export class GLEIFAPI {
   /**
    * Transform GLEIF LEI data to our format
    */
-  private transformLEIData(data: any): LEIEntity {
+  private transformLEIData(data: GLEIFAPIItem): LEIEntity {
     const entity = data.attributes?.entity
     const registration = data.attributes?.registration
 

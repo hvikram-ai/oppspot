@@ -106,8 +106,8 @@ export interface IDataSourceProvider {
   readonly costModel: CostModel
   readonly reliability: number
 
-  search(criteria: SearchCriteria, options?: SearchOptions): AsyncIterable<any>
-  getCompanyDetails(id: string): Promise<any | null>
+  search(criteria: SearchCriteria, options?: SearchOptions): AsyncIterable<CompanyEntity>
+  getCompanyDetails(id: string): Promise<CompanyEntity | null>
   getRateLimit(): RateLimitInfo
   getHealthStatus(): Promise<HealthStatus>
   testConnection(): Promise<ConnectionTestResult>
@@ -264,17 +264,17 @@ export interface AnalysisSummary {
 // ==========================================
 
 export interface IScanRepository {
-  findById(id: string): Promise<any | null>
-  findByUserId(userId: string): Promise<any[]>
-  findByStatus(status: ScanStatus): Promise<any[]>
+  findById(id: string): Promise<ScanResult | null>
+  findByUserId(userId: string): Promise<ScanResult[]>
+  findByStatus(status: ScanStatus): Promise<ScanResult[]>
   save(scan: unknown): Promise<void>
   update(scan: unknown): Promise<void>
   delete(id: string): Promise<void>
 }
 
 export interface ICompanyRepository {
-  findById(id: string): Promise<any | null>
-  findByUserId(userId: string): Promise<any[]>
+  findById(id: string): Promise<CompanyEntity | null>
+  findByUserId(userId: string): Promise<CompanyEntity[]>
   save(company: unknown): Promise<void>
   update(company: unknown): Promise<void>
   delete(id: string): Promise<void>
@@ -285,15 +285,15 @@ export interface ICompanyRepository {
 // ==========================================
 
 export interface IDataCollectionService {
-  collectData(params: unknown): Promise<any>
+  collectData(params: unknown): Promise<CompanyEntity[]>
 }
 
 export interface ICompanyAnalysisService {
-  analyzeCompany(company: unknown): Promise<any>
+  analyzeCompany(company: unknown): Promise<ScanAnalysis>
 }
 
 export interface IScanOrchestrationService {
-  orchestrateScan(scanId: string): Promise<any>
+  orchestrateScan(scanId: string): Promise<ScanResult>
 }
 
 export interface ICacheService {
@@ -319,7 +319,7 @@ export interface ICostManagementService {
 
 export interface IEventStore {
   append(streamId: string, events: unknown[]): Promise<void>
-  getEvents(streamId: string): Promise<any[]>
+  getEvents(streamId: string): Promise<DomainEvent[]>
 }
 
 // ==========================================

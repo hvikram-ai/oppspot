@@ -108,7 +108,7 @@ export function getQueue(name: QueueName): Queue.Queue {
     console.log(`[Queue:${name}] Job ${job.id} started processing`)
   })
 
-  queue.on('completed', (job: Queue.Job, result: any) => {
+  queue.on('completed', (job: Queue.Job, result: unknown) => {
     console.log(`[Queue:${name}] Job ${job.id} completed`)
   })
 

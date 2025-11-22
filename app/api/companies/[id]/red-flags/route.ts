@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getRedFlagService } from '@/lib/red-flags/red-flag-service';
 import { FlagFilters } from '@/lib/red-flags/types';
+import { userHasCompanyAccess } from '@/lib/companies/access';
 
 /**
  * GET handler - List red flags for a company
@@ -32,7 +33,7 @@ export async function GET(
     }
 
     // Check if user has access to this company
-    const hasAccess = await checkCompanyAccess(supabase, user.id, companyId);
+    const hasAccess = await userHasCompanyAccess(supabase, user.id, companyId);
     if (!hasAccess) {
       return NextResponse.json(
         { error: 'Forbidden - no access to this company' },
@@ -120,18 +121,5 @@ async function checkCompanyAccess(
   userId: string,
   companyId: string
 ): Promise<boolean> {
-  // Check if company exists and user has access
-  const { data: company, error } = await supabase
-    .from('businesses')
-    .select('id')
-    .eq('id', companyId)
-    .single();
-
-  if (error || !company) {
-    return false;
-  }
-
-  // For now, assume all authenticated users have access
-  // TODO: Implement proper RLS/permission checking
-  return true;
+  return userHasCompanyAccess(supabase, userId, companyId);
 }

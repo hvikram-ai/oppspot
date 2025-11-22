@@ -18,7 +18,15 @@ import { BaseAgent, AgentConfig, AgentExecutionContext, AgentExecutionResult } f
 import { createClient } from '@/lib/supabase/server'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
+import type { PostgrestError } from '@supabase/supabase-js'
 import type { Row } from '@/lib/supabase/helpers'
+
+// Company type from database query
+interface WebsiteCompany {
+  id: string
+  name: string
+  website: string
+}
 
 export interface WebsiteAnalyzerConfig {
   companyIds?: string[] // Specific companies to analyze
@@ -167,7 +175,7 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
     const limit = config.maxCompanies || 20
     query = query.limit(limit)
 
-    const { data, error } = await query as { data: Array<{ id: string; name: string; website: string }> | null; error: unknown }
+    const { data, error } = await query as { data: WebsiteCompany[] | null; error: PostgrestError | null }
 
     if (error) {
       throw new Error(`Failed to fetch companies: ${error.message}`)
@@ -179,7 +187,7 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
   /**
    * Analyze company website
    */
-  private async analyzeWebsite(company: any): Promise<WebsiteAnalysisData | null> {
+  private async analyzeWebsite(company: WebsiteCompany): Promise<WebsiteAnalysisData | null> {
     const url = this.normalizeUrl(company.website)
 
     this.log(`Analyzing website: ${url}`)
@@ -468,7 +476,7 @@ export class WebsiteAnalyzerAgent extends BaseAgent {
     const supabase = await createClient()
 
     // Update business record with website analysis data
-    const updateData: any = {}
+    const updateData: Record<string, string | string[]> = {}
 
     if (data.technologies.length > 0) updateData.technologies = data.technologies
     if (data.description) updateData.description = data.description
@@ -583,7 +591,7 @@ export async function createWebsiteAnalyzerAgent(agentId: string): Promise<Websi
     .select('*')
     .eq('id', agentId)
     .eq('agent_type', 'website_analyzer_agent')
-    .single() as { data: Row<'ai_agents'> | null; error: any }
+    .single() as { data: Row<'ai_agents'> | null; error: PostgrestError | null }
 
   if (error || !data) {
     throw new Error(`Website analyzer agent not found: ${agentId}`)

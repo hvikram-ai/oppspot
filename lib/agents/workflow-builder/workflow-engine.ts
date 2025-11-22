@@ -216,7 +216,7 @@ export class WorkflowEngine {
 
     // Note: Agents use analyze() method, not execute()
     // Input should be a ResearchContext object
-    const result = await agent.analyze(input as any, agentConfig?.specificQuery as string | undefined)
+    const result = await agent.analyze(input as Parameters<typeof agent.analyze>[0], agentConfig?.specificQuery as string | undefined)
 
     return result
   }

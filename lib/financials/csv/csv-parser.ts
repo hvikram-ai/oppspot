@@ -168,7 +168,7 @@ export class CSVParser {
       } catch (error) {
         if (error instanceof z.ZodError) {
           // Extract Zod validation errors
-          error.errors.forEach((zodError) => {
+          error.errors.forEach((zodError: z.ZodIssue) => {
             errors.push({
               row: rowNumber,
               field: zodError.path.join('.'),

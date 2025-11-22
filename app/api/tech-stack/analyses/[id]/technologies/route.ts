@@ -72,9 +72,10 @@ const AddTechnologySchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -87,7 +88,7 @@ export async function GET(
     const repository = new TechStackRepository(supabase);
 
     // Get analysis to verify access
-    const analysis = await repository.getAnalysis(params.id);
+    const analysis = await repository.getAnalysis(id);
 
     // Verify user has access to data room
     const { data: dataRoom } = await supabase
@@ -126,7 +127,7 @@ export async function GET(
 
     // List technologies
     const filter: TechStackTechnologyFilter = {
-      analysis_id: params.id,
+      analysis_id: id,
       ...validated,
     };
 
@@ -163,9 +164,10 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -182,7 +184,7 @@ export async function POST(
     const repository = new TechStackRepository(supabase);
 
     // Get analysis to verify access
-    const analysis = await repository.getAnalysis(params.id);
+    const analysis = await repository.getAnalysis(id);
 
     // Verify user has access to data room (editor or owner)
     const { data: dataRoom } = await supabase
@@ -215,7 +217,7 @@ export async function POST(
     // Add technology
     const technology = await repository.addTechnology(
       {
-        analysis_id: params.id,
+        analysis_id: id,
         ...validated,
       },
       user.id
@@ -229,7 +231,7 @@ export async function POST(
       actor_email: user.email || '',
       action: 'add_technology',
       details: {
-        analysis_id: params.id,
+        analysis_id: id,
         technology_id: technology.id,
         technology_name: technology.name,
         category: technology.category,

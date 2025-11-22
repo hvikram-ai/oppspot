@@ -16,11 +16,11 @@ import { canAssignRole, UserRole } from '@/lib/rbac/types';
 export const GET = requireEnterpriseAdmin(
   async (
     request: NextRequest,
-    context: { params: { userId: string } },
-    user: any
+    context: { params: Promise<{ userId: string }> },
+    user: Record<string, unknown>
   ) => {
     try {
-      const { userId } = context.params;
+      const { userId } = await context.params;
 
       // Check if user can access this organization
       const targetUserOrgId = await PermissionService.getUserOrgId(userId);
@@ -57,11 +57,11 @@ export const GET = requireEnterpriseAdmin(
           role,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
         {
           error: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Failed to fetch role',
+          message: error instanceof Error ? error.message : 'Failed to fetch role',
         },
         { status: 500 }
       );
@@ -77,11 +77,11 @@ export const GET = requireEnterpriseAdmin(
 export const PUT = requireEnterpriseAdmin(
   async (
     request: NextRequest,
-    context: { params: { userId: string } },
-    user: any
+    context: { params: Promise<{ userId: string }> },
+    user: Record<string, unknown>
   ) => {
     try {
-      const { userId } = context.params;
+      const { userId } = await context.params;
       const { role: newRole, reason } = await request.json();
 
       // Validate new role
@@ -169,11 +169,11 @@ export const PUT = requireEnterpriseAdmin(
           newRole,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
         {
           error: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Failed to change role',
+          message: error instanceof Error ? error.message : 'Failed to change role',
         },
         { status: 500 }
       );

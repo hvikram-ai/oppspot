@@ -115,8 +115,8 @@ export default function AnalysisDashboardPage() {
     );
   }
 
-  const { analysis, competitors, feature_matrix, pricing_comparisons, moat_score } = dashboardData;
-  const isOwner = true; // TODO: Check if current user is owner
+  const { analysis, competitors, feature_matrix, pricing_comparisons, moat_score, access } = dashboardData;
+  const isOwner = access?.isOwner ?? false;
 
   return (
     <div className="container mx-auto py-6 space-y-6">

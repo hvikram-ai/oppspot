@@ -18,9 +18,10 @@ import { getBatchStatus } from '@/lib/ma-prediction/batch/batch-processor';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { batchId: string } }
+  { params }: { params: Promise<{ batchId: string }> }
 ) {
   try {
+    const { batchId } = await params;
     // Authenticate user
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -31,8 +32,6 @@ export async function GET(
         { status: 401 }
       );
     }
-
-    const batchId = params.batchId;
 
     // Fetch batch status
     const status = await getBatchStatus(batchId);

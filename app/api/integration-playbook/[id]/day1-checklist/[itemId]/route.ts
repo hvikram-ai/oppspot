@@ -13,9 +13,10 @@ import type { ChecklistStatus } from '@/lib/data-room/types';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
+    const { id, itemId: item } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -27,7 +28,7 @@ export async function PATCH(
       );
     }
 
-    const itemId = params.itemId;
+    const itemId = item;
     const body = await request.json();
 
     // Build update object

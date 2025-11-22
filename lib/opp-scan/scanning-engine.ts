@@ -95,13 +95,27 @@ class OppScanEngine {
       // Update scan status
       await this.updateScanStatus(scanId, 'scanning', 'data_collection', 5)
 
+      // Cast to ScanConfig for use in methods
+      const scanConfig: ScanConfig = {
+        id: scan.id,
+        scan_id: scanId,
+        user_id: scan.user_id || undefined,
+        org_id: scan.org_id || undefined,
+        selected_industries: (scan.selected_industries as ScanConfig['selected_industries']) || [],
+        selected_regions: (scan.selected_regions as ScanConfig['selected_regions']) || [],
+        data_sources: (scan.data_sources as string[]) || [],
+        scan_depth: (scan.scan_depth as ScanConfig['scan_depth']) || 'basic',
+        required_capabilities: (scan.required_capabilities as ScanConfig['required_capabilities']) || [],
+        strategic_objectives: scan.strategic_objectives as ScanConfig['strategic_objectives']
+      }
+
       // Execute data collection from all configured sources
-      const results = await this.collectDataFromSources(scan as any)
+      const results = await this.collectDataFromSources(scanConfig)
 
       await this.updateScanStatus(scanId, 'scanning', 'data_processing', 25)
 
       // Process and deduplicate results
-      const processedCompanies = await this.processAndDeduplicateResults(results, scan as any)
+      const processedCompanies = await this.processAndDeduplicateResults(results, scanConfig)
 
       await this.updateScanStatus(scanId, 'scanning', 'target_creation', 50)
 
@@ -111,12 +125,12 @@ class OppScanEngine {
       await this.updateScanStatus(scanId, 'analyzing', 'financial_analysis', 60)
 
       // Run analysis on targets
-      await this.analyzeTargets(scanId, targetIds, scan as any)
+      await this.analyzeTargets(scanId, targetIds, scanConfig)
 
       await this.updateScanStatus(scanId, 'analyzing', 'risk_assessment', 80)
 
       // Generate market intelligence
-      await this.generateMarketIntelligence(scanId, scan as any, processedCompanies)
+      await this.generateMarketIntelligence(scanId, scanConfig, processedCompanies)
       
       await this.updateScanStatus(scanId, 'completed', 'completed', 100)
 
@@ -134,7 +148,7 @@ class OppScanEngine {
     try {
       // Convert scan configuration to search criteria
       const searchCriteria = {
-        industries: (scan.selected_industries || []) as any,
+        industries: scan.selected_industries || [],
         regions: scan.selected_regions?.map((r) => r.country || r.name) || [],
         minIncorporationYear: this.extractMinIncorporationYear(scan),
         maxIncorporationYear: this.extractMaxIncorporationYear(scan),
@@ -501,8 +515,8 @@ class OppScanEngine {
         await this.generateDueDiligence(targetId)
 
         // Update target status
-        await (supabase
-          .from('target_companies') as any)
+        await supabase
+          .from('target_companies')
           .update({
             analysis_status: 'completed',
             analyzed_at: new Date().toISOString()
@@ -525,7 +539,7 @@ class OppScanEngine {
     }
 
     // Update analyzed targets count
-    await (supabase as any).rpc('increment_analyzed_targets', {
+    await supabase.rpc('increment_analyzed_targets', {
       scan_id: scanId,
       increment: processedCount
     })
@@ -575,13 +589,13 @@ class OppScanEngine {
     }
 
     if (existingIntelligence) {
-      await (supabase
-        .from('market_intelligence') as any)
+      await supabase
+        .from('market_intelligence')
         .update(intelligenceData)
         .eq('id', existingIntelligence.id)
     } else {
-      await (supabase
-        .from('market_intelligence') as any)
+      await supabase
+        .from('market_intelligence')
         .insert(intelligenceData)
     }
   }
@@ -639,8 +653,8 @@ class OppScanEngine {
       updateData.error_message = error
     }
 
-    await (supabase
-      .from('acquisition_scans') as any)
+    await supabase
+      .from('acquisition_scans')
       .update(updateData)
       .eq('id', scanId)
   }
@@ -726,8 +740,8 @@ class OppScanEngine {
     const scores = [0.8, 0.65, 0.5, 0.3]
     const recIndex = Math.floor(Math.random() * recommendations.length)
 
-    await (supabase
-      .from('due_diligence') as any)
+    await supabase
+      .from('due_diligence')
       .insert({
         target_company_id: targetId,
         document_completeness_score: 0.6 + (Math.random() * 0.3),
@@ -829,7 +843,12 @@ class OppScanEngine {
     return 'declining'
   }
 
-  private identifyTopCompetitors(companies: CompanyData[]): any[] {
+  private identifyTopCompetitors(companies: CompanyData[]): Array<{
+    name: string;
+    estimated_revenue: number | undefined;
+    confidence_score: number;
+    country: string;
+  }> {
     return companies
       .sort((a, b) => (b.revenue_estimate || 0) - (a.revenue_estimate || 0))
       .slice(0, 10)
@@ -885,7 +904,11 @@ class OppScanEngine {
     ]
   }
 
-  private analyzeGeographicDistribution(companies: CompanyData[], scan: ScanConfig): any {
+  private analyzeGeographicDistribution(companies: CompanyData[], scan: ScanConfig): {
+    countries: { [key: string]: number };
+    primary_market: string;
+    geographic_diversity: number;
+  } {
     const distribution: { [key: string]: number } = {}
 
     companies.forEach(company => {
@@ -937,7 +960,7 @@ class OppScanEngine {
               success: !result.metadata.errors || result.metadata.errors.length === 0,
               error_message: result.metadata.errors?.join('; '),
               confidence: result.metadata.confidence
-            } as any
+            }
           })
         }
       }
@@ -958,8 +981,8 @@ class OppScanEngine {
     const ebitdaMargin = 0.05 + (Math.random() * 0.3)
 
     try {
-      await (supabase
-        .from('financial_analysis') as any)
+      await supabase
+        .from('financial_analysis')
         .insert({
           target_company_id: targetId,
           analysis_year: 2024,
@@ -996,8 +1019,8 @@ class OppScanEngine {
     const regulatoryRiskFactors = this.generateRegulatoryRiskFactors()
 
     try {
-      await (supabase
-        .from('risk_assessments') as any)
+      await supabase
+        .from('risk_assessments')
         .insert({
           target_company_id: targetId,
           financial_risk_score: Math.random() * 0.5 + (overallRisk * 0.5),

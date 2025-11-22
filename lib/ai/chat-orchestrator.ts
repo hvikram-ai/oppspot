@@ -731,7 +731,7 @@ Response:`;
       .eq('session_id', this.context?.session_id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single() as { data: (Row<'chat_messages'> & { id: string }) | null; error: any }
+      .single() as { data: (Row<'chat_messages'> & { id: string }) | null; error: unknown }
 
     if (messageData) {
       const citationRecords = citations.map(citation => ({

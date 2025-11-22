@@ -327,7 +327,7 @@ export class OpportunityBot extends BaseAgent {
 
     // Industry match (using categories)
     if (criteria.industry && Array.isArray(criteria.industry)) {
-      const hasMatch = company.categories.some(cat => criteria.industry?.includes(cat))
+      const hasMatch = company.categories.some((cat: string) => criteria.industry?.includes(cat))
       if (hasMatch) {
         score += 0.5
       }

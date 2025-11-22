@@ -15,9 +15,10 @@ import type { SynergyType, SynergyStatus } from '@/lib/data-room/types';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -29,7 +30,7 @@ export async function GET(
       );
     }
 
-    const playbookId = params.id;
+    const playbookId = id;
     const { searchParams } = new URL(request.url);
 
     // Parse filters
@@ -82,9 +83,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: _playbookId } = await params;
     const supabase = await createClient();
 
     // Get authenticated user
@@ -107,7 +109,15 @@ export async function PATCH(
     }
 
     // Build update object
-    const updates: any = {
+    const updates: {
+      updated_at: string;
+      year_1_actual?: number;
+      year_2_actual?: number;
+      year_3_actual?: number;
+      status?: SynergyStatus;
+      notes?: string;
+      total_actual?: number;
+    } = {
       updated_at: new Date().toISOString(),
     };
 

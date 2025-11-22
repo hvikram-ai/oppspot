@@ -27,9 +27,10 @@ const TriggerAnalysisSchema = z.object({
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const startTime = Date.now();
+  const { id } = await params;
 
   try {
     const supabase = await createClient();
@@ -48,7 +49,7 @@ export async function POST(
     const repository = new TechStackRepository(supabase);
 
     // Get existing analysis
-    const analysis = await repository.getAnalysis(params.id);
+    const analysis = await repository.getAnalysis(id);
 
     // Verify user has access to data room (editor or owner)
     const { data: dataRoom } = await supabase
@@ -87,7 +88,7 @@ export async function POST(
     }
 
     // Update status to analyzing
-    await repository.updateAnalysisStatus(params.id, 'analyzing');
+    await repository.updateAnalysisStatus(id, 'analyzing');
 
     // Get documents from data room
     let documentsQuery = supabase
@@ -104,7 +105,7 @@ export async function POST(
 
     if (!documents || documents.length === 0) {
       await repository.updateAnalysisStatus(
-        params.id,
+        id,
         'failed',
         'No processed documents found in data room'
       );
@@ -178,7 +179,7 @@ export async function POST(
 
     for (const tech of allTechnologies.values()) {
       const saved = await repository.addTechnology({
-        analysis_id: params.id,
+        analysis_id: id,
         name: tech.name,
         category: tech.category,
         version: tech.version,
@@ -233,7 +234,7 @@ export async function POST(
     // Save findings
     for (const finding of generatedFindings) {
       await repository.createFinding(
-        findingsGenerator.toCreateRequest(finding, params.id)
+        findingsGenerator.toCreateRequest(finding, id)
       );
     }
 
@@ -250,7 +251,7 @@ export async function POST(
         last_analyzed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id);
+      .eq('id', id);
 
     // Note: Database triggers will automatically calculate and update:
     // - technologies_identified count
@@ -266,7 +267,7 @@ export async function POST(
       actor_email: user.email || '',
       action: 'analyze_tech_stack',
       details: {
-        analysis_id: params.id,
+        analysis_id: id,
         technologies_found: savedTechnologies.length,
         findings_generated: generatedFindings.length,
         documents_analyzed: documents.length,
@@ -277,7 +278,7 @@ export async function POST(
     });
 
     // Get updated analysis with all details
-    const finalAnalysis = await repository.getAnalysisWithDetails(params.id);
+    const finalAnalysis = await repository.getAnalysisWithDetails(id);
 
     // Send completion email notification (async, don't block response)
     try {
@@ -297,7 +298,7 @@ export async function POST(
         modernizationScore: finalAnalysis.modernization_score,
         aiAuthenticityScore: finalAnalysis.ai_authenticity_score,
         criticalFindings: finalAnalysis.critical_findings_count || 0,
-        actionUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://oppspot-one.vercel.app'}/data-room/${analysis.data_room_id}/tech-stack/${params.id}`,
+        actionUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://oppspot-one.vercel.app'}/data-room/${analysis.data_room_id}/tech-stack/${id}`,
       });
 
       // Send notification (in-app + email)
@@ -307,9 +308,9 @@ export async function POST(
         title: 'Tech Stack Analysis Complete',
         body: `${analysis.title} analysis completed with ${savedTechnologies.length} technologies found`,
         priority: finalAnalysis.critical_findings_count > 0 ? 'high' : 'medium',
-        actionUrl: `/data-room/${analysis.data_room_id}/tech-stack/${params.id}`,
+        actionUrl: `/data-room/${analysis.data_room_id}/tech-stack/${id}`,
         data: {
-          analysis_id: params.id,
+          analysis_id: id,
           technologies_found: savedTechnologies.length,
           risk_level: finalAnalysis.risk_level,
         },
@@ -343,7 +344,7 @@ export async function POST(
       const supabase = await createClient();
       const repository = new TechStackRepository(supabase);
       await repository.updateAnalysisStatus(
-        params.id,
+        id,
         'failed',
         (error as Error).message
       );
@@ -355,7 +356,7 @@ export async function POST(
         } = await supabase.auth.getUser();
 
         if (user) {
-          const analysis = await repository.getAnalysis(params.id);
+          const analysis = await repository.getAnalysis(id);
           const { data: dataRoom } = await supabase
             .from('data_rooms')
             .select('name')
@@ -371,9 +372,9 @@ export async function POST(
             title: 'Tech Stack Analysis Failed',
             body: `${analysis.title} analysis failed: ${(error as Error).message}`,
             priority: 'high',
-            actionUrl: `/data-room/${analysis.data_room_id}/tech-stack/${params.id}`,
+            actionUrl: `/data-room/${analysis.data_room_id}/tech-stack/${id}`,
             data: {
-              analysis_id: params.id,
+              analysis_id: id,
               error_message: (error as Error).message,
             },
           });

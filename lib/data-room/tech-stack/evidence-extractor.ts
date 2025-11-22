@@ -28,6 +28,29 @@ export interface EvidenceSearchResult {
   search_time_ms: number;
 }
 
+interface EnrichedChunk {
+  chunk_id: string;
+  document_id: string;
+  document_filename: string;
+  page_number: number | null;
+  chunk_index: number;
+  content: string;
+  similarity: number;
+  token_count?: number;
+  document_page_count?: number;
+}
+
+interface RawChunk {
+  document_id: string;
+  chunk_id?: string;
+  page_number?: number | null;
+  chunk_index?: number;
+  content?: string;
+  similarity?: number;
+  token_count?: number;
+  document_page_count?: number;
+}
+
 /**
  * EvidenceExtractor - Find evidence of technologies in documents using vector search
  */
@@ -94,7 +117,7 @@ export class EvidenceExtractor {
       const dataRoomChunks = await this.filterByDataRoom(chunks, dataRoomId, options.documentIds);
 
       // Convert to evidence format
-      const evidence = dataRoomChunks.slice(0, maxResults).map((chunk: any) => ({
+      const evidence = dataRoomChunks.slice(0, maxResults).map((chunk: EnrichedChunk) => ({
         chunk_id: chunk.chunk_id,
         document_id: chunk.document_id,
         document_filename: chunk.document_filename,
@@ -161,10 +184,10 @@ export class EvidenceExtractor {
    * Filter chunks to only those from documents in the specified data room
    */
   private async filterByDataRoom(
-    chunks: any[],
+    chunks: RawChunk[],
     dataRoomId: string,
     documentIds?: string[]
-  ): Promise<any[]> {
+  ): Promise<Array<RawChunk & { document_filename: string }>> {
     // Get document IDs that belong to this data room
     let query = this.supabase
       .from('documents')
@@ -185,8 +208,8 @@ export class EvidenceExtractor {
 
     // Filter chunks and enrich with document metadata
     return chunks
-      .filter((chunk: any) => validDocumentIds.has(chunk.document_id))
-      .map((chunk: any) => {
+      .filter((chunk: RawChunk) => validDocumentIds.has(chunk.document_id))
+      .map((chunk: RawChunk) => {
         const doc = documents.find((d) => d.id === chunk.document_id);
         return {
           ...chunk,

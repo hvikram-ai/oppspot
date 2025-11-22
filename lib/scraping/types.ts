@@ -49,7 +49,7 @@ export interface ScrapingJob {
   error_message?: string;
   retry_count: number;
   max_retries: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -62,8 +62,8 @@ export interface ScrapedData {
   job_id: string;
   provider: ScrapingProvider;
   data_type: string; // 'company_profile', 'financials', 'team', 'news', etc.
-  raw_data: Record<string, any>;
-  normalized_data?: Record<string, any>;
+  raw_data: Record<string, unknown>;
+  normalized_data?: Record<string, unknown>;
   confidence: DataConfidence;
   source_url?: string;
   scraped_at: string;
@@ -153,12 +153,12 @@ export interface WebsiteScrapingTargets {
 /**
  * Scraping result
  */
-export interface ScrapingResult<T = any> {
+export interface ScrapingResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
   confidence: DataConfidence;
   source_url: string;
   scraped_at: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

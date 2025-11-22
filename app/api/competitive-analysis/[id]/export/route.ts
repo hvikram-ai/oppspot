@@ -19,9 +19,10 @@ import { generateCompetitiveAnalysisExcel } from '@/lib/competitive-analysis/exp
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: analysisId } = await params
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'pdf'
 
@@ -44,7 +45,7 @@ export async function GET(
     }
 
     // Validate UUID format
-    const id = validateUUID(params.id, 'Analysis ID')
+    const id = validateUUID(analysisId, 'Analysis ID')
 
     // Check access permissions
     const hasAccess = await competitiveAnalysisRepository.checkUserAccess(id, user.id)

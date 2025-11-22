@@ -22,6 +22,31 @@ import type {
 } from '@/types/itp';
 import { DEFAULT_SCORING_WEIGHTS } from '@/types/itp';
 
+// Extended Business interface with optional fields used in ITP scoring
+interface BusinessExtended extends Business {
+  ownership_type?: string;
+  founded_year?: number;
+  products_services?: string[];
+  employee_range?: string;
+  revenue_estimated?: number;
+  revenue_verified?: number;
+  latest_valuation?: number;
+  employee_growth_3mo?: number;
+  employee_growth_6mo?: number;
+  employee_growth_12mo?: number;
+  job_openings_count?: number;
+  web_traffic_rank_change_pct?: number;
+  funding_total_raised?: number;
+  funding_latest_round?: string;
+  investors?: string[];
+  web_page_views?: number;
+  web_traffic_rank?: number;
+  sources_count?: number;
+  conference_count?: number;
+  custom_score?: number;
+  priority?: string;
+}
+
 /**
  * Main scoring engine class
  */
@@ -125,7 +150,7 @@ export class ITPScoringEngine {
       totalCriteria++;
       const businessIndustries = business.categories || [];
       const industryMatch = filter.industries.some((ind) =>
-        businessIndustries.some((cat) =>
+        businessIndustries.some((cat: string) =>
           cat.toLowerCase().includes(ind.toLowerCase())
         )
       );
@@ -141,7 +166,7 @@ export class ITPScoringEngine {
     // Ownership type matching
     if (filter.ownership && filter.ownership.length > 0) {
       totalCriteria++;
-      const businessOwnership = (business as any).ownership_type?.toLowerCase();
+      const businessOwnership = (business as BusinessExtended).ownership_type?.toLowerCase();
       const ownershipMatch = filter.ownership.some(
         (own) => businessOwnership === own.toLowerCase()
       );
@@ -157,7 +182,7 @@ export class ITPScoringEngine {
     // Founded year range
     if (filter.foundedYearMin || filter.foundedYearMax) {
       totalCriteria++;
-      const foundedYear = (business as any).founded_year;
+      const foundedYear = (business as BusinessExtended).founded_year;
 
       if (foundedYear) {
         const min = filter.foundedYearMin || 0;
@@ -178,7 +203,7 @@ export class ITPScoringEngine {
     // Products/services matching
     if (filter.productsServices && filter.productsServices.length > 0) {
       totalCriteria++;
-      const businessProducts = (business as any).products_services || [];
+      const businessProducts = (business as BusinessExtended).products_services || [];
       const productMatch = filter.productsServices.some((prod) =>
         businessProducts.some((bp: string) =>
           bp.toLowerCase().includes(prod.toLowerCase())
@@ -215,7 +240,7 @@ export class ITPScoringEngine {
     if (filter.employeeRanges && filter.employeeRanges.length > 0) {
       totalCriteria++;
       const empCount = business.employee_count;
-      const empRange = (business as any).employee_range;
+      const empRange = (business as BusinessExtended).employee_range;
 
       if (empCount || empRange) {
         const rangeMatch = filter.employeeRanges.includes(empRange);
@@ -234,7 +259,7 @@ export class ITPScoringEngine {
     if (filter.revenueMin !== undefined || filter.revenueMax !== undefined) {
       totalCriteria++;
       const revenue =
-        (business as any).revenue_estimated || (business as any).revenue_verified;
+        (business as BusinessExtended).revenue_estimated || (business as BusinessExtended).revenue_verified;
 
       if (revenue) {
         const min = filter.revenueMin || 0;
@@ -263,7 +288,7 @@ export class ITPScoringEngine {
     // Valuation range
     if (filter.valuationMin || filter.valuationMax) {
       totalCriteria++;
-      const valuation = (business as any).latest_valuation;
+      const valuation = (business as BusinessExtended).latest_valuation;
 
       if (valuation) {
         const min = filter.valuationMin || 0;
@@ -302,7 +327,7 @@ export class ITPScoringEngine {
     // Employee growth (3 month)
     if (filter.employeeGrowth3moMin !== undefined) {
       totalCriteria++;
-      const growth3mo = (business as any).employee_growth_3mo;
+      const growth3mo = (business as BusinessExtended).employee_growth_3mo;
 
       if (growth3mo !== null && growth3mo !== undefined) {
         if (growth3mo >= filter.employeeGrowth3moMin) {
@@ -319,7 +344,7 @@ export class ITPScoringEngine {
     // Employee growth (6 month)
     if (filter.employeeGrowth6moMin !== undefined) {
       totalCriteria++;
-      const growth6mo = (business as any).employee_growth_6mo;
+      const growth6mo = (business as BusinessExtended).employee_growth_6mo;
 
       if (growth6mo !== null && growth6mo !== undefined) {
         if (growth6mo >= filter.employeeGrowth6moMin) {
@@ -336,7 +361,7 @@ export class ITPScoringEngine {
     // Employee growth (12 month)
     if (filter.employeeGrowth12moMin !== undefined) {
       totalCriteria++;
-      const growth12mo = (business as any).employee_growth_12mo;
+      const growth12mo = (business as BusinessExtended).employee_growth_12mo;
 
       if (growth12mo !== null && growth12mo !== undefined) {
         if (growth12mo >= filter.employeeGrowth12moMin) {
@@ -353,7 +378,7 @@ export class ITPScoringEngine {
     // Job openings
     if (filter.jobOpeningsMin !== undefined) {
       totalCriteria++;
-      const jobOpenings = (business as any).job_openings_count;
+      const jobOpenings = (business as BusinessExtended).job_openings_count;
 
       if (jobOpenings !== null && jobOpenings !== undefined) {
         if (jobOpenings >= filter.jobOpeningsMin) {
@@ -370,7 +395,7 @@ export class ITPScoringEngine {
     // Web traffic growth
     if (filter.trafficGrowthMin !== undefined) {
       totalCriteria++;
-      const trafficGrowth = (business as any).web_traffic_rank_change_pct;
+      const trafficGrowth = (business as BusinessExtended).web_traffic_rank_change_pct;
 
       if (trafficGrowth !== null && trafficGrowth !== undefined) {
         if (trafficGrowth >= filter.trafficGrowthMin) {
@@ -404,7 +429,7 @@ export class ITPScoringEngine {
     // Total funding raised
     if (filter.fundingTotalMin !== undefined || filter.fundingTotalMax !== undefined) {
       totalCriteria++;
-      const totalFunding = (business as any).funding_total_raised;
+      const totalFunding = (business as BusinessExtended).funding_total_raised;
 
       if (totalFunding) {
         const min = filter.fundingTotalMin || 0;
@@ -431,7 +456,7 @@ export class ITPScoringEngine {
     // Latest funding round
     if (filter.latestRound && filter.latestRound.length > 0) {
       totalCriteria++;
-      const latestRound = (business as any).funding_latest_round?.toLowerCase();
+      const latestRound = (business as BusinessExtended).funding_latest_round?.toLowerCase();
 
       if (latestRound) {
         const roundMatch = filter.latestRound.some(
@@ -452,7 +477,7 @@ export class ITPScoringEngine {
     // Investors
     if (filter.investors && filter.investors.length > 0) {
       totalCriteria++;
-      const businessInvestors = (business as any).investors || [];
+      const businessInvestors = (business as BusinessExtended).investors || [];
 
       if (businessInvestors.length > 0) {
         const investorMatch = filter.investors.some((inv) =>
@@ -495,7 +520,7 @@ export class ITPScoringEngine {
     // Web page views
     if (filter.pageViewsMin !== undefined) {
       totalCriteria++;
-      const pageViews = (business as any).web_page_views;
+      const pageViews = (business as BusinessExtended).web_page_views;
 
       if (pageViews !== null && pageViews !== undefined) {
         if (pageViews >= filter.pageViewsMin) {
@@ -512,7 +537,7 @@ export class ITPScoringEngine {
     // Traffic rank
     if (filter.trafficRankMax !== undefined) {
       totalCriteria++;
-      const trafficRank = (business as any).web_traffic_rank;
+      const trafficRank = (business as BusinessExtended).web_traffic_rank;
 
       if (trafficRank !== null && trafficRank !== undefined) {
         if (trafficRank <= filter.trafficRankMax) {
@@ -529,7 +554,7 @@ export class ITPScoringEngine {
     // Sources count
     if (filter.sourcesMin !== undefined) {
       totalCriteria++;
-      const sources = (business as any).sources_count;
+      const sources = (business as BusinessExtended).sources_count;
 
       if (sources !== null && sources !== undefined) {
         if (sources >= filter.sourcesMin) {
@@ -546,7 +571,7 @@ export class ITPScoringEngine {
     // Conference count
     if (filter.conferenceMin !== undefined) {
       totalCriteria++;
-      const conferences = (business as any).conference_count;
+      const conferences = (business as BusinessExtended).conference_count;
 
       if (conferences !== null && conferences !== undefined) {
         if (conferences >= filter.conferenceMin) {
@@ -583,7 +608,7 @@ export class ITPScoringEngine {
     // Custom score range
     if (filter.customScoreMin !== undefined || filter.customScoreMax !== undefined) {
       totalCriteria++;
-      const customScore = (business as any).custom_score;
+      const customScore = (business as BusinessExtended).custom_score;
 
       if (customScore !== null && customScore !== undefined) {
         const min = filter.customScoreMin || 0;
@@ -604,7 +629,7 @@ export class ITPScoringEngine {
     // Priority
     if (filter.priority && filter.priority.length > 0) {
       totalCriteria++;
-      const businessPriority = (business as any).priority?.toLowerCase();
+      const businessPriority = (business as BusinessExtended).priority?.toLowerCase();
 
       if (businessPriority) {
         const priorityMatch = filter.priority.some(

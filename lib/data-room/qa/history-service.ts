@@ -173,12 +173,36 @@ export async function getHistory(
   const queries = hasMore ? data.slice(0, effectiveLimit) : data;
 
   // Map to HistoricalQuery format
-  const historicalQueries: HistoricalQuery[] = queries.map((row: any) => ({
+  interface QueryRow {
+    id: string;
+    question: string;
+    answer: string | null;
+    answer_type: 'grounded' | 'insufficient_evidence' | 'error';
+    qa_citations?: CitationRow[];
+    retrieval_time_ms: number | null;
+    llm_time_ms: number | null;
+    total_time_ms: number | null;
+    chunks_retrieved: number | null;
+    qa_feedback?: Array<{ rating: 'helpful' | 'not_helpful'; comment?: string }>;
+    created_at: string;
+    completed_at: string | null;
+  }
+
+  interface CitationRow {
+    citation_index: number;
+    document_id: string;
+    page_number: number | null;
+    chunk_id: string | null;
+    relevance_score: number | null;
+    document?: { title: string };
+  }
+
+  const historicalQueries: HistoricalQuery[] = queries.map((row: QueryRow) => ({
     id: row.id,
     question: row.question,
     answer: row.answer,
     answerType: row.answer_type,
-    citations: (row.qa_citations || []).map((cite: any) => ({
+    citations: (row.qa_citations || []).map((cite: CitationRow) => ({
       index: cite.citation_index,
       documentId: cite.document_id,
       documentTitle: cite.document?.title || 'Unknown',
@@ -451,8 +475,14 @@ export async function getHistoryStats(
   const successfulQueries = data.filter(q => q.answer_type === 'grounded').length;
   const avgResponseTime = data.reduce((sum, q) => sum + (q.total_time_ms || 0), 0) / totalQueries;
 
-  const feedbackQueries = data.filter((q: any) => q.qa_feedback && q.qa_feedback.length > 0);
-  const helpfulQueries = feedbackQueries.filter((q: any) => q.qa_feedback[0]?.rating === 'helpful').length;
+  interface QueryWithFeedback {
+    answer_type: string;
+    total_time_ms: number | null;
+    qa_feedback?: Array<{ rating: 'helpful' | 'not_helpful' }>;
+  }
+
+  const feedbackQueries = data.filter((q: QueryWithFeedback) => q.qa_feedback && q.qa_feedback.length > 0);
+  const helpfulQueries = feedbackQueries.filter((q: QueryWithFeedback) => q.qa_feedback?.[0]?.rating === 'helpful').length;
   const helpfulRate = feedbackQueries.length > 0 ? (helpfulQueries / feedbackQueries.length) * 100 : 0;
 
   return {

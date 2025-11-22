@@ -172,7 +172,7 @@ export class FinancialHealthScorer {
       .order('fiscal_year', { ascending: false })
       .order('fiscal_quarter', { ascending: false })
       .limit(1)
-      .single() as { data: Row<'financial_metrics'> | null; error: any }
+      .single() as { data: Row<'financial_metrics'> | null; error: unknown }
 
     if (storedMetrics) {
       return this.mapStoredMetrics(storedMetrics)
@@ -459,7 +459,7 @@ export class FinancialHealthScorer {
     }
   }
 
-  private explainFilingScore(company: any, score: number): string {
+  private explainFilingScore(company: Record<string, unknown>, score: number): string {
     if (score > 90) {
       return `All Companies House filings are up to date and company is in good standing`
     } else if (score > 70) {

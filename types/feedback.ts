@@ -49,7 +49,7 @@ export interface Feedback {
   tags: string[];
   affected_feature: string | null;
   page_url: string | null;
-  browser_info: Record<string, any> | null;
+  browser_info: Record<string, unknown> | null;
   attachment_urls: string[];
   screenshot_url: string | null;
   view_count: number;
@@ -96,8 +96,8 @@ export interface FeedbackActivity {
   feedback_id: string;
   user_id: string | null;
   action: FeedbackActivityAction;
-  old_value: Record<string, any> | null;
-  new_value: Record<string, any> | null;
+  old_value: Record<string, unknown> | null;
+  new_value: Record<string, unknown> | null;
   created_at: string;
 }
 

@@ -229,7 +229,7 @@ export async function GET(
     const { report, sections, sources } = result;
 
     // Format sections by type
-    const sectionsByType: Record<string, any> = {};
+    const sectionsByType: Record<string, unknown> = {};
     for (const section of sections) {
       sectionsByType[section.section_type as string] = {
         ...(section.content as any),

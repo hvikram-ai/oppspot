@@ -257,7 +257,24 @@ export class HypothesisRepository {
       }
 
       // Transform data to include creator_name
-      return (data || []).map((row: any) => ({
+      interface HypothesisRow {
+        id: string;
+        title: string;
+        hypothesis_type: string;
+        status: string;
+        confidence_score: number;
+        evidence_count: number;
+        supporting_evidence_count: number;
+        contradicting_evidence_count: number;
+        metrics_count: number;
+        metrics_met_count: number;
+        created_by: string;
+        created_at: string;
+        updated_at: string;
+        profiles?: { name: string };
+      }
+
+      return (data || []).map((row: HypothesisRow) => ({
         id: row.id,
         title: row.title,
         hypothesis_type: row.hypothesis_type,
@@ -450,7 +467,25 @@ export class HypothesisRepository {
         );
       }
 
-      return (data || []).map((row: any) => ({
+      interface EvidenceRow {
+        id: string;
+        hypothesis_id: string;
+        document_id: string;
+        evidence_type: string;
+        relevance_score: number;
+        excerpt_text: string;
+        page_number: number | null;
+        ai_reasoning: string | null;
+        ai_confidence: number | null;
+        created_at: string;
+        documents?: {
+          filename: string;
+          document_type: string;
+          storage_path: string;
+        };
+      }
+
+      return (data || []).map((row: EvidenceRow) => ({
         ...row,
         document_filename: row.documents?.filename || 'Unknown',
         document_type: row.documents?.document_type || 'other',

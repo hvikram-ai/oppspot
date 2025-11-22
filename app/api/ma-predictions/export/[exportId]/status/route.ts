@@ -20,9 +20,10 @@ const exportStatusStore = new Map<string, any>();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { exportId: string } }
+  { params }: { params: Promise<{ exportId: string }> }
 ) {
   try {
+    const { exportId } = await params;
     // Authenticate user
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -33,8 +34,6 @@ export async function GET(
         { status: 401 }
       );
     }
-
-    const exportId = params.exportId;
 
     // Fetch export status
     const status = exportStatusStore.get(exportId);
